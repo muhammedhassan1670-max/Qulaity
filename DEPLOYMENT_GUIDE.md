@@ -51,17 +51,18 @@ Supabase is for the backend database, not direct frontend secret storage.
 3. Copy the Postgres connection string.
 4. Put it in the backend environment as `DATABASE_URL`.
 
-For a normal server deployment, use the Supavisor session pooler string, usually ending with port `5432`:
+For this Supabase project, replace `YOUR-PASSWORD` with the database password:
 
 ```bash
-DATABASE_URL="postgresql://prisma.PROJECT_REF:PASSWORD@HOST:5432/postgres"
+DATABASE_URL="postgresql://postgres.zopeswdcvdrekuycsxcm:YOUR-PASSWORD@aws-0-eu-west-1.pooler.supabase.com:5432/postgres"
+DIRECT_URL="postgresql://postgres.zopeswdcvdrekuycsxcm:YOUR-PASSWORD@aws-0-eu-west-1.pooler.supabase.com:5432/postgres"
 JWT_SECRET="replace-with-a-long-random-secret"
 ADMIN_EMAIL="admin@qms.com"
 ADMIN_PASSWORD="replace-with-a-strong-production-password"
 CORS_ORIGIN="https://your-vercel-app.vercel.app"
 ```
 
-For serverless or auto-scaling backend hosting, use the transaction pooler string from Supabase, usually ending with port `6543`.
+For serverless or auto-scaling backend hosting, use the transaction pooler string for runtime `DATABASE_URL`, usually ending with port `6543` and `pgbouncer=true`, while keeping `DIRECT_URL` on port `5432` for migrations and seed.
 
 Do not put `DATABASE_URL`, service role keys, JWT secrets, or private provider keys in any `VITE_*` variable.
 
@@ -83,6 +84,7 @@ When deploying the backend to a server platform, set:
 NODE_ENV=production
 PORT=3001
 DATABASE_URL=your_supabase_postgres_url
+DIRECT_URL=your_supabase_migration_url
 JWT_SECRET=your_long_secret
 ADMIN_EMAIL=admin@qms.com
 ADMIN_PASSWORD=your_strong_admin_password

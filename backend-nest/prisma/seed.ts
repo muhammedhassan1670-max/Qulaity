@@ -25,9 +25,9 @@ function loadEnvFile(filePath: string) {
 
 async function main() {
   loadEnvFile('env.local');
-  const databaseUrl = process.env.DATABASE_URL;
+  const databaseUrl = process.env.DIRECT_URL ?? process.env.DATABASE_URL;
   if (!databaseUrl) {
-    throw new Error('DATABASE_URL is not set (env.local)');
+    throw new Error('DIRECT_URL or DATABASE_URL is not set (env.local)');
   }
 
   const pool = new Pool({ connectionString: databaseUrl });
