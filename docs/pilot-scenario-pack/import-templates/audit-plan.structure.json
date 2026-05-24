@@ -1,0 +1,46 @@
+{
+  "exportType": "quality-audit-plan-structure",
+  "purpose": "External pilot layered audit plan structure. Replace placeholders with real audit criteria before publishing.",
+  "plan": {
+    "id": "pilot-audit-plan-structure",
+    "auditName": "Pilot Layered Audit Plan - Replace Before Publish",
+    "auditType": "layered-audit",
+    "factory": "",
+    "workshop": "",
+    "productionLine": "",
+    "inspectionPoint": "",
+    "relatedInspectionPlanId": "",
+    "frequency": "Replace with real audit frequency.",
+    "ownerRole": "QUALITY_SUPERVISOR",
+    "version": 1,
+    "status": "draft",
+    "sections": [
+      { "id": "audit-standard-work", "title": "Standard Work", "description": "Replace with real audit section.", "order": 1 },
+      { "id": "audit-evidence", "title": "Evidence and Reaction", "description": "Replace with real audit evidence section.", "order": 2 }
+    ],
+    "auditItems": [
+      {
+        "id": "audit-replace-001",
+        "itemCode": "AUD-REPLACE-001",
+        "question": "Replace with real audit question.",
+        "section": "Standard Work",
+        "expectedCondition": "Replace with expected shopfloor condition.",
+        "inputType": "pass-fail",
+        "weight": 1,
+        "isCritical": false,
+        "requiredEvidence": false,
+        "linkedCheckItemId": "",
+        "findingTypeIfFail": "process-gap",
+        "severityIfFail": "major",
+        "suggestedAction": "Replace with real suggested action.",
+        "order": 1
+      }
+    ],
+    "history": [],
+    "createdAt": "REPLACE_WITH_IMPORT_DATE",
+    "updatedAt": "REPLACE_WITH_IMPORT_DATE",
+    "createdBy": "pilot-preparation",
+    "createdByRole": "QUALITY_SUPERVISOR"
+  }
+}
+

@@ -1,0 +1,441 @@
+import { useState, useMemo } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { useTranslation } from '../utils/translations';
+import {
+  LayoutDashboard,
+  ShieldCheck,
+  Blocks,
+  Brain,
+  Box,
+  Activity,
+  Wifi,
+  BarChart3,
+  Settings,
+  Users,
+  FileText,
+  DollarSign,
+  Truck,
+  ChevronRight,
+  ChevronDown,
+  Factory,
+  Workflow,
+  Database,
+  ScanLine,
+  ClipboardCheck,
+  AlertCircle,
+  TrendingUp,
+  Cpu,
+  Globe,
+  Search,
+  MessageSquare,
+  LayoutGrid,
+  Library,
+  Target,
+  Smartphone
+} from 'lucide-react';
+import { useConfigStore } from '../stores/configStore';
+
+interface SidebarProps {
+  onSectionChange: (section: string) => void;
+  collapsed: boolean;
+}
+
+interface MenuItem {
+  id: string;
+  labelKey: string;
+  icon: React.ComponentType<{ className?: string }>;
+  badge?: string;
+  badgeColor?: string;
+  children?: MenuItem[];
+}
+
+export function Sidebar({ onSectionChange, collapsed }: SidebarProps) {
+  const { t, language } = useTranslation();
+  const currentPlant = useConfigStore((state) => state.getCurrentPlant());
+  const plantLabel = currentPlant?.name || (language === 'ar' ? 'لا يوجد مصنع محدد' : 'No plant selected');
+  const location = useLocation();
+  const [expandedItems, setExpandedItems] = useState<string[]>(['quality-core', 'intel-hub']);
+
+  const menuItems: MenuItem[] = useMemo(() => [
+    {
+      id: 'intel-hub',
+      labelKey: 'intel-hub',
+      icon: Brain,
+      children: [
+        { id: 'dashboard', labelKey: 'dashboard', icon: LayoutDashboard },
+        { id: 'defect-prediction', labelKey: 'defect-prediction', icon: Target, badge: 'ML', badgeColor: 'bg-purple-500' },
+        { id: 'ai-chat', labelKey: 'ai-chat', icon: MessageSquare, badge: 'BETA', badgeColor: 'bg-blue-500' },
+        { id: 'executive', labelKey: 'executive', icon: BarChart3 }
+      ]
+    },
+    {
+      id: 'quality-core',
+      labelKey: 'quality-core',
+      icon: ShieldCheck,
+      badge: '12',
+      badgeColor: 'bg-red-500',
+      children: [
+        {
+          id: 'issues-mgmt',
+          labelKey: 'issues-mgmt',
+          icon: AlertCircle,
+          children: [
+            { id: 'quality-ncr', labelKey: 'quality-ncr', icon: AlertCircle },
+            { id: 'quality-capa', labelKey: 'quality-capa', icon: ClipboardCheck },
+            { id: 'quality-8d', labelKey: 'quality-8d', icon: FileText },
+            { id: 'quality-deviation', labelKey: 'quality-deviation', icon: TrendingUp },
+            { id: 'quality-complaint', labelKey: 'quality-complaint', icon: AlertCircle },
+            { id: 'quality-change', labelKey: 'quality-change', icon: Workflow }
+          ]
+        },
+        {
+          id: 'compliance-audit',
+          labelKey: 'compliance-audit',
+          icon: ClipboardCheck,
+          children: [
+            { id: 'quality-audit', labelKey: 'quality-audit', icon: ClipboardCheck },
+            { id: 'quality-inspection', labelKey: 'quality-inspection', icon: Search },
+            { id: 'quality-calibration', labelKey: 'quality-calibration', icon: Activity }
+          ]
+        }
+      ]
+    },
+    {
+      id: 'eng-mfg',
+      labelKey: 'eng-mfg',
+      icon: Cpu,
+      children: [
+        {
+          id: 'adv-eng',
+          labelKey: 'adv-eng',
+          icon: Brain,
+          children: [
+            { id: 'quality-fmea', labelKey: 'quality-fmea', icon: Brain },
+            { id: 'quality-control-plan', labelKey: 'quality-control-plan', icon: ScanLine }
+          ]
+        },
+        {
+          id: 'digital-factory',
+          labelKey: 'digital-factory',
+          icon: Box,
+          children: [
+            { id: 'digital-twin', labelKey: 'digital-twin', icon: Box },
+            { id: 'production-layout', labelKey: 'production-layout', icon: LayoutGrid },
+            { id: 'iot', labelKey: 'iot', icon: Wifi, badge: 'LIVE', badgeColor: 'bg-green-500' },
+            { id: 'spc', labelKey: 'spc', icon: Activity }
+          ]
+        }
+      ]
+    },
+    {
+          id: 'analytics-cost',
+          labelKey: 'quality-workspace',
+          icon: TrendingUp,
+          children: [
+            { id: 'quality-home', labelKey: 'quality-home', icon: LayoutDashboard, badge: 'HOME', badgeColor: 'bg-blue-500' },
+            {
+              id: 'quality-setup',
+              labelKey: 'quality-setup',
+              icon: Settings,
+              children: [
+                { id: 'quality-master-data', labelKey: 'quality-master-data', icon: Database },
+                { id: 'quality-form-designer', labelKey: 'quality-form-designer', icon: Blocks, badge: 'FORM', badgeColor: 'bg-violet-500' },
+                { id: 'quality-inspection-plans', labelKey: 'quality-inspection-plans', icon: ClipboardCheck, badge: 'CHK', badgeColor: 'bg-teal-500' },
+                { id: 'quality-rules-sla', labelKey: 'quality-rules-sla', icon: Workflow }
+              ]
+            },
+            {
+              id: 'quality-shopfloor-group',
+              labelKey: 'quality-shopfloor-group',
+              icon: Smartphone,
+              children: [
+                { id: 'quality-shopfloor', labelKey: 'quality-shopfloor', icon: Smartphone, badge: 'FAST', badgeColor: 'bg-emerald-500' },
+                { id: 'quality-execution-board', labelKey: 'quality-execution-board', icon: BarChart3, badge: 'EXEC', badgeColor: 'bg-cyan-500' },
+                { id: 'quality-layered-audits', labelKey: 'quality-layered-audits', icon: ShieldCheck, badge: 'AUD', badgeColor: 'bg-amber-500' }
+              ]
+            },
+            {
+              id: 'quality-defect-management',
+              labelKey: 'quality-defect-management',
+              icon: AlertCircle,
+              children: [
+                { id: 'quality-defect-log', labelKey: 'quality-defect-log', icon: AlertCircle, badge: 'NEW', badgeColor: 'bg-green-500' },
+                { id: 'quality-ncr', labelKey: 'quality-ncr', icon: AlertCircle },
+                { id: 'quality-capa', labelKey: 'quality-capa', icon: ClipboardCheck },
+                { id: 'quality-8d', labelKey: 'quality-8d', icon: FileText },
+                { id: 'quality-command-center-actions', labelKey: 'quality-improvement-actions', icon: Workflow }
+              ]
+            },
+            {
+              id: 'quality-intelligence-group',
+              labelKey: 'quality-intelligence-group',
+              icon: Brain,
+              children: [
+                { id: 'quality-command-center', labelKey: 'quality-command-center', icon: ShieldCheck, badge: 'CMD', badgeColor: 'bg-cyan-500' },
+                { id: 'quality-search', labelKey: 'quality-search', icon: Search, badge: 'FIND', badgeColor: 'bg-sky-500' },
+                { id: 'quality-knowledge-base', labelKey: 'quality-knowledge-base', icon: Library, badge: 'KB', badgeColor: 'bg-indigo-500' },
+                { id: 'quality-defect-prediction', labelKey: 'defect-prediction', icon: Target, badge: 'ML', badgeColor: 'bg-purple-500' },
+                { id: 'quality-spc', labelKey: 'spc', icon: Activity }
+              ]
+            },
+            {
+              id: 'quality-reports',
+              labelKey: 'quality-reports',
+              icon: BarChart3,
+              children: [
+                { id: 'quality-process-ppm', labelKey: 'quality-process-ppm', icon: Activity },
+                { id: 'quality-defect-cost', labelKey: 'quality-defect-cost', icon: DollarSign },
+                { id: 'quality-outgoing', labelKey: 'quality-outgoing', icon: Truck },
+                { id: 'quality-dashboard', labelKey: 'quality-dashboard', icon: LayoutDashboard },
+                { id: 'quality-intelligence', labelKey: 'quality-intelligence', icon: BarChart3 }
+              ]
+            },
+            {
+              id: 'quality-governance',
+              labelKey: 'quality-governance',
+              icon: ShieldCheck,
+              children: [
+                { id: 'quality-backup-sync', labelKey: 'quality-backup-sync', icon: Database },
+                { id: 'quality-audit-trail', labelKey: 'quality-audit-trail', icon: FileText },
+                { id: 'admin-workflow', labelKey: 'admin-workflow', icon: Workflow }
+              ]
+            }
+          ]
+        },
+    {
+      id: 'quality-supplier',
+      labelKey: 'quality-supplier',
+      icon: Factory
+    },
+    {
+      id: 'quality-library',
+      labelKey: 'quality-library',
+      icon: Library,
+      badge: 'NEW',
+      badgeColor: 'bg-green-500'
+    },
+    {
+      id: 'system-tools',
+      labelKey: 'system-tools',
+      icon: Settings,
+      children: [
+        { id: 'builder', labelKey: 'builder', icon: Blocks },
+        {
+          id: 'admin',
+          labelKey: 'admin',
+          icon: Settings,
+          children: [
+            { id: 'admin-users', labelKey: 'admin-users', icon: Users },
+            { id: 'admin-roles', labelKey: 'admin-roles', icon: ShieldCheck },
+            { id: 'admin-plants', labelKey: 'admin-plants', icon: Globe },
+            { id: 'admin-workflow', labelKey: 'admin-workflow', icon: Workflow },
+            { id: 'admin-database', labelKey: 'admin-database', icon: Database },
+            { id: 'admin-reports', labelKey: 'admin-reports', icon: FileText }
+          ]
+        }
+      ]
+    }
+  ], []);
+
+  // Professional ID-to-Path mapping for robust active state detection
+  const PATH_MAP: Record<string, string> = useMemo(() => ({
+    'dashboard': '/',
+    'quality': '/quality',
+    'builder': '/builder',
+    'ai': '/ai',
+    'defect-prediction': '/ai/defect-prediction',
+    'ai-chat': '/ai-chat',
+    'digital-twin': '/digital-twin',
+    'production-layout': '/production-layout',
+    'spc': '/spc',
+    'iot': '/iot',
+    'executive': '/executive',
+    'admin': '/admin',
+    'quality-home': '/quality-home',
+    'quality-intelligence': '/quality-intelligence',
+    'quality-command-center': '/quality-command-center',
+    'quality-command-center-actions': '/quality-command-center',
+    'quality-search': '/quality-search',
+    'quality-knowledge-base': '/quality-knowledge-base',
+    'quality-defect-prediction': '/ai/defect-prediction',
+    'quality-spc': '/spc',
+    'quality-ncr': '/quality/records/ncr',
+    'quality-capa': '/quality/records/capa',
+    'quality-8d': '/quality/records/8d',
+    'quality-deviation': '/quality/records/deviation',
+    'quality-change': '/quality/records/change-control',
+    'quality-complaint': '/quality/records/complaint',
+    'quality-defect-log': '/defect-log',
+    'quality-shopfloor': '/quality-shopfloor',
+    'quality-inspection-plans': '/quality-inspection-plans',
+    'quality-execution-board': '/quality-execution-board',
+    'quality-layered-audits': '/quality-audits',
+    'quality-master-data': '/quality-master-data',
+    'quality-form-designer': '/quality-form-designer',
+    'quality-rules-sla': '/defect-log',
+    'quality-backup-sync': '/quality-command-center',
+    'quality-audit-trail': '/defect-log',
+    'quality-defect-cost': '/defect-cost',
+    'quality-process-ppm': '/process-ppm',
+    'quality-outgoing': '/outgoing-quality',
+    'quality-dashboard': '/quality-dashboard',
+    'quality-audit': '/compliance/hub/audit',
+    'quality-inspection': '/compliance/hub/inspection',
+    'quality-calibration': '/compliance/hub/calibration',
+    'quality-fmea': '/fmea',
+    'quality-control-plan': '/control-plan',
+    'quality-supplier': '/supplier-quality',
+    'quality-library': '/quality-library',
+    'quality-slides': '/quality-slides',
+    'admin-users': '/admin/users',
+    'admin-roles': '/admin/roles',
+    'admin-plants': '/admin/plants',
+    'admin-workflow': '/admin/workflow',
+    'admin-database': '/admin/database',
+    'admin-reports': '/admin/reports'
+  }), []);
+
+  const toggleExpand = (id: string) => {
+    setExpandedItems(prev =>
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
+
+  const isItemActive = (item: MenuItem): boolean => {
+    const itemPath = PATH_MAP[item.id];
+    if (!itemPath) return false;
+    
+    // Exact match for the dashboard/home
+    if (itemPath === '/') return location.pathname === '/';
+    
+    // Professional path matching:
+    // 1. Exact match (e.g., /ai matches /ai)
+    // 2. Parent-child match (e.g., /ai matches /ai/chat)
+    // 3. Avoids partial string matches (e.g., /ai should NOT match /ai-chat)
+    return (
+      location.pathname === itemPath || 
+      location.pathname.startsWith(`${itemPath}/`)
+    );
+  };
+
+  const isMobile = window.innerWidth < 1024;
+
+  const renderMenuItem = (item: MenuItem, level: number = 0) => {
+    const hasChildren = item.children && item.children.length > 0;
+    const isExpanded = expandedItems.includes(item.id);
+    const active = isItemActive(item);
+    const Icon = item.icon;
+    
+    const getPath = (id: string) => PATH_MAP[id] || `/${id}`;
+
+    const content = (
+      <div
+        className={`
+          w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 cursor-pointer group/item
+          ${active 
+            ? 'bg-blue-50 dark:bg-transparent dark:bg-gradient-to-r dark:from-[#0077ff]/20 dark:to-[#00d2ff]/10 border-l-4 border-blue-600 dark:border-[#00d2ff] text-blue-700 dark:text-white shadow-sm dark:shadow-[0_0_20px_rgba(0,210,255,0.15)]' 
+            : 'hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
+          }
+          ${level > 0 && !collapsed ? 'ml-4 mr-0' : ''}
+        `}
+      >
+        <Icon className={`w-5 h-5 shrink-0 transition-all duration-300 ${active ? 'text-blue-600 dark:text-[#00d2ff] scale-110' : 'text-slate-500 dark:text-gray-400 group-hover/item:text-slate-800 dark:group-hover/item:text-white/80 group-hover/item:scale-110'}`} />
+        
+        {!collapsed && (
+          <>
+            <span className={`flex-1 ${language === 'ar' ? 'text-right' : 'text-left'} text-sm truncate font-medium ${active ? 'text-blue-700 dark:text-white' : 'text-slate-600 dark:text-gray-400 group-hover/item:text-slate-900 dark:group-hover/item:text-white'}`}>
+              {t(item.labelKey as any)}
+            </span>
+            
+            {item.badge && (
+              <span className={`px-2 py-0.5 text-[9px] font-black rounded-full shrink-0 uppercase tracking-widest ${item.badgeColor || 'bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-white/40'}`}>
+                {item.badge}
+              </span>
+            )}
+            
+            {hasChildren && (
+              <div className="shrink-0">
+                {isExpanded ? (
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform ${active ? 'text-blue-600 dark:text-[#00A3E0]' : 'text-slate-400 dark:text-white/20'}`} />
+                ) : (
+                  <ChevronRight className={`w-3.5 h-3.5 transition-transform ${active ? 'text-blue-600 dark:text-[#00A3E0]' : 'text-slate-400 dark:text-white/10'}`} />
+                )}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    );
+
+    return (
+      <div key={item.id} className="w-full">
+        {hasChildren ? (
+          <div onClick={() => toggleExpand(item.id)}>
+            {content}
+          </div>
+        ) : (
+          <Link to={getPath(item.id)} onClick={() => onSectionChange(item.id)}>
+            {content}
+          </Link>
+        )}
+
+        {/* Children */}
+        {hasChildren && isExpanded && !collapsed && (
+          <div className="mt-1 space-y-0.5 border-l pl-2 ml-3 border-white/5">
+            {item.children!.map(child => renderMenuItem(child, level + 1))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <aside
+      className={`
+        fixed left-0 top-[70px] bottom-0 z-[90]
+        bg-white dark:bg-transparent dark:glass-ultra border-r border-slate-200 dark:border-white/10
+        flex flex-col shadow-sm dark:shadow-none
+        transition-all duration-500 ease-in-out
+        ${collapsed ? (isMobile ? '-translate-x-full' : 'w-20') : 'w-[280px] translate-x-0'}
+      `}
+    >
+      {/* Plant Selector */}
+      {!collapsed && (
+        <div className="p-4 border-b border-slate-200 dark:border-white/10 hover-lift">
+          <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/5 hover:border-blue-300 dark:hover:border-[#00d2ff]/30 transition-all duration-300 group cursor-pointer hover:bg-blue-50 dark:hover:bg-[#00d2ff]/5 hover:shadow-md dark:shadow-none">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0077ff] to-[#00d2ff] flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+              <Factory className="w-5 h-5 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] text-slate-500 dark:text-gray-500 font-bold uppercase tracking-wider">{t('current-plant')}</p>
+              <p className="text-sm font-black truncate text-slate-800 dark:text-white group-hover:text-blue-600 dark:group-hover:text-[#00d2ff] transition-colors">{plantLabel}</p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-slate-400 dark:text-gray-600 group-hover:text-blue-600 dark:group-hover:text-[#00d2ff] transition-colors" />
+          </div>
+        </div>
+      )}
+
+      {/* Menu */}
+      <nav className={`flex-1 p-3 space-y-1 overflow-y-auto ${collapsed ? '' : 'pb-24'}`}>
+        {menuItems.map(item => renderMenuItem(item))}
+      </nav>
+
+      {/* Bottom Status */}
+      {!collapsed && (
+        <div className="mt-auto p-4 border-t border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-transparent">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-500/20 flex items-center justify-center transition-all duration-300 hover:scale-110 hover:shadow-md dark:hover:shadow-none cursor-pointer">
+              <Cpu className="w-4 h-4 text-green-600 dark:text-green-500 shrink-0" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-slate-500 dark:text-gray-400">{t('system-status')}</p>
+              <p className="text-sm font-medium text-green-600 dark:text-green-400">{t('operational')}</p>
+            </div>
+          </div>
+        </div>
+      )}
+    </aside>
+  );
+}
+
+export default Sidebar;

@@ -1,0 +1,671 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserStatus {
+  active
+  inactive
+  locked
+}
+
+enum RecordStatus {
+  draft
+  open
+  in_progress
+  in_review
+  closed
+  cancelled
+}
+
+enum PriorityLevel {
+  low
+  medium
+  high
+  critical
+}
+
+enum SeverityLevel {
+  minor
+  major
+  critical
+}
+
+enum AuditType {
+  internal
+  external
+  supplier
+  process
+  product
+}
+
+enum AttachmentVisibility {
+  internal
+  external
+  confidential
+}
+
+enum NotificationChannel {
+  in_app
+  email
+  sms
+  webhook
+}
+
+enum FileStorageProvider {
+  local
+  s3
+  minio
+}
+
+enum CapaType {
+  Corrective
+  Preventive
+}
+
+enum EntityType {
+  user
+  role
+  plant
+  department
+  supplier
+  ncr
+  capa
+  audit
+  audit_finding
+  fmea
+  eight_d
+  complaint
+  file
+  report
+}
+
+model User {
+  id              String     @id @default(uuid()) @db.Uuid
+  name            String
+  firstName       String?
+  lastName        String?
+  email           String     @unique @db.Citext
+  phone           String?
+  passwordHash    String
+  status          UserStatus @default(active)
+
+  roleId          String?    @db.Uuid
+  role            Role?      @relation(fields: [roleId], references: [id])
+
+  plantId         String?    @db.Uuid
+  plant           Plant?     @relation(fields: [plantId], references: [id])
+
+  departmentId    String?    @db.Uuid
+  department      Department? @relation("DepartmentUsers", fields: [departmentId], references: [id])
+
+  managedDepartments Department[] @relation("DepartmentManager")
+
+  jobTitle        String?
+
+  avatarFileId    String?    @db.Uuid
+  avatarFile      File?      @relation("UserAvatar", fields: [avatarFileId], references: [id])
+
+  lastLoginAt     DateTime?
+  twoFactorEnabled Boolean   @default(false)
+  twoFactorSecret String?
+
+  metadata        Json       @default("{}")
+
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  createdById     String?    @db.Uuid
+  updatedById     String?    @db.Uuid
+  deletedAt       DateTime?
+
+  createdBy       User?      @relation("UserCreatedBy", fields: [createdById], references: [id])
+  updatedBy       User?      @relation("UserUpdatedBy", fields: [updatedById], references: [id])
+
+  createdUsers    User[]     @relation("UserCreatedBy")
+  updatedUsers    User[]     @relation("UserUpdatedBy")
+
+  reportedNcrs     NcrReport[] @relation("NcrReportedBy")
+  assignedNcrs     NcrReport[] @relation("NcrAssignedTo")
+
+  ownerCapas       CapaAction[] @relation("CapaOwner")
+  assignedCapas    CapaAction[] @relation("CapaAssignedTo")
+
+  leadAudits       Audit[]      @relation("AuditLeadAuditor")
+  assignedFindings AuditFinding[] @relation("AuditFindingAssignedTo")
+
+  fmeaOwned        Fmea[]      @relation("FmeaOwner")
+  fmeaApproved     Fmea[]      @relation("FmeaApprovedBy")
+  fmeaItemOwned    FmeaItem[]  @relation("FmeaItemOwner")
+
+  eightDOwned      EightD[]    @relation("EightDOwner")
+
+  complaintsAssigned Complaint[] @relation("ComplaintAssignedTo")
+
+  uploadedFiles    File[] @relation("FileUploadedBy")
+  recordAttachments RecordAttachment[]
+
+  activityLogs     ActivityLog[] @relation("ActivityActor")
+  notifications    Notification[]
+
+  @@index([status])
+  @@index([plantId, departmentId])
+}
+
+model Role {
+  id          String  @id @default(uuid()) @db.Uuid
+  name        String  @unique
+  description String?
+  isSystem    Boolean @default(false)
+  metadata    Json    @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users       User[]
+  rolePermissions RolePermission[]
+}
+
+model Permission {
+  id          String @id @default(uuid()) @db.Uuid
+  code        String @unique
+  name        String
+  module      String?
+  description String?
+
+  rolePermissions RolePermission[]
+}
+
+model RolePermission {
+  roleId       String @db.Uuid
+  permissionId String @db.Uuid
+
+  role         Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+}
+
+model Plant {
+  id        String  @id @default(uuid()) @db.Uuid
+  code      String  @unique
+  name      String
+  location  String?
+  timezone  String?
+  isActive  Boolean @default(true)
+  metadata  Json    @default("{}")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users     User[]
+  departments Department[]
+  ncrReports NcrReport[]
+  capaActions CapaAction[]
+  audits    Audit[]
+  fmeas     Fmea[]
+  eightDs   EightD[]
+  complaints Complaint[]
+  productionLayouts ProductionLayout[]
+  activityLogs ActivityLog[]
+
+  @@index([isActive])
+}
+
+model ProductionLayout {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String
+  plantId     String?  @db.Uuid
+  version     Int      @default(1)
+  isPublished Boolean  @default(false)
+  layout      Json
+  metadata    Json     @default("{}")
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdById String?  @db.Uuid
+  updatedById String?  @db.Uuid
+  deletedAt   DateTime?
+
+  plant       Plant?   @relation(fields: [plantId], references: [id])
+
+  @@index([plantId])
+  @@index([isPublished])
+  @@index([deletedAt])
+}
+
+model Department {
+  id            String  @id @default(uuid()) @db.Uuid
+  plantId       String? @db.Uuid
+  code          String?
+  name          String
+  managerUserId String? @db.Uuid
+  isActive      Boolean @default(true)
+  metadata      Json    @default("{}")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  plant         Plant? @relation(fields: [plantId], references: [id])
+  manager       User?  @relation("DepartmentManager", fields: [managerUserId], references: [id])
+
+  users         User[] @relation("DepartmentUsers")
+  ncrReports    NcrReport[]
+  capaActions   CapaAction[]
+  audits        Audit[]
+  auditFindings AuditFinding[]
+  fmeas         Fmea[]
+  eightDs       EightD[]
+  complaints    Complaint[]
+  activityLogs  ActivityLog[]
+
+  @@index([plantId])
+  @@index([isActive])
+}
+
+model Supplier {
+  id        String  @id @default(uuid()) @db.Uuid
+  code      String? @unique
+  name      String
+  email     String?
+  phone     String?
+  address   String?
+  rating    Decimal? @db.Decimal(5, 2)
+  isActive  Boolean @default(true)
+  metadata  Json    @default("{}")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ncrReports NcrReport[]
+  audits     Audit[]
+
+  @@index([isActive])
+}
+
+model NcrReport {
+  id          String        @id @default(uuid()) @db.Uuid
+  ncrNumber   String        @unique
+  title       String
+  description String?
+  category    String?
+  severity    SeverityLevel @default(major)
+  priority    PriorityLevel @default(medium)
+  status      RecordStatus  @default(open)
+
+  plantId      String   @db.Uuid
+  departmentId String?  @db.Uuid
+  supplierId   String?  @db.Uuid
+
+  reportedById String   @db.Uuid
+  assignedToId String?  @db.Uuid
+
+  detectedAt   DateTime?
+  closedAt     DateTime?
+  dueDate      DateTime?
+
+  rootCause               String?
+  containmentAction       String?
+  correctiveActionSummary String?
+
+  costImpact  Decimal? @db.Decimal(12, 2)
+  currency    String?  @default("USD")
+
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdById String?  @db.Uuid
+  updatedById String?  @db.Uuid
+  deletedAt   DateTime?
+
+  plant       Plant      @relation(fields: [plantId], references: [id])
+  department  Department? @relation(fields: [departmentId], references: [id])
+  supplier    Supplier?  @relation(fields: [supplierId], references: [id])
+
+  reportedBy  User @relation("NcrReportedBy", fields: [reportedById], references: [id])
+  assignedTo  User? @relation("NcrAssignedTo", fields: [assignedToId], references: [id])
+
+  capaActions CapaAction[]
+  complaints  Complaint[]
+
+  @@index([plantId, status])
+  @@index([assignedToId])
+  @@index([createdAt])
+}
+
+model CapaAction {
+  id        String      @id @default(uuid()) @db.Uuid
+  capaNumber String     @unique
+  title     String
+  description String?
+  type      CapaType
+  priority  PriorityLevel @default(medium)
+  status    RecordStatus  @default(open)
+
+  sourceType String?
+  sourceNcrId String? @db.Uuid
+  sourceAuditFindingId String? @db.Uuid
+
+  ownerUserId String? @db.Uuid
+  assignedToId String? @db.Uuid
+
+  plantId String @db.Uuid
+  departmentId String? @db.Uuid
+
+  dueDate   DateTime?
+  closedAt  DateTime?
+
+  effectivenessCheckRequired Boolean @default(true)
+  effectivenessCheckDate DateTime?
+  effectivenessResult String?
+
+  metadata  Json @default("{}")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdById String? @db.Uuid
+  updatedById String? @db.Uuid
+  deletedAt DateTime?
+
+  plant Plant @relation(fields: [plantId], references: [id])
+  department Department? @relation(fields: [departmentId], references: [id])
+  sourceNcr NcrReport? @relation(fields: [sourceNcrId], references: [id])
+  sourceAuditFinding AuditFinding? @relation(fields: [sourceAuditFindingId], references: [id])
+  ownerUser User? @relation("CapaOwner", fields: [ownerUserId], references: [id])
+  assignedTo User? @relation("CapaAssignedTo", fields: [assignedToId], references: [id])
+
+  complaints Complaint[]
+
+  @@index([plantId, status])
+  @@index([assignedToId])
+}
+
+model Audit {
+  id          String      @id @default(uuid()) @db.Uuid
+  auditNumber String      @unique
+  title       String
+  type        AuditType   @default(internal)
+  scope       String?
+  status      String      @default("scheduled")
+
+  plantId      String  @db.Uuid
+  departmentId String? @db.Uuid
+  supplierId   String? @db.Uuid
+
+  scheduledAt DateTime?
+  startedAt   DateTime?
+  completedAt DateTime?
+
+  leadAuditorUserId String? @db.Uuid
+  team              Json    @default("[]")
+
+  summary String?
+  score   Decimal? @db.Decimal(5, 2)
+
+  metadata  Json @default("{}")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdById String? @db.Uuid
+  updatedById String? @db.Uuid
+  deletedAt DateTime?
+
+  plant      Plant @relation(fields: [plantId], references: [id])
+  department Department? @relation(fields: [departmentId], references: [id])
+  supplier   Supplier? @relation(fields: [supplierId], references: [id])
+  leadAuditor User? @relation("AuditLeadAuditor", fields: [leadAuditorUserId], references: [id])
+
+  findings   AuditFinding[]
+
+  @@index([plantId])
+  @@index([scheduledAt])
+}
+
+model AuditFinding {
+  id            String        @id @default(uuid()) @db.Uuid
+  auditId       String        @db.Uuid
+  findingNumber String?
+  title         String
+  description   String?
+  category      String?
+  severity      SeverityLevel @default(minor)
+  status        RecordStatus  @default(open)
+
+  departmentId  String? @db.Uuid
+  assignedToId  String? @db.Uuid
+  dueDate       DateTime?
+  closedAt      DateTime?
+
+  metadata      Json @default("{}")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  audit         Audit @relation(fields: [auditId], references: [id], onDelete: Cascade)
+  department    Department? @relation(fields: [departmentId], references: [id])
+  assignedTo    User? @relation("AuditFindingAssignedTo", fields: [assignedToId], references: [id])
+
+  capaActions   CapaAction[]
+
+  @@index([auditId])
+  @@index([assignedToId])
+}
+
+model Fmea {
+  id          String      @id @default(uuid()) @db.Uuid
+  fmeaNumber  String      @unique
+  title       String
+  type        String
+  revision    Int         @default(1)
+  status      RecordStatus @default(draft)
+
+  plantId      String  @db.Uuid
+  departmentId String? @db.Uuid
+  ownerUserId  String? @db.Uuid
+  approvedById String? @db.Uuid
+  approvedAt   DateTime?
+
+  metadata  Json @default("{}")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdById String? @db.Uuid
+  updatedById String? @db.Uuid
+  deletedAt DateTime?
+
+  plant      Plant @relation(fields: [plantId], references: [id])
+  department Department? @relation(fields: [departmentId], references: [id])
+  ownerUser  User? @relation("FmeaOwner", fields: [ownerUserId], references: [id])
+  approvedBy User? @relation("FmeaApprovedBy", fields: [approvedById], references: [id])
+
+  items       FmeaItem[]
+
+  @@index([plantId])
+}
+
+model FmeaItem {
+  id            String @id @default(uuid()) @db.Uuid
+  fmeaId        String @db.Uuid
+  processStep   String?
+  failureMode   String
+  effects       String?
+  causes        String?
+  currentControls String?
+  severity      Int @default(1)
+  occurrence    Int @default(1)
+  detection     Int @default(1)
+  rpn           Int @default(1)
+
+  recommendedActions String?
+  ownerUserId  String? @db.Uuid
+  targetDate   DateTime?
+  status       RecordStatus @default(open)
+
+  metadata  Json @default("{}")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  fmea       Fmea @relation(fields: [fmeaId], references: [id], onDelete: Cascade)
+  ownerUser  User? @relation("FmeaItemOwner", fields: [ownerUserId], references: [id])
+
+  @@index([fmeaId])
+}
+
+model EightD {
+  id             String @id @default(uuid()) @db.Uuid
+  dNumber        String @unique
+  title          String
+  problemDescription String?
+  status         RecordStatus @default(open)
+  currentStep    Int @default(1)
+
+  plantId        String @db.Uuid
+  departmentId   String? @db.Uuid
+  customerName   String?
+  ownerUserId    String? @db.Uuid
+  team           Json @default("[]")
+
+  d1Team             String?
+  d2Problem          String?
+  d3Containment      String?
+  d4RootCause        String?
+  d5CorrectiveActions String?
+  d6Implement        String?
+  d7PreventRecurrence String?
+  d8Congratulate     String?
+
+  metadata  Json @default("{}")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdById String? @db.Uuid
+  updatedById String? @db.Uuid
+  deletedAt DateTime?
+
+  plant      Plant @relation(fields: [plantId], references: [id])
+  department Department? @relation(fields: [departmentId], references: [id])
+  ownerUser  User? @relation("EightDOwner", fields: [ownerUserId], references: [id])
+
+  @@index([plantId])
+}
+
+model Complaint {
+  id             String @id @default(uuid()) @db.Uuid
+  complaintNumber String @unique
+  customerName   String
+  customerContact String?
+  title          String
+  description    String?
+  status         RecordStatus @default(open)
+  priority       PriorityLevel @default(medium)
+
+  plantId        String @db.Uuid
+  departmentId   String? @db.Uuid
+  assignedToId   String? @db.Uuid
+
+  relatedNcrId   String? @db.Uuid
+  relatedCapaId  String? @db.Uuid
+
+  receivedAt     DateTime?
+  closedAt       DateTime?
+
+  metadata  Json @default("{}")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdById String? @db.Uuid
+  updatedById String? @db.Uuid
+  deletedAt DateTime?
+
+  plant      Plant @relation(fields: [plantId], references: [id])
+  department Department? @relation(fields: [departmentId], references: [id])
+  assignedTo User? @relation("ComplaintAssignedTo", fields: [assignedToId], references: [id])
+  relatedNcr NcrReport? @relation(fields: [relatedNcrId], references: [id])
+  relatedCapa CapaAction? @relation(fields: [relatedCapaId], references: [id])
+
+  @@index([plantId, status])
+  @@index([assignedToId])
+}
+
+model File {
+  id             String @id @default(uuid()) @db.Uuid
+  storageProvider FileStorageProvider
+  bucket         String?
+  storageKey     String
+  originalName   String
+  mimeType       String?
+  sizeBytes      BigInt @default(0)
+  checksumSha256 String?
+  uploadedById   String? @db.Uuid
+  visibility     AttachmentVisibility @default(internal)
+  tags           String[] @default([])
+  metadata       Json @default("{}")
+  createdAt      DateTime @default(now())
+  deletedAt      DateTime?
+
+  uploadedBy     User? @relation("FileUploadedBy", fields: [uploadedById], references: [id])
+  attachments    RecordAttachment[]
+  avatarUsers    User[] @relation("UserAvatar")
+
+  @@index([uploadedById])
+  @@index([createdAt])
+}
+
+model RecordAttachment {
+  id          String @id @default(uuid()) @db.Uuid
+  recordType  EntityType
+  recordId    String @db.Uuid
+  fileId      String @db.Uuid
+  title       String?
+  notes       String?
+  createdAt   DateTime @default(now())
+  createdById String? @db.Uuid
+
+  file        File @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  createdBy   User? @relation(fields: [createdById], references: [id])
+
+  @@index([recordType, recordId])
+  @@index([fileId])
+}
+
+model ActivityLog {
+  id           String @id @default(uuid()) @db.Uuid
+  actorUserId  String? @db.Uuid
+  action       String
+  entityType   EntityType
+  entityId     String? @db.Uuid
+  plantId      String? @db.Uuid
+  departmentId String? @db.Uuid
+  ipAddress    String?
+  userAgent    String?
+  changes      Json @default("{}")
+  metadata     Json @default("{}")
+  createdAt    DateTime @default(now())
+
+  actor        User? @relation("ActivityActor", fields: [actorUserId], references: [id])
+  plant        Plant? @relation(fields: [plantId], references: [id])
+  department   Department? @relation(fields: [departmentId], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([actorUserId])
+  @@index([createdAt])
+}
+
+model Notification {
+  id              String @id @default(uuid()) @db.Uuid
+  recipientUserId String @db.Uuid
+  title           String
+  message         String
+  severity        String @default("info")
+  channel         NotificationChannel @default(in_app)
+  isRead          Boolean @default(false)
+  readAt          DateTime?
+  entityType      EntityType?
+  entityId        String? @db.Uuid
+  metadata        Json @default("{}")
+  createdAt       DateTime @default(now())
+
+  recipient       User @relation(fields: [recipientUserId], references: [id], onDelete: Cascade)
+
+  @@index([recipientUserId, isRead])
+  @@index([createdAt])
+}

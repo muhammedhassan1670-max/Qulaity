@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- Mobile-first viewport with safe area support (iPhone notch, etc.) -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>QMS Enterprise 4.0</title>
+    <meta name="description" content="Industrial Quality Management System — NCR, CAPA, Audits, 8D & IoT" />
+
+    <!-- PWA -->
+    <link rel="manifest" href="./manifest.json" />
+    <meta name="theme-color" content="#0066CC" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="QMS 4.0" />
+
+    <!-- Open Graph / Social -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="QMS Enterprise 4.0" />
+    <meta property="og:description" content="Industrial Quality Management System" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <!-- Register Service Worker outside local development only. -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        const isLocalDev =
+          location.hostname === 'localhost' ||
+          location.hostname === '127.0.0.1' ||
+          location.hostname === '::1' ||
+          location.port === '5173';
+
+        if (isLocalDev) {
+          window.addEventListener('load', () => {
+            navigator.serviceWorker.getRegistrations?.().then((registrations) => {
+              registrations.forEach((registration) => registration.unregister());
+            });
+
+            if ('caches' in window) {
+              caches.keys().then((keys) => {
+                keys
+                  .filter((key) => key.startsWith('qms-'))
+                  .forEach((key) => caches.delete(key));
+              });
+            }
+          });
+        } else {
+          window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js').catch(() => {});
+          });
+        }
+      }
+    </script>
+  </body>
+</html>

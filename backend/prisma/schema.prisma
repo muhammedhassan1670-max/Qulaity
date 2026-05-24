@@ -1,0 +1,1200 @@
+// QMS Enterprise 4.0 - Database Schema
+// Multi-Tenant Quality Management System
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// TENANT & ORGANIZATION
+// ============================================
+
+model Tenant {
+  id          String   @id @default(uuid())
+  name        String
+  code        String   @unique
+  logo        String?
+  status      String   @default("active") // active, suspended, archived
+  settings    Json     @default("{}")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  // Relations
+  users       User[]
+  plants      Plant[]
+  roles       Role[]
+  ncrRecords  NCR[]
+  capaRecords CAPA[]
+  eightDRecords EightD[]
+  deviationRecords Deviation[]
+  changeControlRecords ChangeControl[]
+  complaintRecords Complaint[]
+  controlPlanRecords ControlPlan[]
+  fmeaRecords FMEA[]
+  auditRecords Audit[]
+  spcRecords  SPCRecord[]
+  iotDevices  IoTDevice[]
+  suppliers   Supplier[]
+  inspectionRecords InspectionRecord[]
+  calibrationRecords CalibrationRecord[]
+  productionLayouts ProductionLayout[]
+  workflows   Workflow[]
+  reports     Report[]
+  auditLogs   AuditLog[]
+
+  @@map("tenants")
+}
+
+model Plant {
+  id          String   @id @default(uuid())
+  tenantId    String   @map("tenant_id")
+  name        String
+  code        String
+  location    String?
+  timezone    String   @default("UTC")
+  status      String   @default("active")
+  settings    Json     @default("{}")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  // Relations
+  tenant          Tenant   @relation(fields: [tenantId], references: [id])
+  departments Department[]
+  machines    Machine[]
+  iotDevices  IoTDevice[]
+  ncrRecords  NCR[]
+  capaRecords CAPA[]
+  users       User[]
+  productionLayouts ProductionLayout[]
+
+  @@unique([tenantId, code])
+  @@map("plants")
+}
+
+// ============================================
+// PRODUCTION LAYOUT (LINE / ROOMS / STATIONS)
+// ============================================
+
+model ProductionLayout {
+  id          String   @id @default(uuid())
+  tenantId    String   @map("tenant_id")
+  plantId     String?  @map("plant_id")
+  name        String
+  version     Int      @default(1)
+  isPublished Boolean  @default(false) @map("is_published")
+  layout      Json
+  metadata    Json?    @default("{}")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  // Relations
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  plant       Plant?   @relation(fields: [plantId], references: [id])
+
+  @@index([tenantId, plantId])
+  @@index([tenantId, isPublished])
+  @@map("production_layouts")
+}
+
+model Department {
+  id          String   @id @default(uuid())
+  plantId     String   @map("plant_id")
+  name        String
+  code        String
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  plant       Plant    @relation(fields: [plantId], references: [id])
+  users       User[]
+
+  @@unique([plantId, code])
+  @@map("departments")
+}
+
+// ============================================
+// USER MANAGEMENT & AUTH
+// ============================================
+
+model User {
+  id              String   @id @default(uuid())
+  tenantId        String   @map("tenant_id")
+  plantId         String?  @map("plant_id")
+  departmentId    String?  @map("department_id")
+  email           String
+  password        String
+  firstName       String   @map("first_name")
+  lastName        String   @map("last_name")
+  avatar          String?
+  phone           String?
+  status          String   @default("active") // active, inactive, suspended
+  emailVerified   Boolean  @default(false) @map("email_verified")
+  lastLoginAt     DateTime? @map("last_login_at")
+  lastLoginIp     String?   @map("last_login_ip")
+  loginAttempts   Int      @default(0) @map("login_attempts")
+  lockedUntil     DateTime? @map("locked_until")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+
+  createdById     String    @map("created_by_id")
+  updatedById     String?   @map("updated_by_id")
+
+  // Relations
+  tenant          Tenant   @relation(fields: [tenantId], references: [id])
+  plant           Plant?   @relation(fields: [plantId], references: [id])
+  department      Department? @relation(fields: [departmentId], references: [id])
+  userRoles       UserRole[]
+  refreshTokens   RefreshToken[]
+  notifications   Notification[]
+  
+  // Created/Updated records
+  createdNCRs     NCR[]    @relation("NCRCreatedBy")
+  updatedNCRs     NCR[]    @relation("NCRUpdatedBy")
+  assignedNCRs    NCR[]    @relation("NCRAssignedTo")
+  
+  createdCAPAs    CAPA[]   @relation("CAPACreatedBy")
+  updatedCAPAs    CAPA[]   @relation("CAPAUpdatedBy")
+  assignedCAPAs   CAPA[]   @relation("CAPAAssignedTo")
+
+  @@unique([tenantId, email])
+  @@map("users")
+}
+
+model Role {
+  id          String   @id @default(uuid())
+  tenantId    String   @map("tenant_id")
+  name        String
+  description String?
+  isSystem    Boolean  @default(false) @map("is_system")
+  permissions Json     @default("[]")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  userRoles   UserRole[]
+
+  @@unique([tenantId, name])
+  @@map("roles")
+}
+
+model UserRole {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  roleId    String   @map("role_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@map("user_roles")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  revokedAt DateTime? @map("revoked_at")
+  ipAddress String?   @map("ip_address")
+  userAgent String?   @map("user_agent")
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+// ============================================
+// NCR (NON-CONFORMANCE REPORT)
+// ============================================
+
+model NCR {
+  id              String   @id @default(uuid())
+  tenantId        String   @map("tenant_id")
+  plantId         String   @map("plant_id")
+  ncrNumber       String   @map("ncr_number")
+  title           String
+  description     String   @db.Text
+  category        String   // product, process, system, supplier
+  severity        String   // critical, major, minor
+  status          String   @default("draft") // draft, open, in_review, pending_capa, closed, cancelled
+  detectedDate    DateTime @map("detected_date")
+  reportedById    String   @map("reported_by_id")
+  assignedToId    String?  @map("assigned_to_id")
+  department      String?
+  productCode     String?  @map("product_code")
+  lotNumber       String?  @map("lot_number")
+  quantityAffected Int?    @map("quantity_affected")
+  rootCause       String?  @db.Text @map("root_cause")
+  containmentAction String? @db.Text @map("containment_action")
+  correctiveAction  String? @db.Text @map("corrective_action")
+  preventiveAction  String? @db.Text @map("preventive_action")
+  capaId          String?  @map("capa_id")
+  closedAt        DateTime? @map("closed_at")
+  closedById      String?   @map("closed_by_id")
+  updatedById     String?   @map("updated_by_id")
+
+  // Relations
+  tenant          Tenant   @relation(fields: [tenantId], references: [id])
+  plant           Plant    @relation(fields: [plantId], references: [id])
+  reportedBy      User     @relation("NCRCreatedBy", fields: [reportedById], references: [id])
+  assignedTo      User?    @relation("NCRAssignedTo", fields: [assignedToId], references: [id])
+  updatedBy       User?    @relation("NCRUpdatedBy", fields: [updatedById], references: [id])
+  comments        NCRComment[]
+  approvals       NCRApproval[]
+  attachments     Json      @default("[]")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+
+  @@unique([tenantId, ncrNumber])
+  @@index([tenantId, status])
+  @@index([tenantId, plantId])
+  @@map("ncr_records")
+}
+
+model NCRComment {
+  id        String   @id @default(uuid())
+  ncrId     String   @map("ncr_id")
+  userId    String   @map("user_id")
+  content   String   @db.Text
+  isInternal Boolean @default(false) @map("is_internal")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  ncr       NCR      @relation(fields: [ncrId], references: [id], onDelete: Cascade)
+
+  @@map("ncr_comments")
+}
+
+model NCRApproval {
+  id          String   @id @default(uuid())
+  ncrId       String   @map("ncr_id")
+  approverId  String   @map("approver_id")
+  step        Int
+  status      String   @default("pending") // pending, approved, rejected
+  comments    String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+  decidedAt   DateTime? @map("decided_at")
+
+  // Relations
+  ncr         NCR      @relation(fields: [ncrId], references: [id], onDelete: Cascade)
+
+  @@map("ncr_approvals")
+}
+
+// ============================================
+// CAPA (CORRECTIVE AND PREVENTIVE ACTION)
+// ============================================
+
+model CAPA {
+  id              String   @id @default(uuid())
+  tenantId        String   @map("tenant_id")
+  plantId         String   @map("plant_id")
+  capaNumber      String   @map("capa_number")
+  title           String
+  description     String   @db.Text
+  type            String   // corrective, preventive, both
+  source          String   // ncr, audit, complaint, risk, other
+  sourceId        String?  @map("source_id")
+  priority        String   @default("medium") // low, medium, high, critical
+  status          String   @default("draft") // draft, open, in_progress, pending_verification, closed, cancelled
+  assignedToId    String?  @map("assigned_to_id")
+  dueDate         DateTime? @map("due_date")
+  completedDate   DateTime? @map("completed_date")
+  effectiveness   String?  // effective, partially_effective, ineffective
+  verifiedById    String?  @map("verified_by_id")
+  verifiedAt      DateTime? @map("verified_at")
+  verificationNotes String? @db.Text @map("verification_notes")
+  attachments     Json     @default("[]")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+
+  createdById     String    @map("created_by_id")
+  updatedById     String?   @map("updated_by_id")
+
+  // Relations
+  tenant          Tenant   @relation(fields: [tenantId], references: [id])
+  plant           Plant    @relation(fields: [plantId], references: [id])
+  createdBy       User     @relation("CAPACreatedBy", fields: [createdById], references: [id])
+  updatedBy       User?    @relation("CAPAUpdatedBy", fields: [updatedById], references: [id])
+  assignedTo      User?    @relation("CAPAAssignedTo", fields: [assignedToId], references: [id])
+  actions         CAPAAction[]
+
+  @@unique([tenantId, capaNumber])
+  @@index([tenantId, status])
+  @@map("capa_records")
+}
+
+model CAPAAction {
+  id          String   @id @default(uuid())
+  capaId      String   @map("capa_id")
+  description String   @db.Text
+  type        String   // containment, correction, corrective, preventive
+  assignedTo  String?  @map("assigned_to")
+  dueDate     DateTime? @map("due_date")
+  completedAt DateTime? @map("completed_at")
+  evidence    String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relations
+  capa        CAPA     @relation(fields: [capaId], references: [id], onDelete: Cascade)
+
+  @@map("capa_actions")
+}
+
+// ============================================
+// 8D PROBLEM SOLVING
+// ============================================
+
+model EightD {
+  id              String   @id @default(uuid())
+  tenantId        String   @map("tenant_id")
+  dNumber         String   @map("d_number")
+  title           String
+  customerName    String?  @map("customer_name")
+  customerRef     String?  @map("customer_ref")
+  currentStep     Int      @default(1) @map("current_step")
+  status          String   @default("in_progress") // in_progress, completed, cancelled
+  
+  // D1: Team
+  teamMembers     Json     @default("[]") @map("team_members")
+  teamLeadId      String?  @map("team_lead_id")
+  
+  // D2: Problem Description
+  problemDescription String? @db.Text @map("problem_description")
+  what            String?
+  where           String?
+  when            String?
+  who             String?
+  why             String?
+  how             String?
+  howMany         Int?     @map("how_many")
+  
+  // D3: Containment
+  containmentActions String? @db.Text @map("containment_actions")
+  containmentDate DateTime? @map("containment_date")
+  
+  // D4: Root Cause
+  rootCause       String?  @db.Text @map("root_cause")
+  escapePoint     String?  @map("escape_point")
+  
+  // D5: Corrective Actions
+  correctiveActions String? @db.Text @map("corrective_actions")
+  
+  // D6: Implementation
+  implementationDate DateTime? @map("implementation_date")
+  
+  // D7: Prevention
+  preventiveActions String? @db.Text @map("preventive_actions")
+  
+  // D8: Recognition
+  lessonsLearned  String?  @db.Text @map("lessons_learned")
+  completedAt     DateTime? @map("completed_at")
+  
+  attachments     Json     @default("[]")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  tenant          Tenant   @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, dNumber])
+  @@map("eight_d_records")
+}
+
+// ============================================
+// DEVIATION MANAGEMENT
+// ============================================
+
+model Deviation {
+  id              String   @id @default(uuid())
+  tenantId        String   @map("tenant_id")
+  deviationNumber String   @map("deviation_number")
+  title           String
+  description     String   @db.Text
+  type            String   // product, process, material, equipment
+  category        String   // planned, unplanned, emergency
+  status          String   @default("draft") // draft, submitted, under_review, approved, rejected, closed
+  
+  // Deviation Period
+  startDate       DateTime @map("start_date")
+  endDate         DateTime? @map("end_date")
+  duration        Int?     // in hours
+  
+  // Product/Process Info
+  productCode     String?  @map("product_code")
+  productName     String?  @map("product_name")
+  batchNumber     String?  @map("batch_number")
+  processName     String?  @map("process_name")
+  
+  // Justification
+  reason          String   @db.Text
+  impact          String?  @db.Text
+  riskAssessment  String?  @db.Text @map("risk_assessment")
+  
+  // Approval
+  requestedById   String   @map("requested_by_id")
+  approvedById    String?  @map("approved_by_id")
+  approvedAt      DateTime? @map("approved_at")
+  approvedUntil   DateTime? @map("approved_until")
+  
+  // Closure
+  closedById      String?   @map("closed_by_id")
+  closedAt        DateTime? @map("closed_at")
+  closureNotes    String?   @db.Text @map("closure_notes")
+  
+  // Attachments & Relations
+  attachments     Json      @default("[]")
+  relatedNCRId    String?   @map("related_ncr_id")
+  relatedCAPAId   String?   @map("related_capa_id")
+  
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+
+  // Relations
+  tenant          Tenant   @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, deviationNumber])
+  @@index([tenantId, status])
+  @@map("deviation_records")
+}
+
+// ============================================
+// CHANGE CONTROL
+// ============================================
+
+model ChangeControl {
+  id              String   @id @default(uuid())
+  tenantId        String   @map("tenant_id")
+  changeNumber    String   @map("change_number")
+  title           String
+  description     String   @db.Text
+  type            String   // product, process, equipment, document, supplier, other
+  category        String   // major, minor, emergency
+  priority        String   @default("medium") // low, medium, high, critical
+  
+  // Current vs Proposed
+  currentState    String   @db.Text @map("current_state")
+  proposedState   String   @db.Text @map("proposed_state")
+  reason          String   @db.Text
+  
+  // Impact Assessment
+  qualityImpact   String?  @db.Text @map("quality_impact")
+  safetyImpact    String?  @db.Text @map("safety_impact")
+  regulatoryImpact String? @db.Text @map("regulatory_impact")
+  costImpact      String?  @map("cost_impact")
+  timelineImpact  String?  @map("timeline_impact")
+  
+  // Status
+  status          String   @default("draft") // draft, submitted, under_review, approved, rejected, implemented, closed
+  
+  // Request & Approval
+  requestedById   String   @map("requested_by_id")
+  requestDate     DateTime @map("request_date")
+  
+  // Implementation
+  implementationPlan String? @db.Text @map("implementation_plan")
+  implementationDate DateTime? @map("implementation_date")
+  
+  // Verification
+  verifiedById    String?   @map("verified_by_id")
+  verifiedAt      DateTime? @map("verified_at")
+  verificationResult String? @map("verification_result")
+  
+  // Closure
+  closedAt        DateTime? @map("closed_at")
+  closedById      String?   @map("closed_by_id")
+  
+  // Attachments & Relations
+  attachments     Json      @default("[]")
+  
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+
+  // Relations
+  tenant          Tenant   @relation(fields: [tenantId], references: [id])
+  approvals       ChangeApproval[]
+
+  @@unique([tenantId, changeNumber])
+  @@index([tenantId, status])
+  @@map("change_control_records")
+}
+
+model ChangeApproval {
+  id              String   @id @default(uuid())
+  changeId        String   @map("change_id")
+  approverId      String   @map("approver_id")
+  level           Int
+  status          String   @default("pending") // pending, approved, rejected
+  comments        String?  @db.Text
+  createdAt       DateTime @default(now()) @map("created_at")
+  decidedAt       DateTime? @map("decided_at")
+
+  // Relations
+  change          ChangeControl @relation(fields: [changeId], references: [id], onDelete: Cascade)
+
+  @@map("change_approvals")
+}
+
+// ============================================
+// CUSTOMER COMPLAINTS
+// ============================================
+
+model Complaint {
+  id              String   @id @default(uuid())
+  tenantId        String   @map("tenant_id")
+  complaintId     String   @map("complaint_id")
+  
+  // Customer Info
+  customerName    String   @map("customer_name")
+  customerCode    String?  @map("customer_code")
+  customerContact String?  @map("customer_contact")
+  customerEmail   String?  @map("customer_email")
+  customerPhone   String?  @map("customer_phone")
+  
+  // Complaint Details
+  subject         String
+  description     String   @db.Text
+  category        String   // product_defect, service_issue, delivery_delay, documentation, other
+  priority        String   @default("medium") // low, medium, high, critical
+  severity        String   @default("minor") // minor, major, critical
+  
+  // Product Info
+  productName     String?  @map("product_name")
+  productCode     String?  @map("product_code")
+  batchNumber     String?  @map("batch_number")
+  quantityAffected Int?    @map("quantity_affected")
+  
+  // Status & Assignment
+  status          String   @default("new") // new, acknowledged, under_investigation, corrective_action, pending_closure, closed
+  assignedToId    String?  @map("assigned_to_id")
+  
+  // Timeline
+  receivedDate    DateTime @map("received_date")
+  acknowledgedAt  DateTime? @map("acknowledged_at")
+  targetCloseDate DateTime? @map("target_close_date")
+  closedAt        DateTime? @map("closed_at")
+  
+  // Investigation
+  rootCause       String?  @db.Text @map("root_cause")
+  investigationNotes String? @db.Text @map("investigation_notes")
+  investigatedById String?  @map("investigated_by_id")
+  investigatedAt  DateTime? @map("investigated_at")
+  
+  // Resolution
+  resolution      String?  @db.Text
+  correctiveAction String? @db.Text @map("corrective_action")
+  preventiveAction String? @db.Text @map("preventive_action")
+  relatedCAPAId   String?  @map("related_capa_id")
+  
+  // Customer Satisfaction
+  customerSatisfaction String? @map("customer_satisfaction") // satisfied, neutral, dissatisfied
+  feedback        String?  @db.Text
+  
+  // Attachments
+  attachments     Json      @default("[]")
+  
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+
+  // Relations
+  tenant          Tenant   @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, complaintId])
+  @@index([tenantId, status])
+  @@index([tenantId, customerName])
+  @@map("complaint_records")
+}
+
+// ============================================
+// CONTROL PLAN
+// ============================================
+
+model ControlPlan {
+  id              String   @id @default(uuid())
+  tenantId        String   @map("tenant_id")
+  controlPlanId   String   @map("control_plan_id")
+  title           String
+  description     String?  @db.Text
+  
+  // Product/Process Info
+  productName     String?  @map("product_name")
+  productCode     String?  @map("product_code")
+  processName     String?  @map("process_name")
+  revision        Int      @default(1)
+  
+  // Status
+  status          String   @default("draft") // draft, active, obsolete
+  
+  // Team
+  preparedById    String   @map("prepared_by_id")
+  reviewedById    String?  @map("reviewed_by_id")
+  reviewedAt      DateTime? @map("reviewed_at")
+  approvedById    String?  @map("approved_by_id")
+  approvedAt      DateTime? @map("approved_at")
+  
+  // Effective Date
+  effectiveDate   DateTime? @map("effective_date")
+  obsoleteDate    DateTime? @map("obsolete_date")
+  
+  // Attachments
+  attachments     Json      @default("[]")
+  
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+
+  // Relations
+  tenant          Tenant   @relation(fields: [tenantId], references: [id])
+  characteristics ControlCharacteristic[]
+
+  @@unique([tenantId, controlPlanId])
+  @@index([tenantId, status])
+  @@map("control_plans")
+}
+
+model ControlCharacteristic {
+  id              String   @id @default(uuid())
+  controlPlanId   String   @map("control_plan_id")
+  stepNumber      Int      @map("step_number")
+  processStep     String   @map("process_step")
+  characteristic  String
+  specification   String
+  tolerance       String?
+  measurementMethod String? @map("measurement_method")
+  sampleSize      Int?     @map("sample_size")
+  sampleFrequency String?  @map("sample_frequency")
+  controlMethod   String?  @map("control_method")
+  reactionPlan    String?  @map("reaction_plan")
+  responsible     String?
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  // Relations
+  controlPlan     ControlPlan @relation(fields: [controlPlanId], references: [id], onDelete: Cascade)
+
+  @@map("control_characteristics")
+}
+
+// ============================================
+// SUPPLIER QUALITY
+// ============================================
+
+model Supplier {
+  id            String   @id @default(uuid())
+  tenantId      String   @map("tenant_id")
+  supplierCode  String   @map("supplier_code")
+  name          String
+  category      String?  @default("General")
+  status        String   @default("approved") // approved, conditional, blocked
+  address       Json?
+  primaryContact String? @map("primary_contact")
+  email         String?
+  phone         String?
+  rating        Float?   @default(4.0)
+  metadata      Json?
+
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+
+  // Relations
+  tenant        Tenant   @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, supplierCode])
+  @@index([tenantId, status])
+  @@map("suppliers")
+}
+
+// ============================================
+// INSPECTION MANAGEMENT
+// ============================================
+
+model InspectionRecord {
+  id              String   @id @default(uuid())
+  tenantId        String   @map("tenant_id")
+  inspectionNumber String  @map("inspection_number")
+  type            String   // incoming, in_process, final, shipping
+  productName     String   @map("product_name")
+  batchNumber     String?  @map("batch_number")
+  inspectedBy     String?  @map("inspected_by")
+  inspectionDate  DateTime @map("inspection_date")
+  result          String   @default("pending") // pass, fail, pending
+  sampleSize      Int      @default(0) @map("sample_size")
+  defectCount     Int      @default(0) @map("defect_count")
+  inspectionPoints Int?    @map("inspection_points")
+  metadata        Json?
+
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+
+  // Relations
+  tenant          Tenant   @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, inspectionNumber])
+  @@index([tenantId, type])
+  @@index([tenantId, result])
+  @@map("inspection_records")
+}
+
+// ============================================
+// CALIBRATION MANAGEMENT
+// ============================================
+
+model CalibrationRecord {
+  id                String   @id @default(uuid())
+  tenantId          String   @map("tenant_id")
+  calibrationNumber String   @map("calibration_number")
+  equipment         String
+  model             String?
+  serialNumber      String   @map("serial_number")
+  location          String?
+  lastCalibration   DateTime? @map("last_calibration")
+  nextCalibration   DateTime? @map("next_calibration")
+  status            String   @default("calibrated") // calibrated, due, overdue, maintenance
+  calibratedBy      String?  @map("calibrated_by")
+  uncertainty       String?  @map("uncertainty")
+  metadata          Json?
+
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  deletedAt         DateTime? @map("deleted_at")
+
+  // Relations
+  tenant            Tenant   @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, calibrationNumber])
+  @@index([tenantId, status])
+  @@map("calibration_records")
+}
+
+// ============================================
+// FMEA (FAILURE MODE & EFFECTS ANALYSIS)
+// ============================================
+
+model FMEA {
+  id              String   @id @default(uuid())
+  tenantId        String   @map("tenant_id")
+  fmeaNumber      String   @map("fmea_number")
+  title           String
+  type            String   // design, process, system
+  revision        Int      @default(1)
+  status          String   @default("draft") // draft, active, obsolete
+  productName     String?  @map("product_name")
+  processName     String?  @map("process_name")
+  teamMembers     Json     @default("[]") @map("team_members")
+  approvedById    String?  @map("approved_by_id")
+  approvedAt      DateTime? @map("approved_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  tenant          Tenant   @relation(fields: [tenantId], references: [id])
+  items           FMEAItem[]
+
+  @@unique([tenantId, fmeaNumber])
+  @@map("fmea_records")
+}
+
+model FMEAItem {
+  id              String   @id @default(uuid())
+  fmeaId          String   @map("fmea_id")
+  stepNumber      Int      @map("step_number")
+  function        String
+  failureMode     String   @map("failure_mode")
+  failureEffect   String   @map("failure_effect")
+  severity        Int      @default(1)
+  cause           String
+  occurrence      Int      @default(1)
+  currentControls String?  @map("current_controls")
+  detection       Int      @default(1)
+  rpn             Int      // Severity × Occurrence × Detection
+  recommendedAction String? @map("recommended_action")
+  responsibility  String?
+  targetDate      DateTime? @map("target_date")
+  actionTaken     String?  @map("action_taken")
+  actionDate      DateTime? @map("action_date")
+  newSeverity     Int?     @map("new_severity")
+  newOccurrence   Int?     @map("new_occurrence")
+  newDetection    Int?     @map("new_detection")
+  newRpn          Int?     @map("new_rpn")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  // Relations
+  fmea            FMEA     @relation(fields: [fmeaId], references: [id], onDelete: Cascade)
+
+  @@map("fmea_items")
+}
+
+// ============================================
+// AUDIT MANAGEMENT
+// ============================================
+
+model Audit {
+  id              String   @id @default(uuid())
+  tenantId        String   @map("tenant_id")
+  auditNumber     String   @map("audit_number")
+  title           String
+  type            String   // internal, external, supplier, certification
+  scope           String   @db.Text
+  criteria        String   @db.Text
+  status          String   @default("scheduled") // scheduled, in_progress, completed, cancelled
+  scheduledDate   DateTime @map("scheduled_date")
+  startDate       DateTime? @map("start_date")
+  endDate         DateTime? @map("end_date")
+  leadAuditorId   String   @map("lead_auditor_id")
+  auditors        Json     @default("[]")
+  auditees        Json     @default("[]")
+  location        String?
+  findingsSummary String?  @db.Text @map("findings_summary")
+  reportUrl       String?  @map("report_url")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  tenant          Tenant   @relation(fields: [tenantId], references: [id])
+  findings        AuditFinding[]
+
+  @@unique([tenantId, auditNumber])
+  @@map("audit_records")
+}
+
+model AuditFinding {
+  id              String   @id @default(uuid())
+  auditId         String   @map("audit_id")
+  findingNumber   String   @map("finding_number")
+  description     String   @db.Text
+  type            String   // major, minor, observation, opportunity
+  clause          String?
+  evidence        String?  @db.Text
+  correctiveActionRequired Boolean @default(true) @map("corrective_action_required")
+  capaId          String?  @map("capa_id")
+  status          String   @default("open") // open, closed
+  closedAt        DateTime? @map("closed_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  // Relations
+  audit           Audit    @relation(fields: [auditId], references: [id], onDelete: Cascade)
+
+  @@map("audit_findings")
+}
+
+// ============================================
+// SPC (STATISTICAL PROCESS CONTROL)
+// ============================================
+
+model SPCRecord {
+  id              String   @id @default(uuid())
+  tenantId        String   @map("tenant_id")
+  chartType       String   @map("chart_type") // xbar, r, s, p, np, c, u
+  characteristic  String
+  partNumber      String   @map("part_number")
+  processName     String   @map("process_name")
+  machineId       String?  @map("machine_id")
+  sampleSize      Int      @map("sample_size")
+  sampleFrequency String   @map("sample_frequency")
+  ucl             Float    @map("ucl") // Upper Control Limit
+  lcl             Float    @map("lcl") // Lower Control Limit
+  centerLine      Float    @map("center_line")
+  usl             Float?   @map("usl") // Upper Specification Limit
+  lsl             Float?   @map("lsl") // Lower Specification Limit
+  cp              Float?   // Process Capability
+  cpk             Float?   // Process Capability Index
+  status          String   @default("active")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  tenant          Tenant   @relation(fields: [tenantId], references: [id])
+  dataPoints      SPCDataPoint[]
+  ruleViolations  SPCRuleViolation[]
+
+  @@map("spc_records")
+}
+
+model SPCDataPoint {
+  id              String   @id @default(uuid())
+  spcRecordId     String   @map("spc_record_id")
+  sampleNumber    String   @map("sample_number")
+  sampleDate      DateTime @map("sample_date")
+  value           Float
+  values          Json     // Array of individual values for X-bar, R, S charts
+  isOutOfControl  Boolean  @default(false) @map("is_out_of_control")
+  notes           String?
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  // Relations
+  spcRecord       SPCRecord @relation(fields: [spcRecordId], references: [id], onDelete: Cascade)
+
+  @@index([spcRecordId, sampleDate])
+  @@map("spc_data_points")
+}
+
+model SPCRuleViolation {
+  id              String   @id @default(uuid())
+  spcRecordId     String   @map("spc_record_id")
+  ruleNumber      Int      @map("rule_number") // 1-8 Nelson rules
+  description     String
+  dataPointIds    Json     @map("data_point_ids")
+  detectedAt      DateTime @default(now()) @map("detected_at")
+  acknowledgedAt  DateTime? @map("acknowledged_at")
+  acknowledgedBy  String?   @map("acknowledged_by")
+
+  // Relations
+  spcRecord       SPCRecord @relation(fields: [spcRecordId], references: [id], onDelete: Cascade)
+
+  @@map("spc_rule_violations")
+}
+
+// ============================================
+// IOT & MACHINE DATA
+// ============================================
+
+model Machine {
+  id              String   @id @default(uuid())
+  plantId         String   @map("plant_id")
+  machineCode     String   @map("machine_code")
+  name            String
+  type            String
+  model           String?
+  serialNumber    String?  @map("serial_number")
+  manufacturer    String?
+  installationDate DateTime? @map("installation_date")
+  status          String   @default("active") // active, maintenance, retired
+  location        String?
+  specifications  Json     @default("{}")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  plant           Plant    @relation(fields: [plantId], references: [id])
+  iotDevices      IoTDevice[]
+  dataPoints      MachineDataPoint[]
+
+  @@unique([plantId, machineCode])
+  @@map("machines")
+}
+
+model IoTDevice {
+  id              String   @id @default(uuid())
+  tenantId        String   @map("tenant_id")
+  plantId         String   @map("plant_id")
+  machineId       String?  @map("machine_id")
+  deviceCode      String   @map("device_code")
+  name            String
+  type            String   // temperature, vibration, pressure, flow, humidity, power
+  location        String?
+  mqttTopic       String   @map("mqtt_topic")
+  status          String   @default("online") // online, offline, warning, alarm
+  batteryLevel    Int?     @map("battery_level")
+  signalStrength  Int?     @map("signal_strength")
+  lastReadingAt   DateTime? @map("last_reading_at")
+  lastReadingValue Float?  @map("last_reading_value")
+  unit            String?
+  thresholds      Json     @default("{}") // { min, max, critical }
+  calibrationDate DateTime? @map("calibration_date")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  tenant          Tenant   @relation(fields: [tenantId], references: [id])
+  plant           Plant    @relation(fields: [plantId], references: [id])
+  machine         Machine? @relation(fields: [machineId], references: [id])
+  dataPoints      MachineDataPoint[]
+
+  @@unique([tenantId, deviceCode])
+  @@map("iot_devices")
+}
+
+model MachineDataPoint {
+  id              String   @id @default(uuid())
+  machineId       String   @map("machine_id")
+  deviceId        String?  @map("device_id")
+  timestamp       DateTime
+  value           Float
+  unit            String
+  isAnomaly       Boolean  @default(false) @map("is_anomaly")
+  anomalyScore    Float?   @map("anomaly_score")
+  metadata        Json     @default("{}")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  // Relations
+  machine         Machine  @relation(fields: [machineId], references: [id])
+  device          IoTDevice? @relation(fields: [deviceId], references: [id])
+
+  @@index([machineId, timestamp])
+  @@index([deviceId, timestamp])
+  @@map("machine_data_points")
+}
+
+// ============================================
+// WORKFLOW ENGINE
+// ============================================
+
+model Workflow {
+  id              String   @id @default(uuid())
+  tenantId        String   @map("tenant_id")
+  name            String
+  description     String?
+  entityType      String   @map("entity_type") // ncr, capa, audit, etc.
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  tenant          Tenant   @relation(fields: [tenantId], references: [id])
+  steps           WorkflowStep[]
+  instances       WorkflowInstance[]
+
+  @@map("workflows")
+}
+
+model WorkflowStep {
+  id              String   @id @default(uuid())
+  workflowId      String   @map("workflow_id")
+  stepNumber      Int      @map("step_number")
+  name            String
+  description     String?
+  actionType      String   @map("action_type") // approval, review, notification, task
+  assigneeRoleId  String?  @map("assignee_role_id")
+  assigneeUserId  String?  @map("assignee_user_id")
+  slaHours        Int?     @map("sla_hours")
+  escalationUserId String? @map("escalation_user_id")
+  conditions      Json     @default("{}") // Conditions to proceed
+  nextStepId      String?  @map("next_step_id")
+  rejectStepId    String?  @map("reject_step_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  // Relations
+  workflow        Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  @@map("workflow_steps")
+}
+
+model WorkflowInstance {
+  id              String   @id @default(uuid())
+  workflowId      String   @map("workflow_id")
+  entityType      String   @map("entity_type")
+  entityId        String   @map("entity_id")
+  currentStepId   String   @map("current_step_id")
+  status          String   @default("active") // active, completed, cancelled
+  startedAt       DateTime @default(now()) @map("started_at")
+  completedAt     DateTime? @map("completed_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  // Relations
+  workflow        Workflow @relation(fields: [workflowId], references: [id])
+  history         WorkflowHistory[]
+
+  @@unique([entityType, entityId])
+  @@map("workflow_instances")
+}
+
+model WorkflowHistory {
+  id              String   @id @default(uuid())
+  instanceId      String   @map("instance_id")
+  stepId          String   @map("step_id")
+  action          String   // approve, reject, delegate, comment
+  actorId         String   @map("actor_id")
+  comments        String?
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  // Relations
+  instance        WorkflowInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+
+  @@map("workflow_history")
+}
+
+// ============================================
+// NOTIFICATIONS
+// ============================================
+
+model Notification {
+  id              String   @id @default(uuid())
+  userId          String   @map("user_id")
+  type            String   // ncr_assigned, capa_due, approval_required, etc.
+  title           String
+  message         String   @db.Text
+  entityType      String?  @map("entity_type")
+  entityId        String?  @map("entity_id")
+  isRead          Boolean  @default(false) @map("is_read")
+  readAt          DateTime? @map("read_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@map("notifications")
+}
+
+// ============================================
+// REPORTS
+// ============================================
+
+model Report {
+  id              String   @id @default(uuid())
+  tenantId        String   @map("tenant_id")
+  name            String
+  description     String?
+  type            String   // ncr_summary, capa_effectiveness, spc_analysis, etc.
+  parameters      Json     @default("{}")
+  schedule        String?  // cron expression for scheduled reports
+  lastRunAt       DateTime? @map("last_run_at")
+  lastRunStatus   String?   @map("last_run_status")
+  fileUrl         String?   @map("file_url")
+  createdById     String    @map("created_by_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  tenant          Tenant   @relation(fields: [tenantId], references: [id])
+
+  @@map("reports")
+}
+
+// ============================================
+// AUDIT LOG
+// ============================================
+
+model AuditLog {
+  id              String   @id @default(uuid())
+  tenantId        String   @map("tenant_id")
+  userId          String?  @map("user_id")
+  action          String   // create, update, delete, login, logout, etc.
+  entityType      String   @map("entity_type")
+  entityId        String?  @map("entity_id")
+  oldValues       Json?    @map("old_values")
+  newValues       Json?    @map("new_values")
+  ipAddress       String?  @map("ip_address")
+  userAgent       String?  @map("user_agent")
+  metadata        Json     @default("{}")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  // Relations
+  tenant          Tenant   @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId, createdAt])
+  @@index([tenantId, entityType])
+  @@index([tenantId, userId])
+  @@map("audit_logs")
+}

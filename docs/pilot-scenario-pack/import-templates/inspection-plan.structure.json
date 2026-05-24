@@ -1,0 +1,54 @@
+{
+  "exportType": "quality-inspection-plan-structure",
+  "purpose": "External pilot inspection plan structure. Replace placeholders with real inspection criteria before publishing.",
+  "plan": {
+    "id": "pilot-inspection-plan-structure",
+    "planName": "Pilot Inspection Plan - Replace Before Publish",
+    "description": "Structure only. Configure real model, line, inspection point, standards, and acceptance criteria before publishing.",
+    "factory": "",
+    "workshop": "",
+    "productionLine": "",
+    "inspectionPoint": "",
+    "product": "",
+    "model": "",
+    "partNumber": "",
+    "customer": "",
+    "supplier": "",
+    "version": 1,
+    "status": "draft",
+    "effectiveDate": "",
+    "sections": [
+      { "id": "inspection-general", "title": "General Checks", "description": "Replace with real inspection section.", "order": 1 },
+      { "id": "inspection-critical", "title": "Critical Quality Checks", "description": "Replace with real critical-to-quality checks.", "order": 2 }
+    ],
+    "checkItems": [
+      {
+        "id": "check-replace-001",
+        "checkCode": "REPLACE-001",
+        "checkName": "Replace with real check name",
+        "description": "Replace with real shopfloor instruction.",
+        "section": "General Checks",
+        "inspectionMethod": "visual",
+        "standard": "Replace with controlled standard.",
+        "acceptanceCriteria": "Replace with real acceptance criteria.",
+        "inputType": "pass-fail",
+        "sampleSize": 1,
+        "frequency": "Replace with actual frequency.",
+        "defectTypeIfNG": "",
+        "severityIfNG": "major",
+        "recordTypeIfNG": "process-ppm",
+        "requiredEvidence": false,
+        "relatedPartNumber": "",
+        "guidanceText": "Replace with real guidance.",
+        "order": 1,
+        "isRequired": true
+      }
+    ],
+    "history": [],
+    "createdAt": "REPLACE_WITH_IMPORT_DATE",
+    "updatedAt": "REPLACE_WITH_IMPORT_DATE",
+    "createdBy": "pilot-preparation",
+    "createdByRole": "QUALITY_ENGINEER"
+  }
+}
+

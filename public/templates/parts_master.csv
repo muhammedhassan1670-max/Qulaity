@@ -1,0 +1,11 @@
+id,name,description,category
+P001,Engine Gasket A,Primary cylinder head gasket,Engine Components
+P002,Brake Pad Front,Standard ceramic brake pad,Braking System
+P003,Oil Filter X1,High flow synthetic oil filter,Maintenance
+P004,Fuel Pump Z,Electric fuel pump 12V,Fuel System
+P005,Timing Belt,Reinforced rubber timing belt,Engine Components
+P006,Spark Plug Iridium,Long life iridium spark plug,Ignition
+P007,Radiator Fan,Electric cooling fan assembly,Cooling System
+P008,Shock Absorber,Heavy duty rear shock absorber,Suspension
+P009,Alternator 90A,Compact high output alternator,Electrical
+P010,Battery Terminal,Lead-free battery connector,Electrical

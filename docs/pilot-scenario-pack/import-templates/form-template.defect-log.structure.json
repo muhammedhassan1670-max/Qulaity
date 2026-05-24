@@ -1,0 +1,261 @@
+{
+  "exportType": "quality-form-template-structure",
+  "purpose": "External pilot template structure. Replace placeholders with real factory configuration before publishing.",
+  "template": {
+    "id": "pilot-defect-log-template-structure",
+    "name": "Pilot Defect Recorder Template - Replace Before Publish",
+    "description": "Structure for pilot form configuration. Review all fields, lookup mappings, formulas, and role visibility before publishing.",
+    "entityType": "defect-log",
+    "recordType": "process-ppm",
+    "version": 1,
+    "status": "draft",
+    "sections": [
+      {
+        "id": "basic",
+        "title": "Basic Defect Information",
+        "description": "Core fields required for dashboard routing.",
+        "order": 1,
+        "collapsible": true
+      },
+      {
+        "id": "routing",
+        "title": "Routing and Cost Signals",
+        "description": "Fields used by Process PPM, COPQ, Outgoing Quality, and prediction readiness.",
+        "order": 2,
+        "collapsible": true
+      }
+    ],
+    "fields": [
+      {
+        "id": "field-date",
+        "fieldKey": "date",
+        "label": "Date",
+        "type": "date",
+        "sectionId": "basic",
+        "order": 1,
+        "required": true,
+        "readOnly": false,
+        "hidden": false
+      },
+      {
+        "id": "field-record-type",
+        "fieldKey": "recordType",
+        "label": "Record Type",
+        "type": "select",
+        "sectionId": "basic",
+        "order": 2,
+        "required": true,
+        "readOnly": false,
+        "hidden": false,
+        "options": [
+          { "value": "process-ppm", "label": "Process PPM" },
+          { "value": "defect-cost", "label": "Defect Cost / COPQ" },
+          { "value": "outgoing-quality", "label": "Outgoing Quality" },
+          { "value": "customer-return", "label": "Customer Return" }
+        ]
+      },
+      {
+        "id": "field-part-number",
+        "fieldKey": "partNumber",
+        "label": "Part Number / Barcode",
+        "type": "lookup",
+        "sectionId": "basic",
+        "order": 3,
+        "required": true,
+        "readOnly": false,
+        "hidden": false,
+        "lookup": {
+          "sourceTable": "parts",
+          "keyColumn": "partNumber",
+          "displayColumn": "partNumber",
+          "searchColumns": ["partNumber", "partName", "model"],
+          "autoFillMappings": [
+            { "sourceColumn": "partName", "targetField": "partName" },
+            { "sourceColumn": "model", "targetField": "model" },
+            { "sourceColumn": "supplierName", "targetField": "supplierName" },
+            { "sourceColumn": "unitCost", "targetField": "unitCost", "readOnly": true },
+            { "sourceColumn": "productionLine", "targetField": "productionLine" },
+            { "sourceColumn": "defaultInspectionPoint", "targetField": "defaultInspectionPoint" }
+          ],
+          "fillEmptyFieldsOnly": true,
+          "preventOverwriteWithoutConfirmation": true,
+          "overwriteBehavior": "fill-empty-only"
+        }
+      },
+      {
+        "id": "field-part-name",
+        "fieldKey": "partName",
+        "label": "Part Name",
+        "type": "text",
+        "sectionId": "basic",
+        "order": 4,
+        "required": false,
+        "readOnly": false,
+        "hidden": false
+      },
+      {
+        "id": "field-model",
+        "fieldKey": "model",
+        "label": "Model",
+        "type": "text",
+        "sectionId": "basic",
+        "order": 5,
+        "required": true,
+        "readOnly": false,
+        "hidden": false
+      },
+      {
+        "id": "field-production-line",
+        "fieldKey": "productionLine",
+        "label": "Production Line",
+        "type": "text",
+        "sectionId": "basic",
+        "order": 6,
+        "required": true,
+        "readOnly": false,
+        "hidden": false
+      },
+      {
+        "id": "field-shift",
+        "fieldKey": "shift",
+        "label": "Shift",
+        "type": "select",
+        "sectionId": "basic",
+        "order": 7,
+        "required": true,
+        "readOnly": false,
+        "hidden": false,
+        "options": []
+      },
+      {
+        "id": "field-defect-type",
+        "fieldKey": "defectType",
+        "label": "Defect Type",
+        "type": "lookup",
+        "sectionId": "basic",
+        "order": 8,
+        "required": true,
+        "readOnly": false,
+        "hidden": false,
+        "lookup": {
+          "sourceTable": "defects",
+          "keyColumn": "defectType",
+          "displayColumn": "defectType",
+          "searchColumns": ["defectType", "defectCategory"],
+          "autoFillMappings": [
+            { "sourceColumn": "defectCategory", "targetField": "defectCategory" },
+            { "sourceColumn": "defaultSeverity", "targetField": "severity" },
+            { "sourceColumn": "defaultCostCategory", "targetField": "costCategory" }
+          ],
+          "fillEmptyFieldsOnly": true,
+          "preventOverwriteWithoutConfirmation": true,
+          "overwriteBehavior": "fill-empty-only"
+        }
+      },
+      {
+        "id": "field-defect-category",
+        "fieldKey": "defectCategory",
+        "label": "Defect Category",
+        "type": "text",
+        "sectionId": "routing",
+        "order": 9,
+        "required": false,
+        "readOnly": false,
+        "hidden": false
+      },
+      {
+        "id": "field-severity",
+        "fieldKey": "severity",
+        "label": "Severity",
+        "type": "select",
+        "sectionId": "routing",
+        "order": 10,
+        "required": true,
+        "readOnly": false,
+        "hidden": false,
+        "options": [
+          { "value": "minor", "label": "Minor" },
+          { "value": "major", "label": "Major" },
+          { "value": "critical", "label": "Critical" }
+        ]
+      },
+      {
+        "id": "field-quantity",
+        "fieldKey": "quantity",
+        "label": "Defect Quantity",
+        "type": "number",
+        "sectionId": "routing",
+        "order": 11,
+        "required": true,
+        "readOnly": false,
+        "hidden": false
+      },
+      {
+        "id": "field-inspected-quantity",
+        "fieldKey": "inspectedQuantity",
+        "label": "Inspected Quantity",
+        "type": "number",
+        "sectionId": "routing",
+        "order": 12,
+        "required": false,
+        "readOnly": false,
+        "hidden": false
+      },
+      {
+        "id": "field-unit-cost",
+        "fieldKey": "unitCost",
+        "label": "Unit Cost",
+        "type": "number",
+        "sectionId": "routing",
+        "order": 13,
+        "required": false,
+        "readOnly": true,
+        "hidden": false
+      },
+      {
+        "id": "field-estimated-cost",
+        "fieldKey": "estimatedCost",
+        "label": "Estimated Cost",
+        "type": "calculated",
+        "sectionId": "routing",
+        "order": 14,
+        "required": false,
+        "readOnly": true,
+        "hidden": false,
+        "formula": {
+          "expression": "ROUND(@quantity * @unitCost, 2)",
+          "precision": 2
+        }
+      },
+      {
+        "id": "field-ppm-preview",
+        "fieldKey": "ppmPreview",
+        "label": "PPM Preview",
+        "type": "calculated",
+        "sectionId": "routing",
+        "order": 15,
+        "required": false,
+        "readOnly": true,
+        "hidden": false,
+        "formula": {
+          "expression": "ROUND(@quantity / @inspectedQuantity * 1000000, 0)",
+          "precision": 0
+        }
+      }
+    ],
+    "rules": [
+      {
+        "id": "rule-process-ppm-inspected-required",
+        "sourceField": "recordType",
+        "operator": "equals",
+        "value": "process-ppm",
+        "action": "require field",
+        "targetField": "inspectedQuantity",
+        "warningMessage": "Inspected Quantity is required for reliable Process PPM."
+      }
+    ],
+    "createdAt": "REPLACE_WITH_IMPORT_DATE",
+    "updatedAt": "REPLACE_WITH_IMPORT_DATE"
+  }
+}
+

@@ -1,0 +1,6 @@
+line_id,line_name,department,capacity_per_shift
+line-1,Main Assembly 01,Assembly,500
+line-2,Component Machining,Production,800
+line-3,Quality Inspection,QC,1200
+line-4,Packaging & Dispatch,Logistics,2000
+line-5,Painting Station,Surface Prep,300
