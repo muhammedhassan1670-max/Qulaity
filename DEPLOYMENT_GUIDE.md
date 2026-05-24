@@ -56,6 +56,8 @@ For a normal server deployment, use the Supavisor session pooler string, usually
 ```bash
 DATABASE_URL="postgresql://prisma.PROJECT_REF:PASSWORD@HOST:5432/postgres"
 JWT_SECRET="replace-with-a-long-random-secret"
+ADMIN_EMAIL="admin@qms.com"
+ADMIN_PASSWORD="replace-with-a-strong-production-password"
 CORS_ORIGIN="https://your-vercel-app.vercel.app"
 ```
 
@@ -82,7 +84,17 @@ NODE_ENV=production
 PORT=3001
 DATABASE_URL=your_supabase_postgres_url
 JWT_SECRET=your_long_secret
+ADMIN_EMAIL=admin@qms.com
+ADMIN_PASSWORD=your_strong_admin_password
 CORS_ORIGIN=https://your-vercel-app.vercel.app
+```
+
+Run database migrations and seed after `DATABASE_URL` is configured:
+
+```bash
+cd backend-nest
+npx prisma migrate deploy
+npm run seed
 ```
 
 After the backend is online, update Vercel frontend variables:
@@ -117,4 +129,4 @@ For the offline pilot login fallback:
 - Email: `admin@qms.com`
 - Password: `admin123`
 
-Use real authentication through the backend before production factory rollout.
+For the online backend, the admin password comes from `ADMIN_PASSWORD` during the seed step. Use a strong password before production factory rollout.

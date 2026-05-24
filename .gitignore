@@ -23,6 +23,9 @@ LOGIN_CREDENTIALS.md
 # Keep safe templates tracked
 !.env.example
 !*.env.example
+!.env.production.example
+!backend-nest/.env.production.example
+!backend/.env.production.example
 !backend-nest/.env.example
 
 # Logs and caches

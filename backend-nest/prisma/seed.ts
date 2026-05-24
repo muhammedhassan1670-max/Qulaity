@@ -129,24 +129,39 @@ async function main() {
   ]);
   await grantSome(operatorRole.id, ['dashboard.view', 'quality.manage', 'files.upload']);
 
-  const adminPasswordHash = await bcrypt.hash('admin123', 10);
+  const isProduction = process.env.NODE_ENV === 'production';
+  const adminEmail = (process.env.ADMIN_EMAIL ?? 'admin@qms.com').trim().toLowerCase();
+  const adminName = (process.env.ADMIN_NAME ?? 'System Administrator').trim();
+  const adminPassword = process.env.ADMIN_PASSWORD ?? (isProduction ? '' : 'admin123');
+
+  if (!adminPassword) {
+    throw new Error('ADMIN_PASSWORD is required when running seed in production');
+  }
+
+  if (isProduction && adminPassword.length < 12) {
+    throw new Error('ADMIN_PASSWORD must be at least 12 characters in production');
+  }
+
+  const [adminFirstName = 'System', ...adminLastNameParts] = adminName.split(/\s+/).filter(Boolean);
+  const adminLastName = adminLastNameParts.join(' ') || 'Administrator';
+  const adminPasswordHash = await bcrypt.hash(adminPassword, 10);
 
   await prisma.user.upsert({
-    where: { email: 'admin@qms.com' },
+    where: { email: adminEmail },
     update: {
-      name: 'System Administrator',
-      firstName: 'System',
-      lastName: 'Administrator',
+      name: adminName,
+      firstName: adminFirstName,
+      lastName: adminLastName,
       roleId: adminRole.id,
       plantId: plant.id,
       passwordHash: adminPasswordHash,
       status: 'active',
     },
     create: {
-      name: 'System Administrator',
-      firstName: 'System',
-      lastName: 'Administrator',
-      email: 'admin@qms.com',
+      name: adminName,
+      firstName: adminFirstName,
+      lastName: adminLastName,
+      email: adminEmail,
       passwordHash: adminPasswordHash,
       status: 'active',
       roleId: adminRole.id,
