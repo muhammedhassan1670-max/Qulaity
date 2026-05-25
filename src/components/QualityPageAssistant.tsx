@@ -28,6 +28,12 @@ interface UserIntent extends AssistantLink {
   descriptionAr: string;
 }
 
+interface StoryStep extends AssistantLink {
+  descriptionEn: string;
+  descriptionAr: string;
+  match: (path: string) => boolean;
+}
+
 interface PageGuide {
   match: (path: string) => boolean;
   stageEn: string;
@@ -103,6 +109,65 @@ const userIntentActions: UserIntent[] = [
     descriptionEn: 'Open master data, forms, inspection plans, and setup checks.',
     descriptionAr: 'افتح البيانات الرئيسية والنماذج وخطط الفحص.',
     path: '/quality-home',
+  },
+];
+
+const qualityStorySteps: StoryStep[] = [
+  {
+    labelEn: 'Prepare the factory memory',
+    labelAr: 'جهز ذاكرة المصنع',
+    descriptionEn: 'Add master data, form templates, and inspection plans so entries become faster and cleaner.',
+    descriptionAr: 'جهز البيانات الرئيسية والنماذج وخطط الفحص عشان التسجيل يبقى أسرع وأنضف.',
+    path: '/quality-home',
+    match: (path) => ['/quality-home', '/quality/workspace', '/quality-master-data', '/quality-form-designer', '/quality-inspection-plans'].some((route) => path === route),
+  },
+  {
+    labelEn: 'Inspect on the shopfloor',
+    labelAr: 'افحص على أرضية الإنتاج',
+    descriptionEn: 'Run checksheets and capture failed checks before they turn into repeated problems.',
+    descriptionAr: 'نفذ الفحص وسجل نقاط الفشل قبل ما تتحول لمشكلة متكررة.',
+    path: '/quality-shopfloor',
+    match: (path) => path === '/quality-shopfloor' || path === '/quality/mobile-defect-entry' || path === '/quality-execution-board',
+  },
+  {
+    labelEn: 'Register the defect',
+    labelAr: 'سجل العيب',
+    descriptionEn: 'Turn the observation into a real defect record that dashboards, SPC, FMEA, and prediction can read.',
+    descriptionAr: 'حوّل الملاحظة لسجل عيب حقيقي يسمع في الداش بورد وSPC وFMEA والتوقع.',
+    path: '/defect-log',
+    match: (path) => path === '/defect-log' || path.startsWith('/quality/defect-log') || path.startsWith('/quality/defect-logs'),
+  },
+  {
+    labelEn: 'Decide the risk',
+    labelAr: 'قيّم الخطورة',
+    descriptionEn: 'Use dashboards, FMEA, PPM, COPQ, and outgoing quality to decide what needs attention first.',
+    descriptionAr: 'استخدم الداش بورد وFMEA وPPM وCOPQ عشان تعرف تبدأ بإيه.',
+    path: '/quality-command-center',
+    match: (path) => ['/quality-command-center', '/quality/command-center', '/fmea', '/quality-dashboard', '/process-ppm', '/defect-cost', '/outgoing-quality', '/spc'].some((route) => path === route || path.startsWith('/fmea/')),
+  },
+  {
+    labelEn: 'Escalate if needed',
+    labelAr: 'صعّد لو محتاج',
+    descriptionEn: 'Open NCR, CAPA, or 8D only when the issue needs controlled follow-up.',
+    descriptionAr: 'افتح NCR أو CAPA أو 8D بس لما المشكلة تحتاج متابعة رسمية.',
+    path: '/quality/records/ncr',
+    match: (path) => path.startsWith('/quality/records/ncr') || path.startsWith('/quality/records/capa') || path.startsWith('/quality/records/8d') || path === '/ncr' || path === '/capa' || path === '/8d',
+  },
+  {
+    labelEn: 'Act and verify',
+    labelAr: 'نفذ وتحقق',
+    descriptionEn: 'Create actions, follow owners and due dates, then verify effectiveness using real records.',
+    descriptionAr: 'اعمل إجراءات، تابع المسؤولين والمواعيد، وتحقق من الفاعلية من البيانات الحقيقية.',
+    path: '/quality-command-center',
+    match: (path) => path === '/quality-audits' || path === '/quality/layered-audits',
+  },
+  {
+    labelEn: 'Keep the lesson',
+    labelAr: 'احفظ الدرس',
+    descriptionEn: 'Search similar cases and convert useful outcomes into knowledge for the next problem.',
+    descriptionAr: 'ابحث عن الحالات المشابهة وحوّل النتائج المفيدة لدرس يساعد في المشكلة اللي بعدها.',
+    path: '/quality-knowledge-base',
+    match: (path) => path === '/quality-search' || path === '/quality/intelligence-search' || path === '/quality-knowledge-base' || path === '/quality/knowledge-base' || path === '/ai/defect-prediction',
   },
 ];
 
@@ -361,8 +426,14 @@ export function QualityPageAssistant() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [pageMode, setPageMode] = useState<PageMode>(() => readPageMode());
   const [isIntentOpen, setIsIntentOpen] = useState(false);
+  const [isStoryOpen, setIsStoryOpen] = useState(false);
 
   const guide = useMemo(() => findGuide(location.pathname), [location.pathname]);
+  const activeStoryIndex = useMemo(() => {
+    const index = qualityStorySteps.findIndex((step) => step.match(location.pathname));
+    return index >= 0 ? index : 0;
+  }, [location.pathname]);
+
   const actionItems = useMemo(() => {
     if (!guide) return [];
 
@@ -385,6 +456,7 @@ export function QualityPageAssistant() {
 
   useEffect(() => {
     setIsIntentOpen(false);
+    setIsStoryOpen(false);
   }, [location.pathname]);
 
   if (!guide) return null;
@@ -521,6 +593,73 @@ export function QualityPageAssistant() {
 
     {pageMode === 'simple' && (
       <>
+      {isStoryOpen && (
+        <div className="fixed inset-x-3 bottom-28 z-50 mx-auto max-w-6xl rounded-2xl border border-slate-200 bg-white/98 p-3 shadow-2xl shadow-slate-900/20 backdrop-blur dark:border-white/10 dark:bg-[#0f172a]/98 lg:bottom-24">
+          <div className="mb-3 flex items-start justify-between gap-3">
+            <div>
+              <h3 className="text-sm font-black text-slate-900 dark:text-white">
+                {isArabic ? 'قصة رحلة العيب' : 'Defect Journey Story'}
+              </h3>
+              <p className="mt-0.5 text-xs text-slate-500 dark:text-white/45">
+                {isArabic
+                  ? 'اتبع الرحلة من أول الإعداد لحد الدرس المستفاد. الصفحة الحالية متعلمة بالأزرق.'
+                  : 'Follow the journey from setup to lesson learned. The current stage is highlighted.'}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsStoryOpen(false)}
+              className="rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-black text-slate-500 transition hover:text-slate-900 dark:border-white/10 dark:text-white/45 dark:hover:text-white"
+            >
+              {isArabic ? 'إغلاق' : 'Close'}
+            </button>
+          </div>
+
+          <div className="grid max-h-[58vh] gap-2 overflow-y-auto md:grid-cols-2 xl:grid-cols-4">
+            {qualityStorySteps.map((step, index) => {
+              const isActiveStep = index === activeStoryIndex;
+              const isDone = index < activeStoryIndex;
+
+              return (
+                <Link
+                  key={step.path}
+                  to={step.path}
+                  onClick={() => setIsStoryOpen(false)}
+                  className={`group rounded-xl border p-3 transition ${
+                    isActiveStep
+                      ? 'border-blue-300 bg-blue-50 text-blue-900 dark:border-[#00A3E0]/50 dark:bg-[#00A3E0]/10 dark:text-white'
+                      : 'border-slate-200 bg-slate-50 hover:border-blue-300 hover:bg-blue-50 dark:border-white/10 dark:bg-white/5 dark:hover:border-[#00A3E0]/40 dark:hover:bg-[#00A3E0]/10'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-black ${
+                      isActiveStep
+                        ? 'bg-blue-600 text-white dark:bg-[#0066CC]'
+                        : isDone
+                          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
+                          : 'bg-white text-slate-500 shadow-sm dark:bg-black/20 dark:text-white/50'
+                    }`}
+                    >
+                      {index + 1}
+                    </span>
+                    <span className="rounded-full bg-white/70 px-2 py-0.5 text-[10px] font-black text-slate-500 dark:bg-black/20 dark:text-white/45">
+                      {isActiveStep ? (isArabic ? 'أنت هنا' : 'You are here') : isDone ? (isArabic ? 'تم' : 'Done') : (isArabic ? 'التالي' : 'Next')}
+                    </span>
+                  </div>
+
+                  <h4 className="mt-3 text-sm font-black text-slate-900 dark:text-white">
+                    {isArabic ? step.labelAr : step.labelEn}
+                  </h4>
+                  <p className="mt-1 line-clamp-3 text-xs text-slate-500 dark:text-white/45">
+                    {isArabic ? step.descriptionAr : step.descriptionEn}
+                  </p>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {isIntentOpen && (
         <div className="fixed inset-x-3 bottom-28 z-50 mx-auto max-w-5xl rounded-2xl border border-slate-200 bg-white/98 p-3 shadow-2xl shadow-slate-900/20 backdrop-blur dark:border-white/10 dark:bg-[#0f172a]/98 lg:bottom-24">
           <div className="mb-3 flex items-start justify-between gap-3">
@@ -580,7 +719,21 @@ export function QualityPageAssistant() {
           <div className="flex shrink-0 flex-wrap gap-2">
             <button
               type="button"
-              onClick={() => setIsIntentOpen((value) => !value)}
+              onClick={() => {
+                setIsStoryOpen((value) => !value);
+                setIsIntentOpen(false);
+              }}
+              className="inline-flex h-9 items-center justify-center rounded-xl bg-indigo-600 px-3 text-xs font-black text-white transition hover:bg-indigo-700"
+              aria-expanded={isStoryOpen}
+            >
+              {isArabic ? 'القصة' : 'Story'}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIsIntentOpen((value) => !value);
+                setIsStoryOpen(false);
+              }}
               className="inline-flex h-9 items-center justify-center rounded-xl bg-emerald-600 px-3 text-xs font-black text-white transition hover:bg-emerald-700"
               aria-expanded={isIntentOpen}
             >
