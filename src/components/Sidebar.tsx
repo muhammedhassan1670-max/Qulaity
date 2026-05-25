@@ -43,10 +43,22 @@ interface SidebarProps {
 interface MenuItem {
   id: string;
   labelKey: string;
+  labelEn?: string;
+  labelAr?: string;
+  hintEn?: string;
+  hintAr?: string;
   icon: React.ComponentType<{ className?: string }>;
   badge?: string;
   badgeColor?: string;
   children?: MenuItem[];
+}
+
+interface QuickAction {
+  id: string;
+  labelEn: string;
+  labelAr: string;
+  path: string;
+  icon: React.ComponentType<{ className?: string }>;
 }
 
 export function Sidebar({ onSectionChange, collapsed }: SidebarProps) {
@@ -54,106 +66,137 @@ export function Sidebar({ onSectionChange, collapsed }: SidebarProps) {
   const currentPlant = useConfigStore((state) => state.getCurrentPlant());
   const plantLabel = currentPlant?.name || (language === 'ar' ? 'لا يوجد مصنع محدد' : 'No plant selected');
   const location = useLocation();
-  const [expandedItems, setExpandedItems] = useState<string[]>([
-    'quality-shopfloor-group',
-    'quality-defect-management',
-    'quality-intelligence-group',
-  ]);
+  const [expandedItems, setExpandedItems] = useState<string[]>(['quality-entry-flow']);
+
+  const quickActions: QuickAction[] = useMemo(() => [
+    { id: 'quick-defect', labelEn: 'Log Defect', labelAr: 'سجل عيب', path: '/defect-log', icon: AlertCircle },
+    { id: 'quick-shopfloor', labelEn: 'Quick Entry', labelAr: 'تسجيل سريع', path: '/quality-shopfloor', icon: Smartphone },
+    { id: 'quick-command', labelEn: 'Status', labelAr: 'الموقف', path: '/quality-command-center', icon: ShieldCheck },
+  ], []);
 
   const menuItems: MenuItem[] = useMemo(() => [
-    { id: 'quality-home', labelKey: 'quality-home', icon: LayoutDashboard, badge: 'START', badgeColor: 'bg-blue-500' },
     {
-      id: 'quality-shopfloor-group',
+      id: 'quality-home',
+      labelKey: 'quality-home',
+      labelEn: 'Start Here',
+      labelAr: 'ابدأ هنا',
+      hintEn: 'Setup status and next steps',
+      hintAr: 'حالة النظام والخطوة التالية',
+      icon: LayoutDashboard,
+      badge: 'START',
+      badgeColor: 'bg-blue-500',
+    },
+    {
+      id: 'quality-entry-flow',
       labelKey: 'quality-shopfloor-group',
+      labelEn: '1. Record & Inspect',
+      labelAr: '1. سجل وافحص',
+      hintEn: 'Daily entry point',
+      hintAr: 'مكان التسجيل اليومي',
       icon: Smartphone,
       children: [
-        { id: 'quality-shopfloor', labelKey: 'quality-shopfloor', icon: Smartphone, badge: 'FAST', badgeColor: 'bg-emerald-500' },
-        { id: 'quality-defect-log', labelKey: 'quality-defect-log', icon: AlertCircle, badge: 'LOG', badgeColor: 'bg-green-500' },
-        { id: 'quality-inspection-plans', labelKey: 'quality-inspection-plans', icon: ClipboardCheck },
-        { id: 'quality-execution-board', labelKey: 'quality-execution-board', icon: BarChart3 },
-        { id: 'quality-layered-audits', labelKey: 'quality-layered-audits', icon: ShieldCheck },
+        { id: 'quality-shopfloor', labelKey: 'quality-shopfloor', labelEn: 'Quick Shopfloor Entry', labelAr: 'تسجيل سريع من الأرضية', icon: Smartphone, badge: 'FAST', badgeColor: 'bg-emerald-500' },
+        { id: 'quality-defect-log', labelKey: 'quality-defect-log', labelEn: 'Defect Recorder', labelAr: 'تسجيل / قائمة العيوب', icon: AlertCircle, badge: 'LOG', badgeColor: 'bg-green-500' },
+        { id: 'quality-execution-board', labelKey: 'quality-execution-board', labelEn: 'Inspection Execution Board', labelAr: 'متابعة تنفيذ الفحص', icon: BarChart3 },
+        { id: 'quality-inspection-plans', labelKey: 'quality-inspection-plans', labelEn: 'Inspection Plans', labelAr: 'خطط الفحص', icon: ClipboardCheck },
+        { id: 'quality-layered-audits', labelKey: 'quality-layered-audits', labelEn: 'Layered Audits', labelAr: 'مراجعات المشرف', icon: ShieldCheck },
       ]
     },
     {
       id: 'quality-defect-management',
       labelKey: 'quality-defect-management',
+      labelEn: '2. Problem Cycle',
+      labelAr: '2. دورة المشكلة',
+      hintEn: 'Review, escalate, and close',
+      hintAr: 'مراجعة وتصعيد وإغلاق',
       icon: Workflow,
       children: [
-        { id: 'quality-ncr', labelKey: 'quality-ncr', icon: AlertCircle },
+        { id: 'quality-ncr', labelKey: 'quality-ncr', labelEn: 'NCR', labelAr: 'NCR عدم مطابقة', icon: AlertCircle },
         { id: 'quality-capa', labelKey: 'quality-capa', icon: ClipboardCheck },
-        { id: 'quality-8d', labelKey: 'quality-8d', icon: FileText },
-        { id: 'quality-command-center-actions', labelKey: 'quality-improvement-actions', icon: Workflow },
-        { id: 'quality-fmea', labelKey: 'quality-fmea', icon: Brain, badge: 'RPN', badgeColor: 'bg-red-500' },
-        { id: 'quality-control-plan', labelKey: 'quality-control-plan', icon: ScanLine },
-        { id: 'quality-deviation', labelKey: 'quality-deviation', icon: TrendingUp },
-        { id: 'quality-complaint', labelKey: 'quality-complaint', icon: AlertCircle },
-        { id: 'quality-change', labelKey: 'quality-change', icon: Workflow },
+        { id: 'quality-8d', labelKey: 'quality-8d', labelEn: '8D', labelAr: '8D حل مشكلة', icon: FileText },
+        { id: 'quality-command-center-actions', labelKey: 'quality-improvement-actions', labelEn: 'Improvement Actions', labelAr: 'إجراءات التحسين', icon: Workflow },
+        { id: 'quality-fmea', labelKey: 'quality-fmea', labelEn: 'FMEA / RPN', labelAr: 'FMEA / أرقام RPN', icon: Brain, badge: 'RPN', badgeColor: 'bg-red-500' },
       ]
     },
     {
       id: 'quality-intelligence-group',
       labelKey: 'quality-intelligence-group',
+      labelEn: '3. Analyze & Decide',
+      labelAr: '3. حلل وخد قرار',
+      hintEn: 'Search, prediction, command view',
+      hintAr: 'بحث وتوقع ولوحة قيادة',
       icon: Brain,
       children: [
-        { id: 'quality-command-center', labelKey: 'quality-command-center', icon: ShieldCheck, badge: 'CMD', badgeColor: 'bg-cyan-500' },
-        { id: 'quality-search', labelKey: 'quality-search', icon: Search },
-        { id: 'quality-knowledge-base', labelKey: 'quality-knowledge-base', icon: Library },
-        { id: 'quality-defect-prediction', labelKey: 'defect-prediction', icon: Target, badge: 'ML', badgeColor: 'bg-purple-500' },
-        { id: 'quality-spc', labelKey: 'spc', icon: Activity },
-        { id: 'ai-chat', labelKey: 'ai-chat', icon: MessageSquare },
-        { id: 'executive', labelKey: 'executive', icon: BarChart3 },
+        { id: 'quality-command-center', labelKey: 'quality-command-center', labelEn: 'Command Center', labelAr: 'مركز القيادة', icon: ShieldCheck, badge: 'CMD', badgeColor: 'bg-cyan-500' },
+        { id: 'quality-search', labelKey: 'quality-search', labelEn: 'Quality Search', labelAr: 'بحث الجودة', icon: Search },
+        { id: 'quality-defect-prediction', labelKey: 'defect-prediction', labelEn: 'Defect Prediction', labelAr: 'توقع العيوب', icon: Target, badge: 'ML', badgeColor: 'bg-purple-500' },
+        { id: 'quality-spc', labelKey: 'spc', labelEn: 'SPC', labelAr: 'SPC التحكم الإحصائي', icon: Activity },
+        { id: 'quality-knowledge-base', labelKey: 'quality-knowledge-base', labelEn: 'Knowledge Base', labelAr: 'الدروس المستفادة', icon: Library },
       ]
     },
     {
       id: 'quality-reports',
       labelKey: 'quality-reports',
+      labelEn: '4. Reports',
+      labelAr: '4. التقارير',
+      hintEn: 'Management and quality metrics',
+      hintAr: 'مؤشرات الإدارة والجودة',
       icon: TrendingUp,
       children: [
-        { id: 'dashboard', labelKey: 'dashboard', icon: LayoutDashboard },
-        { id: 'quality-dashboard', labelKey: 'quality-dashboard', icon: LayoutDashboard },
-        { id: 'quality-process-ppm', labelKey: 'quality-process-ppm', icon: Activity },
-        { id: 'quality-defect-cost', labelKey: 'quality-defect-cost', icon: DollarSign },
-        { id: 'quality-outgoing', labelKey: 'quality-outgoing', icon: Truck },
-        { id: 'quality-supplier', labelKey: 'quality-supplier', icon: Factory },
-        { id: 'quality-library', labelKey: 'quality-library', icon: Library },
-        { id: 'quality-slides', labelKey: 'quality-slides', icon: FileText },
-        { id: 'quality-intelligence', labelKey: 'quality-intelligence', icon: BarChart3 },
+        { id: 'dashboard', labelKey: 'dashboard', labelEn: 'Main Dashboard', labelAr: 'الداش بورد الرئيسية', icon: LayoutDashboard },
+        { id: 'quality-dashboard', labelKey: 'quality-dashboard', labelEn: 'Quality Dashboard', labelAr: 'داش بورد الجودة', icon: LayoutDashboard },
+        { id: 'quality-process-ppm', labelKey: 'quality-process-ppm', labelEn: 'Process PPM', labelAr: 'Process PPM', icon: Activity },
+        { id: 'quality-defect-cost', labelKey: 'quality-defect-cost', labelEn: 'COPQ / Defect Cost', labelAr: 'تكلفة العيوب COPQ', icon: DollarSign },
+        { id: 'quality-outgoing', labelKey: 'quality-outgoing', labelEn: 'Outgoing Quality', labelAr: 'جودة الخروج', icon: Truck },
       ]
     },
     {
       id: 'quality-setup',
       labelKey: 'quality-setup',
+      labelEn: '5. Setup',
+      labelAr: '5. الإعداد',
+      hintEn: 'Master data and forms',
+      hintAr: 'البيانات والنماذج',
       icon: Settings,
       children: [
-        { id: 'quality-master-data', labelKey: 'quality-master-data', icon: Database },
-        { id: 'quality-form-designer', labelKey: 'quality-form-designer', icon: Blocks },
-        { id: 'builder', labelKey: 'builder', icon: Blocks },
-        { id: 'quality-rules-sla', labelKey: 'quality-rules-sla', icon: Workflow },
-        { id: 'quality-audit', labelKey: 'quality-audit', icon: ClipboardCheck },
-        { id: 'quality-inspection', labelKey: 'quality-inspection', icon: Search },
-        { id: 'quality-calibration', labelKey: 'quality-calibration', icon: Activity },
-      ]
-    },
-    {
-      id: 'digital-factory',
-      labelKey: 'digital-factory',
-      icon: Box,
-      children: [
-        { id: 'digital-twin', labelKey: 'digital-twin', icon: Box },
-        { id: 'production-layout', labelKey: 'production-layout', icon: LayoutGrid },
-        { id: 'iot', labelKey: 'iot', icon: Wifi, badge: 'LIVE', badgeColor: 'bg-green-500' },
+        { id: 'quality-master-data', labelKey: 'quality-master-data', labelEn: 'Master Data', labelAr: 'البيانات الرئيسية', icon: Database },
+        { id: 'quality-form-designer', labelKey: 'quality-form-designer', labelEn: 'Form Designer', labelAr: 'مصمم النماذج', icon: Blocks },
+        { id: 'quality-inspection-plans', labelKey: 'quality-inspection-plans', labelEn: 'Inspection Plans', labelAr: 'خطط الفحص', icon: ClipboardCheck },
+        { id: 'quality-rules-sla', labelKey: 'quality-rules-sla', labelEn: 'Rules / SLA', labelAr: 'القواعد و SLA', icon: Workflow },
       ]
     },
     {
       id: 'quality-governance',
       labelKey: 'quality-governance',
+      labelEn: 'More / Admin',
+      labelAr: 'المزيد / الإدارة',
+      hintEn: 'Advanced modules',
+      hintAr: 'صفحات متقدمة',
       icon: ShieldCheck,
       children: [
-        { id: 'quality-backup-sync', labelKey: 'quality-backup-sync', icon: Database },
-        { id: 'quality-audit-trail', labelKey: 'quality-audit-trail', icon: FileText },
+        { id: 'quality-control-plan', labelKey: 'quality-control-plan', labelEn: 'Control Plan', labelAr: 'Control Plan', icon: ScanLine },
+        { id: 'quality-deviation', labelKey: 'quality-deviation', labelEn: 'Deviation', labelAr: 'الانحرافات', icon: TrendingUp },
+        { id: 'quality-complaint', labelKey: 'quality-complaint', labelEn: 'Complaints', labelAr: 'الشكاوى', icon: AlertCircle },
+        { id: 'quality-change', labelKey: 'quality-change', labelEn: 'Change Control', labelAr: 'ضبط التغيير', icon: Workflow },
+        { id: 'quality-supplier', labelKey: 'quality-supplier', labelEn: 'Supplier Quality', labelAr: 'جودة الموردين', icon: Factory },
+        { id: 'quality-library', labelKey: 'quality-library', labelEn: 'Quality Library', labelAr: 'مكتبة الجودة', icon: Library },
+        { id: 'quality-slides', labelKey: 'quality-slides', labelEn: 'Quality Slides', labelAr: 'شرائح الجودة', icon: FileText },
+        { id: 'builder', labelKey: 'builder', labelEn: 'No-Code Builder', labelAr: 'No-Code Builder', icon: Blocks },
+        { id: 'digital-twin', labelKey: 'digital-twin', labelEn: 'Digital Twin', labelAr: 'Digital Twin', icon: Box },
+        { id: 'production-layout', labelKey: 'production-layout', labelEn: 'Production Layout', labelAr: 'تخطيط الإنتاج', icon: LayoutGrid },
+        { id: 'iot', labelKey: 'iot', labelEn: 'IoT', labelAr: 'IoT', icon: Wifi, badge: 'LIVE', badgeColor: 'bg-green-500' },
+        { id: 'quality-audit', labelKey: 'quality-audit', labelEn: 'Audit Management', labelAr: 'إدارة التدقيق', icon: ClipboardCheck },
+        { id: 'quality-inspection', labelKey: 'quality-inspection', labelEn: 'Inspection', labelAr: 'التفتيش', icon: Search },
+        { id: 'quality-calibration', labelKey: 'quality-calibration', labelEn: 'Calibration', labelAr: 'المعايرة', icon: Activity },
+        { id: 'ai-chat', labelKey: 'ai-chat', labelEn: 'AI Chat', labelAr: 'مساعد الجودة', icon: MessageSquare },
+        { id: 'executive', labelKey: 'executive', labelEn: 'Executive Insights', labelAr: 'رؤى الإدارة', icon: BarChart3 },
+        { id: 'quality-backup-sync', labelKey: 'quality-backup-sync', labelEn: 'Backup / Sync', labelAr: 'نسخ احتياطي / مزامنة', icon: Database },
+        { id: 'quality-audit-trail', labelKey: 'quality-audit-trail', labelEn: 'Audit Trail', labelAr: 'سجل التدقيق', icon: FileText },
         {
           id: 'admin',
           labelKey: 'admin',
+          labelEn: 'Administration',
+          labelAr: 'الإدارة',
           icon: Settings,
           children: [
             { id: 'admin-users', labelKey: 'admin-users', icon: Users },
@@ -262,6 +305,17 @@ export function Sidebar({ onSectionChange, collapsed }: SidebarProps) {
     );
   };
 
+  const getItemLabel = (item: MenuItem): string => {
+    if (language === 'ar' && item.labelAr) return item.labelAr;
+    if (language === 'en' && item.labelEn) return item.labelEn;
+    return t(item.labelKey as any);
+  };
+
+  const getItemHint = (item: MenuItem): string => {
+    if (language === 'ar') return item.hintAr || '';
+    return item.hintEn || '';
+  };
+
   const isItemActive = (item: MenuItem): boolean => {
     if (item.children?.some((child) => isItemActive(child))) return true;
 
@@ -288,6 +342,7 @@ export function Sidebar({ onSectionChange, collapsed }: SidebarProps) {
     const isExpanded = expandedItems.includes(item.id);
     const active = isItemActive(item);
     const Icon = item.icon;
+    const hint = getItemHint(item);
     
     const getPath = (id: string) => PATH_MAP[id] || `/${id}`;
 
@@ -306,8 +361,11 @@ export function Sidebar({ onSectionChange, collapsed }: SidebarProps) {
         
         {!collapsed && (
           <>
-            <span className={`flex-1 ${language === 'ar' ? 'text-right' : 'text-left'} text-sm truncate font-medium ${active ? 'text-blue-700 dark:text-white' : 'text-slate-600 dark:text-gray-400 group-hover/item:text-slate-900 dark:group-hover/item:text-white'}`}>
-              {t(item.labelKey as any)}
+            <span className={`flex-1 min-w-0 ${language === 'ar' ? 'text-right' : 'text-left'} ${active ? 'text-blue-700 dark:text-white' : 'text-slate-600 dark:text-gray-400 group-hover/item:text-slate-900 dark:group-hover/item:text-white'}`}>
+              <span className="block truncate text-sm font-bold">{getItemLabel(item)}</span>
+              {hint && level === 0 && (
+                <span className="mt-0.5 block truncate text-[10px] font-medium text-slate-400 dark:text-white/30">{hint}</span>
+              )}
             </span>
             
             {item.badge && (
@@ -374,6 +432,25 @@ export function Sidebar({ onSectionChange, collapsed }: SidebarProps) {
               <p className="text-sm font-black truncate text-slate-800 dark:text-white group-hover:text-blue-600 dark:group-hover:text-[#00d2ff] transition-colors">{plantLabel}</p>
             </div>
             <ChevronRight className="w-4 h-4 text-slate-400 dark:text-gray-600 group-hover:text-blue-600 dark:group-hover:text-[#00d2ff] transition-colors" />
+          </div>
+
+          <div className="mt-3 grid grid-cols-3 gap-2">
+            {quickActions.map((action) => {
+              const Icon = action.icon;
+              return (
+                <Link
+                  key={action.id}
+                  to={action.path}
+                  onClick={() => onSectionChange(action.id)}
+                  className="rounded-xl border border-slate-200 bg-white px-2 py-2 text-center transition hover:border-blue-300 hover:bg-blue-50 dark:border-white/10 dark:bg-white/5 dark:hover:border-[#00d2ff]/30 dark:hover:bg-[#00d2ff]/10"
+                >
+                  <Icon className="mx-auto mb-1 h-4 w-4 text-blue-600 dark:text-[#00d2ff]" />
+                  <span className="block truncate text-[10px] font-black text-slate-700 dark:text-white/80">
+                    {language === 'ar' ? action.labelAr : action.labelEn}
+                  </span>
+                </Link>
+              );
+            })}
           </div>
         </div>
       )}
