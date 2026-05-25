@@ -78,17 +78,29 @@ npm install
 npm run build
 ```
 
-When deploying the backend to a server platform, set:
+### Option A: Vercel serverless backend
+
+This option avoids a separate Node server provider. It is suitable for pilot REST API usage.
+WebSocket notifications are not supported in Vercel serverless functions.
+
+Create a second Vercel project from the same GitHub repository:
+
+- Root Directory: `backend-nest`
+- Build Command: `npm run build`
+
+Environment variables:
 
 ```bash
 NODE_ENV=production
-PORT=3001
-DATABASE_URL=your_supabase_postgres_url
-DIRECT_URL=your_supabase_migration_url
-JWT_SECRET=your_long_secret
+DATABASE_URL=postgresql://postgres.zopeswdcvdrekuycsxcm:YOUR-PASSWORD@aws-0-eu-west-1.pooler.supabase.com:6543/postgres?pgbouncer=true
+DIRECT_URL=postgresql://postgres.zopeswdcvdrekuycsxcm:YOUR-PASSWORD@aws-0-eu-west-1.pooler.supabase.com:5432/postgres
+JWT_SECRET=your_long_random_secret
+JWT_EXPIRES_IN=1d
 ADMIN_EMAIL=admin@qms.com
 ADMIN_PASSWORD=your_strong_admin_password
+ADMIN_NAME=System Administrator
 CORS_ORIGIN=https://your-vercel-app.vercel.app
+JSON_BODY_LIMIT=2mb
 ```
 
 Run database migrations and seed after `DATABASE_URL` is configured:
@@ -98,6 +110,12 @@ cd backend-nest
 npx prisma migrate deploy
 npm run seed
 ```
+
+You can run the migration and seed locally against Supabase using the same environment variables, or from a temporary backend shell if your host provides one.
+
+### Option B: Persistent Node backend
+
+For production WebSocket support and fewer cold starts, deploy `backend-nest` to a persistent Node host such as Railway, Render, Fly, or a VPS, then use the same environment variables above.
 
 After the backend is online, update Vercel frontend variables:
 
