@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   AlertCircle,
@@ -35,6 +35,18 @@ interface PageGuide {
   next?: AssistantLink;
   related: AssistantLink[];
   icon: React.ComponentType<{ className?: string }>;
+}
+
+type PageMode = 'simple' | 'advanced';
+
+const PAGE_MODE_STORAGE_KEY = 'qms_quality_page_mode_v1';
+
+function readPageMode(): PageMode {
+  try {
+    return localStorage.getItem(PAGE_MODE_STORAGE_KEY) === 'advanced' ? 'advanced' : 'simple';
+  } catch {
+    return 'simple';
+  }
 }
 
 const guides: PageGuide[] = [
@@ -290,8 +302,29 @@ export function QualityPageAssistant() {
   const location = useLocation();
   const language = useAppStore((state) => state.language);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [pageMode, setPageMode] = useState<PageMode>(() => readPageMode());
 
   const guide = useMemo(() => findGuide(location.pathname), [location.pathname]);
+  const actionItems = useMemo(() => {
+    if (!guide) return [];
+
+    const items = [guide.primary, ...(guide.next ? [guide.next] : []), ...guide.related];
+    const uniqueItems = items.filter(
+      (item, index, list) => list.findIndex((candidate) => candidate.path === item.path) === index,
+    );
+
+    return pageMode === 'simple' ? uniqueItems.slice(0, 3) : uniqueItems.slice(0, 6);
+  }, [guide, pageMode]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(PAGE_MODE_STORAGE_KEY, pageMode);
+      document.documentElement.dataset.qualityPageMode = pageMode;
+    } catch {
+      // Local UI preference only. Ignore storage errors so page guidance never blocks work.
+    }
+  }, [pageMode]);
+
   if (!guide) return null;
 
   const isArabic = language === 'ar';
@@ -301,6 +334,9 @@ export function QualityPageAssistant() {
   const purpose = isArabic ? guide.purposeAr : guide.purposeEn;
   const primary = isArabic ? guide.primary.labelAr : guide.primary.labelEn;
   const next = guide.next ? (isArabic ? guide.next.labelAr : guide.next.labelEn) : '';
+  const modeLabel = pageMode === 'simple'
+    ? (isArabic ? 'عرض بسيط' : 'Simple view')
+    : (isArabic ? 'عرض متقدم' : 'Advanced view');
 
   return (
     <section className="mb-4 rounded-2xl border border-slate-200 bg-white/90 p-3 shadow-sm backdrop-blur dark:border-white/10 dark:bg-white/5">
@@ -327,6 +363,32 @@ export function QualityPageAssistant() {
         </button>
 
         <div className="flex flex-wrap gap-2">
+          <div className="flex h-9 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 text-[11px] font-black dark:border-white/10 dark:bg-white/5">
+            <button
+              type="button"
+              onClick={() => setPageMode('simple')}
+              className={`px-3 transition ${
+                pageMode === 'simple'
+                  ? 'bg-blue-600 text-white dark:bg-[#0066CC]'
+                  : 'text-slate-500 hover:text-slate-900 dark:text-white/45 dark:hover:text-white'
+              }`}
+              aria-pressed={pageMode === 'simple'}
+            >
+              {isArabic ? 'بسيط' : 'Simple'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setPageMode('advanced')}
+              className={`px-3 transition ${
+                pageMode === 'advanced'
+                  ? 'bg-blue-600 text-white dark:bg-[#0066CC]'
+                  : 'text-slate-500 hover:text-slate-900 dark:text-white/45 dark:hover:text-white'
+              }`}
+              aria-pressed={pageMode === 'advanced'}
+            >
+              {isArabic ? 'متقدم' : 'Advanced'}
+            </button>
+          </div>
           <Link
             to={guide.primary.path}
             className="inline-flex h-9 items-center gap-2 rounded-xl bg-blue-600 px-3 text-xs font-black text-white transition hover:bg-blue-700 dark:bg-[#0066CC] dark:hover:bg-[#0052a3]"
@@ -345,8 +407,39 @@ export function QualityPageAssistant() {
         </div>
       </div>
 
-      {!isCollapsed && guide.related.length > 0 && (
-        <div className="mt-3 flex flex-wrap gap-2 border-t border-slate-200 pt-3 dark:border-white/10">
+      {!isCollapsed && actionItems.length > 0 && (
+        <div className="mt-3 border-t border-slate-200 pt-3 dark:border-white/10">
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <span className="px-1 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-white/30">
+              {isArabic ? 'ماذا أفعل هنا؟' : 'What should I do here?'}
+            </span>
+            <span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-black text-slate-500 dark:bg-white/5 dark:text-white/40">
+              {modeLabel}
+            </span>
+          </div>
+
+          <div className="grid gap-2 md:grid-cols-3">
+            {actionItems.map((item, index) => (
+              <Link
+                key={`${item.path}-${item.labelEn}`}
+                to={item.path}
+                className="group flex min-h-[54px] items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 dark:border-white/10 dark:bg-white/5 dark:text-white/60 dark:hover:border-[#00A3E0]/40 dark:hover:bg-[#00A3E0]/10 dark:hover:text-[#00A3E0]"
+              >
+                <span className="flex min-w-0 items-center gap-2">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-white text-[10px] font-black text-slate-500 shadow-sm dark:bg-black/20 dark:text-white/50">
+                    {index + 1}
+                  </span>
+                  <span className="truncate">{isArabic ? item.labelAr : item.labelEn}</span>
+                </span>
+                <ArrowRight className="h-3.5 w-3.5 shrink-0 opacity-50 transition group-hover:translate-x-0.5 group-hover:opacity-100" />
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {!isCollapsed && pageMode === 'advanced' && guide.related.length > actionItems.length && (
+        <div className="mt-3 flex flex-wrap gap-2">
           <span className="px-1 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-white/30">
             {isArabic ? 'روابط مرتبطة' : 'Related'}
           </span>
