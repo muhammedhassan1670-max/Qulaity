@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from '../utils/translations';
 import {
@@ -54,172 +54,103 @@ export function Sidebar({ onSectionChange, collapsed }: SidebarProps) {
   const currentPlant = useConfigStore((state) => state.getCurrentPlant());
   const plantLabel = currentPlant?.name || (language === 'ar' ? 'لا يوجد مصنع محدد' : 'No plant selected');
   const location = useLocation();
-  const [expandedItems, setExpandedItems] = useState<string[]>(['quality-core', 'intel-hub']);
+  const [expandedItems, setExpandedItems] = useState<string[]>([
+    'quality-shopfloor-group',
+    'quality-defect-management',
+    'quality-intelligence-group',
+  ]);
 
   const menuItems: MenuItem[] = useMemo(() => [
+    { id: 'quality-home', labelKey: 'quality-home', icon: LayoutDashboard, badge: 'START', badgeColor: 'bg-blue-500' },
     {
-      id: 'intel-hub',
-      labelKey: 'intel-hub',
+      id: 'quality-shopfloor-group',
+      labelKey: 'quality-shopfloor-group',
+      icon: Smartphone,
+      children: [
+        { id: 'quality-shopfloor', labelKey: 'quality-shopfloor', icon: Smartphone, badge: 'FAST', badgeColor: 'bg-emerald-500' },
+        { id: 'quality-defect-log', labelKey: 'quality-defect-log', icon: AlertCircle, badge: 'LOG', badgeColor: 'bg-green-500' },
+        { id: 'quality-inspection-plans', labelKey: 'quality-inspection-plans', icon: ClipboardCheck },
+        { id: 'quality-execution-board', labelKey: 'quality-execution-board', icon: BarChart3 },
+        { id: 'quality-layered-audits', labelKey: 'quality-layered-audits', icon: ShieldCheck },
+      ]
+    },
+    {
+      id: 'quality-defect-management',
+      labelKey: 'quality-defect-management',
+      icon: Workflow,
+      children: [
+        { id: 'quality-ncr', labelKey: 'quality-ncr', icon: AlertCircle },
+        { id: 'quality-capa', labelKey: 'quality-capa', icon: ClipboardCheck },
+        { id: 'quality-8d', labelKey: 'quality-8d', icon: FileText },
+        { id: 'quality-command-center-actions', labelKey: 'quality-improvement-actions', icon: Workflow },
+        { id: 'quality-fmea', labelKey: 'quality-fmea', icon: Brain, badge: 'RPN', badgeColor: 'bg-red-500' },
+        { id: 'quality-control-plan', labelKey: 'quality-control-plan', icon: ScanLine },
+        { id: 'quality-deviation', labelKey: 'quality-deviation', icon: TrendingUp },
+        { id: 'quality-complaint', labelKey: 'quality-complaint', icon: AlertCircle },
+        { id: 'quality-change', labelKey: 'quality-change', icon: Workflow },
+      ]
+    },
+    {
+      id: 'quality-intelligence-group',
+      labelKey: 'quality-intelligence-group',
       icon: Brain,
       children: [
+        { id: 'quality-command-center', labelKey: 'quality-command-center', icon: ShieldCheck, badge: 'CMD', badgeColor: 'bg-cyan-500' },
+        { id: 'quality-search', labelKey: 'quality-search', icon: Search },
+        { id: 'quality-knowledge-base', labelKey: 'quality-knowledge-base', icon: Library },
+        { id: 'quality-defect-prediction', labelKey: 'defect-prediction', icon: Target, badge: 'ML', badgeColor: 'bg-purple-500' },
+        { id: 'quality-spc', labelKey: 'spc', icon: Activity },
+        { id: 'ai-chat', labelKey: 'ai-chat', icon: MessageSquare },
+        { id: 'executive', labelKey: 'executive', icon: BarChart3 },
+      ]
+    },
+    {
+      id: 'quality-reports',
+      labelKey: 'quality-reports',
+      icon: TrendingUp,
+      children: [
         { id: 'dashboard', labelKey: 'dashboard', icon: LayoutDashboard },
-        { id: 'defect-prediction', labelKey: 'defect-prediction', icon: Target, badge: 'ML', badgeColor: 'bg-purple-500' },
-        { id: 'ai-chat', labelKey: 'ai-chat', icon: MessageSquare, badge: 'BETA', badgeColor: 'bg-blue-500' },
-        { id: 'executive', labelKey: 'executive', icon: BarChart3 }
+        { id: 'quality-dashboard', labelKey: 'quality-dashboard', icon: LayoutDashboard },
+        { id: 'quality-process-ppm', labelKey: 'quality-process-ppm', icon: Activity },
+        { id: 'quality-defect-cost', labelKey: 'quality-defect-cost', icon: DollarSign },
+        { id: 'quality-outgoing', labelKey: 'quality-outgoing', icon: Truck },
+        { id: 'quality-supplier', labelKey: 'quality-supplier', icon: Factory },
+        { id: 'quality-library', labelKey: 'quality-library', icon: Library },
+        { id: 'quality-slides', labelKey: 'quality-slides', icon: FileText },
+        { id: 'quality-intelligence', labelKey: 'quality-intelligence', icon: BarChart3 },
       ]
     },
     {
-      id: 'quality-core',
-      labelKey: 'quality-core',
-      icon: ShieldCheck,
-      badge: '12',
-      badgeColor: 'bg-red-500',
-      children: [
-        {
-          id: 'issues-mgmt',
-          labelKey: 'issues-mgmt',
-          icon: AlertCircle,
-          children: [
-            { id: 'quality-ncr', labelKey: 'quality-ncr', icon: AlertCircle },
-            { id: 'quality-capa', labelKey: 'quality-capa', icon: ClipboardCheck },
-            { id: 'quality-8d', labelKey: 'quality-8d', icon: FileText },
-            { id: 'quality-deviation', labelKey: 'quality-deviation', icon: TrendingUp },
-            { id: 'quality-complaint', labelKey: 'quality-complaint', icon: AlertCircle },
-            { id: 'quality-change', labelKey: 'quality-change', icon: Workflow }
-          ]
-        },
-        {
-          id: 'compliance-audit',
-          labelKey: 'compliance-audit',
-          icon: ClipboardCheck,
-          children: [
-            { id: 'quality-audit', labelKey: 'quality-audit', icon: ClipboardCheck },
-            { id: 'quality-inspection', labelKey: 'quality-inspection', icon: Search },
-            { id: 'quality-calibration', labelKey: 'quality-calibration', icon: Activity }
-          ]
-        }
-      ]
-    },
-    {
-      id: 'eng-mfg',
-      labelKey: 'eng-mfg',
-      icon: Cpu,
-      children: [
-        {
-          id: 'adv-eng',
-          labelKey: 'adv-eng',
-          icon: Brain,
-          children: [
-            { id: 'quality-fmea', labelKey: 'quality-fmea', icon: Brain },
-            { id: 'quality-control-plan', labelKey: 'quality-control-plan', icon: ScanLine }
-          ]
-        },
-        {
-          id: 'digital-factory',
-          labelKey: 'digital-factory',
-          icon: Box,
-          children: [
-            { id: 'digital-twin', labelKey: 'digital-twin', icon: Box },
-            { id: 'production-layout', labelKey: 'production-layout', icon: LayoutGrid },
-            { id: 'iot', labelKey: 'iot', icon: Wifi, badge: 'LIVE', badgeColor: 'bg-green-500' },
-            { id: 'spc', labelKey: 'spc', icon: Activity }
-          ]
-        }
-      ]
-    },
-    {
-          id: 'analytics-cost',
-          labelKey: 'quality-workspace',
-          icon: TrendingUp,
-          children: [
-            { id: 'quality-home', labelKey: 'quality-home', icon: LayoutDashboard, badge: 'HOME', badgeColor: 'bg-blue-500' },
-            {
-              id: 'quality-setup',
-              labelKey: 'quality-setup',
-              icon: Settings,
-              children: [
-                { id: 'quality-master-data', labelKey: 'quality-master-data', icon: Database },
-                { id: 'quality-form-designer', labelKey: 'quality-form-designer', icon: Blocks, badge: 'FORM', badgeColor: 'bg-violet-500' },
-                { id: 'quality-inspection-plans', labelKey: 'quality-inspection-plans', icon: ClipboardCheck, badge: 'CHK', badgeColor: 'bg-teal-500' },
-                { id: 'quality-rules-sla', labelKey: 'quality-rules-sla', icon: Workflow }
-              ]
-            },
-            {
-              id: 'quality-shopfloor-group',
-              labelKey: 'quality-shopfloor-group',
-              icon: Smartphone,
-              children: [
-                { id: 'quality-shopfloor', labelKey: 'quality-shopfloor', icon: Smartphone, badge: 'FAST', badgeColor: 'bg-emerald-500' },
-                { id: 'quality-execution-board', labelKey: 'quality-execution-board', icon: BarChart3, badge: 'EXEC', badgeColor: 'bg-cyan-500' },
-                { id: 'quality-layered-audits', labelKey: 'quality-layered-audits', icon: ShieldCheck, badge: 'AUD', badgeColor: 'bg-amber-500' }
-              ]
-            },
-            {
-              id: 'quality-defect-management',
-              labelKey: 'quality-defect-management',
-              icon: AlertCircle,
-              children: [
-                { id: 'quality-defect-log', labelKey: 'quality-defect-log', icon: AlertCircle, badge: 'NEW', badgeColor: 'bg-green-500' },
-                { id: 'quality-ncr', labelKey: 'quality-ncr', icon: AlertCircle },
-                { id: 'quality-capa', labelKey: 'quality-capa', icon: ClipboardCheck },
-                { id: 'quality-8d', labelKey: 'quality-8d', icon: FileText },
-                { id: 'quality-command-center-actions', labelKey: 'quality-improvement-actions', icon: Workflow }
-              ]
-            },
-            {
-              id: 'quality-intelligence-group',
-              labelKey: 'quality-intelligence-group',
-              icon: Brain,
-              children: [
-                { id: 'quality-command-center', labelKey: 'quality-command-center', icon: ShieldCheck, badge: 'CMD', badgeColor: 'bg-cyan-500' },
-                { id: 'quality-search', labelKey: 'quality-search', icon: Search, badge: 'FIND', badgeColor: 'bg-sky-500' },
-                { id: 'quality-knowledge-base', labelKey: 'quality-knowledge-base', icon: Library, badge: 'KB', badgeColor: 'bg-indigo-500' },
-                { id: 'quality-defect-prediction', labelKey: 'defect-prediction', icon: Target, badge: 'ML', badgeColor: 'bg-purple-500' },
-                { id: 'quality-spc', labelKey: 'spc', icon: Activity }
-              ]
-            },
-            {
-              id: 'quality-reports',
-              labelKey: 'quality-reports',
-              icon: BarChart3,
-              children: [
-                { id: 'quality-process-ppm', labelKey: 'quality-process-ppm', icon: Activity },
-                { id: 'quality-defect-cost', labelKey: 'quality-defect-cost', icon: DollarSign },
-                { id: 'quality-outgoing', labelKey: 'quality-outgoing', icon: Truck },
-                { id: 'quality-dashboard', labelKey: 'quality-dashboard', icon: LayoutDashboard },
-                { id: 'quality-intelligence', labelKey: 'quality-intelligence', icon: BarChart3 }
-              ]
-            },
-            {
-              id: 'quality-governance',
-              labelKey: 'quality-governance',
-              icon: ShieldCheck,
-              children: [
-                { id: 'quality-backup-sync', labelKey: 'quality-backup-sync', icon: Database },
-                { id: 'quality-audit-trail', labelKey: 'quality-audit-trail', icon: FileText },
-                { id: 'admin-workflow', labelKey: 'admin-workflow', icon: Workflow }
-              ]
-            }
-          ]
-        },
-    {
-      id: 'quality-supplier',
-      labelKey: 'quality-supplier',
-      icon: Factory
-    },
-    {
-      id: 'quality-library',
-      labelKey: 'quality-library',
-      icon: Library,
-      badge: 'NEW',
-      badgeColor: 'bg-green-500'
-    },
-    {
-      id: 'system-tools',
-      labelKey: 'system-tools',
+      id: 'quality-setup',
+      labelKey: 'quality-setup',
       icon: Settings,
       children: [
+        { id: 'quality-master-data', labelKey: 'quality-master-data', icon: Database },
+        { id: 'quality-form-designer', labelKey: 'quality-form-designer', icon: Blocks },
         { id: 'builder', labelKey: 'builder', icon: Blocks },
+        { id: 'quality-rules-sla', labelKey: 'quality-rules-sla', icon: Workflow },
+        { id: 'quality-audit', labelKey: 'quality-audit', icon: ClipboardCheck },
+        { id: 'quality-inspection', labelKey: 'quality-inspection', icon: Search },
+        { id: 'quality-calibration', labelKey: 'quality-calibration', icon: Activity },
+      ]
+    },
+    {
+      id: 'digital-factory',
+      labelKey: 'digital-factory',
+      icon: Box,
+      children: [
+        { id: 'digital-twin', labelKey: 'digital-twin', icon: Box },
+        { id: 'production-layout', labelKey: 'production-layout', icon: LayoutGrid },
+        { id: 'iot', labelKey: 'iot', icon: Wifi, badge: 'LIVE', badgeColor: 'bg-green-500' },
+      ]
+    },
+    {
+      id: 'quality-governance',
+      labelKey: 'quality-governance',
+      icon: ShieldCheck,
+      children: [
+        { id: 'quality-backup-sync', labelKey: 'quality-backup-sync', icon: Database },
+        { id: 'quality-audit-trail', labelKey: 'quality-audit-trail', icon: FileText },
         {
           id: 'admin',
           labelKey: 'admin',
@@ -295,6 +226,36 @@ export function Sidebar({ onSectionChange, collapsed }: SidebarProps) {
     'admin-reports': '/admin/reports'
   }), []);
 
+  useEffect(() => {
+    const matchesPath = (id: string): boolean => {
+      const itemPath = PATH_MAP[id];
+      if (!itemPath) return false;
+      if (itemPath === '/') return location.pathname === '/';
+      return location.pathname === itemPath || location.pathname.startsWith(`${itemPath}/`);
+    };
+
+    const collectActiveParents = (items: MenuItem[]): string[] => {
+      const parents: string[] = [];
+      items.forEach((item) => {
+        if (!item.children?.length) return;
+        const childParents = collectActiveParents(item.children);
+        const childIsActive = item.children.some((child) => matchesPath(child.id) || childParents.includes(child.id));
+        if (childIsActive || childParents.length > 0) {
+          parents.push(item.id, ...childParents);
+        }
+      });
+      return parents;
+    };
+
+    const activeParents = collectActiveParents(menuItems);
+    if (activeParents.length === 0) return;
+
+    setExpandedItems((prev) => {
+      const merged = [...new Set([...prev, ...activeParents])];
+      return merged.length === prev.length ? prev : merged;
+    });
+  }, [PATH_MAP, location.pathname, menuItems]);
+
   const toggleExpand = (id: string) => {
     setExpandedItems(prev =>
       prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
@@ -302,6 +263,8 @@ export function Sidebar({ onSectionChange, collapsed }: SidebarProps) {
   };
 
   const isItemActive = (item: MenuItem): boolean => {
+    if (item.children?.some((child) => isItemActive(child))) return true;
+
     const itemPath = PATH_MAP[item.id];
     if (!itemPath) return false;
     
