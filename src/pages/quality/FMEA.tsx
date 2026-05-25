@@ -10,22 +10,9 @@ import {
 import { toast } from 'sonner';
 import { useNavigate, useParams } from 'react-router-dom';
 import { fmeaApi, type FmeaData } from '../../api/fmea';
+import { normalizeFmeaRecord, type NormalizedFmeaItem } from '@/services/defectFmeaIntegration';
 
-interface FMEAItem {
-  id: string;
-  process: string;
-  failureMode: string;
-  failureEffect: string;
-  severity: number;
-  occurrence: number;
-  detection: number;
-  rpn: number;
-  actions: string;
-  owner: string;
-  status: 'draft' | 'review' | 'approved';
-}
-
-export const mockFMEAs: FMEAItem[] = [];
+export const mockFMEAs: NormalizedFmeaItem[] = [];
 
 const statusConfig = {
   'draft': 'bg-gray-500/20 text-gray-400',
@@ -47,10 +34,10 @@ function getScoreColor(score: number): string {
 
 export function FMEAPage() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [fmeas, setFmeas] = useState<FMEAItem[]>([]);
+  const [fmeas, setFmeas] = useState<NormalizedFmeaItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingFmea, setEditingFmea] = useState<FMEAItem | null>(null);
+  const [editingFmea, setEditingFmea] = useState<NormalizedFmeaItem | null>(null);
   const navigate = useNavigate();
   const params = useParams();
 
@@ -63,21 +50,7 @@ export function FMEAPage() {
     try {
       setIsLoading(true);
       const response = await fmeaApi.getAll();
-      // Transform API data to match FMEAItem interface
-      const transformed = response.data.map((fmea: any) => ({
-        id: fmea.id,
-        process: fmea.processStep || fmea.process,
-        failureMode: fmea.failureMode,
-        failureEffect: fmea.potentialEffect || fmea.effect,
-        severity: fmea.severityRating || fmea.severity || 1,
-        occurrence: fmea.occurrenceRating || fmea.occurrence || 1,
-        detection: fmea.detectionRating || fmea.detection || 1,
-        rpn: fmea.rpn || (fmea.severityRating || 1) * (fmea.occurrenceRating || 1) * (fmea.detectionRating || 1),
-        actions: fmea.recommendedAction || fmea.actions,
-        owner: fmea.ownerUser?.name || fmea.owner || 'Unassigned',
-        status: fmea.status?.toLowerCase() || 'draft',
-        ...fmea
-      }));
+      const transformed = response.data.map(normalizeFmeaRecord);
       setFmeas(transformed);
     } catch (err) {
       console.warn('API unavailable; keeping empty state:', err);
@@ -136,6 +109,18 @@ export function FMEAPage() {
     { label: 'Under Review', value: fmeas.filter((fmea) => fmea.status === 'review').length, change: '0', trend: 'neutral' as const },
     { label: 'Avg RPN', value: fmeas.length ? Math.round(fmeas.reduce((sum, fmea) => sum + Number(fmea.rpn || 0), 0) / fmeas.length) : 0, change: '0', trend: 'neutral' as const }
   ];
+  const visibleFmeas = fmeas.filter((fmea) => {
+    const query = searchQuery.toLowerCase().trim();
+    if (!query) return true;
+    return [
+      fmea.id,
+      fmea.fmeaNumber,
+      fmea.process,
+      fmea.failureMode,
+      fmea.failureEffect,
+      fmea.sourceDefectId,
+    ].some((value) => String(value || '').toLowerCase().includes(query));
+  });
 
   if (isLoading) {
     return (
@@ -214,7 +199,7 @@ export function FMEAPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {fmeas.map((fmea) => (
+              {visibleFmeas.map((fmea) => (
                 <tr
                   key={fmea.id}
                   className="hover:bg-white/5 transition-colors cursor-pointer"
@@ -225,6 +210,18 @@ export function FMEAPage() {
                 >
                   <td className="px-6 py-4">
                     <span className="text-[#00A3E0] font-mono text-sm">{fmea.id}</span>
+                    {fmea.sourceDefectId && (
+                      <button
+                        type="button"
+                        className="mt-1 block text-left text-xs text-amber-300 hover:text-amber-200"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          navigate(`/quality/defect-log/${fmea.sourceDefectId}`);
+                        }}
+                      >
+                        Source defect: {fmea.sourceDefectId}
+                      </button>
+                    )}
                   </td>
                   <td className="px-6 py-4">
                     <p className="text-white text-sm">{fmea.process}</p>

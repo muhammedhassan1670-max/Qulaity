@@ -14,6 +14,7 @@ export type QualitySyncEntityType =
   | 'form-templates'
   | 'improvement-actions'
   | 'knowledge-base'
+  | 'fmea'
   | 'ncr'
   | 'capa'
   | 'eight-d';

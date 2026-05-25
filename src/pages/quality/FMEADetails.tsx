@@ -1,15 +1,45 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ArrowLeft, FileText } from 'lucide-react';
 import { PageContainer, PageHeader, PageSection, StatsBar } from '../../components/PageHeader';
-import { mockFMEAs } from './FMEA';
+import { fmeaApi } from '@/api/fmea';
+import { normalizeFmeaRecord, type NormalizedFmeaItem } from '@/services/defectFmeaIntegration';
 
 export function FMEADetailsPage() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const [fmea, setFmea] = useState<NormalizedFmeaItem | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const fmea = useMemo(() => mockFMEAs.find((x) => x.id === id), [id]);
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      if (!id) {
+        setIsLoading(false);
+        return;
+      }
+      try {
+        setIsLoading(true);
+        const record = await fmeaApi.getById(id);
+        if (active) setFmea(normalizeFmeaRecord(record));
+      } catch {
+        try {
+          const records = await fmeaApi.getAll();
+          const found = records.data.map(normalizeFmeaRecord).find((item) => item.id === id);
+          if (active) setFmea(found || null);
+        } catch {
+          if (active) setFmea(null);
+        }
+      } finally {
+        if (active) setIsLoading(false);
+      }
+    };
+    load();
+    return () => {
+      active = false;
+    };
+  }, [id]);
 
   const stats = useMemo(() => {
     if (!fmea) return [];
@@ -21,6 +51,21 @@ export function FMEADetailsPage() {
     ];
   }, [fmea]);
 
+  if (isLoading) {
+    return (
+      <PageContainer>
+        <PageHeader
+          title="FMEA Details"
+          subtitle="Loading FMEA risk record"
+          breadcrumbs={[{ label: 'Quality 4.0' }, { label: 'FMEA' }, { label: id ?? 'Unknown' }]}
+        />
+        <PageSection>
+          <div className="glass-panel rounded-xl p-6 text-gray-300">Loading FMEA record...</div>
+        </PageSection>
+      </PageContainer>
+    );
+  }
+
   if (!id || !fmea) {
     return (
       <PageContainer>
@@ -30,7 +75,7 @@ export function FMEADetailsPage() {
           breadcrumbs={[{ label: 'Quality 4.0' }, { label: 'FMEA' }, { label: id ?? 'Unknown' }]}
           actions={{
             create: () => navigate('/fmea'),
-            refresh: () => toast.info('Refresh', { description: 'Reload coming soon' }),
+            refresh: () => window.location.reload(),
           }}
         />
 
@@ -93,6 +138,22 @@ export function FMEADetailsPage() {
             <p className="text-gray-200">{fmea.actions}</p>
             <p className="text-gray-500 text-xs mt-1">Owner: {fmea.owner}</p>
           </div>
+
+          {fmea.sourceDefectId && (
+            <div className="rounded-xl border border-amber-400/20 bg-amber-400/10 p-4">
+              <p className="text-xs font-black uppercase tracking-widest text-amber-200">Linked Defect Signal</p>
+              <p className="mt-2 text-sm text-white/70">
+                This FMEA row was created from a real high-risk defect record and should be used as decision-support for PFMEA review.
+              </p>
+              <button
+                className="mt-3 h-9 px-3 bg-amber-400/15 border border-amber-300/20 rounded-lg text-amber-100 hover:bg-amber-400/20 transition-colors"
+                onClick={() => navigate(`/quality/defect-log/${fmea.sourceDefectId}`)}
+                type="button"
+              >
+                Open Source Defect
+              </button>
+            </div>
+          )}
 
           <div className="flex items-center justify-between pt-2 border-t border-white/10">
             <button

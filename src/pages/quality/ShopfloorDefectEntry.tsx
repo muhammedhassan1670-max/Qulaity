@@ -51,6 +51,7 @@ import {
 } from '@/services/defectWorkflowGovernance';
 import { enqueueQualitySyncItem } from '@/services/qualitySyncQueue';
 import { loadActiveQualityFormTemplate } from '@/services/qualityFormTemplates';
+import { buildDefectFmeaRiskPreview, upsertFmeaFromDefectRisk } from '@/services/defectFmeaIntegration';
 import {
   buildInspectionRunFromPlan,
   canExecuteInspection,
@@ -186,6 +187,10 @@ export default function ShopfloorDefectEntry() {
 
   const intelligence = useMemo(
     () => evaluateDefectRecordIntelligence(formDraft, defects as ExtendedDefectLog[]),
+    [formDraft, defects],
+  );
+  const fmeaRiskPreview = useMemo(
+    () => buildDefectFmeaRiskPreview(formDraft, defects as ExtendedDefectLog[]),
     [formDraft, defects],
   );
 
@@ -563,6 +568,7 @@ export default function ShopfloorDefectEntry() {
         setCheckResults(Object.fromEntries(updatedResults.map((result) => [result.checkItemId, result])));
       }
       appendGlobalAudit(created.id, auditEntry);
+      const fmeaSync = upsertFmeaFromDefectRisk(created as DefectLogData, [created as DefectLogData, ...defects]);
       enqueueQualitySyncItem({
         entityType: 'defect-logs',
         entityId: created.id,
@@ -571,10 +577,10 @@ export default function ShopfloorDefectEntry() {
           ? `Defect created locally from failed inspection check ${preparedCheckId}.`
           : `Shopfloor defect entry created locally. Route: ${payload.recordType}. Evidence count: ${evidence.length}.`,
       });
-      setLastImpact(currentIntelligence.affectedModules);
+      setLastImpact(fmeaSync.synced ? [...new Set([...currentIntelligence.affectedModules, 'FMEA / RPN'])] : currentIntelligence.affectedModules);
       await loadDefects();
       toast.success(submitAction === 'draft' ? 'Draft saved' : 'Shopfloor defect saved', {
-        description: `${currentIntelligence.recordQuality} record. Updates: ${currentIntelligence.affectedModules.join(', ')}.`,
+        description: `${currentIntelligence.recordQuality} record. Updates: ${(fmeaSync.synced ? [...new Set([...currentIntelligence.affectedModules, 'FMEA / RPN'])] : currentIntelligence.affectedModules).join(', ')}.${fmeaSync.synced ? ` RPN ${fmeaSync.rpn}.` : ''}`,
       });
       if (submitAction === 'save-new') resetForNew();
       else setPreparedCheckId('');
@@ -988,7 +994,7 @@ export default function ShopfloorDefectEntry() {
 
         <section className="rounded-3xl border border-white/10 bg-white/5 p-4 md:p-6">
           <h2 className="mb-4 text-lg font-black text-white">Compact Record Intelligence</h2>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-6">
             <div className="rounded-2xl border border-white/10 bg-black/10 p-3">
               <Gauge className="mb-2 h-4 w-4 text-[#00A3E0]" />
               <p className="text-[10px] font-black uppercase text-white/40">Quality</p>
@@ -1013,6 +1019,11 @@ export default function ShopfloorDefectEntry() {
               <CheckCircle2 className="mb-2 h-4 w-4 text-emerald-300" />
               <p className="text-[10px] font-black uppercase text-white/40">Prediction</p>
               <p className="text-sm font-black text-white">{intelligence.predictionReady ? 'Ready' : 'Needs fields'}</p>
+            </div>
+            <div className={`rounded-2xl border p-3 ${fmeaRiskPreview.shouldSync ? 'border-red-400/20 bg-red-400/10' : 'border-white/10 bg-black/10'}`}>
+              <Gauge className={`mb-2 h-4 w-4 ${fmeaRiskPreview.shouldSync ? 'text-red-300' : 'text-white/40'}`} />
+              <p className="text-[10px] font-black uppercase text-white/40">FMEA RPN</p>
+              <p className="text-sm font-black text-white">{fmeaRiskPreview.rpn} / {fmeaRiskPreview.riskLevel}</p>
             </div>
           </div>
           {intelligence.missingRequiredFields.length > 0 && (

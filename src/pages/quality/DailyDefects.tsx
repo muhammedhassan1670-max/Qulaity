@@ -118,6 +118,7 @@ import { buildKnowledgeContextFromDefect } from '@/services/qualityKnowledgeBase
 import { createImprovementAction, prefillActionFromDefect } from '@/services/qualityImprovementActions';
 import { loadActiveQualityFormTemplate } from '@/services/qualityFormTemplates';
 import { loadQualityInspectionPlans, loadQualityInspectionRuns } from '@/services/qualityInspectionPlans';
+import { buildDefectFmeaRiskPreview, upsertFmeaFromDefectRisk } from '@/services/defectFmeaIntegration';
 
 const recordTypeToTemplate: Record<string, DefectFormTemplateId> = {
   'process-ppm': 'process-ppm',
@@ -261,6 +262,10 @@ export default function DailyDefects() {
   );
   const recordIntelligence = useMemo(
     () => evaluateDefectRecordIntelligence(currentFormValues, defects as ExtendedDefectLog[]),
+    [currentFormValues, defects],
+  );
+  const fmeaRiskPreview = useMemo(
+    () => buildDefectFmeaRiskPreview(currentFormValues, defects as ExtendedDefectLog[]),
     [currentFormValues, defects],
   );
   const advancedRules = useMemo(
@@ -1043,7 +1048,7 @@ export default function DailyDefects() {
         customFields,
       };
       if (editingDefect) {
-        await unifiedDefectLogApi.update(editingDefect.id, payload as any);
+        const updated = await unifiedDefectLogApi.update(editingDefect.id, payload as any);
         enqueueQualitySyncItem({
           entityType: 'defect-logs',
           entityId: editingDefect.id,
@@ -1051,9 +1056,10 @@ export default function DailyDefects() {
           payloadSummary: `Defect record updated locally. Changed fields: ${fieldChanges.join(', ') || 'none'}. Evidence count: ${evidenceDraft.length}.`,
         });
         appendGlobalAudit(editingDefect.id, auditEntry);
-        setLastSavedImpact(intelligence.affectedModules);
+        const fmeaSync = upsertFmeaFromDefectRisk(updated as DefectLogData, defects.map((record) => record.id === editingDefect.id ? (updated as DefectLogData) : record));
+        setLastSavedImpact(fmeaSync.synced ? [...new Set([...intelligence.affectedModules, 'FMEA / RPN'])] : intelligence.affectedModules);
         toast.success('Log updated successfully', {
-          description: `Record quality: ${intelligence.recordQuality}. ${rules.approvalRequired ? 'Supervisor review is suggested.' : 'No supervisor review requirement from current rules.'}`,
+          description: `Record quality: ${intelligence.recordQuality}. ${rules.approvalRequired ? 'Supervisor review is suggested.' : 'No supervisor review requirement from current rules.'}${fmeaSync.synced ? ` FMEA RPN updated: ${fmeaSync.rpn}.` : ''}`,
         });
       } else {
         const created = await unifiedDefectLogApi.create(payload as any);
@@ -1068,6 +1074,7 @@ export default function DailyDefects() {
         // Fetch fresh data immediately to get the most accurate count
         const response = await unifiedDefectLogApi.getAll();
         const allDefects = response.data || [];
+        const fmeaSync = upsertFmeaFromDefectRisk(created as DefectLogData, allDefects);
         setDefects(allDefects);
 
         const todayStr = new Date().toISOString().split('T')[0];
@@ -1089,13 +1096,18 @@ export default function DailyDefects() {
             <span className="text-white/60 text-xs">
               Route: {intelligence.routeLabel} | Quality: {intelligence.recordQuality}
             </span>
+            {fmeaSync.synced && (
+              <span className="text-amber-200 text-xs">
+                FMEA / RPN updated: {fmeaSync.rpn} ({fmeaSync.riskLevel})
+              </span>
+            )}
           </div>,
           {
             duration: 5000,
             className: 'bg-[#1a1a25] border-[#0066CC] border-2',
           }
         );
-        setLastSavedImpact(intelligence.affectedModules);
+        setLastSavedImpact(fmeaSync.synced ? [...new Set([...intelligence.affectedModules, 'FMEA / RPN'])] : intelligence.affectedModules);
       }
       setEditingAudit(null);
       setEvidenceDraft([]);
@@ -1741,6 +1753,28 @@ export default function DailyDefects() {
                         </span>
                       </div>
                       <p className="text-xs text-white/60 leading-relaxed">{recordIntelligence.ncrReason}</p>
+                    </div>
+
+                    <div className={`rounded-xl border p-4 ${fmeaRiskPreview.shouldSync ? 'border-red-400/25 bg-red-400/10' : 'border-white/10 bg-white/5'}`}>
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2">
+                          <Gauge className={`w-4 h-4 ${fmeaRiskPreview.shouldSync ? 'text-red-300' : 'text-white/40'}`} />
+                          <span className={`text-xs font-black uppercase tracking-widest ${fmeaRiskPreview.shouldSync ? 'text-red-200' : 'text-white/40'}`}>
+                            FMEA / RPN
+                          </span>
+                        </div>
+                        <span className={`text-sm font-black ${fmeaRiskPreview.rpn >= 100 ? 'text-red-200' : fmeaRiskPreview.rpn >= 50 ? 'text-amber-200' : 'text-emerald-200'}`}>
+                          {fmeaRiskPreview.rpn}
+                        </span>
+                      </div>
+                      <p className="mt-2 text-xs text-white/60 leading-relaxed">
+                        {fmeaRiskPreview.shouldSync
+                          ? `Will create/update an FMEA review signal after save. ${fmeaRiskPreview.reason}`
+                          : `No automatic FMEA review signal yet. ${fmeaRiskPreview.reason}`}
+                      </p>
+                      <p className="mt-2 text-[11px] text-white/40">
+                        S{fmeaRiskPreview.severityScore} x O{fmeaRiskPreview.occurrenceScore} x D{fmeaRiskPreview.detectionScore} - {fmeaRiskPreview.riskLevel}
+                      </p>
                     </div>
 
                     <div className={`rounded-xl border p-4 ${recordIntelligence.approvalRequired ? 'border-purple-300/25 bg-purple-300/10' : 'border-white/10 bg-white/5'}`}>
