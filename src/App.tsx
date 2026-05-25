@@ -3,6 +3,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 import { ThreeBackground } from './components/3d/ThreeBackground';
 import { Header } from './components/Header';
 import { Sidebar } from './components/Sidebar';
+import { QualityPageAssistant } from './components/QualityPageAssistant';
 import { useAppStore } from './stores/appStore';
 import { FullPageLoader } from './components/Loading';
 import { toast } from 'sonner';
@@ -153,6 +154,7 @@ function App() {
         }}
       >
         <div className="p-4 md:p-6">
+          <QualityPageAssistant />
           <Outlet />
         </div>
       </main>
