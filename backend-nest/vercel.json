@@ -2,6 +2,12 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "npm run build",
   "functions": {
+    "api/health/serverless.ts": {
+      "maxDuration": 10
+    },
+    "api/health/live.ts": {
+      "maxDuration": 10
+    },
     "api/[...path].ts": {
       "maxDuration": 30
     }

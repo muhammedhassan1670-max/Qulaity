@@ -87,6 +87,7 @@ Create a second Vercel project from the same GitHub repository:
 
 - Root Directory: `backend-nest`
 - Build Command: `npm run build`
+- Health check after deployment: `/api/health/serverless`
 
 Environment variables:
 
