@@ -23,6 +23,11 @@ interface AssistantLink {
   path: string;
 }
 
+interface UserIntent extends AssistantLink {
+  descriptionEn: string;
+  descriptionAr: string;
+}
+
 interface PageGuide {
   match: (path: string) => boolean;
   stageEn: string;
@@ -48,6 +53,58 @@ function readPageMode(): PageMode {
     return 'simple';
   }
 }
+
+const userIntentActions: UserIntent[] = [
+  {
+    labelEn: 'Register a defect',
+    labelAr: 'أسجل عيب',
+    descriptionEn: 'Use when you found a real defect and need it to update dashboards.',
+    descriptionAr: 'لما تلاقي عيب حقيقي وعايزه يسمع في الداش بورد.',
+    path: '/defect-log',
+  },
+  {
+    labelEn: 'Fast shopfloor entry',
+    labelAr: 'تسجيل سريع من الإنتاج',
+    descriptionEn: 'Fast mobile-friendly entry for inspectors and operators.',
+    descriptionAr: 'تسجيل سريع للمفتش أو المشغل بأقل كتابة.',
+    path: '/quality-shopfloor',
+  },
+  {
+    labelEn: 'Check today quality status',
+    labelAr: 'أتابع حالة الجودة',
+    descriptionEn: 'Open the management view for risks, open work, and data health.',
+    descriptionAr: 'شوف المخاطر والمشاكل المفتوحة وصحة البيانات.',
+    path: '/quality-command-center',
+  },
+  {
+    labelEn: 'Track inspection execution',
+    labelAr: 'أتابع تنفيذ الفحص',
+    descriptionEn: 'Review inspection runs, failed checks, and missing evidence.',
+    descriptionAr: 'تابع الفحوصات والفشل والأدلة الناقصة.',
+    path: '/quality-execution-board',
+  },
+  {
+    labelEn: 'Escalate a problem',
+    labelAr: 'أصعّد مشكلة',
+    descriptionEn: 'Start NCR/CAPA/8D when the issue needs controlled follow-up.',
+    descriptionAr: 'ابدأ NCR/CAPA/8D لما المشكلة تحتاج متابعة رسمية.',
+    path: '/quality/records/ncr',
+  },
+  {
+    labelEn: 'Search similar cases',
+    labelAr: 'أبحث عن حالة مشابهة',
+    descriptionEn: 'Search defects, actions, knowledge, and linked records.',
+    descriptionAr: 'ابحث في العيوب والإجراءات والدروس والعلاقات.',
+    path: '/quality-search',
+  },
+  {
+    labelEn: 'Configure the system',
+    labelAr: 'أظبط النظام',
+    descriptionEn: 'Open master data, forms, inspection plans, and setup checks.',
+    descriptionAr: 'افتح البيانات الرئيسية والنماذج وخطط الفحص.',
+    path: '/quality-home',
+  },
+];
 
 const guides: PageGuide[] = [
   {
@@ -303,6 +360,7 @@ export function QualityPageAssistant() {
   const language = useAppStore((state) => state.language);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [pageMode, setPageMode] = useState<PageMode>(() => readPageMode());
+  const [isIntentOpen, setIsIntentOpen] = useState(false);
 
   const guide = useMemo(() => findGuide(location.pathname), [location.pathname]);
   const actionItems = useMemo(() => {
@@ -324,6 +382,10 @@ export function QualityPageAssistant() {
       // Local UI preference only. Ignore storage errors so page guidance never blocks work.
     }
   }, [pageMode]);
+
+  useEffect(() => {
+    setIsIntentOpen(false);
+  }, [location.pathname]);
 
   if (!guide) return null;
 
@@ -458,6 +520,52 @@ export function QualityPageAssistant() {
     </section>
 
     {pageMode === 'simple' && (
+      <>
+      {isIntentOpen && (
+        <div className="fixed inset-x-3 bottom-28 z-50 mx-auto max-w-5xl rounded-2xl border border-slate-200 bg-white/98 p-3 shadow-2xl shadow-slate-900/20 backdrop-blur dark:border-white/10 dark:bg-[#0f172a]/98 lg:bottom-24">
+          <div className="mb-3 flex items-start justify-between gap-3">
+            <div>
+              <h3 className="text-sm font-black text-slate-900 dark:text-white">
+                {isArabic ? 'أنا عايز أعمل إيه؟' : 'What do you want to do?'}
+              </h3>
+              <p className="mt-0.5 text-xs text-slate-500 dark:text-white/45">
+                {isArabic
+                  ? 'اختار هدفك بلغة بسيطة، والنظام هيفتح الصفحة الصح.'
+                  : 'Choose the plain-language goal and the system opens the right page.'}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsIntentOpen(false)}
+              className="rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-black text-slate-500 transition hover:text-slate-900 dark:border-white/10 dark:text-white/45 dark:hover:text-white"
+            >
+              {isArabic ? 'إغلاق' : 'Close'}
+            </button>
+          </div>
+
+          <div className="grid max-h-[55vh] gap-2 overflow-y-auto sm:grid-cols-2 lg:grid-cols-3">
+            {userIntentActions.map((item) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                onClick={() => setIsIntentOpen(false)}
+                className="group rounded-xl border border-slate-200 bg-slate-50 p-3 transition hover:border-blue-300 hover:bg-blue-50 dark:border-white/10 dark:bg-white/5 dark:hover:border-[#00A3E0]/40 dark:hover:bg-[#00A3E0]/10"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-sm font-black text-slate-900 dark:text-white">
+                    {isArabic ? item.labelAr : item.labelEn}
+                  </span>
+                  <ArrowRight className="h-4 w-4 shrink-0 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-blue-600 dark:group-hover:text-[#00A3E0]" />
+                </div>
+                <p className="mt-1 line-clamp-2 text-xs text-slate-500 dark:text-white/45">
+                  {isArabic ? item.descriptionAr : item.descriptionEn}
+                </p>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="fixed inset-x-3 bottom-3 z-40 mx-auto max-w-4xl rounded-2xl border border-slate-200 bg-white/95 p-2 shadow-2xl shadow-slate-900/15 backdrop-blur dark:border-white/10 dark:bg-[#0f172a]/95 lg:bottom-5">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0 px-1">
@@ -470,6 +578,14 @@ export function QualityPageAssistant() {
           </div>
 
           <div className="flex shrink-0 flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setIsIntentOpen((value) => !value)}
+              className="inline-flex h-9 items-center justify-center rounded-xl bg-emerald-600 px-3 text-xs font-black text-white transition hover:bg-emerald-700"
+              aria-expanded={isIntentOpen}
+            >
+              {isArabic ? 'أنا عايز...' : 'I want to...'}
+            </button>
             <Link
               to={guide.primary.path}
               className="inline-flex h-9 items-center justify-center gap-2 rounded-xl bg-blue-600 px-3 text-xs font-black text-white transition hover:bg-blue-700 dark:bg-[#0066CC] dark:hover:bg-[#0052a3]"
@@ -495,6 +611,7 @@ export function QualityPageAssistant() {
           </div>
         </div>
       </div>
+      </>
     )}
     </>
   );
