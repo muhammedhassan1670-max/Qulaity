@@ -120,6 +120,123 @@ export const useAppStore = create<AppState>()(
         // Reinitialize config defaults (in case of new updates to persisted store)
         useConfigStore.getState().reinitializeDefaults();
 
+        // Seed default local records for offline/Vercel demonstration
+        if (typeof localStorage !== 'undefined' && !localStorage.getItem('qms_local_seeded')) {
+          localStorage.setItem('qms_local_defect-logs', JSON.stringify([
+            {
+              id: "DEF-2026-0001",
+              date: "2026-06-21",
+              shift: "Morning",
+              productionLine: "Assembly Line A",
+              partId: "PART-001",
+              partNumber: "PN-100-200",
+              recordType: "process-ppm",
+              defectType: "Paint Scratch",
+              quantity: 5,
+              severity: "Medium",
+              description: "Minor paint scratch detected on dashboard panel after curing.",
+              operatorName: "Ahmed Ali",
+              actionTaken: "Reworked and repainted.",
+              status: "logged",
+              relatedNcrIds: ["NCR-2026-1001"]
+            }
+          ]));
+          localStorage.setItem('qms_local_ncrs', JSON.stringify([
+            {
+              id: "NCR-2026-1001",
+              title: "Welding cracks detected on chassis",
+              description: "Multiple welding cracks detected on chassis during final line check. Possibly caused by incorrect temperature setting in welding robot.",
+              status: "open",
+              priority: "critical",
+              createdDate: "2026-06-21",
+              dueDate: "2026-06-28",
+              assignedTo: "Sayed Mahmoud",
+              department: "Welding Department",
+              source: "Defect Log",
+              defectType: "Welding Crack",
+              productionLine: "Welding Line B",
+              partNumber: "PN-CHASSIS-01",
+              supplierName: "Global Steel Co",
+              relatedDefectIds: ["DEF-2026-0001"],
+              relatedCapaIds: ["CAPA-2026-2001"],
+              relatedEightDIds: ["8D-2026-3001"]
+            }
+          ]));
+          localStorage.setItem('qms_local_capas', JSON.stringify([
+            {
+              id: "CAPA-2026-2001",
+              title: "Welding Temperature Parameter Optimization",
+              description: "Perform comprehensive temperature audit on welding robots and define strict range limit guidelines.",
+              status: "open",
+              priority: "high",
+              createdDate: "2026-06-21",
+              targetDate: "2026-07-05",
+              assignedTo: "Kareem Hassan",
+              department: "Engineering",
+              source: "NCR-2026-1001",
+              relatedNcrIds: ["NCR-2026-1001"],
+              relatedEightDIds: ["8D-2026-3001"]
+            }
+          ]));
+          localStorage.setItem('qms_local_8ds', JSON.stringify([
+            {
+              id: "8D-2026-3001",
+              subject: "Chassis Welding Crack Analysis",
+              description: "Investigate and document root cause for the structural welding cracks detected on Batch B12.",
+              status: "open",
+              priority: "high",
+              createdDate: "2026-06-21",
+              targetDate: "2026-07-15",
+              assignedTo: "Welding Quality Team",
+              ncrReportId: "NCR-2026-1001",
+              relatedNcrIds: ["NCR-2026-1001"],
+              relatedCapaIds: ["CAPA-2026-2001"]
+            }
+          ]));
+          localStorage.setItem('qms_local_inspections', JSON.stringify([
+            {
+              id: "INSP-2026-4001",
+              title: "Incoming Inspection - Steel Plates Batch A10",
+              description: "Thickness and tensile strength verification for steel plates.",
+              status: "failed",
+              result: "fail",
+              createdDate: "2026-06-21",
+              inspector: "Mostafa Omar",
+              supplierId: "SUP-STEEL",
+              supplierName: "Global Steel Co",
+              partId: "PART-002",
+              partNumber: "PN-STEEL-002",
+              relatedNcrIds: ["NCR-2026-1001"]
+            }
+          ]));
+          localStorage.setItem('qms_local_complaints', JSON.stringify([
+            {
+              id: "COMP-2026-5001",
+              title: "Dashboard squeaking noise reported",
+              description: "Customer complained about persistent squeaking noise from the dashboard panel under hot conditions.",
+              status: "open",
+              createdDate: "2026-06-21",
+              customerName: "Cairo Auto Dealership",
+              product: "Dashboard Assembly v2",
+              severity: "high",
+              relatedDefectIds: ["DEF-2026-0001"]
+            }
+          ]));
+          localStorage.setItem('qms_local_control-plans', JSON.stringify([
+            {
+              id: "CP-2026-6001",
+              title: "Welding Line Parameter Control Plan",
+              description: "Control plan detailing inspection frequencies, temperature ranges, and operator checks for welding robots.",
+              status: "active",
+              createdDate: "2026-06-21",
+              department: "Welding",
+              relatedNcrIds: ["NCR-2026-1001"],
+              relatedCapaIds: ["CAPA-2026-2001"]
+            }
+          ]));
+          localStorage.setItem('qms_local_seeded', 'true');
+        }
+
         // If already authenticated (rehydrated), don't overwrite user on refresh.
         if (get().user) {
           set({ isLoading: false });
