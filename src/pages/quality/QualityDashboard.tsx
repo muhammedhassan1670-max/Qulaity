@@ -159,7 +159,7 @@ export function QualityDashboardPage() {
     { name: 'Change Requests', count: kpis?.pendingChanges || 0, trend: 0, status: 'good', icon: FileText, color: '#06B6D4' },
     { name: 'Control Plans', count: kpis?.activeControlPlans || 0, trend: 0, status: 'good', icon: Package, color: '#22C55E' }
   ]
-  .filter(item => !isLiteMode || ['NCRs', 'Deviations', 'Complaints'].includes(item.name))
+  .filter(item => !isLiteMode || ['NCRs', 'Deviations', 'Complaints'].includes(item.name)) as ModuleStats[]
   , [kpis, isLiteMode]);
 
   if (isLoading) {
