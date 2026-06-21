@@ -1911,9 +1911,10 @@ export default function DailyDefects() {
                     </div>
                   )}
                 </div>
-              )}
-            </div>
-          </TabsContent>
+              </div>
+            )}
+          </div>
+        </TabsContent>
 
           <TabsContent value="records" className="mt-0 focus-visible:outline-none">
             <div className="glass-panel rounded-2xl border border-white/10">
