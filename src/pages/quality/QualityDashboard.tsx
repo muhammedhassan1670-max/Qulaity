@@ -1,6 +1,7 @@
 // QMS Enterprise 4.0 - Quality Dashboard Page - Professional Edition
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { useAppStore } from '@/stores/appStore';
 import { PageHeader, PageContainer, PageSection } from '../../components/PageHeader';
 import { toast } from 'sonner';
 import { 
@@ -75,6 +76,7 @@ import { buildDashboardDrilldownUrl, recordDashboardDrilldown } from '@/services
 // ... (keep constants like trendData, statusDistribution, etc. as fallbacks)
 
 export function QualityDashboardPage() {
+  const { isLiteMode } = useAppStore();
   const [kpis, setKpis] = useState<DashboardKPIs | null>(mockKPIs);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedPeriod, setSelectedPeriod] = useState('month');
@@ -156,7 +158,9 @@ export function QualityDashboardPage() {
     { name: 'Complaints', count: kpis?.newComplaints || 0, trend: kpis?.complaintTrend || 0, status: 'good', icon: Users, color: '#3B82F6' },
     { name: 'Change Requests', count: kpis?.pendingChanges || 0, trend: 0, status: 'good', icon: FileText, color: '#06B6D4' },
     { name: 'Control Plans', count: kpis?.activeControlPlans || 0, trend: 0, status: 'good', icon: Package, color: '#22C55E' }
-  ], [kpis]);
+  ]
+  .filter(item => !isLiteMode || ['NCRs', 'Deviations', 'Complaints'].includes(item.name))
+  , [kpis, isLiteMode]);
 
   if (isLoading) {
     return (
@@ -259,12 +263,16 @@ export function QualityDashboardPage() {
                 <span className="flex items-center gap-1 text-gray-400">
                   <span className="w-3 h-3 rounded-full bg-red-500" /> NCR
                 </span>
-                <span className="flex items-center gap-1 text-gray-400">
-                  <span className="w-3 h-3 rounded-full bg-yellow-500" /> CAPA
-                </span>
-                <span className="flex items-center gap-1 text-gray-400">
-                  <span className="w-3 h-3 rounded-full bg-blue-500" /> Complaints
-                </span>
+                {!isLiteMode && (
+                  <>
+                    <span className="flex items-center gap-1 text-gray-400">
+                      <span className="w-3 h-3 rounded-full bg-yellow-500" /> CAPA
+                    </span>
+                    <span className="flex items-center gap-1 text-gray-400">
+                      <span className="w-3 h-3 rounded-full bg-blue-500" /> Complaints
+                    </span>
+                  </>
+                )}
               </div>
             </div>
             <div className="h-64">
@@ -278,9 +286,13 @@ export function QualityDashboardPage() {
                     labelStyle={{ color: '#F3F4F6' }}
                   />
                   <Area type="monotone" dataKey="ncr" stroke="#EF4444" fill="#EF4444" fillOpacity={0.3} name="NCR" />
-                  <Area type="monotone" dataKey="capa" stroke="#F59E0B" fill="#F59E0B" fillOpacity={0.3} name="CAPA" />
-                  <Area type="monotone" dataKey="complaint" stroke="#3B82F6" fill="#3B82F6" fillOpacity={0.3} name="Complaints" />
-                  <Line type="monotone" dataKey="audit" stroke="#10B981" strokeWidth={2} name="Audits" dot={{ fill: '#10B981' }} />
+                  {!isLiteMode && (
+                    <>
+                      <Area type="monotone" dataKey="capa" stroke="#F59E0B" fill="#F59E0B" fillOpacity={0.3} name="CAPA" />
+                      <Area type="monotone" dataKey="complaint" stroke="#3B82F6" fill="#3B82F6" fillOpacity={0.3} name="Complaints" />
+                      <Line type="monotone" dataKey="audit" stroke="#10B981" strokeWidth={2} name="Audits" dot={{ fill: '#10B981' }} />
+                    </>
+                  )}
                 </ComposedChart>
               </ResponsiveContainer>
             </div>
@@ -323,7 +335,8 @@ export function QualityDashboardPage() {
       </PageSection>
 
       {/* Priority & Activity Row */}
-      <PageSection>
+      {!isLiteMode && (
+        <PageSection>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           {/* Priority Distribution */}
           <div className="glass-panel rounded-xl p-6">
@@ -387,10 +400,12 @@ export function QualityDashboardPage() {
             </div>
           </div>
         </div>
-      </PageSection>
+        </PageSection>
+      )}
 
       {/* Alerts Section */}
-      <PageSection>
+      {!isLiteMode && (
+        <PageSection>
         <div className="glass-panel rounded-xl p-6">
           <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
             <AlertCircle className="w-5 h-5 text-yellow-400" />
@@ -427,6 +442,7 @@ export function QualityDashboardPage() {
           </div>
         </div>
       </PageSection>
+      )}
     </PageContainer>
   );
 }

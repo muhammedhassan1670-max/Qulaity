@@ -2,6 +2,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { PageHeader, PageContainer, PageSection, StatsBar } from '../../components/PageHeader';
 import DynamicFormRenderer from '../../components/DynamicFormRenderer';
+import QualityRelationshipManager from '../../components/QualityRelationshipManager';
 import { DataTable } from '../../components/DataTable';
 import { FilterPanel } from '../../components/FilterPanel';
 import { BulkActionBar } from '../../components/BulkActionBar';
@@ -480,6 +481,17 @@ export function DeviationPage() {
                 showSubmitButton={true}
                 submitLabel={editingDeviation ? 'Update Deviation Request' : 'Create Deviation Request'}
               />
+
+              {editingDeviation && (
+                <div className="mt-8 border-t border-white/10 pt-6">
+                  <QualityRelationshipManager
+                    currentType="deviation"
+                    currentId={editingDeviation.id}
+                    currentLabel={`Deviation: ${editingDeviation.title || editingDeviation.id}`}
+                    onChanged={loadDeviations}
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>

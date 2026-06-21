@@ -1,7 +1,21 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link2, Save, Search, Unlink } from 'lucide-react';
 import { toast } from 'sonner';
-import type { CapaData, DefectLogData, EightDData, NcrData } from '@/api/unified-api';
+import type {
+  CapaData,
+  DefectLogData,
+  EightDData,
+  NcrData,
+  InspectionData,
+  SupplierData,
+  ComplaintData,
+  ControlPlanData,
+  ChangeControlData,
+  DeviationData,
+  AuditData,
+  CalibrationData,
+  FmeaData,
+} from '@/api/unified-api';
 import type { QualityImprovementAction } from '@/services/qualityImprovementActions';
 import { loadImprovementActions } from '@/services/qualityImprovementActions';
 import {
@@ -22,6 +36,15 @@ interface RelationshipRecordCollections {
   capas: CapaData[];
   eightDs: EightDData[];
   actions: QualityImprovementAction[];
+  inspections: InspectionData[];
+  suppliers: SupplierData[];
+  complaints: ComplaintData[];
+  controlPlans: ControlPlanData[];
+  changeControls: ChangeControlData[];
+  deviations: DeviationData[];
+  audits: AuditData[];
+  calibrations: CalibrationData[];
+  fmeas: FmeaData[];
 }
 
 interface SearchableRecord {
@@ -65,7 +88,17 @@ function entityLabel(type: QualityRelationshipEntityType): string {
   if (type === 'ncr') return 'NCR';
   if (type === 'capa') return 'CAPA';
   if (type === 'eightD') return '8D';
-  return 'Improvement Action';
+  if (type === 'improvement-action') return 'Improvement Action';
+  if (type === 'inspection') return 'Inspection';
+  if (type === 'supplier') return 'Supplier';
+  if (type === 'complaint') return 'Customer Complaint';
+  if (type === 'control-plan') return 'Control Plan';
+  if (type === 'change-control') return 'Change Control';
+  if (type === 'deviation') return 'Deviation';
+  if (type === 'audit') return 'Audit';
+  if (type === 'calibration') return 'Calibration';
+  if (type === 'fmea') return 'FMEA';
+  return 'Record';
 }
 
 function normalize(value: unknown): string {
@@ -113,7 +146,83 @@ function asSearchable(collections: RelationshipRecordCollections): SearchableRec
     status: record.status,
     raw: record,
   }));
-  return [...defects, ...ncrs, ...capas, ...eightDs, ...actions].filter((record) => record.id);
+  const inspections = collections.inspections.map((record) => ({
+    type: 'inspection' as const,
+    id: String(record.id),
+    title: `Inspection: ${record.productName || record.inspectionNumber || 'Unnamed'}`,
+    description: [record.type, record.batchNumber, record.result, record.inspectedBy, record.inspectionDate].filter(Boolean).join(' | '),
+    status: record.result,
+    raw: record,
+  }));
+  const suppliers = collections.suppliers.map((record) => ({
+    type: 'supplier' as const,
+    id: String(record.id),
+    title: `Supplier: ${record.name || record.supplierCode || 'Unnamed'}`,
+    description: [record.category, record.status, record.primaryContact, record.email].filter(Boolean).join(' | '),
+    status: record.status,
+    raw: record,
+  }));
+  const complaints = collections.complaints.map((record) => ({
+    type: 'complaint' as const,
+    id: String(record.id),
+    title: `Complaint: ${record.subject || record.complaintId || 'Unnamed'}`,
+    description: [record.customerName, record.priority, record.status, record.receivedDate].filter(Boolean).join(' | '),
+    status: record.status,
+    raw: record,
+  }));
+  const controlPlans = collections.controlPlans.map((record) => ({
+    type: 'control-plan' as const,
+    id: String(record.id),
+    title: `Control Plan: ${record.title || record.controlPlanId || 'Unnamed'}`,
+    description: [record.productName, record.status].filter(Boolean).join(' | '),
+    status: record.status,
+    raw: record,
+  }));
+  const changeControls = collections.changeControls.map((record) => ({
+    type: 'change-control' as const,
+    id: String(record.id),
+    title: `Change Control: ${record.title || record.changeNumber || 'Unnamed'}`,
+    description: [record.type, record.priority, record.status, record.requestDate].filter(Boolean).join(' | '),
+    status: record.status,
+    raw: record,
+  }));
+  const deviations = collections.deviations.map((record) => ({
+    type: 'deviation' as const,
+    id: String(record.id),
+    title: `Deviation: ${record.title || record.deviationNumber || 'Unnamed'}`,
+    description: [record.type, record.category, record.status, record.productName, record.batchNumber].filter(Boolean).join(' | '),
+    status: record.status,
+    raw: record,
+  }));
+  const audits = collections.audits.map((record) => ({
+    type: 'audit' as const,
+    id: String(record.id),
+    title: `Audit: ${record.title || record.auditNumber || 'Unnamed'}`,
+    description: [record.type, record.status, record.auditor, record.auditee, record.scheduledDate].filter(Boolean).join(' | '),
+    status: record.status,
+    raw: record,
+  }));
+  const calibrations = collections.calibrations.map((record) => ({
+    type: 'calibration' as const,
+    id: String(record.id),
+    title: `Calibration: ${record.description || record.itemCode || 'Unnamed'}`,
+    description: [record.equipmentType, record.serialNumber, record.status, record.location, record.nextCalibrationDate].filter(Boolean).join(' | '),
+    status: record.status,
+    raw: record,
+  }));
+  const fmeas = collections.fmeas.map((record) => ({
+    type: 'fmea' as const,
+    id: String(record.id),
+    title: `FMEA: ${record.title || record.fmeaNumber || 'Unnamed'}`,
+    description: [record.type, record.status].filter(Boolean).join(' | '),
+    status: record.status,
+    raw: record,
+  }));
+  return [
+    ...defects, ...ncrs, ...capas, ...eightDs, ...actions,
+    ...inspections, ...suppliers, ...complaints, ...controlPlans,
+    ...changeControls, ...deviations, ...audits, ...calibrations, ...fmeas
+  ].filter((record) => record.id);
 }
 
 function resolveLinkedRecord(relationship: QualityRelationshipRecord, currentType: QualityRelationshipEntityType, currentId: string, allRecords: SearchableRecord[]): SearchableRecord {
@@ -145,7 +254,7 @@ export function QualityRelationshipManager({
   const [relationshipVersion, setRelationshipVersion] = useState(0);
   const [noteDrafts, setNoteDrafts] = useState<Record<string, string>>({});
   const availableTargetTypes = useMemo(
-    () => (['defect', 'ncr', 'capa', 'eightD', 'improvement-action'] as QualityRelationshipEntityType[]).filter((type) => type !== currentType),
+    () => (['defect', 'ncr', 'capa', 'eightD', 'improvement-action', 'inspection', 'supplier', 'complaint', 'control-plan', 'change-control', 'deviation', 'audit', 'calibration', 'fmea'] as QualityRelationshipEntityType[]).filter((type) => type !== currentType),
     [currentType],
   );
 
@@ -161,6 +270,15 @@ export function QualityRelationshipManager({
     capas: mergeById(readLocalList<CapaData>('qms_local_capa'), records?.capas || []),
     eightDs: mergeById(readLocalList<EightDData>('qms_local_eight-d'), records?.eightDs || []),
     actions: mergeById(loadImprovementActions(), records?.actions || []),
+    inspections: mergeById(readLocalList<InspectionData>('qms_local_inspections'), records?.inspections || []),
+    suppliers: mergeById(readLocalList<SupplierData>('qms_local_suppliers'), records?.suppliers || []),
+    complaints: mergeById(readLocalList<ComplaintData>('qms_local_complaints'), records?.complaints || []),
+    controlPlans: mergeById(readLocalList<ControlPlanData>('qms_local_control-plans'), records?.controlPlans || []),
+    changeControls: mergeById(readLocalList<ChangeControlData>('qms_local_change-control'), records?.changeControls || []),
+    deviations: mergeById(readLocalList<DeviationData>('qms_local_deviations'), records?.deviations || []),
+    audits: mergeById(readLocalList<AuditData>('qms_local_audits'), records?.audits || []),
+    calibrations: mergeById(readLocalList<CalibrationData>('qms_local_calibrations'), records?.calibrations || []),
+    fmeas: mergeById(readLocalList<FmeaData>('qms_local_fmea'), records?.fmeas || []),
   }), [records, relationshipVersion]);
 
   const allRecords = useMemo(() => asSearchable(collections), [collections]);

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useAppStore } from '@/stores/appStore';
 import {
   Activity, RefreshCw, Layers, Target, ShieldAlert, AlertTriangle, CheckCircle, Calculator
 } from 'lucide-react';
@@ -30,6 +31,7 @@ const KPIMini = ({ title, value, color }: { title: string, value: string, color:
 );
 
 export function Dashboard() {
+  const { isLiteMode } = useAppStore();
   const sectionRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [kpiData, setKpiData] = useState<any>(null);
@@ -121,7 +123,7 @@ export function Dashboard() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 module-row">
+      <div className={`grid grid-cols-2 ${isLiteMode ? 'md:grid-cols-3' : 'md:grid-cols-5'} gap-4 module-row`}>
         {[
           { icon: Target, title: 'Defect Records', val: `${kpiData?.totalRecords ?? 0}`, col: '#00d2ff', route: '/defect-log', filters: {} },
           { icon: AlertTriangle, title: 'Total Defects', val: `${kpiData?.totalDefects ?? 0}`, col: '#FF6B35', route: '/defect-log', filters: {} },
@@ -133,7 +135,9 @@ export function Dashboard() {
           { icon: Activity, title: 'Open 8Ds', val: `${kpiData?.openEightD ?? 0}`, col: '#7C4DFF', route: '/quality/records/8d', filters: { eightDStatus: 'open' } },
           { icon: Calculator, title: 'Open Actions', val: `${kpiData?.openActions ?? 0}`, col: '#26A69A', route: '/quality-command-center', filters: { actionStatus: 'open' } },
           { icon: AlertTriangle, title: 'Failed Checks', val: `${kpiData?.failedChecksWithoutDefect ?? 0}`, col: '#FF9100', route: '/quality-execution-board', filters: {} }
-        ].map((k, i) => (
+        ]
+        .filter(k => !isLiteMode || ['Defect Records', 'Total Defects', 'Open NCRs'].includes(k.title))
+        .map((k, i) => (
           <Link key={i} to={buildDashboardDrilldownUrl(k.route, k.filters)} onClick={() => recordDashboardDrilldown(k.route, k.filters, k.title)}>
           <Card className="glass-panel border-white/5 relative overflow-hidden group hover:border-white/20 transition-all">
              <div className="absolute top-0 right-0 w-16 h-16 bg-white/5 rounded-bl-full group-hover:scale-150 transition-transform" />
@@ -203,38 +207,40 @@ export function Dashboard() {
       </div>
 
       {/* Row: External & Compliance */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 module-row">
-         <Card className="lg:col-span-1 glass-panel border-white/10 p-6 flex flex-col justify-center gap-4">
-            <KPIMini title="Outgoing Holds" value={`${kpiData?.holds ?? 0}`} color="#E91E63" />
-            <KPIMini title="Customer Returns" value={`${kpiData?.returnQty ?? 0}`} color="#795548" />
-            <KPIMini title="Outgoing Pass Rate" value={`${kpiData?.passRate ?? 0}%`} color="#00C853" />
-         </Card>
-         <Card className="lg:col-span-2 glass-panel border-white/10 p-6">
-            <h2 className="text-sm font-black text-white uppercase tracking-wider mb-6">PPM by Production Line</h2>
-            <div className="h-[200px]">
-               <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={auditScoresData} layout="vertical">
-                    <XAxis type="number" hide />
-                    <YAxis dataKey="name" type="category" stroke="rgba(255,255,255,0.4)" fontSize={10} width={80} />
-                    <Tooltip cursor={{ fill: 'rgba(255,255,255,0.05)' }} contentStyle={{ background: '#111' }} />
-                    <Bar dataKey="compliance" fill="#00BCD4" radius={[0, 4, 4, 0]} name="PPM" />
-                  </BarChart>
-               </ResponsiveContainer>
-            </div>
-         </Card>
-         <Card className="lg:col-span-1 glass-panel border-white/10 p-6">
-            <h2 className="text-sm font-black text-white uppercase tracking-wider mb-6">Recent Outgoing</h2>
-            <div className="space-y-4">
-               {approvalBottlenecksData.slice(0, 4).map((b, i) => (
-                 <div key={i} className="flex justify-between items-center bg-white/5 p-3 rounded-xl">
-                   <span className="text-[10px] text-gray-400 uppercase font-bold">{b.role}</span>
-                   <Badge className="bg-blue-500/20 text-blue-400">{b.pending}</Badge>
-                 </div>
-               ))}
-               {approvalBottlenecksData.length === 0 && <div className="text-center py-10 opacity-30"><Calculator className="w-8 h-8 mx-auto mb-2" /> No tasks</div>}
-            </div>
-         </Card>
-      </div>
+      {!isLiteMode && (
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 module-row">
+           <Card className="lg:col-span-1 glass-panel border-white/10 p-6 flex flex-col justify-center gap-4">
+              <KPIMini title="Outgoing Holds" value={`${kpiData?.holds ?? 0}`} color="#E91E63" />
+              <KPIMini title="Customer Returns" value={`${kpiData?.returnQty ?? 0}`} color="#795548" />
+              <KPIMini title="Outgoing Pass Rate" value={`${kpiData?.passRate ?? 0}%`} color="#00C853" />
+           </Card>
+           <Card className="lg:col-span-2 glass-panel border-white/10 p-6">
+              <h2 className="text-sm font-black text-white uppercase tracking-wider mb-6">PPM by Production Line</h2>
+              <div className="h-[200px]">
+                 <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={auditScoresData} layout="vertical">
+                      <XAxis type="number" hide />
+                      <YAxis dataKey="name" type="category" stroke="rgba(255,255,255,0.4)" fontSize={10} width={80} />
+                      <Tooltip cursor={{ fill: 'rgba(255,255,255,0.05)' }} contentStyle={{ background: '#111' }} />
+                      <Bar dataKey="compliance" fill="#00BCD4" radius={[0, 4, 4, 0]} name="PPM" />
+                    </BarChart>
+                 </ResponsiveContainer>
+              </div>
+           </Card>
+           <Card className="lg:col-span-1 glass-panel border-white/10 p-6">
+              <h2 className="text-sm font-black text-white uppercase tracking-wider mb-6">Recent Outgoing</h2>
+              <div className="space-y-4">
+                 {approvalBottlenecksData.slice(0, 4).map((b, i) => (
+                   <div key={i} className="flex justify-between items-center bg-white/5 p-3 rounded-xl">
+                     <span className="text-[10px] text-gray-400 uppercase font-bold">{b.role}</span>
+                     <Badge className="bg-blue-500/20 text-blue-400">{b.pending}</Badge>
+                   </div>
+                 ))}
+                 {approvalBottlenecksData.length === 0 && <div className="text-center py-10 opacity-30"><Calculator className="w-8 h-8 mx-auto mb-2" /> No tasks</div>}
+              </div>
+           </Card>
+        </div>
+      )}
     </div>
   );
 }

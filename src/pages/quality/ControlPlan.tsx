@@ -2,6 +2,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { PageHeader, PageContainer, PageSection, StatsBar } from '../../components/PageHeader';
 import DynamicFormRenderer from '../../components/DynamicFormRenderer';
+import QualityRelationshipManager from '../../components/QualityRelationshipManager';
 import { DataTable } from '../../components/DataTable';
 import { FilterPanel } from '../../components/FilterPanel';
 import { BulkActionBar } from '../../components/BulkActionBar';
@@ -489,6 +490,17 @@ export function ControlPlanPage() {
                 showSubmitButton={true}
                 submitLabel={editingControlPlan ? 'Update Control Plan' : 'Create Control Plan'}
               />
+
+              {editingControlPlan && (
+                <div className="mt-8 border-t border-white/10 pt-6">
+                  <QualityRelationshipManager
+                    currentType="control-plan"
+                    currentId={editingControlPlan.id}
+                    currentLabel={`Control Plan: ${editingControlPlan.partName || editingControlPlan.id}`}
+                    onChanged={loadControlPlans}
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>

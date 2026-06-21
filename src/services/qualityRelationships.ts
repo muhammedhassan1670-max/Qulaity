@@ -16,7 +16,21 @@ import {
   safeWriteLocalDefectRecords,
 } from '@/services/safeDefectStorage';
 
-export type QualityRelationshipEntityType = 'defect' | 'ncr' | 'capa' | 'eightD' | 'improvement-action';
+export type QualityRelationshipEntityType =
+  | 'defect'
+  | 'ncr'
+  | 'capa'
+  | 'eightD'
+  | 'improvement-action'
+  | 'inspection'
+  | 'supplier'
+  | 'complaint'
+  | 'control-plan'
+  | 'change-control'
+  | 'deviation'
+  | 'audit'
+  | 'calibration'
+  | 'fmea';
 export type QualityRelationshipStatus = 'active' | 'removed';
 
 export interface QualityRelationshipRecord {
@@ -44,6 +58,15 @@ const localKeyByType: Partial<Record<QualityRelationshipEntityType, string>> = {
   capa: 'qms_local_capa',
   eightD: 'qms_local_eight-d',
   'improvement-action': QUALITY_IMPROVEMENT_ACTIONS_KEY,
+  inspection: 'qms_local_inspections',
+  supplier: 'qms_local_suppliers',
+  complaint: 'qms_local_complaints',
+  'control-plan': 'qms_local_control-plans',
+  'change-control': 'qms_local_change-control',
+  deviation: 'qms_local_deviations',
+  audit: 'qms_local_audits',
+  calibration: 'qms_local_calibrations',
+  fmea: 'qms_local_fmea',
 };
 
 function nowIso(): string {
@@ -116,14 +139,23 @@ function relationshipArrayField(targetType: QualityRelationshipEntityType): stri
   if (targetType === 'ncr') return 'relatedNcrIds';
   if (targetType === 'capa') return 'relatedCapaIds';
   if (targetType === 'eightD') return 'relatedEightDIds';
-  return 'relatedActionIds';
+  if (targetType === 'improvement-action') return 'relatedActionIds';
+  if (targetType === 'inspection') return 'relatedInspectionIds';
+  if (targetType === 'supplier') return 'relatedSupplierIds';
+  if (targetType === 'complaint') return 'relatedComplaintIds';
+  if (targetType === 'control-plan') return 'relatedControlPlanIds';
+  if (targetType === 'change-control') return 'relatedChangeControlIds';
+  if (targetType === 'deviation') return 'relatedDeviationIds';
+  if (targetType === 'audit') return 'relatedAuditIds';
+  if (targetType === 'calibration') return 'relatedCalibrationIds';
+  if (targetType === 'fmea') return 'relatedFmeaIds';
+  return 'relatedOtherIds';
 }
 
 function legacySingleField(targetType: QualityRelationshipEntityType): string | null {
   if (targetType === 'ncr') return 'relatedNcrId';
   if (targetType === 'capa') return 'relatedCapaId';
   if (targetType === 'eightD') return 'relatedEightDId';
-  if (targetType === 'improvement-action') return null;
   return null;
 }
 

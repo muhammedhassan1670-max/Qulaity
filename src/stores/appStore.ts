@@ -20,6 +20,7 @@ export interface AppState {
   sidebarCollapsed: boolean;
   notifications: Notification[];
   isOnline: boolean;
+  isLiteMode: boolean;
   
   // Actions
   setUser: (user: User | null) => void;
@@ -30,6 +31,7 @@ export interface AppState {
   addNotification: (notification: Notification) => void;
   removeNotification: (id: string) => void;
   setOnline: (status: boolean) => void;
+  setLiteMode: (isLite: boolean) => void;
   initializeApp: () => Promise<void>;
 }
 
@@ -71,6 +73,7 @@ export const useAppStore = create<AppState>()(
       sidebarCollapsed: false,
       notifications: [],
       isOnline: true,
+      isLiteMode: false,
 
       setUser: (user) => set({ user }),
 
@@ -111,6 +114,8 @@ export const useAppStore = create<AppState>()(
       
       setOnline: (status) => set({ isOnline: status }),
       
+      setLiteMode: (isLite) => set({ isLiteMode: isLite }),
+      
       initializeApp: async () => {
         // Reinitialize config defaults (in case of new updates to persisted store)
         useConfigStore.getState().reinitializeDefaults();
@@ -146,7 +151,8 @@ export const useAppStore = create<AppState>()(
         user: state.user,
         theme: state.theme,
         language: state.language,
-        sidebarCollapsed: state.sidebarCollapsed
+        sidebarCollapsed: state.sidebarCollapsed,
+        isLiteMode: state.isLiteMode
       }),
       onRehydrateStorage: () => (state) => {
         state?.setIsLoading(false);

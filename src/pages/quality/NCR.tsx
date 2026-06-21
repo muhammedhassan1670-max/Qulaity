@@ -48,6 +48,7 @@ import {
   loadLocalWorkflowRole,
 } from '@/services/defectWorkflowGovernance';
 import { loadSafeLocalDefectRecords } from '@/services/safeDefectStorage';
+import { useAppStore } from '@/stores/appStore';
 import type { CapaData, DefectLogData, EightDData } from '@/api/unified-api';
 
 interface NCRItem {
@@ -76,6 +77,7 @@ function generateNCRNumber(): string {
 }
 
 export function NCRPage() {
+  const { isLiteMode } = useAppStore();
   // Data State
   const [ncrs, setNcrs] = useState<NCRItem[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -547,15 +549,19 @@ export function NCRPage() {
               pageSize={10}
               actions={(item) => (
                 <div className="flex items-center gap-1">
-                  <button onClick={(e) => { e.stopPropagation(); handleCreateImprovementAction(item); }} className="p-2 hover:bg-white/10 rounded-lg transition-colors" title="Create Improvement Action">
-                    <Activity className="w-4 h-4 text-emerald-400" />
-                  </button>
-                  <button onClick={(e) => { e.stopPropagation(); handleCreateCapa(item); }} className="p-2 hover:bg-white/10 rounded-lg transition-colors" title="Create CAPA">
-                    <ShieldAlert className="w-4 h-4 text-blue-400" />
-                  </button>
-                  <button onClick={(e) => { e.stopPropagation(); handleCreateEightD(item); }} className="p-2 hover:bg-white/10 rounded-lg transition-colors" title="Create 8D Report">
-                    <ClipboardList className="w-4 h-4 text-green-400" />
-                  </button>
+                  {!isLiteMode && (
+                    <>
+                      <button onClick={(e) => { e.stopPropagation(); handleCreateImprovementAction(item); }} className="p-2 hover:bg-white/10 rounded-lg transition-colors" title="Create Improvement Action">
+                        <Activity className="w-4 h-4 text-emerald-400" />
+                      </button>
+                      <button onClick={(e) => { e.stopPropagation(); handleCreateCapa(item); }} className="p-2 hover:bg-white/10 rounded-lg transition-colors" title="Create CAPA">
+                        <ShieldAlert className="w-4 h-4 text-blue-400" />
+                      </button>
+                      <button onClick={(e) => { e.stopPropagation(); handleCreateEightD(item); }} className="p-2 hover:bg-white/10 rounded-lg transition-colors" title="Create 8D Report">
+                        <ClipboardList className="w-4 h-4 text-green-400" />
+                      </button>
+                    </>
+                  )}
                   <button onClick={(e) => { e.stopPropagation(); setEditingNcr(item); setIsFormOpen(true); }} className="p-2 hover:bg-white/10 rounded-lg transition-colors" title="View">
                     <Eye className="w-4 h-4 text-gray-400" />
                   </button>

@@ -76,6 +76,7 @@ import {
 } from '@/services/qualityMasterData';
 import { evaluateAdvancedDefectRules } from '@/services/qualityRulesEngine';
 import useAuthStore from '@/stores/authStore';
+import { useAppStore } from '@/stores/appStore';
 import {
   applyStatusTimestamp,
   buildActivityTimeline,
@@ -219,6 +220,7 @@ function loadGlobalAudit(recordId: string): AuditEntry[] {
 
 export default function DailyDefects() {
   const authUser = useAuthStore((state) => state.user);
+  const { isLiteMode } = useAppStore();
   const [defects, setDefects] = useState<DefectLogData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveSetId] = useState('entry');
@@ -322,6 +324,12 @@ export default function DailyDefects() {
   );
   const unreadWorkflowNotifications = workflowNotifications.filter((item) => !item.read).length;
   const recentRecords = useMemo(() => defects.slice(0, 5), [defects]);
+ 
+  useEffect(() => {
+    if (isLiteMode && !['entry', 'records'].includes(activeTab)) {
+      setActiveSetId('entry');
+    }
+  }, [isLiteMode, activeTab]);
 
   const handleImportExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!hasDefectPermission(workflowUser, 'masterData.edit')) {
@@ -1421,79 +1429,85 @@ export default function DailyDefects() {
                   <History className="w-4 h-4" />
                   <span className="whitespace-nowrap">Defect Records</span>
                 </TabsTrigger>
-                <TabsTrigger
-                  value="details"
-                  className="data-[state=active]:bg-[#0066CC] data-[state=active]:text-white flex items-center gap-2 px-4 md:px-6 py-2 shrink-0"
-                >
-                  <FileText className="w-4 h-4" />
-                  <span className="whitespace-nowrap">Lifecycle Details</span>
-                </TabsTrigger>
-                <TabsTrigger
-                  value="workflow"
-                  className="data-[state=active]:bg-[#0066CC] data-[state=active]:text-white flex items-center gap-2 px-4 md:px-6 py-2 shrink-0"
-                >
-                  <Workflow className="w-4 h-4" />
-                  <span className="whitespace-nowrap">Workflow Dashboard</span>
-                </TabsTrigger>
-                <TabsTrigger
-                  value="tasks"
-                  className="data-[state=active]:bg-[#0066CC] data-[state=active]:text-white flex items-center gap-2 px-4 md:px-6 py-2 shrink-0"
-                >
-                  <ClipboardList className="w-4 h-4" />
-                  <span className="whitespace-nowrap">My Tasks</span>
-                  {unreadWorkflowNotifications > 0 && (
-                    <span className="ml-1 rounded-full bg-amber-400 px-1.5 py-0.5 text-[10px] font-black text-black">{unreadWorkflowNotifications}</span>
-                  )}
-                </TabsTrigger>
-                <TabsTrigger
-                  value="governance"
-                  className="data-[state=active]:bg-[#0066CC] data-[state=active]:text-white flex items-center gap-2 px-4 md:px-6 py-2 shrink-0"
-                >
-                  <SlidersHorizontal className="w-4 h-4" />
-                  <span className="whitespace-nowrap">Governance Settings</span>
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="analytics" 
-                  className="data-[state=active]:bg-[#0066CC] data-[state=active]:text-white flex items-center gap-2 px-4 md:px-6 py-2 shrink-0"
-                >
-                  <BarChart3 className="w-4 h-4" />
-                  <span className="whitespace-nowrap">Pareto Analysis</span>
-                </TabsTrigger>
+                {!isLiteMode && (
+                  <>
+                    <TabsTrigger
+                      value="details"
+                      className="data-[state=active]:bg-[#0066CC] data-[state=active]:text-white flex items-center gap-2 px-4 md:px-6 py-2 shrink-0"
+                    >
+                      <FileText className="w-4 h-4" />
+                      <span className="whitespace-nowrap">Lifecycle Details</span>
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="workflow"
+                      className="data-[state=active]:bg-[#0066CC] data-[state=active]:text-white flex items-center gap-2 px-4 md:px-6 py-2 shrink-0"
+                    >
+                      <Workflow className="w-4 h-4" />
+                      <span className="whitespace-nowrap">Workflow Dashboard</span>
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="tasks"
+                      className="data-[state=active]:bg-[#0066CC] data-[state=active]:text-white flex items-center gap-2 px-4 md:px-6 py-2 shrink-0"
+                    >
+                      <ClipboardList className="w-4 h-4" />
+                      <span className="whitespace-nowrap">My Tasks</span>
+                      {unreadWorkflowNotifications > 0 && (
+                        <span className="ml-1 rounded-full bg-amber-400 px-1.5 py-0.5 text-[10px] font-black text-black">{unreadWorkflowNotifications}</span>
+                      )}
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="governance"
+                      className="data-[state=active]:bg-[#0066CC] data-[state=active]:text-white flex items-center gap-2 px-4 md:px-6 py-2 shrink-0"
+                    >
+                      <SlidersHorizontal className="w-4 h-4" />
+                      <span className="whitespace-nowrap">Governance Settings</span>
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="analytics" 
+                      className="data-[state=active]:bg-[#0066CC] data-[state=active]:text-white flex items-center gap-2 px-4 md:px-6 py-2 shrink-0"
+                    >
+                      <BarChart3 className="w-4 h-4" />
+                      <span className="whitespace-nowrap">Pareto Analysis</span>
+                    </TabsTrigger>
+                  </>
+                )}
               </TabsList>
-
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10">
-                  <UserCog className="w-4 h-4 text-[#00A3E0]" />
-                  <select
-                    value={workflowRole}
-                    onChange={(event) => handleWorkflowRoleChange(event.target.value as QualityWorkflowRole)}
-                    className="bg-transparent text-white text-xs font-bold outline-none"
-                    title="Local workflow role for permission simulation"
+ 
+              {!isLiteMode && (
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10">
+                    <UserCog className="w-4 h-4 text-[#00A3E0]" />
+                    <select
+                      value={workflowRole}
+                      onChange={(event) => handleWorkflowRoleChange(event.target.value as QualityWorkflowRole)}
+                      className="bg-transparent text-white text-xs font-bold outline-none"
+                      title="Local workflow role for permission simulation"
+                    >
+                      {QUALITY_WORKFLOW_ROLES.map((role) => (
+                        <option key={role} value={role} className="bg-slate-900">
+                          {roleLabel(role)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    className="hidden" 
+                    accept=".xlsx, .xls, .csv" 
+                    onChange={handleImportExcel}
+                  />
+                  <button 
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={!hasDefectPermission(workflowUser, 'masterData.edit')}
+                    className="flex items-center gap-2 px-4 py-2 bg-white/5 text-white/60 rounded-lg border border-white/10 hover:bg-white/10 transition-all font-bold text-xs uppercase tracking-wider shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+                    title={hasDefectPermission(workflowUser, 'masterData.edit') ? 'Import part master data from Excel' : 'Requires master data edit permission'}
                   >
-                    {QUALITY_WORKFLOW_ROLES.map((role) => (
-                      <option key={role} value={role} className="bg-slate-900">
-                        {roleLabel(role)}
-                      </option>
-                    ))}
-                  </select>
+                    <Database className="w-4 h-4" />
+                    Import Parts
+                  </button>
                 </div>
-                <input 
-                  type="file" 
-                  ref={fileInputRef} 
-                  className="hidden" 
-                  accept=".xlsx, .xls, .csv" 
-                  onChange={handleImportExcel}
-                />
-                <button 
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={!hasDefectPermission(workflowUser, 'masterData.edit')}
-                  className="flex items-center gap-2 px-4 py-2 bg-white/5 text-white/60 rounded-lg border border-white/10 hover:bg-white/10 transition-all font-bold text-xs uppercase tracking-wider shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
-                  title={hasDefectPermission(workflowUser, 'masterData.edit') ? 'Import part master data from Excel' : 'Requires master data edit permission'}
-                >
-                  <Database className="w-4 h-4" />
-                  Import Parts
-                </button>
-              </div>
+              )}
             </div>
 
             {activeTab === 'records' && (
@@ -1537,7 +1551,7 @@ export default function DailyDefects() {
           </div>
 
           <TabsContent value="entry" className="mt-0 focus-visible:outline-none">
-            <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-6 items-start">
+            <div className={`grid grid-cols-1 ${isLiteMode ? '' : 'xl:grid-cols-[minmax(0,1fr)_360px]'} gap-6 items-start`}>
               <div className="glass-panel p-5 md:p-8 rounded-2xl border border-white/10">
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 mb-8">
                   <div className="flex items-center gap-3">
@@ -1644,8 +1658,9 @@ export default function DailyDefects() {
                 />
               </div>
 
-              <div className="space-y-6 xl:sticky xl:top-6">
-                <div className="glass-panel p-5 rounded-2xl border border-white/10">
+              {!isLiteMode && (
+                <div className="space-y-6 xl:sticky xl:top-6">
+                  <div className="glass-panel p-5 rounded-2xl border border-white/10">
                   <div className="flex items-center gap-3 mb-5">
                     <div className="p-2 rounded-xl bg-[#00A3E0]/10 border border-[#00A3E0]/20">
                       <Brain className="w-5 h-5 text-[#00A3E0]" />
@@ -1896,7 +1911,7 @@ export default function DailyDefects() {
                     </div>
                   )}
                 </div>
-              </div>
+              )}
             </div>
           </TabsContent>
 
@@ -1913,7 +1928,7 @@ export default function DailyDefects() {
                     onRowClick={openRecordDetails}
                     actions={(item: DefectLogData) => (
                       <div className="flex items-center gap-2">
-                        {!item.relatedNcrId && hasDefectPermission(workflowUser, 'defect.elevateNcr') && (
+                        {!isLiteMode && !item.relatedNcrId && hasDefectPermission(workflowUser, 'defect.elevateNcr') && (
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -1972,13 +1987,15 @@ export default function DailyDefects() {
                     >
                       Edit
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => handleCreateImprovementAction(selectedRecord)}
-                      className="px-4 py-2 rounded-xl bg-emerald-400/10 border border-emerald-400/20 text-emerald-200 text-sm font-bold"
-                    >
-                      Create Action
-                    </button>
+                    {!isLiteMode && (
+                      <button
+                        type="button"
+                        onClick={() => handleCreateImprovementAction(selectedRecord)}
+                        className="px-4 py-2 rounded-xl bg-emerald-400/10 border border-emerald-400/20 text-emerald-200 text-sm font-bold"
+                      >
+                        Create Action
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={() => setSelectedRecord(null)}

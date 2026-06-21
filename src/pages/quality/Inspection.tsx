@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { PageHeader, PageContainer, PageSection, StatsBar } from '../../components/PageHeader';
 import DynamicFormRenderer from '../../components/DynamicFormRenderer';
+import QualityRelationshipManager from '../../components/QualityRelationshipManager';
 import { 
   Search,
   Plus,
@@ -291,13 +292,22 @@ export function InspectionPage() {
                 />
 
                 {editingInspection && (
-                  <div className="mt-4">
-                    <button
-                      className="h-10 px-4 bg-red-600/80 text-white rounded-lg hover:bg-red-600"
-                      onClick={() => handleDelete(editingInspection.id)}
-                    >
-                      Delete
-                    </button>
+                  <div className="mt-8 space-y-8 border-t border-white/10 pt-6">
+                    <QualityRelationshipManager
+                      currentType="inspection"
+                      currentId={editingInspection.id}
+                      currentLabel={`Inspection: ${editingInspection.product || editingInspection.id}`}
+                      onChanged={loadInspections}
+                    />
+
+                    <div className="flex justify-end">
+                      <button
+                        className="h-10 px-4 bg-red-600/80 text-white rounded-lg hover:bg-red-600"
+                        onClick={() => handleDelete(editingInspection.id)}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>

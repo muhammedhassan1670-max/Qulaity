@@ -16,7 +16,9 @@ import {
   AlertTriangle,
   Info,
   X,
-  QrCode
+  QrCode,
+  Layout,
+  LayoutGrid
 } from 'lucide-react';
 import { useAppStore, type User } from '../stores/appStore';
 import { useTranslation } from '../utils/translations';
@@ -45,7 +47,7 @@ export function Header({ onMenuToggle, user }: HeaderProps) {
 
   const navigate = useNavigate();
   
-  const { theme, setTheme, notifications, removeNotification, setUser } = useAppStore();
+  const { theme, setTheme, notifications, removeNotification, setUser, isLiteMode, setLiteMode } = useAppStore();
   
   const unreadCount = notifications.filter(n => !n.read).length;
   
@@ -167,6 +169,40 @@ export function Header({ onMenuToggle, user }: HeaderProps) {
             <Shield className="w-4 h-4 text-blue-600 dark:text-[#00d2ff]" />
             <span className="text-slate-700 dark:text-gray-300 group-hover:text-blue-700 dark:group-hover:text-white">{t('admin')}</span>
           </button>
+
+          {/* Mode Toggle (Simple/Advanced) */}
+          <div className="flex items-center gap-1 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-1 rounded-xl shadow-sm dark:shadow-none">
+            <button
+              onClick={() => {
+                setLiteMode(true);
+                toast.success(language === 'ar' ? 'تم التفعيل للوضع المبسط' : 'Simple Mode Enabled');
+              }}
+              className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-300 flex items-center gap-1 ${
+                isLiteMode
+                  ? 'bg-emerald-600 text-white shadow-[0_0_15px_rgba(16,185,129,0.4)] scale-105'
+                  : 'text-slate-400 hover:text-slate-600 dark:text-gray-500 dark:hover:text-gray-300'
+              }`}
+              title={language === 'ar' ? 'وضع مبسط' : 'Simple Mode'}
+            >
+              <Layout className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{language === 'ar' ? 'مبسط' : 'Simple'}</span>
+            </button>
+            <button
+              onClick={() => {
+                setLiteMode(false);
+                toast.success(language === 'ar' ? 'تم التفعيل للوضع المتقدم' : 'Advanced Mode Enabled');
+              }}
+              className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-300 flex items-center gap-1 ${
+                !isLiteMode
+                  ? 'bg-[#0077ff] text-white shadow-[0_0_15px_rgba(0,119,255,0.4)] scale-105'
+                  : 'text-slate-400 hover:text-slate-600 dark:text-gray-500 dark:hover:text-gray-300'
+              }`}
+              title={language === 'ar' ? 'وضع متقدم' : 'Advanced Mode'}
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{language === 'ar' ? 'متقدم' : 'Advanced'}</span>
+            </button>
+          </div>
 
           {/* Theme Toggle - Condensed on mobile */}
           <div className="flex items-center gap-1 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-1 rounded-xl shadow-sm dark:shadow-none">

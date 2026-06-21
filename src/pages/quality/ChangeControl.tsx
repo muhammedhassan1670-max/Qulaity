@@ -2,6 +2,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { PageHeader, PageContainer, PageSection, StatsBar } from '../../components/PageHeader';
 import DynamicFormRenderer from '../../components/DynamicFormRenderer';
+import QualityRelationshipManager from '../../components/QualityRelationshipManager';
 import { DataTable } from '../../components/DataTable';
 import { FilterPanel } from '../../components/FilterPanel';
 import { BulkActionBar } from '../../components/BulkActionBar';
@@ -503,6 +504,17 @@ export function ChangeControlPage() {
                 showSubmitButton={true}
                 submitLabel={editingChange ? 'Update Change Request' : 'Create Change Request'}
               />
+
+              {editingChange && (
+                <div className="mt-8 border-t border-white/10 pt-6">
+                  <QualityRelationshipManager
+                    currentType="change-control"
+                    currentId={editingChange.id}
+                    currentLabel={`Change Control: ${editingChange.title || editingChange.id}`}
+                    onChanged={loadChanges}
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>
