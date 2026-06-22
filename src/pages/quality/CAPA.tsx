@@ -22,7 +22,6 @@ import {
   User,
   X,
   Edit3,
-  Trash2,
   Eye,
   ShieldAlert,
   FileText,
@@ -226,18 +225,6 @@ export function CAPAPage() {
     setIsFormOpen(true);
   };
 
-  const handleDelete = async (capaId: string) => {
-    if (confirm('Are you sure you want to delete this CAPA?')) {
-      try {
-        await capaApi.delete(capaId);
-        await loadCapas();
-        toast.success('CAPA deleted successfully');
-      } catch (err) {
-        toast.error('Failed to delete CAPA');
-        console.error(err);
-      }
-    }
-  };
 
   const handleEscalateTo8D = async (capa: CAPAItem) => {
     if (!hasDefectPermission(workflowUser, 'defect.escalate8d')) {
@@ -461,13 +448,6 @@ export function CAPAPage() {
               selectedCount={selectedIds.length}
               itemName="CAPAs"
               onClearSelection={() => setSelectedIds([])}
-              onDelete={() => {
-                if (confirm(`Delete ${selectedIds.length} CAPAs?`)) {
-                  setCapas(prev => prev.filter(c => !selectedIds.includes(c.id)));
-                  setSelectedIds([]);
-                  toast.success(`${selectedIds.length} CAPAs deleted`);
-                }
-              }}
               onExport={(format) => handleExport(format, selectedIds)}
             />
 
@@ -526,9 +506,6 @@ export function CAPAPage() {
                   </button>
                   <button onClick={(e) => { e.stopPropagation(); handleEdit(item); }} className="p-2 hover:bg-white/10 rounded-lg transition-colors" title="Edit">
                     <Edit3 className="w-4 h-4 text-[#00A3E0]" />
-                  </button>
-                  <button onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }} className="p-2 hover:bg-white/10 rounded-lg transition-colors" title="Delete">
-                    <Trash2 className="w-4 h-4 text-red-400" />
                   </button>
                 </div>
               )}

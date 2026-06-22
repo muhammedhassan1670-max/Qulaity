@@ -87,7 +87,7 @@ export function Header({ onMenuToggle, user }: HeaderProps) {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 h-[70px] bg-white/80 dark:bg-transparent dark:glass-ultra z-[100] border-b border-slate-200 dark:border-white/10 backdrop-blur-md">
+    <header className="fixed top-0 left-0 right-0 h-[70px] bg-white/80 dark:bg-[#080b11]/80 dark:glass-ultra z-[100] border-b border-slate-200 dark:border-white/10 backdrop-blur-md">
       <div className="h-full flex items-center justify-between px-4">
         {/* Left Section */}
         <div className="flex items-center gap-2 md:gap-4">
@@ -100,12 +100,12 @@ export function Header({ onMenuToggle, user }: HeaderProps) {
           
           {/* Logo */}
           <div className="flex items-center gap-2 md:gap-3 group cursor-pointer">
-            <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-gradient-to-br from-[#0077ff] via-[#00d2ff] to-[#7000ff] flex items-center justify-center shadow-md dark:shadow-[0_0_20px_rgba(0,210,255,0.3)] group-hover:scale-110 transition-transform duration-500">
+            <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-gradient-to-br from-[var(--industrial-primary)] to-[var(--industrial-secondary)] flex items-center justify-center shadow-md dark:shadow-[0_0_20px_rgba(14,165,233,0.25)] group-hover:scale-110 transition-transform duration-500">
               <Zap className="w-4 h-4 md:w-5 md:h-5 text-white animate-pulse" />
             </div>
             <div className="block">
               <h1 className="text-sm md:text-xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">
-                QMS <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00d2ff] to-[#7000ff]">4.0</span>
+                QMS <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--industrial-primary)] to-[var(--industrial-secondary)]">4.0</span>
               </h1>
               <p className="text-[8px] md:text-[10px] text-slate-500 dark:text-gray-500 font-bold uppercase tracking-[0.2em] hidden sm:block">Industrial Intelligence</p>
             </div>
@@ -121,7 +121,7 @@ export function Header({ onMenuToggle, user }: HeaderProps) {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={t('search-placeholder')}
-                className="w-full h-10 pl-10 pr-4 bg-white dark:bg-black/30 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 dark:focus:border-[#00A3E0] focus:ring-1 focus:ring-blue-500 dark:focus:ring-0 transition-colors"
+                className="w-full h-10 pl-10 pr-4 bg-white dark:bg-[#0f131a]/50 border border-slate-200 dark:border-white/10 rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:border-[var(--industrial-primary)] dark:focus:border-[var(--industrial-secondary)] focus:ring-2 focus:ring-[var(--industrial-primary)]/20 dark:focus:ring-[var(--industrial-secondary)]/20 transition-all duration-300"
                 autoFocus
                 onBlur={() => !searchQuery && setShowSearch(false)}
               />
@@ -152,7 +152,7 @@ export function Header({ onMenuToggle, user }: HeaderProps) {
           {/* Scanner Button (Mobile & Desktop) */}
           <button
             onClick={scanner.open}
-            className="p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 transition-all duration-300 text-slate-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-[#00A3E0]"
+            className="p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 transition-all duration-300 text-slate-500 dark:text-gray-400 hover:text-[var(--industrial-primary)] dark:hover:text-[var(--industrial-secondary)] hover:scale-105 active:scale-95"
             title="Scan QR/Barcode"
           >
             <QrCode className="w-5 h-5" />
@@ -160,14 +160,14 @@ export function Header({ onMenuToggle, user }: HeaderProps) {
 
           {/* Admin - Desktop only */}
           <button
-            className="hidden lg:inline-flex items-center gap-2 px-4 h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 hover:bg-blue-50 dark:hover:bg-[#0077ff]/10 hover:border-blue-300 dark:hover:border-[#0077ff]/50 transition-all duration-300 text-sm font-bold hover:scale-105 active:scale-95"
+            className="hidden lg:inline-flex items-center gap-2 px-4 h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 hover:bg-[var(--industrial-primary)]/5 dark:hover:bg-[var(--industrial-primary)]/10 hover:border-[var(--industrial-primary)]/30 dark:hover:border-[var(--industrial-primary)]/50 transition-all duration-300 text-sm font-bold hover:scale-105 active:scale-95"
             onClick={() => {
               const canAccessAdmin = Boolean(user?.permissions?.includes('admin.access'));
               navigate(canAccessAdmin ? '/admin' : '/admin-login');
             }}
           >
-            <Shield className="w-4 h-4 text-blue-600 dark:text-[#00d2ff]" />
-            <span className="text-slate-700 dark:text-gray-300 group-hover:text-blue-700 dark:group-hover:text-white">{t('admin')}</span>
+            <Shield className="w-4 h-4 text-[var(--industrial-primary)] dark:text-[var(--industrial-secondary)]" />
+            <span className="text-slate-700 dark:text-gray-300 group-hover:text-[var(--industrial-primary)] dark:group-hover:text-[var(--industrial-secondary)]">{t('admin')}</span>
           </button>
 
           {/* Mode Toggle (Simple/Advanced) */}
@@ -179,7 +179,7 @@ export function Header({ onMenuToggle, user }: HeaderProps) {
               }}
               className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-300 flex items-center gap-1 ${
                 isLiteMode
-                  ? 'bg-emerald-600 text-white shadow-[0_0_15px_rgba(16,185,129,0.4)] scale-105'
+                  ? 'bg-[var(--industrial-success)] text-white shadow-[0_0_15px_rgba(16,185,129,0.3)] scale-105'
                   : 'text-slate-400 hover:text-slate-600 dark:text-gray-500 dark:hover:text-gray-300'
               }`}
               title={language === 'ar' ? 'وضع مبسط' : 'Simple Mode'}
@@ -194,7 +194,7 @@ export function Header({ onMenuToggle, user }: HeaderProps) {
               }}
               className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-300 flex items-center gap-1 ${
                 !isLiteMode
-                  ? 'bg-[#0077ff] text-white shadow-[0_0_15px_rgba(0,119,255,0.4)] scale-105'
+                  ? 'bg-[var(--industrial-primary)] text-white shadow-[0_0_15px_rgba(14,165,233,0.3)] scale-105'
                   : 'text-slate-400 hover:text-slate-600 dark:text-gray-500 dark:hover:text-gray-300'
               }`}
               title={language === 'ar' ? 'وضع متقدم' : 'Advanced Mode'}
@@ -215,7 +215,7 @@ export function Header({ onMenuToggle, user }: HeaderProps) {
             </button>
             <button
               onClick={() => setTheme('dark')}
-              className={`p-1.5 rounded-lg transition-all duration-300 ${theme === 'dark' ? 'bg-[#0077ff] text-white shadow-[0_0_15px_rgba(0,119,255,0.5)] scale-110' : 'text-slate-400 hover:text-slate-600 dark:text-gray-500 dark:hover:text-gray-300'}`}
+              className={`p-1.5 rounded-lg transition-all duration-300 ${theme === 'dark' ? 'bg-[var(--industrial-primary)] text-white shadow-[0_0_15px_rgba(14,165,233,0.3)] scale-110' : 'text-slate-400 hover:text-slate-600 dark:text-gray-500 dark:hover:text-gray-300'}`}
               title={t('dark-mode')}
             >
               <Moon className="w-4 h-4" />
@@ -229,18 +229,18 @@ export function Header({ onMenuToggle, user }: HeaderProps) {
                 <Bell className="w-5 h-5 text-slate-500 dark:text-gray-400 group-hover:text-slate-900 dark:group-hover:text-white transition-colors" />
                 {unreadCount > 0 && (
                   <Badge 
-                    className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 bg-gradient-to-br from-[#ff1744] to-[#ff4d00] text-white text-[10px] font-black shadow-lg animate-bounce"
+                    className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 bg-gradient-sunset text-white text-[10px] font-black shadow-lg shadow-[var(--industrial-accent)]/25 animate-pulse"
                   >
                     {unreadCount}
                   </Badge>
                 )}
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[calc(100vw-2rem)] sm:w-80 bg-white dark:bg-[#1a1a25] border-slate-200 dark:border-white/10 mt-2 shadow-xl">
-              <div className="flex items-center justify-between px-3 py-2 border-b border-slate-100 dark:border-white/10">
-                <span className="font-medium text-slate-900 dark:text-white">{t('notifications')}</span>
+            <DropdownMenuContent align="end" className="w-[calc(100vw-2rem)] sm:w-80 bg-white dark:bg-[#0f131a]/95 backdrop-blur-xl border border-slate-200 dark:border-white/10 mt-2 shadow-2xl rounded-2xl p-1 overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-white/10 bg-slate-50/50 dark:bg-black/20">
+                <span className="font-bold text-sm text-slate-900 dark:text-white">{t('notifications')}</span>
                 <button
-                  className="text-xs text-[#00A3E0] hover:underline"
+                  className="text-xs font-bold text-[var(--industrial-primary)] dark:text-[var(--industrial-secondary)] hover:underline"
                   onClick={() => toast.info(t('notifications'), { description: language === 'ar' ? 'ميزة تحديد الكل كمقروء ستتوفر قريباً' : 'Mark all read coming soon' })}
                 >
                   {t('mark-all-read')}
@@ -272,7 +272,7 @@ export function Header({ onMenuToggle, user }: HeaderProps) {
                           </p>
                         </div>
                         {!notification.read && (
-                          <div className="w-2 h-2 rounded-full bg-[#00A3E0] mt-1" />
+                          <div className="w-2 h-2 rounded-full bg-[var(--industrial-primary)] mt-1 animate-pulse" />
                         )}
                       </div>
                     </DropdownMenuItem>
@@ -284,10 +284,10 @@ export function Header({ onMenuToggle, user }: HeaderProps) {
 
           {/* Mobile User Profile Trigger */}
           <button 
-            className="sm:hidden w-8 h-8 rounded-lg bg-gradient-to-br from-[#0066CC] to-[#00A3E0] p-0.5"
+            className="sm:hidden w-8 h-8 rounded-xl bg-gradient-to-br from-[var(--industrial-primary)] to-[var(--industrial-secondary)] p-0.5"
             onClick={() => navigate('/profile')}
           >
-            <div className="w-full h-full rounded-[6px] bg-[#0a0a0f] flex items-center justify-center overflow-hidden">
+            <div className="w-full h-full rounded-[10px] bg-slate-900 dark:bg-[#0a0a0f] flex items-center justify-center overflow-hidden">
               <UserIcon className="w-4 h-4 text-white" />
             </div>
           </button>
@@ -297,7 +297,7 @@ export function Header({ onMenuToggle, user }: HeaderProps) {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-2 p-1.5 rounded-2xl hover:bg-slate-50 dark:hover:bg-white/5 border border-transparent hover:border-slate-200 dark:hover:border-white/10 transition-all duration-300 ml-2 group">
-                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#0077ff] via-[#00d2ff] to-[#7000ff] p-0.5 shadow-md dark:shadow-lg group-hover:scale-110 transition-transform">
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[var(--industrial-primary)] to-[var(--industrial-secondary)] p-0.5 shadow-md dark:shadow-lg group-hover:scale-110 transition-transform">
                     <div className="w-full h-full rounded-[10px] bg-slate-900 dark:bg-[#0a0a0f] flex items-center justify-center overflow-hidden">
                       {user?.avatar ? (
                         <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
@@ -309,13 +309,13 @@ export function Header({ onMenuToggle, user }: HeaderProps) {
                     </div>
                   </div>
                   <div className="hidden lg:block text-left">
-                    <p className="text-sm font-black leading-tight text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-[#00d2ff] transition-colors">{user?.name}</p>
+                    <p className="text-sm font-black leading-tight text-slate-900 dark:text-white group-hover:text-[var(--industrial-primary)] dark:group-hover:text-[var(--industrial-secondary)] transition-colors">{user?.name}</p>
                     <p className="text-[10px] text-slate-500 dark:text-gray-500 font-bold uppercase tracking-tighter">{user?.role}</p>
                   </div>
                   <ChevronDown className="w-4 h-4 text-slate-400 dark:text-gray-600 group-hover:text-slate-900 dark:group-hover:text-white transition-colors" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 bg-white dark:bg-[#1a1a25] border-slate-200 dark:border-white/10 mt-2 shadow-xl">
+              <DropdownMenuContent align="end" className="w-56 bg-white dark:bg-[#0f131a]/95 backdrop-blur-xl border border-slate-200 dark:border-white/10 mt-2 shadow-2xl rounded-2xl p-1">
                 <div className="px-3 py-2 border-b border-slate-100 dark:border-white/10">
                   <p className="font-medium text-slate-900 dark:text-white">{user?.name}</p>
                   <p className="text-sm text-slate-500 dark:text-gray-400">{user?.email}</p>
@@ -357,17 +357,17 @@ export function Header({ onMenuToggle, user }: HeaderProps) {
 
       {/* Mobile Search Overlay */}
       {showSearch && (
-        <div className="lg:hidden absolute top-[70px] left-0 right-0 p-4 glass-strong border-b border-white/10 animate-in slide-in-from-top-2">
+        <div className="lg:hidden absolute top-[70px] left-0 right-0 p-4 bg-white/95 dark:bg-[#080b11]/95 backdrop-blur-md border-b border-slate-200 dark:border-white/10 animate-in slide-in-from-top-2">
           <form onSubmit={handleSearch} className="relative">
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t('search-anything')}
-              className="w-full h-12 pl-12 pr-4 bg-black/50 border border-[#00A3E0]/50 rounded-xl text-white outline-none focus:ring-2 focus:ring-[#00A3E0]/20"
+              className="w-full h-12 pl-12 pr-4 bg-slate-50 dark:bg-black/30 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white outline-none focus:border-[var(--industrial-primary)] focus:ring-2 focus:ring-[var(--industrial-primary)]/10"
               autoFocus
             />
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#00A3E0]" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--industrial-primary)]" />
             <button 
               type="button"
               onClick={() => setShowSearch(false)}

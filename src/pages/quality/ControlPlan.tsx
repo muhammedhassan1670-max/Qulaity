@@ -17,7 +17,6 @@ import {
   User,
   X,
   Edit3,
-  Trash2,
   Eye,
   ScanLine
 } from 'lucide-react';
@@ -214,17 +213,6 @@ export function ControlPlanPage() {
     setIsFormOpen(true);
   };
 
-  const handleDelete = async (cpId: string) => {
-    if (confirm('Are you sure you want to delete this control plan?')) {
-      try {
-        await controlPlanApi.delete(cpId);
-        await loadControlPlans();
-        toast.success('Control plan deleted successfully');
-      } catch (err) {
-        toast.error('Failed to delete control plan');
-      }
-    }
-  };
 
   const handleFormSubmit = async (data: Record<string, unknown>) => {
     try {
@@ -330,13 +318,6 @@ export function ControlPlanPage() {
               selectedCount={selectedIds.length}
               itemName="Control Plans"
               onClearSelection={() => setSelectedIds([])}
-              onDelete={() => {
-                if (confirm(`Delete ${selectedIds.length} control plans?`)) {
-                  setControlPlans(prev => prev.filter(cp => !selectedIds.includes(cp.id)));
-                  setSelectedIds([]);
-                  toast.success(`${selectedIds.length} control plans deleted`);
-                }
-              }}
               onExport={(format) => toast.success(`Exporting ${selectedIds.length || filteredControlPlans.length} as ${format.toUpperCase()}...`)}
             />
 
@@ -398,9 +379,6 @@ export function ControlPlanPage() {
                   </button>
                   <button onClick={(e) => { e.stopPropagation(); handleEdit(item); }} className="p-2 hover:bg-white/10 rounded-lg transition-colors" title="Edit">
                     <Edit3 className="w-4 h-4 text-[#00A3E0]" />
-                  </button>
-                  <button onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }} className="p-2 hover:bg-white/10 rounded-lg transition-colors" title="Delete">
-                    <Trash2 className="w-4 h-4 text-red-400" />
                   </button>
                 </div>
               )}

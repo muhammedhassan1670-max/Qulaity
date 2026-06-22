@@ -5,7 +5,6 @@ import {
   PlusCircle, 
   History, 
   FileText, 
-  Trash2, 
   Edit3, 
   Database,
   Download,
@@ -925,46 +924,6 @@ export default function DailyDefects() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!hasDefectPermission(workflowUser, 'defect.delete')) {
-      const record = defects.find((item) => item.id === id);
-      if (record) appendBlockedWorkflowAudit(record, 'delete', `${roleLabel(workflowUser.role)} cannot delete defect records.`);
-      toast.error('Delete blocked', { description: `${roleLabel(workflowUser.role)} cannot delete defect records.` });
-      return;
-    }
-    if (confirm('Are you sure you want to delete this log?')) {
-      try {
-        const record = defects.find((item) => item.id === id);
-        if (record) {
-          appendGlobalAudit(id, {
-            id: `audit-${Date.now()}`,
-            action: 'delete',
-            timestamp: new Date().toISOString(),
-            changedBy: userLabel(workflowUser),
-            role: workflowUser.role,
-            changedFields: ['deleted'],
-            oldValue: record as unknown as Record<string, unknown>,
-            reasonForChange: 'Deleted from Daily Defect Recorder',
-            previousStatus: record.status,
-            newStatus: 'deleted',
-            permissionResult: 'allowed',
-          });
-        }
-        await unifiedDefectLogApi.delete(id);
-        enqueueQualitySyncItem({
-          entityType: 'defect-logs',
-          entityId: id,
-          operation: 'delete',
-          payloadSummary: 'Defect record deleted locally.',
-        });
-        await loadDefects();
-        if (selectedRecord?.id === id) setSelectedRecord(null);
-        toast.success('Log deleted successfully');
-      } catch (err) {
-        toast.error('Failed to delete log');
-      }
-    }
-  };
 
   const handleFormSubmit = async (data: Record<string, unknown>) => {
     if (editingDefect && !hasDefectPermission(workflowUser, 'defect.edit')) {
@@ -1952,17 +1911,7 @@ export default function DailyDefects() {
                         >
                           <Edit3 className="w-4 h-4" />
                         </button>
-                        <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDelete(item.id);
-                          }} 
-                          disabled={!hasDefectPermission(workflowUser, 'defect.delete')}
-                          className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                          title={hasDefectPermission(workflowUser, 'defect.delete') ? 'Delete Record' : 'Requires delete defect permission'}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+
                       </div>
                     )}
                   />

@@ -18,7 +18,6 @@ import {
   User,
   X,
   Edit3,
-  Trash2,
   Eye,
   GitPullRequest
 } from 'lucide-react';
@@ -200,17 +199,6 @@ export function DeviationPage() {
     setIsFormOpen(true);
   };
 
-  const handleDelete = async (deviationId: string) => {
-    if (confirm('Are you sure you want to delete this deviation request?')) {
-      try {
-        await deviationApi.delete(deviationId);
-        await loadDeviations();
-        toast.success('Deviation request deleted successfully');
-      } catch (err) {
-        toast.error('Failed to delete deviation request');
-      }
-    }
-  };
 
   const handleFormSubmit = async (data: Record<string, unknown>) => {
     try {
@@ -320,13 +308,6 @@ export function DeviationPage() {
               selectedCount={selectedIds.length}
               itemName="Deviation Requests"
               onClearSelection={() => setSelectedIds([])}
-              onDelete={() => {
-                if (confirm(`Delete ${selectedIds.length} deviation requests?`)) {
-                  setDeviations(prev => prev.filter(d => !selectedIds.includes(d.id)));
-                  setSelectedIds([]);
-                  toast.success(`${selectedIds.length} deviation requests deleted`);
-                }
-              }}
               onExport={(format) => toast.success(`Exporting ${selectedIds.length || filteredDeviations.length} as ${format.toUpperCase()}...`)}
             />
 
@@ -389,9 +370,6 @@ export function DeviationPage() {
                   </button>
                   <button onClick={(e) => { e.stopPropagation(); handleEdit(item); }} className="p-2 hover:bg-white/10 rounded-lg transition-colors" title="Edit">
                     <Edit3 className="w-4 h-4 text-[#00A3E0]" />
-                  </button>
-                  <button onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }} className="p-2 hover:bg-white/10 rounded-lg transition-colors" title="Delete">
-                    <Trash2 className="w-4 h-4 text-red-400" />
                   </button>
                 </div>
               )}

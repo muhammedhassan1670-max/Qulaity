@@ -89,20 +89,20 @@ export function AdminLoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center p-4">
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#0066CC]/10 via-transparent to-[#00A3E0]/10" />
-        <div className="absolute top-24 right-20 w-72 h-72 bg-[#0066CC]/20 rounded-full blur-3xl" />
-        <div className="absolute bottom-24 left-16 w-96 h-96 bg-[#00A3E0]/10 rounded-full blur-3xl" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[var(--industrial-primary)]/10 via-transparent to-[var(--industrial-secondary)]/10" />
+        <div className="absolute top-24 right-20 w-72 h-72 bg-[var(--industrial-primary)]/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-24 left-16 w-96 h-96 bg-[var(--industrial-secondary)]/5 rounded-full blur-3xl" />
       </div>
 
       <div className="relative z-10 w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-[#0066CC] to-[#00A3E0] mb-4 shadow-2xl shadow-[#0066CC]/30">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-[var(--industrial-primary)] to-[var(--industrial-secondary)] mb-4 shadow-2xl shadow-[var(--industrial-primary)]/30">
             <Zap className="w-10 h-10 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">Admin Portal</h1>
-          <p className="text-gray-400">Secure access to system configuration</p>
+          <h1 className="text-3xl font-bold text-[var(--text-primary)] mb-2">Admin Portal</h1>
+          <p className="text-[var(--text-muted)]">Secure access to system configuration</p>
         </div>
 
         <div className="glass-panel rounded-2xl p-8 shadow-2xl shadow-black/50">
@@ -126,7 +126,7 @@ export function AdminLoginPage() {
                   value={credentials.email}
                   onChange={(e) => setCredentials((prev) => ({ ...prev, email: e.target.value }))}
                   placeholder="admin@company.com"
-                  className="w-full h-12 pl-11 pr-4 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#00A3E0] focus:ring-1 focus:ring-[#00A3E0] transition-all"
+                  className="w-full h-12 pl-11 pr-4 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[var(--industrial-secondary)] focus:ring-1 focus:ring-[var(--industrial-secondary)] transition-all"
                   required
                 />
               </div>
@@ -141,7 +141,7 @@ export function AdminLoginPage() {
                   value={credentials.password}
                   onChange={(e) => setCredentials((prev) => ({ ...prev, password: e.target.value }))}
                   placeholder="Enter admin password"
-                  className="w-full h-12 pl-11 pr-4 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#00A3E0] focus:ring-1 focus:ring-[#00A3E0] transition-all"
+                  className="w-full h-12 pl-11 pr-4 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[var(--industrial-secondary)] focus:ring-1 focus:ring-[var(--industrial-secondary)] transition-all"
                   required
                 />
               </div>
@@ -158,7 +158,7 @@ export function AdminLoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full h-12 bg-gradient-to-r from-[#0066CC] to-[#00A3E0] text-white font-semibold rounded-lg hover:from-[#0052a3] hover:to-[#0082b3] focus:outline-none focus:ring-2 focus:ring-[#00A3E0] focus:ring-offset-2 focus:ring-offset-[#0a0a0f] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
+              className="w-full h-12 bg-gradient-to-r from-[var(--industrial-primary)] to-[var(--industrial-secondary)] text-white font-semibold rounded-lg hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-[var(--industrial-secondary)] focus:ring-offset-2 focus:ring-offset-[var(--bg-primary)] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
             >
               {isLoading ? (
                 <>

@@ -13,7 +13,6 @@ import {
   Save,
   Search,
   ShieldCheck,
-  Trash2,
   Upload,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -202,10 +201,6 @@ export default function QualityInspectionPlans() {
     });
   };
 
-  const removeCheck = (id: string) => {
-    if (!ensureAccess()) return;
-    updateDraft({ checkItems: draft.checkItems.filter((item) => item.id !== id) });
-  };
 
   const moveCheck = (id: string, direction: -1 | 1) => {
     const index = draft.checkItems.findIndex((item) => item.id === id);
@@ -476,11 +471,10 @@ export default function QualityInspectionPlans() {
                                 >
                                   {inputTypes.map((type) => <option key={type} value={type}>{type}</option>)}
                                 </select>
-                                <div className="flex gap-1">
-                                  <button type="button" onClick={() => moveCheck(item.id, -1)} disabled={!access.allowed} className="rounded-lg border border-white/10 bg-white/5 px-3 text-white/60">↑</button>
-                                  <button type="button" onClick={() => moveCheck(item.id, 1)} disabled={!access.allowed} className="rounded-lg border border-white/10 bg-white/5 px-3 text-white/60">↓</button>
-                                  <button type="button" onClick={() => removeCheck(item.id)} disabled={!access.allowed} className="rounded-lg border border-red-400/20 bg-red-500/10 px-3 text-red-200"><Trash2 className="h-4 w-4" /></button>
-                                </div>
+                                  <div className="flex gap-1">
+                                    <button type="button" onClick={() => moveCheck(item.id, -1)} disabled={!access.allowed} className="rounded-lg border border-white/10 bg-white/5 px-3 text-white/60">↑</button>
+                                    <button type="button" onClick={() => moveCheck(item.id, 1)} disabled={!access.allowed} className="rounded-lg border border-white/10 bg-white/5 px-3 text-white/60">↓</button>
+                                  </div>
                               </div>
                               <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-4">
                                 <input value={item.standard || ''} onChange={(event) => updateCheck(item.id, { standard: event.target.value })} disabled={!access.allowed} placeholder="Standard" className="rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-sm text-white" />

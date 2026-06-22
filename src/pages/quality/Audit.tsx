@@ -18,7 +18,6 @@ import {
   Users,
   X,
   Edit3,
-  Trash2,
   Eye,
   Filter,
   ShieldAlert
@@ -188,18 +187,6 @@ export function AuditPage() {
     setIsFormOpen(true);
   };
 
-  const handleDelete = async (auditId: string) => {
-    if (confirm('Are you sure you want to delete this Audit?')) {
-      try {
-        await auditApi.delete(auditId);
-        await loadAudits();
-        toast.success('Audit deleted successfully');
-      } catch (err) {
-        toast.error('Failed to delete Audit');
-        console.error(err);
-      }
-    }
-  };
 
   const handleFormSubmit = async (data: Record<string, unknown>) => {
     try {
@@ -349,13 +336,6 @@ export function AuditPage() {
               selectedCount={selectedIds.length}
               itemName="Audits"
               onClearSelection={() => setSelectedIds([])}
-              onDelete={() => {
-                if (confirm(`Delete ${selectedIds.length} Audits?`)) {
-                  setAudits(prev => prev.filter(a => !selectedIds.includes(a.id)));
-                  setSelectedIds([]);
-                  toast.success(`${selectedIds.length} Audits deleted`);
-                }
-              }}
               onExport={(format) => handleExport(format, selectedIds)}
             />
 
@@ -448,9 +428,6 @@ export function AuditPage() {
                     title="Edit"
                   >
                     <Edit3 className="w-4 h-4 text-[#00A3E0]" />
-                  </button>
-                  <button onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }} className="p-2 hover:bg-white/10 rounded-lg transition-colors" title="Delete">
-                    <Trash2 className="w-4 h-4 text-red-400" />
                   </button>
                 </div>
               )}

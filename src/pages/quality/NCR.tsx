@@ -16,7 +16,6 @@ import {
   User,
   X,
   Edit3,
-  Trash2,
   Eye,
   ClipboardList,
   ShieldAlert,
@@ -235,18 +234,6 @@ export function NCRPage() {
     setIsFormOpen(true);
   };
 
-  const handleDelete = async (ncrId: string) => {
-    if (confirm('Are you sure you want to delete this NCR?')) {
-      try {
-        await ncrApi.delete(ncrId);
-        await loadNcrs();
-        toast.success('NCR deleted successfully');
-      } catch (err) {
-        toast.error('Failed to delete NCR');
-        console.error(err);
-      }
-    }
-  };
 
   const handleFormSubmit = async (data: Record<string, unknown>) => {
     try {
@@ -495,13 +482,6 @@ export function NCRPage() {
               selectedCount={selectedIds.length}
               itemName="NCRs"
               onClearSelection={() => setSelectedIds([])}
-              onDelete={() => {
-                if (confirm(`Delete ${selectedIds.length} NCRs?`)) {
-                  setNcrs(prev => prev.filter(n => !selectedIds.includes(n.id)));
-                  setSelectedIds([]);
-                  toast.success(`${selectedIds.length} NCRs deleted`);
-                }
-              }}
               onExport={(format) => handleExport(format, selectedIds)}
             />
 
@@ -568,9 +548,7 @@ export function NCRPage() {
                   <button onClick={(e) => { e.stopPropagation(); handleEdit(item); }} className="p-2 hover:bg-white/10 rounded-lg transition-colors" title="Edit">
                     <Edit3 className="w-4 h-4 text-[#00A3E0]" />
                   </button>
-                  <button onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }} className="p-2 hover:bg-white/10 rounded-lg transition-colors" title="Delete">
-                    <Trash2 className="w-4 h-4 text-red-400" />
-                  </button>
+
                 </div>
               )}
               emptyState={

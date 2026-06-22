@@ -15,7 +15,6 @@ import {
   User,
   X,
   Edit3,
-  Trash2,
   Eye,
   Target,
   ShieldAlert,
@@ -291,16 +290,6 @@ export function D8Page() {
     setIsFormOpen(true);
   };
 
-  const handleDelete = async (reportId: string) => {
-    if (confirm('Are you sure you want to delete this 8D report?')) {
-      try {
-        setReports(prev => prev.filter(r => r.id !== reportId));
-        toast.success('8D report deleted successfully');
-      } catch (err) {
-        toast.error('Failed to delete 8D report');
-      }
-    }
-  };
 
   const handleFormSubmit = async (data: Record<string, unknown>) => {
     try {
@@ -494,13 +483,6 @@ export function D8Page() {
               selectedCount={selectedIds.length}
               itemName="8D Reports"
               onClearSelection={() => setSelectedIds([])}
-              onDelete={() => {
-                if (confirm(`Delete ${selectedIds.length} 8D reports?`)) {
-                  setReports(prev => prev.filter(r => !selectedIds.includes(r.id)));
-                  setSelectedIds([]);
-                  toast.success(`${selectedIds.length} 8D reports deleted`);
-                }
-              }}
               onExport={(format) => handleExport(format, selectedIds)}
             />
 
@@ -584,9 +566,6 @@ export function D8Page() {
                   </button>
                   <button onClick={(e) => { e.stopPropagation(); handleEdit(item); }} className="p-2 hover:bg-white/10 rounded-lg transition-colors" title="Edit">
                     <Edit3 className="w-4 h-4 text-[#00A3E0]" />
-                  </button>
-                  <button onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }} className="p-2 hover:bg-white/10 rounded-lg transition-colors" title="Delete">
-                    <Trash2 className="w-4 h-4 text-red-400" />
                   </button>
                 </div>
               )}

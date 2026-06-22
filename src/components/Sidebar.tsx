@@ -384,19 +384,19 @@ export function Sidebar({ onSectionChange, collapsed }: SidebarProps) {
     const content = (
       <div
         className={`
-          w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 cursor-pointer group/item
+          w-full flex items-center gap-3 px-3.5 py-3 rounded-xl transition-all duration-300 cursor-pointer group/item
           ${active 
-            ? 'bg-blue-50 dark:bg-transparent dark:bg-gradient-to-r dark:from-[#0077ff]/20 dark:to-[#00d2ff]/10 border-l-4 border-blue-600 dark:border-[#00d2ff] text-blue-700 dark:text-white shadow-sm dark:shadow-[0_0_20px_rgba(0,210,255,0.15)]' 
-            : 'hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
+            ? 'bg-gradient-to-r from-[var(--industrial-primary)]/10 to-transparent border-l-4 border-[var(--industrial-primary)] text-[var(--industrial-primary)] font-black shadow-sm shadow-[var(--industrial-primary)]/5' 
+            : 'hover:bg-slate-100 dark:hover:bg-white/5 text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
           }
           ${level > 0 && !collapsed ? 'ml-4 mr-0' : ''}
         `}
       >
-        <Icon className={`w-5 h-5 shrink-0 transition-all duration-300 ${active ? 'text-blue-600 dark:text-[#00d2ff] scale-110' : 'text-slate-500 dark:text-gray-400 group-hover/item:text-slate-800 dark:group-hover/item:text-white/80 group-hover/item:scale-110'}`} />
+        <Icon className={`w-5 h-5 shrink-0 transition-all duration-300 ${active ? 'text-[var(--industrial-primary)] scale-110' : 'text-slate-500 dark:text-gray-400 group-hover/item:text-slate-800 dark:group-hover/item:text-white/80 group-hover/item:scale-110'}`} />
         
         {!collapsed && (
           <>
-            <span className={`flex-1 min-w-0 ${language === 'ar' ? 'text-right' : 'text-left'} ${active ? 'text-blue-700 dark:text-white' : 'text-slate-600 dark:text-gray-400 group-hover/item:text-slate-900 dark:group-hover/item:text-white'}`}>
+            <span className={`flex-1 min-w-0 ${language === 'ar' ? 'text-right' : 'text-left'} ${active ? 'text-[var(--industrial-primary)]' : 'text-slate-600 dark:text-gray-400 group-hover/item:text-slate-900 dark:group-hover/item:text-white'}`}>
               <span className="block truncate text-sm font-bold">{getItemLabel(item)}</span>
               {hint && level === 0 && (
                 <span className="mt-0.5 block truncate text-[10px] font-medium text-slate-400 dark:text-white/30">{hint}</span>
@@ -412,9 +412,9 @@ export function Sidebar({ onSectionChange, collapsed }: SidebarProps) {
             {hasChildren && (
               <div className="shrink-0">
                 {isExpanded ? (
-                  <ChevronDown className={`w-3.5 h-3.5 transition-transform ${active ? 'text-blue-600 dark:text-[#00A3E0]' : 'text-slate-400 dark:text-white/20'}`} />
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform ${active ? 'text-[var(--industrial-primary)]' : 'text-slate-400 dark:text-white/20'}`} />
                 ) : (
-                  <ChevronRight className={`w-3.5 h-3.5 transition-transform ${active ? 'text-blue-600 dark:text-[#00A3E0]' : 'text-slate-400 dark:text-white/10'}`} />
+                  <ChevronRight className={`w-3.5 h-3.5 transition-transform ${active ? 'text-[var(--industrial-primary)]' : 'text-slate-400 dark:text-white/10'}`} />
                 )}
               </div>
             )}
@@ -457,16 +457,16 @@ export function Sidebar({ onSectionChange, collapsed }: SidebarProps) {
     >
       {/* Plant Selector */}
       {!collapsed && (
-        <div className="p-4 border-b border-slate-200 dark:border-white/10 hover-lift">
-          <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/5 hover:border-blue-300 dark:hover:border-[#00d2ff]/30 transition-all duration-300 group cursor-pointer hover:bg-blue-50 dark:hover:bg-[#00d2ff]/5 hover:shadow-md dark:shadow-none">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0077ff] to-[#00d2ff] flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+        <div className="p-4 border-b border-slate-200 dark:border-white/10">
+          <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-[#0f131a]/60 rounded-2xl border border-slate-200 dark:border-white/5 hover:border-[var(--industrial-primary)]/50 transition-all duration-300 group cursor-pointer hover:bg-slate-100 dark:hover:bg-[#0f131a]/90 hover:shadow-md dark:hover:shadow-[0_0_20px_rgba(14,165,233,0.05)]">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--industrial-primary)] to-[var(--industrial-secondary)] flex items-center justify-center shadow-lg shadow-[var(--industrial-primary)]/20 group-hover:scale-110 transition-transform">
               <Factory className="w-5 h-5 text-white" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[10px] text-slate-500 dark:text-gray-500 font-bold uppercase tracking-wider">{t('current-plant')}</p>
-              <p className="text-sm font-black truncate text-slate-800 dark:text-white group-hover:text-blue-600 dark:group-hover:text-[#00d2ff] transition-colors">{plantLabel}</p>
+              <p className="text-sm font-black truncate text-slate-800 dark:text-white group-hover:text-[var(--industrial-primary)] transition-colors">{plantLabel}</p>
             </div>
-            <ChevronRight className="w-4 h-4 text-slate-400 dark:text-gray-600 group-hover:text-blue-600 dark:group-hover:text-[#00d2ff] transition-colors" />
+            <ChevronRight className="w-4 h-4 text-slate-400 dark:text-gray-600 group-hover:text-[var(--industrial-primary)] transition-colors" />
           </div>
 
           <div className="mt-3 grid grid-cols-3 gap-2">
@@ -477,10 +477,10 @@ export function Sidebar({ onSectionChange, collapsed }: SidebarProps) {
                   key={action.id}
                   to={action.path}
                   onClick={() => onSectionChange(action.id)}
-                  className="rounded-xl border border-slate-200 bg-white px-2 py-2 text-center transition hover:border-blue-300 hover:bg-blue-50 dark:border-white/10 dark:bg-white/5 dark:hover:border-[#00d2ff]/30 dark:hover:bg-[#00d2ff]/10"
+                  className="rounded-xl border border-slate-200 bg-white px-2 py-2 text-center transition-all duration-300 hover:border-[var(--industrial-primary)]/50 hover:bg-slate-50 dark:border-white/10 dark:bg-[#0f131a]/40 dark:hover:border-[var(--industrial-secondary)]/30 dark:hover:bg-[var(--industrial-secondary)]/10 hover:-translate-y-0.5"
                 >
-                  <Icon className="mx-auto mb-1 h-4 w-4 text-blue-600 dark:text-[#00d2ff]" />
-                  <span className="block truncate text-[10px] font-black text-slate-700 dark:text-white/80">
+                  <Icon className="mx-auto mb-1 h-4 w-4 text-[var(--industrial-primary)] dark:text-[var(--industrial-secondary)]" />
+                  <span className="block truncate text-[10px] font-black text-slate-700 dark:text-slate-200">
                     {language === 'ar' ? action.labelAr : action.labelEn}
                   </span>
                 </Link>
@@ -497,14 +497,14 @@ export function Sidebar({ onSectionChange, collapsed }: SidebarProps) {
 
       {/* Bottom Status */}
       {!collapsed && (
-        <div className="mt-auto p-4 border-t border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-transparent">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-500/20 flex items-center justify-center transition-all duration-300 hover:scale-110 hover:shadow-md dark:hover:shadow-none cursor-pointer">
-              <Cpu className="w-4 h-4 text-green-600 dark:text-green-500 shrink-0" />
+        <div className="mt-auto p-4 border-t border-slate-200 dark:border-white/10 bg-slate-50/30 dark:bg-black/10">
+          <div className="flex items-center gap-3 p-2 bg-white/40 dark:bg-[#0f131a]/40 border border-slate-200/50 dark:border-white/5 rounded-xl">
+            <div className="w-8 h-8 rounded-lg bg-[var(--industrial-success)]/10 dark:bg-[var(--industrial-success)]/20 flex items-center justify-center transition-all duration-300 hover:scale-110 cursor-pointer shrink-0">
+              <Cpu className="w-4 h-4 text-[var(--industrial-success)] shrink-0 animate-pulse" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs text-slate-500 dark:text-gray-400">{t('system-status')}</p>
-              <p className="text-sm font-medium text-green-600 dark:text-green-400">{t('operational')}</p>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">{t('system-status')}</p>
+              <p className="text-xs font-black text-[var(--industrial-success)]">{t('operational')}</p>
             </div>
           </div>
         </div>

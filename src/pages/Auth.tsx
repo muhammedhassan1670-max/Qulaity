@@ -133,24 +133,24 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center p-4">
       {/* 3D Background Effect */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#0066CC]/10 via-transparent to-[#00A3E0]/10" />
-        <div className="absolute top-20 left-10 w-72 h-72 bg-[#0066CC]/20 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-[#00A3E0]/10 rounded-full blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-radial from-[#0066CC]/5 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[var(--industrial-primary)]/10 via-transparent to-[var(--industrial-secondary)]/10" />
+        <div className="absolute top-20 left-10 w-72 h-72 bg-[var(--industrial-primary)]/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-[var(--industrial-secondary)]/5 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-radial from-[var(--industrial-primary)]/5 via-transparent to-transparent" />
       </div>
 
       {/* Main Container */}
       <div className="relative z-10 w-full max-w-md">
         {/* Logo Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-[#0066CC] to-[#00A3E0] mb-4 shadow-2xl shadow-[#0066CC]/30">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-[var(--industrial-primary)] to-[var(--industrial-secondary)] mb-4 shadow-2xl shadow-[var(--industrial-primary)]/30">
             <Zap className="w-10 h-10 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">QMS Enterprise</h1>
-          <p className="text-gray-400">4.0 Industrial Operating System</p>
+          <h1 className="text-3xl font-bold text-[var(--text-primary)] mb-2">QMS Enterprise</h1>
+          <p className="text-[var(--text-muted)]">4.0 Industrial Operating System</p>
         </div>
 
         {/* Auth Card */}
@@ -161,7 +161,7 @@ export function LoginPage() {
               onClick={() => setActiveTab('login')}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all duration-200 ${
                 activeTab === 'login'
-                  ? 'bg-[#0066CC] text-white'
+                  ? 'bg-[var(--industrial-primary)] text-white shadow-lg shadow-[var(--industrial-primary)]/20'
                   : 'text-gray-400 hover:text-white hover:bg-white/5'
               }`}
             >
@@ -171,7 +171,7 @@ export function LoginPage() {
               onClick={() => setActiveTab('register')}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all duration-200 ${
                 activeTab === 'register'
-                  ? 'bg-[#0066CC] text-white'
+                  ? 'bg-[var(--industrial-primary)] text-white shadow-lg shadow-[var(--industrial-primary)]/20'
                   : 'text-gray-400 hover:text-white hover:bg-white/5'
               }`}
             >
@@ -246,14 +246,14 @@ export function LoginPage() {
                     type="checkbox"
                     checked={credentials.rememberMe}
                     onChange={(e) => setCredentials({ ...credentials, rememberMe: e.target.checked })}
-                    className="w-4 h-4 rounded border-white/20 bg-white/5 text-[#0066CC] focus:ring-[#00A3E0]"
+                    className="w-4 h-4 rounded border-white/20 bg-white/5 text-[var(--industrial-primary)] focus:ring-[var(--industrial-secondary)]"
                   />
                   <span className="text-sm text-gray-400">Remember me</span>
                 </label>
                 <button
                   type="button"
                   onClick={() => setActiveTab('forgot')}
-                  className="text-sm text-[#00A3E0] hover:text-[#0066CC] transition-colors"
+                  className="text-sm text-[var(--industrial-secondary)] hover:text-[var(--industrial-primary)] transition-colors"
                 >
                   Forgot password?
                 </button>
@@ -262,7 +262,7 @@ export function LoginPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full h-12 bg-gradient-to-r from-[#0066CC] to-[#00A3E0] text-white font-semibold rounded-lg hover:from-[#0052a3] hover:to-[#0082b3] focus:outline-none focus:ring-2 focus:ring-[#00A3E0] focus:ring-offset-2 focus:ring-offset-[#0a0a0f] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
+                className="w-full h-12 bg-gradient-to-r from-[var(--industrial-primary)] to-[var(--industrial-secondary)] text-white font-semibold rounded-lg hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-[var(--industrial-secondary)] focus:ring-offset-2 focus:ring-offset-[var(--bg-primary)] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
               >
                 {isLoading ? (
                   <>
@@ -601,13 +601,13 @@ function RegisterForm({ onSwitchToLogin }: { onSwitchToLogin: () => void }) {
               type="checkbox"
               checked={data.acceptTerms}
               onChange={(e) => setData({ ...data, acceptTerms: e.target.checked })}
-              className="mt-1 w-4 h-4 rounded border-white/20 bg-white/5 text-[#0066CC] focus:ring-[#00A3E0]"
+              className="mt-1 w-4 h-4 rounded border-white/20 bg-white/5 text-[var(--industrial-primary)] focus:ring-[var(--industrial-secondary)]"
             />
             <span className="text-sm text-gray-400">
               I agree to the{' '}
               <button
                 type="button"
-                className="text-[#00A3E0] hover:underline"
+                className="text-[var(--industrial-secondary)] hover:underline"
                 onClick={() => toast.info('Terms of Service', { description: 'Terms page coming soon' })}
               >
                 Terms of Service
@@ -615,7 +615,7 @@ function RegisterForm({ onSwitchToLogin }: { onSwitchToLogin: () => void }) {
               and{' '}
               <button
                 type="button"
-                className="text-[#00A3E0] hover:underline"
+                className="text-[var(--industrial-secondary)] hover:underline"
                 onClick={() => toast.info('Privacy Policy', { description: 'Privacy page coming soon' })}
               >
                 Privacy Policy
@@ -638,7 +638,7 @@ function RegisterForm({ onSwitchToLogin }: { onSwitchToLogin: () => void }) {
         <button
           type="submit"
           disabled={isLoading}
-          className="flex-1 h-12 bg-gradient-to-r from-[#0066CC] to-[#00A3E0] text-white font-semibold rounded-lg hover:from-[#0052a3] hover:to-[#0082b3] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
+          className="flex-1 h-12 bg-gradient-to-r from-[var(--industrial-primary)] to-[var(--industrial-secondary)] text-white font-semibold rounded-lg hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
         >
           {isLoading ? (
             <>
@@ -741,7 +741,7 @@ function ForgotPasswordForm({ onSwitchToLogin }: { onSwitchToLogin: () => void }
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Enter your email"
-            className="w-full h-12 pl-11 pr-4 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#00A3E0] transition-all"
+            className="w-full h-12 pl-11 pr-4 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[var(--industrial-secondary)] transition-all"
             required
           />
         </div>
@@ -750,7 +750,7 @@ function ForgotPasswordForm({ onSwitchToLogin }: { onSwitchToLogin: () => void }
       <button
         type="submit"
         disabled={isLoading}
-        className="w-full h-12 bg-gradient-to-r from-[#0066CC] to-[#00A3E0] text-white font-semibold rounded-lg hover:from-[#0052a3] hover:to-[#0082b3] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
+        className="w-full h-12 bg-gradient-to-r from-[var(--industrial-primary)] to-[var(--industrial-secondary)] text-white font-semibold rounded-lg hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
       >
         {isLoading ? (
           <>

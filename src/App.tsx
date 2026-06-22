@@ -128,7 +128,7 @@ function App() {
   }
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 ${theme === 'dark' ? 'bg-[#0a0a0f] text-white dark' : 'bg-slate-50 text-slate-900 light'}`}>
+    <div className={`min-h-screen transition-colors duration-300 ${theme === 'dark' ? 'bg-[var(--bg-primary)] text-white dark' : 'bg-[var(--bg-primary)] text-slate-900 light'}`}>
       {/* 3D Background */}
       <ThreeBackground mode={performanceMode} interactive={activeSection === 'digital-twin'} />
       
