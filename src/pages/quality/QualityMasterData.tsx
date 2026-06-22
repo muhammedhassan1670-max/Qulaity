@@ -28,6 +28,7 @@ import {
   type QualityMasterTableId,
 } from '@/services/qualityMasterData';
 import { enqueueQualitySyncItem } from '@/services/qualitySyncQueue';
+import { unifiedDefectLogApi } from '@/api/unified-api';
 
 const userLabel = 'local-user';
 
@@ -60,14 +61,21 @@ export default function QualityMasterData() {
 
   useEffect(() => {
     if (activeTable === 'defect-records') {
-      try {
-        const stored = localStorage.getItem('qms_local_defect-logs');
-        if (stored) {
-          setDefectRecords(JSON.parse(stored));
+      const loadDefects = async () => {
+        try {
+          const response = await unifiedDefectLogApi.getAll();
+          if (response && Array.isArray(response.data)) {
+            setDefectRecords(response.data);
+          } else {
+            // Fallback just in case
+            const stored = localStorage.getItem('qms_local_defect-logs');
+            if (stored) setDefectRecords(JSON.parse(stored));
+          }
+        } catch (err) {
+          console.error('Failed to load defect records:', err);
         }
-      } catch (err) {
-        console.error('Failed to load defect records:', err);
-      }
+      };
+      loadDefects();
     }
   }, [activeTable]);
 
@@ -83,10 +91,23 @@ export default function QualityMasterData() {
     });
   }, [search, statusFilter, tableRecords]);
 
-  const refreshTable = (table?: QualityMasterTableId) => {
-    const tableToRefresh = table || (activeTable === 'defect-records' ? null : activeTable);
-    if (!tableToRefresh) return;
-    setRecords((prev) => ({ ...prev, [tableToRefresh]: loadQualityMasterTable(tableToRefresh) }));
+  const refreshTable = async (table?: QualityMasterTableId | 'defect-records') => {
+    const tableToRefresh = table || activeTable;
+    if (tableToRefresh === 'defect-records') {
+      try {
+        const response = await unifiedDefectLogApi.getAll();
+        if (response && Array.isArray(response.data)) {
+          setDefectRecords(response.data);
+        } else {
+          const stored = localStorage.getItem('qms_local_defect-logs');
+          if (stored) setDefectRecords(JSON.parse(stored));
+        }
+      } catch (err) {
+        console.error('Failed to load defect records:', err);
+      }
+      return;
+    }
+    setRecords((prev) => ({ ...prev, [tableToRefresh as QualityMasterTableId]: loadQualityMasterTable(tableToRefresh as QualityMasterTableId) }));
   };
 
   const switchTable = (table: string) => {
