@@ -1,378 +1,414 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Activity, BarChart3, LineChart as LineChartIcon, Plus, Trash2 } from 'lucide-react';
+import { useState, useMemo, useEffect } from 'react';
+import { 
+  Activity, BarChart3, LineChart as LineChartIcon, AlertCircle, 
+  Settings2, Download
+} from 'lucide-react';
 import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
+  ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, 
+  ResponsiveContainer, ReferenceLine, Area
 } from 'recharts';
+import { useTranslation } from '@/utils/translations';
 import { toast } from 'sonner';
-import QualityDashboardFilterBar from '@/components/QualityDashboardFilterBar';
-import QualityAnalyticsConsistencyBadge from '@/components/QualityAnalyticsConsistencyBadge';
-import type { ExtendedDefectLog } from '@/services/defectAnalytics';
-import {
-  loadQualityAnalyticsSnapshot,
-  loadQualityDashboardFilters,
-  type QualityAnalyticsSnapshot,
-  type QualityDashboardFilters,
-  type QualitySpcNumericPoint,
-} from '@/services/qualityAnalyticsHub';
 
-type SpcMetric = 'quantity' | 'ppm' | 'cost' | 'inspection-numeric';
-type SpcChartType = 'line' | 'bar';
+import { 
+  calculateXbarR, calculateIMR, calculatePChart, calculateUChart,
+  calculateCapability, buildHistogramData, type SpcSubgroup
+} from '@/services/spcEngine';
 
-interface SpcChartConfig {
-  id: string;
-  name: string;
-  metric: SpcMetric;
-  chartType: SpcChartType;
-  productionLine: string;
-  lcl: number;
-  ucl: number;
+type SpcTab = 'control' | 'capability';
+type ChartType = 'xbar-r' | 'i-mr' | 'p' | 'u';
+
+interface DemoDataRow {
+  label: string;
+  values?: number[]; // For X-bar
+  value?: number; // For I-MR
+  defective?: number; // For P
+  sampleSize?: number; // For P
+  defects?: number; // For U
+  units?: number; // For U
 }
 
-const STORAGE_KEY = 'qms_spc_charts';
-
-const defaultDraft: Omit<SpcChartConfig, 'id'> = {
-  name: '',
-  metric: 'quantity',
-  chartType: 'line',
-  productionLine: '',
-  lcl: 0,
-  ucl: 0,
-};
-
-function toNumber(value: unknown): number {
-  const parsed = Number(value || 0);
-  return Number.isFinite(parsed) ? parsed : 0;
-}
-
-function dayKey(value?: string): string {
-  if (!value) return new Date().toISOString().split('T')[0];
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? value.split('T')[0] : date.toISOString().split('T')[0];
-}
-
-function loadSavedCharts(): SpcChartConfig[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveCharts(charts: SpcChartConfig[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(charts));
-}
-
-function buildChartData(chart: SpcChartConfig | null, records: ExtendedDefectLog[], numericPoints: QualitySpcNumericPoint[]) {
-  if (!chart) return [];
-  if (chart.metric === 'inspection-numeric') {
-    return numericPoints
-      .filter((point) => !chart.productionLine || point.productionLine === chart.productionLine)
-      .map((point) => ({
-        date: point.date,
-        value: point.measuredValue,
-        lcl: point.lowerSpecLimit ?? chart.lcl,
-        ucl: point.upperSpecLimit ?? chart.ucl,
-        outOfSpec: point.outOfSpec,
-      }));
-  }
-  const filtered = records.filter((record) => !chart.productionLine || record.productionLine === chart.productionLine);
-  const byDay = new Map<string, ExtendedDefectLog[]>();
-  filtered.forEach((record) => {
-    const key = dayKey(record.date || record.createdAt);
-    byDay.set(key, [...(byDay.get(key) || []), record]);
-  });
-
-  return [...byDay.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([date, rows]) => {
-      const defects = rows.reduce((sum, record) => sum + toNumber(record.quantity), 0);
-      const inspected = rows.reduce((sum, record) => sum + toNumber(record.inspectedQuantity || record.productionQuantity), 0);
-      const cost = rows.reduce((sum, record) => sum + toNumber(record.estimatedCost), 0);
-      const value = chart.metric === 'ppm'
-        ? inspected > 0 ? Math.round((defects / inspected) * 1_000_000) : 0
-        : chart.metric === 'cost'
-          ? cost
-          : defects;
-
-      return {
-        date,
-        value,
-        lcl: chart.lcl,
-        ucl: chart.ucl,
-      };
-    });
+// Generate random normal data using Box-Muller transform
+function randomNormal(mean: number, stdDev: number) {
+  const u1 = 1 - Math.random();
+  const u2 = 1 - Math.random();
+  const z0 = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
+  return z0 * stdDev + mean;
 }
 
 export default function SPCSystem() {
-  const [records, setRecords] = useState<ExtendedDefectLog[]>([]);
-  const [analytics, setAnalytics] = useState<QualityAnalyticsSnapshot | null>(null);
-  const [charts, setCharts] = useState<SpcChartConfig[]>([]);
-  const [selectedId, setSelectedId] = useState<string>('');
-  const [draft, setDraft] = useState(defaultDraft);
-  const [isLoading, setIsLoading] = useState(true);
-  const [filters, setFilters] = useState<QualityDashboardFilters>(() => loadQualityDashboardFilters());
+  const { language } = useTranslation();
+  
+  const [activeTab, setActiveTab] = useState<SpcTab>('control');
+  const [chartType, setChartType] = useState<ChartType>('xbar-r');
+  const [data, setData] = useState<DemoDataRow[]>([]);
+  const subgroupSize = 5;
+  
+  // Capability specs
+  const [usl, setUsl] = useState<number>(55);
+  const [lsl, setLsl] = useState<number>(45);
+  const [target, setTarget] = useState<number>(50);
 
-  const selectedChart = charts.find((chart) => chart.id === selectedId) || charts[0] || null;
-  const chartData = useMemo(
-    () => buildChartData(selectedChart, records, analytics?.spcMetrics.numericInspectionSeries || []),
-    [analytics?.spcMetrics.numericInspectionSeries, selectedChart, records],
-  );
-  const lines = useMemo(() => [...new Set([
-    ...records.map((record) => record.productionLine).filter(Boolean),
-    ...(analytics?.spcMetrics.numericInspectionSeries.map((point) => point.productionLine).filter(Boolean) || []),
-  ])], [analytics?.spcMetrics.numericInspectionSeries, records]);
-
-  const reload = async () => {
-    try {
-      setIsLoading(true);
-      const nextAnalytics = await loadQualityAnalyticsSnapshot(filters);
-      const nextCharts = loadSavedCharts();
-      setAnalytics(nextAnalytics);
-      setRecords(nextAnalytics.filteredDefectRecords as ExtendedDefectLog[]);
-      setCharts(nextCharts);
-      setSelectedId((current) => current || nextCharts[0]?.id || '');
-    } catch {
-      toast.error('Failed to load SPC data');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+  // Load demo data on type change
   useEffect(() => {
-    reload();
-  }, [filters]);
+    loadDemoData();
+  }, [chartType]);
 
-  const createChart = () => {
-    if (!draft.name.trim()) {
-      toast.error('Enter a chart name');
-      return;
+  const loadDemoData = () => {
+    const newData: DemoDataRow[] = [];
+    if (chartType === 'xbar-r') {
+      // 25 subgroups of size 5
+      for (let i = 1; i <= 25; i++) {
+        // Create an out of control point artificially at index 15
+        const meanShift = i === 15 ? 4 : 0; 
+        const values = Array.from({length: subgroupSize}, () => randomNormal(50 + meanShift, 2));
+        newData.push({ label: `SG-${i}`, values });
+      }
+    } else if (chartType === 'i-mr') {
+      for (let i = 1; i <= 30; i++) {
+        newData.push({ label: `Obs-${i}`, value: randomNormal(100, 5) });
+      }
+    } else if (chartType === 'p') {
+      for (let i = 1; i <= 20; i++) {
+        const size = Math.floor(Math.random() * 50) + 100;
+        const p = i === 10 ? 0.15 : 0.05; // Spike at 10
+        newData.push({ label: `Lot-${i}`, defective: Math.round(size * p), sampleSize: size });
+      }
+    } else if (chartType === 'u') {
+      for (let i = 1; i <= 25; i++) {
+        newData.push({ label: `Unit-${i}`, defects: Math.floor(Math.random() * 8), units: 1 });
+      }
     }
+    setData(newData);
+    toast.success(language === 'ar' ? 'تم تحميل البيانات التجريبية' : 'Demo data loaded');
+  };
 
-    const next: SpcChartConfig = {
-      ...draft,
-      id: `spc-${Date.now()}`,
-      name: draft.name.trim(),
-      lcl: toNumber(draft.lcl),
-      ucl: toNumber(draft.ucl),
+  // Run Calculations
+  const calculations = useMemo(() => {
+    if (data.length === 0) return null;
+    try {
+      if (chartType === 'xbar-r') {
+        const subgroups: SpcSubgroup[] = data.map((d, i) => ({
+          id: i.toString(), label: d.label, values: d.values || []
+        }));
+        return calculateXbarR(subgroups);
+      } else if (chartType === 'i-mr') {
+        const mapped = data.map(d => ({ label: d.label, value: d.value || 0 }));
+        return calculateIMR(mapped);
+      } else if (chartType === 'p') {
+        const mapped = data.map(d => ({ label: d.label, defective: d.defective || 0, sampleSize: d.sampleSize || 100 }));
+        return calculatePChart(mapped);
+      } else if (chartType === 'u') {
+        const mapped = data.map(d => ({ label: d.label, defects: d.defects || 0, units: d.units || 1 }));
+        return calculateUChart(mapped);
+      }
+    } catch (err: any) {
+      console.error(err);
+      return null;
+    }
+    return null;
+  }, [data, chartType, subgroupSize]);
+
+  // Capability calculations
+  const capabilityData = useMemo(() => {
+    if (chartType !== 'xbar-r' && chartType !== 'i-mr') return null;
+    if (!calculations) return null;
+    
+    let allValues: number[] = [];
+    if (chartType === 'xbar-r') {
+      allValues = data.flatMap(d => d.values || []);
+    } else {
+      allValues = data.map(d => d.value || 0);
+    }
+    
+    if (allValues.length === 0) return null;
+    
+    return {
+      indices: calculateCapability(allValues, usl, lsl, target, calculations.withinSigma),
+      histogram: buildHistogramData(allValues)
     };
-    const nextCharts = [next, ...charts];
-    setCharts(nextCharts);
-    setSelectedId(next.id);
-    saveCharts(nextCharts);
-    setDraft(defaultDraft);
-    toast.success('SPC chart created');
+  }, [data, chartType, calculations, usl, lsl, target]);
+
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      const dataPoint = payload[0].payload;
+      return (
+        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-3 rounded-lg shadow-xl">
+          <p className="font-bold mb-2">{label}</p>
+          <div className="space-y-1 text-sm">
+            <p><span className="text-slate-500">Value:</span> {payload[0].value?.toFixed(3)}</p>
+            {dataPoint.ucl !== undefined && <p><span className="text-red-500">UCL:</span> {dataPoint.ucl?.toFixed(3)}</p>}
+            {dataPoint.cl !== undefined && <p><span className="text-green-500">CL:</span> {dataPoint.cl?.toFixed(3)}</p>}
+            {dataPoint.lcl !== undefined && <p><span className="text-red-500">LCL:</span> {dataPoint.lcl?.toFixed(3)}</p>}
+            
+            {dataPoint.violations && dataPoint.violations.length > 0 && (
+              <div className="mt-2 pt-2 border-t border-slate-200 dark:border-slate-600">
+                <p className="text-red-500 font-bold flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" /> Violations:
+                </p>
+                <ul className="list-disc pl-4 text-xs text-red-400">
+                  {dataPoint.violations.map((v: string, i: number) => <li key={i}>{v}</li>)}
+                </ul>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+    return null;
   };
 
-  const deleteChart = (id: string) => {
-    const nextCharts = charts.filter((chart) => chart.id !== id);
-    setCharts(nextCharts);
-    setSelectedId(nextCharts[0]?.id || '');
-    saveCharts(nextCharts);
+  const renderControlChart = (chartData: any[], limits: any, title: string, dataKey: string = 'value') => {
+    if (!chartData || chartData.length === 0) return null;
+    
+    // Add dummy point for connecting out-of-control dots if needed, but Recharts dot customizer works better
+    return (
+      <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 shadow-sm mb-6">
+        <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+          <Activity className="w-5 h-5 text-[var(--industrial-primary)]" />
+          {title}
+        </h3>
+        
+        <div className="h-[300px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" opacity={0.2} vertical={false} />
+              <XAxis dataKey="label" tick={{fontSize: 12}} />
+              <YAxis domain={['auto', 'auto']} tick={{fontSize: 12}} />
+              <Tooltip content={<CustomTooltip />} />
+              
+              {/* Control Limits */}
+              {limits.ucl !== undefined && <ReferenceLine y={limits.ucl} stroke="red" strokeDasharray="5 5" label={{ value: 'UCL', position: 'insideTopRight', fill: 'red' }} />}
+              {limits.cl !== undefined && <ReferenceLine y={limits.cl} stroke="green" strokeDasharray="3 3" label={{ value: 'CL', position: 'insideTopRight', fill: 'green' }} />}
+              {limits.lcl !== undefined && <ReferenceLine y={limits.lcl} stroke="red" strokeDasharray="5 5" label={{ value: 'LCL', position: 'insideBottomRight', fill: 'red' }} />}
+              
+              {/* Data Line */}
+              <Line 
+                type="monotone" 
+                dataKey={dataKey} 
+                stroke="var(--industrial-primary)" 
+                strokeWidth={2}
+                dot={((props: any) => {
+                  const { cx, cy, payload } = props;
+                  if (!cx || !cy) return <circle key={`dot-${props.index}`} />;
+                  const isViolation = payload.outOfControl || (payload.violations && payload.violations.length > 0);
+                  return (
+                    <circle 
+                      cx={cx} 
+                      cy={cy} 
+                      r={isViolation ? 6 : 4} 
+                      fill={isViolation ? "red" : "var(--industrial-primary)"} 
+                      stroke="white" 
+                      strokeWidth={2} 
+                      key={`dot-${props.index}`}
+                    />
+                  );
+                }) as any}
+                activeDot={{ r: 8 }} 
+              />
+            </ComposedChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    );
   };
 
-  const ChartComponent = selectedChart?.chartType === 'bar' ? BarChart : LineChart;
-
-  if (isLoading) {
-    return <div className="p-20 text-white">Loading SPC workspace...</div>;
-  }
+  const getCapabilityColor = (val: number) => {
+    if (val >= 1.33) return 'text-green-500 bg-green-500/10 border-green-500/20';
+    if (val >= 1.0) return 'text-yellow-500 bg-yellow-500/10 border-yellow-500/20';
+    return 'text-red-500 bg-red-500/10 border-red-500/20';
+  };
 
   return (
-    <div className="p-8 space-y-6">
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-[#0066CC]/20 border border-[#0066CC]/30 flex items-center justify-center">
-            <Activity className="text-[#00A3E0] w-7 h-7" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-black text-white uppercase italic">SPC Workspace</h1>
-            <p className="text-sm text-gray-500">Create control charts from registered defect records</p>
-          </div>
+    <div className="max-w-[1600px] mx-auto p-4 md:p-6 lg:p-8 pt-24 min-h-screen">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <div>
+          <h1 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-3">
+            <LineChartIcon className="w-8 h-8 text-[var(--industrial-primary)]" />
+            {language === 'ar' ? 'التحكم الإحصائي (SPC)' : 'Statistical Process Control'}
+          </h1>
+          <p className="text-slate-500 dark:text-gray-400 mt-1 font-medium">
+            {language === 'ar' ? 'مراقبة استقرار وقدرة العمليات' : 'Monitor process stability and capability'}
+          </p>
         </div>
-        <button
-          onClick={reload}
-          className="px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-sm font-bold text-white hover:bg-white/10"
-        >
-          Refresh Data
-        </button>
-      </div>
-
-      <QualityDashboardFilterBar value={filters} onChange={setFilters} compact />
-      <QualityAnalyticsConsistencyBadge dashboardName="SPC Workspace" snapshot={analytics} compact />
-
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          { label: 'Records', value: analytics?.defectMetrics.totalRecords || 0 },
-          { label: 'Defects', value: analytics?.defectMetrics.totalDefectQuantity || 0 },
-          { label: 'Process PPM', value: analytics?.ppmMetrics.currentPpm || 0 },
-          { label: 'Numeric Points', value: analytics?.spcMetrics.numericInspectionSeries.length || 0 },
-          { label: 'Out of Spec', value: analytics?.spcMetrics.outOfSpecPoints || 0 },
-          { label: 'Charts', value: charts.length },
-        ].map((card) => (
-          <div key={card.label} className="glass-panel rounded-xl p-4 border border-white/10">
-            <p className="text-xs text-gray-500 uppercase font-black">{card.label}</p>
-            <p className="text-2xl font-black text-white mt-1">{card.value}</p>
-          </div>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-        <div className="glass-panel rounded-2xl p-5 border border-white/10 xl:col-span-1 space-y-4">
-          <div className="flex items-center gap-2">
-            <Plus className="w-4 h-4 text-[#00A3E0]" />
-            <h2 className="text-sm font-black text-white uppercase tracking-widest">New Chart</h2>
-          </div>
-
-          <input
-            value={draft.name}
-            onChange={(event) => setDraft({ ...draft, name: event.target.value })}
-            placeholder="Chart name"
-            className="w-full h-11 px-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder:text-gray-600"
-          />
-
-          <select
-            value={draft.metric}
-            onChange={(event) => setDraft({ ...draft, metric: event.target.value as SpcMetric })}
-            className="w-full h-11 px-3 rounded-lg bg-[#1a1a1f] border border-white/10 text-white"
-          >
-            <option value="quantity">Defect Quantity</option>
-            <option value="ppm">Process PPM</option>
-            <option value="cost">Defect Cost</option>
-            <option value="inspection-numeric">Numeric Inspection Check</option>
-          </select>
-
-          <select
-            value={draft.chartType}
-            onChange={(event) => setDraft({ ...draft, chartType: event.target.value as SpcChartType })}
-            className="w-full h-11 px-3 rounded-lg bg-[#1a1a1f] border border-white/10 text-white"
-          >
-            <option value="line">Line Chart</option>
-            <option value="bar">Bar Chart</option>
-          </select>
-
-          <select
-            value={draft.productionLine}
-            onChange={(event) => setDraft({ ...draft, productionLine: event.target.value })}
-            className="w-full h-11 px-3 rounded-lg bg-[#1a1a1f] border border-white/10 text-white"
-          >
-            <option value="">All production lines</option>
-            {lines.map((line) => (
-              <option key={line} value={line}>{line}</option>
-            ))}
-          </select>
-
-          <div className="grid grid-cols-2 gap-3">
-            <input
-              type="number"
-              value={draft.lcl}
-              onChange={(event) => setDraft({ ...draft, lcl: Number(event.target.value) })}
-              placeholder="LCL"
-              className="w-full h-11 px-3 rounded-lg bg-white/5 border border-white/10 text-white"
-            />
-            <input
-              type="number"
-              value={draft.ucl}
-              onChange={(event) => setDraft({ ...draft, ucl: Number(event.target.value) })}
-              placeholder="UCL"
-              className="w-full h-11 px-3 rounded-lg bg-white/5 border border-white/10 text-white"
-            />
-          </div>
-
+        
+        <div className="flex bg-slate-100 dark:bg-white/5 p-1 rounded-xl">
           <button
-            onClick={createChart}
-            className="w-full h-11 rounded-lg bg-[#0066CC] text-white font-bold hover:bg-[#005BB5]"
+            onClick={() => setActiveTab('control')}
+            className={`px-6 py-2.5 rounded-lg font-bold text-sm transition-all ${activeTab === 'control' ? 'bg-white dark:bg-[var(--industrial-primary)] text-[var(--industrial-primary)] dark:text-white shadow-sm' : 'text-slate-500 dark:text-gray-400 hover:text-slate-700 dark:hover:text-white'}`}
           >
-            Create Chart
+            {language === 'ar' ? 'شارتات التحكم' : 'Control Charts'}
           </button>
-
-          <div className="pt-4 border-t border-white/10 space-y-2">
-            {charts.map((chart) => {
-              const Icon = chart.chartType === 'bar' ? BarChart3 : LineChartIcon;
-              return (
-                <button
-                  key={chart.id}
-                  onClick={() => setSelectedId(chart.id)}
-                  className={`w-full flex items-center justify-between gap-3 p-3 rounded-xl border text-left transition-colors ${
-                    selectedChart?.id === chart.id ? 'bg-[#0066CC]/20 border-[#0066CC]/40' : 'bg-white/5 border-white/10 hover:bg-white/10'
-                  }`}
-                >
-                  <span className="flex items-center gap-2 min-w-0">
-                    <Icon className="w-4 h-4 text-[#00A3E0] shrink-0" />
-                    <span className="text-sm text-white font-bold truncate">{chart.name}</span>
-                  </span>
-                  <Trash2
-                    className="w-4 h-4 text-gray-500 hover:text-red-400 shrink-0"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      deleteChart(chart.id);
-                    }}
-                  />
-                </button>
-              );
-            })}
-            {charts.length === 0 && <p className="text-xs text-gray-500 text-center py-6">No SPC charts yet</p>}
-          </div>
-        </div>
-
-        <div className="glass-panel rounded-2xl p-5 border border-white/10 xl:col-span-3">
-          {selectedChart ? (
-            <>
-              <div className="flex items-center justify-between mb-5">
-                <div>
-                  <h2 className="text-lg font-black text-white">{selectedChart.name}</h2>
-                  <p className="text-xs text-gray-500 uppercase font-bold">{selectedChart.metric} - {selectedChart.productionLine || 'All lines'}</p>
-                </div>
-                <div className="text-xs text-gray-500">LCL {selectedChart.lcl} - UCL {selectedChart.ucl}</div>
-              </div>
-              {selectedChart.metric === 'inspection-numeric' && (
-                <div className="mb-4 rounded-xl border border-amber-400/20 bg-amber-500/10 p-3 text-xs text-amber-100">
-                  Numeric inspection points come from real inspection runs and check-item LSL/USL limits. Missing numeric data shows as an empty state.
-                </div>
-              )}
-              <div className="h-[420px]">
-                {chartData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <ChartComponent data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
-                      <XAxis dataKey="date" stroke="#6B7280" fontSize={12} />
-                      <YAxis stroke="#6B7280" fontSize={12} />
-                      <Tooltip contentStyle={{ background: '#0a0a0f', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }} />
-                      {selectedChart.chartType === 'bar' ? (
-                        <Bar dataKey="value" fill="#00A3E0" radius={[8, 8, 0, 0]} />
-                      ) : (
-                        <>
-                          <Line type="monotone" dataKey="value" stroke="#00A3E0" strokeWidth={3} dot={{ r: 4 }} />
-                          <Line type="monotone" dataKey="ucl" stroke="#EF4444" strokeDasharray="6 4" dot={false} />
-                          <Line type="monotone" dataKey="lcl" stroke="#F59E0B" strokeDasharray="6 4" dot={false} />
-                        </>
-                      )}
-                    </ChartComponent>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="h-full flex items-center justify-center rounded-2xl border border-dashed border-white/10 text-gray-500">
-                    No matching defect or numeric inspection records for this chart
-                  </div>
-                )}
-              </div>
-            </>
-          ) : (
-            <div className="h-[420px] flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/10 text-center">
-              <Activity className="w-12 h-12 text-white/10 mb-4" />
-              <h2 className="text-xl font-black text-white/30 uppercase">Create your first SPC chart</h2>
-              <p className="text-sm text-gray-600 mt-2">Charts will populate from records entered in the defect recorder.</p>
-            </div>
-          )}
+          <button
+            onClick={() => setActiveTab('capability')}
+            disabled={chartType !== 'xbar-r' && chartType !== 'i-mr'}
+            className={`px-6 py-2.5 rounded-lg font-bold text-sm transition-all disabled:opacity-30 ${activeTab === 'capability' ? 'bg-white dark:bg-[var(--industrial-primary)] text-[var(--industrial-primary)] dark:text-white shadow-sm' : 'text-slate-500 dark:text-gray-400 hover:text-slate-700 dark:hover:text-white'}`}
+          >
+            {language === 'ar' ? 'تحليل القدرة' : 'Capability Analysis'}
+          </button>
         </div>
       </div>
+
+      {activeTab === 'control' && (
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Controls Sidebar */}
+          <div className="lg:col-span-1 space-y-6">
+            <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-5">
+              <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                <Settings2 className="w-5 h-5 text-[var(--industrial-primary)]" />
+                {language === 'ar' ? 'إعدادات الشارت' : 'Chart Settings'}
+              </h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">
+                    {language === 'ar' ? 'نوع الشارت' : 'Chart Type'}
+                  </label>
+                  <select 
+                    value={chartType}
+                    onChange={(e) => setChartType(e.target.value as ChartType)}
+                    className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-[var(--industrial-primary)]"
+                  >
+                    <option value="xbar-r">X-bar & R (Variables)</option>
+                    <option value="i-mr">I-MR (Individual Variables)</option>
+                    <option value="p">p Chart (Proportion Defective)</option>
+                    <option value="u">u Chart (Defects per Unit)</option>
+                  </select>
+                </div>
+
+                <button 
+                  onClick={loadDemoData}
+                  className="w-full py-2.5 bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 text-slate-700 dark:text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-colors"
+                >
+                  <Download className="w-4 h-4" />
+                  {language === 'ar' ? 'تحميل بيانات تجريبية' : 'Load Demo Data'}
+                </button>
+              </div>
+            </div>
+
+            {calculations && (
+              <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-5">
+                <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                  <BarChart3 className="w-5 h-5 text-[var(--industrial-primary)]" />
+                  {language === 'ar' ? 'ملخص إحصائي' : 'Statistical Summary'}
+                </h3>
+                
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center p-3 rounded-xl bg-slate-50 dark:bg-white/5">
+                    <span className="text-sm text-slate-500">{language === 'ar' ? 'المتوسط الإجمالي' : 'Overall Mean'}</span>
+                    <span className="font-bold">{calculations.overallMean.toFixed(3)}</span>
+                  </div>
+                  <div className="flex justify-between items-center p-3 rounded-xl bg-slate-50 dark:bg-white/5">
+                    <span className="text-sm text-slate-500">{language === 'ar' ? 'الانحراف (الداخلي)' : 'Within Sigma'}</span>
+                    <span className="font-bold">{calculations.withinSigma.toFixed(3)}</span>
+                  </div>
+                  <div className="flex justify-between items-center p-3 rounded-xl bg-slate-50 dark:bg-white/5">
+                    <span className="text-sm text-slate-500">{language === 'ar' ? 'الانحراف (الكلي)' : 'Overall Sigma'}</span>
+                    <span className="font-bold">{calculations.overallSigma.toFixed(3)}</span>
+                  </div>
+                  
+                  {calculations.primaryChart.some(p => p.outOfControl) && (
+                    <div className="mt-4 p-3 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-red-600 dark:text-red-400 text-sm flex items-start gap-2">
+                      <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                      <div>
+                        <strong>{language === 'ar' ? 'تحذير' : 'Warning'}:</strong> 
+                        {language === 'ar' ? ' توجد نقاط خارج حدود التحكم!' : ' Process is out of statistical control!'}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Charts Area */}
+          <div className="lg:col-span-3">
+            {calculations ? (
+              <>
+                {renderControlChart(calculations.primaryChart, calculations.primaryLimits, calculations.chartType + ' Chart')}
+                {calculations.secondaryChart && (
+                  renderControlChart(calculations.secondaryChart, calculations.secondaryLimits!, chartType === 'xbar-r' ? 'R Chart' : 'MR Chart')
+                )}
+              </>
+            ) : (
+              <div className="h-[400px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 border-dashed rounded-2xl flex flex-col items-center justify-center text-slate-400">
+                <LineChartIcon className="w-16 h-16 mb-4 opacity-50" />
+                <p>{language === 'ar' ? 'قم بتحميل البيانات لرؤية الشارت' : 'Load data to view charts'}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'capability' && capabilityData && (
+        <div className="space-y-6">
+          {/* Spec Limits Input */}
+          <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-5 flex flex-wrap gap-4 items-end">
+            <div>
+              <label className="block text-xs font-bold text-slate-500 mb-1">LSL</label>
+              <input type="number" value={lsl} onChange={e => setLsl(Number(e.target.value))} className="w-32 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2 outline-none" />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-500 mb-1">Target</label>
+              <input type="number" value={target} onChange={e => setTarget(Number(e.target.value))} className="w-32 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2 outline-none" />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-500 mb-1">USL</label>
+              <input type="number" value={usl} onChange={e => setUsl(Number(e.target.value))} className="w-32 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2 outline-none" />
+            </div>
+          </div>
+
+          {/* KPI Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className={`p-6 rounded-2xl border ${getCapabilityColor(capabilityData.indices.cp)}`}>
+              <p className="text-sm font-bold uppercase opacity-80">Cp</p>
+              <p className="text-3xl font-black mt-2">{capabilityData.indices.cp.toFixed(2)}</p>
+            </div>
+            <div className={`p-6 rounded-2xl border ${getCapabilityColor(capabilityData.indices.cpk)}`}>
+              <p className="text-sm font-bold uppercase opacity-80">Cpk</p>
+              <p className="text-3xl font-black mt-2">{capabilityData.indices.cpk.toFixed(2)}</p>
+            </div>
+            <div className={`p-6 rounded-2xl border ${getCapabilityColor(capabilityData.indices.pp)}`}>
+              <p className="text-sm font-bold uppercase opacity-80">Pp</p>
+              <p className="text-3xl font-black mt-2">{capabilityData.indices.pp.toFixed(2)}</p>
+            </div>
+            <div className={`p-6 rounded-2xl border ${getCapabilityColor(capabilityData.indices.ppk)}`}>
+              <p className="text-sm font-bold uppercase opacity-80">Ppk</p>
+              <p className="text-3xl font-black mt-2">{capabilityData.indices.ppk.toFixed(2)}</p>
+            </div>
+          </div>
+
+          {/* Histogram */}
+          <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-6">
+            <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
+              <BarChart3 className="w-5 h-5 text-[var(--industrial-primary)]" />
+              {language === 'ar' ? 'توزيع القياسات' : 'Measurements Distribution (Histogram)'}
+            </h3>
+            
+            <div className="h-[400px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart data={capabilityData.histogram} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.2} vertical={false} />
+                  <XAxis dataKey="binLabel" tick={{fontSize: 12}} />
+                  <YAxis yAxisId="left" domain={['auto', 'auto']} />
+                  <YAxis yAxisId="right" orientation="right" hide />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.9)', border: 'none', borderRadius: '8px', color: 'white' }}
+                  />
+                  
+                  <ReferenceLine x={lsl.toString()} stroke="red" strokeDasharray="5 5" label={{ value: 'LSL', position: 'insideTopLeft', fill: 'red' }} />
+                  <ReferenceLine x={usl.toString()} stroke="red" strokeDasharray="5 5" label={{ value: 'USL', position: 'insideTopRight', fill: 'red' }} />
+                  {target && <ReferenceLine x={target.toString()} stroke="green" strokeDasharray="3 3" label={{ value: 'Target', position: 'insideTop', fill: 'green' }} />}
+                  
+                  <Bar yAxisId="left" dataKey="frequency" fill="var(--industrial-primary)" opacity={0.6} />
+                  <Area yAxisId="right" type="monotone" dataKey="normalY" stroke="var(--industrial-secondary)" fill="var(--industrial-secondary)" fillOpacity={0.1} strokeWidth={3} />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

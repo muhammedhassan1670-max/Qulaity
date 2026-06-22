@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState, useEffect } from 'react';
 import {
   AlertTriangle,
   CheckCircle2,
@@ -44,22 +44,36 @@ function recordText(record: QualityMasterRecord): string {
 }
 
 export default function QualityMasterData() {
-  const [activeTable, setActiveTable] = useState<QualityMasterTableId>('parts');
+  const [activeTable, setActiveTable] = useState<QualityMasterTableId | 'defect-records'>('parts');
   const [records, setRecords] = useState<Record<QualityMasterTableId, QualityMasterRecord[]>>(() => (
     qualityMasterTableConfigs.reduce((acc, table) => {
       acc[table.id] = loadQualityMasterTable(table.id);
       return acc;
     }, {} as Record<QualityMasterTableId, QualityMasterRecord[]>)
   ));
+  const [defectRecords, setDefectRecords] = useState<any[]>([]);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('active');
   const [editingRecord, setEditingRecord] = useState<QualityMasterRecord | null>(null);
   const [draft, setDraft] = useState<Record<string, unknown>>(() => blankRecord('parts'));
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const config = getQualityMasterTableConfig(activeTable);
-  const tableRecords = records[activeTable] || [];
-  const duplicates = useMemo(() => detectMasterDuplicates(activeTable, tableRecords), [activeTable, tableRecords]);
+  useEffect(() => {
+    if (activeTable === 'defect-records') {
+      try {
+        const stored = localStorage.getItem('qms_local_defect-logs');
+        if (stored) {
+          setDefectRecords(JSON.parse(stored));
+        }
+      } catch (err) {
+        console.error('Failed to load defect records:', err);
+      }
+    }
+  }, [activeTable]);
+
+  const config = activeTable !== 'defect-records' ? getQualityMasterTableConfig(activeTable as QualityMasterTableId) : qualityMasterTableConfigs[0];
+  const tableRecords = activeTable !== 'defect-records' ? (records[activeTable as QualityMasterTableId] || []) : [];
+  const duplicates = useMemo(() => activeTable !== 'defect-records' ? detectMasterDuplicates(activeTable as QualityMasterTableId, tableRecords) : [], [activeTable, tableRecords]);
   const filteredRecords = useMemo(() => {
     const needle = search.trim().toLowerCase();
     return tableRecords.filter((record) => {
@@ -69,11 +83,18 @@ export default function QualityMasterData() {
     });
   }, [search, statusFilter, tableRecords]);
 
-  const refreshTable = (table: QualityMasterTableId = activeTable) => {
-    setRecords((prev) => ({ ...prev, [table]: loadQualityMasterTable(table) }));
+  const refreshTable = (table?: QualityMasterTableId) => {
+    const tableToRefresh = table || (activeTable === 'defect-records' ? null : activeTable);
+    if (!tableToRefresh) return;
+    setRecords((prev) => ({ ...prev, [tableToRefresh]: loadQualityMasterTable(tableToRefresh) }));
   };
 
   const switchTable = (table: string) => {
+    if (table === 'defect-records') {
+      setActiveTable('defect-records');
+      setSearch('');
+      return;
+    }
     const tableId = table as QualityMasterTableId;
     setActiveTable(tableId);
     setDraft(blankRecord(tableId));
@@ -88,19 +109,21 @@ export default function QualityMasterData() {
   };
 
   const startNew = () => {
+    if (activeTable === 'defect-records') return;
     setEditingRecord(null);
-    setDraft(blankRecord(activeTable));
+    setDraft(blankRecord(activeTable as QualityMasterTableId));
   };
 
   const saveRecord = () => {
-    const missing = validateMasterRecord(activeTable, draft);
+    if (activeTable === 'defect-records') return;
+    const missing = validateMasterRecord(activeTable as QualityMasterTableId, draft);
     if (missing.length > 0) {
       toast.error('Required master data fields are missing', {
         description: missing.join(', '),
       });
       return;
     }
-    upsertQualityMasterRecord(activeTable, editingRecord ? { ...editingRecord, ...draft } : draft, userLabel);
+    upsertQualityMasterRecord(activeTable as QualityMasterTableId, editingRecord ? { ...editingRecord, ...draft } : draft, userLabel);
     enqueueQualitySyncItem({
       entityType: 'master-data',
       entityId: `${activeTable}:${String(draft.id || draft[config.primaryKey] || 'new')}`,
@@ -115,7 +138,8 @@ export default function QualityMasterData() {
   };
 
   const deactivateRecord = (id: string) => {
-    deactivateQualityMasterRecord(activeTable, id, userLabel);
+    if (activeTable === 'defect-records') return;
+    deactivateQualityMasterRecord(activeTable as QualityMasterTableId, id, userLabel);
     enqueueQualitySyncItem({
       entityType: 'master-data',
       entityId: `${activeTable}:${id}`,
@@ -143,14 +167,14 @@ export default function QualityMasterData() {
           toast.error('Empty file', { description: 'No rows were found in the selected file.' });
           return;
         }
-        const next = importQualityMasterRows(activeTable, rows, userLabel);
+        const next = importQualityMasterRows(activeTable as QualityMasterTableId, rows, userLabel);
         enqueueQualitySyncItem({
           entityType: 'master-data',
           entityId: activeTable,
           operation: 'update',
           payloadSummary: `${rows.length} rows imported into ${config.name}.`,
         });
-        setRecords((prev) => ({ ...prev, [activeTable]: next }));
+        setRecords((prev) => ({ ...prev, [activeTable as QualityMasterTableId]: next }));
         toast.success('Master data imported', {
           description: `${rows.length} rows loaded into ${config.name}.`,
         });
@@ -200,6 +224,12 @@ export default function QualityMasterData() {
                   {table.name}
                 </TabsTrigger>
               ))}
+              <TabsTrigger
+                value="defect-records"
+                className="data-[state=active]:bg-[#0066CC] data-[state=active]:text-white px-4 py-2 shrink-0 border-l border-white/10 ml-2 pl-6"
+              >
+                Defect Records
+              </TabsTrigger>
             </TabsList>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -430,6 +460,90 @@ export default function QualityMasterData() {
               </div>
             </TabsContent>
           ))}
+
+          <TabsContent value="defect-records" className="mt-0 focus-visible:outline-none">
+            <div className="glass-panel p-5 rounded-2xl border border-white/10">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+                <div>
+                  <h3 className="text-xl font-black text-white">Recorded Defects</h3>
+                  <p className="text-xs text-white/50">
+                    These are the actual defect records logged by operators. Note: This view is read-only. 
+                    To log new defects, please use the Defect Recorder page.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <Search className="w-4 h-4 text-white/40 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      placeholder="Search records..."
+                      className="w-[250px] pl-9 pr-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-sm"
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm text-left">
+                  <thead className="text-xs text-white/40 uppercase bg-white/5 border-b border-white/10">
+                    <tr>
+                      <th className="px-4 py-3 font-black">Date</th>
+                      <th className="px-4 py-3 font-black">Shift</th>
+                      <th className="px-4 py-3 font-black">Line</th>
+                      <th className="px-4 py-3 font-black">Part</th>
+                      <th className="px-4 py-3 font-black">Defect Type</th>
+                      <th className="px-4 py-3 font-black">Qty</th>
+                      <th className="px-4 py-3 font-black">Severity</th>
+                      <th className="px-4 py-3 font-black">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {defectRecords.length === 0 ? (
+                      <tr>
+                        <td colSpan={8} className="px-4 py-8 text-center text-white/40">
+                          No defect records found.
+                        </td>
+                      </tr>
+                    ) : (
+                      defectRecords.filter(r => !search || JSON.stringify(r).toLowerCase().includes(search.toLowerCase())).map((record: any, index: number) => (
+                        <tr key={index} className="border-t border-white/5 hover:bg-white/[0.03]">
+                          <td className="px-4 py-3 text-white/70">{record.date || '---'}</td>
+                          <td className="px-4 py-3 text-white/70">{record.shift || '---'}</td>
+                          <td className="px-4 py-3 text-white/70">{record.productionLine || '---'}</td>
+                          <td className="px-4 py-3 text-white/70 max-w-[200px] truncate" title={record.partNameAtTime || record.partId || '---'}>
+                            {record.partNameAtTime || record.partId || '---'}
+                          </td>
+                          <td className="px-4 py-3 text-white/70">{record.defectType || '---'}</td>
+                          <td className="px-4 py-3 text-white/70 font-bold">{record.quantity || 0}</td>
+                          <td className="px-4 py-3">
+                            <span className={`px-2 py-1 rounded text-[10px] font-black uppercase ${
+                              record.severity === 'critical' ? 'bg-red-500/20 text-red-400' :
+                              record.severity === 'major' ? 'bg-amber-500/20 text-amber-400' :
+                              'bg-yellow-500/20 text-yellow-400'
+                            }`}>
+                              {record.severity || 'minor'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`px-2 py-1 rounded text-[10px] font-black uppercase ${
+                              record.status === 'open' ? 'bg-amber-500/10 text-amber-400' :
+                              record.status === 'closed' ? 'bg-emerald-500/10 text-emerald-400' :
+                              'bg-blue-500/10 text-blue-400'
+                            }`}>
+                              {record.status || 'open'}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </TabsContent>
+
         </Tabs>
       </PageSection>
     </PageContainer>
