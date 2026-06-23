@@ -26,7 +26,10 @@ import {
   GizmoViewport,
   Sparkles,
   Float,
+  MeshReflectorMaterial,
+  PointerLockControls
 } from '@react-three/drei';
+import { EffectComposer, Bloom, Vignette, Noise } from '@react-three/postprocessing';
 import * as THREE from 'three';
 import {
   Box as BoxIcon,
@@ -71,6 +74,8 @@ import {
 } from 'recharts';
 import ACFactoryDigitalTwin from './ACFactoryDigitalTwin';
 import { productionLayoutApi, type ProductionLayoutData } from '@/api/production-layout';
+import { FPSController } from '@/components/3d/FPSController';
+import { AIDrone } from '@/components/3d/AIDrone';
 
 const DEFAULT_MACHINE_DIMENSIONS = {
   width: 2.8,
@@ -1007,8 +1012,26 @@ function FactoryFloor({
     <>
       <FactoryShell />
 
+      {/* God-Tier Reflective Floor */}
+      <mesh position={[0, -1.95, 2]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[100, 100]} />
+        <MeshReflectorMaterial
+          blur={[300, 100]}
+          resolution={1024}
+          mixBlur={1}
+          mixStrength={80}
+          roughness={1}
+          depthScale={1.2}
+          minDepthThreshold={0.4}
+          maxDepthThreshold={1.4}
+          color="#050505"
+          metalness={0.8}
+          mirror={1}
+        />
+      </mesh>
+      
       {/* Floor helper grid */}
-      <Grid position={[0, -1.95, 2]} args={[50, 50]} cellSize={1} cellThickness={0.45} cellColor="#0066CC" sectionSize={5} sectionThickness={1} sectionColor="#00A3E0" fadeDistance={30} fadeStrength={1} />
+      <Grid position={[0, -1.94, 2]} args={[50, 50]} cellSize={1} cellThickness={0.45} cellColor="#0066CC" sectionSize={5} sectionThickness={1} sectionColor="#00A3E0" fadeDistance={30} fadeStrength={1} />
       
       {/* Machines */}
       {machines.map((m) => (
@@ -1496,6 +1519,9 @@ export function DigitalTwin() {
   const [isSimulationRunning, setIsSimulationRunning] = useState(true);
   const [showLabels, setShowLabels] = useState(true);
   const [viewMode, setViewMode] = useState<'3d' | 'heatmap' | 'schematic'>('3d');
+  const [walkMode, setWalkMode] = useState(false);
+  const [timeTravel, setTimeTravel] = useState(false);
+  const [deployDrone, setDeployDrone] = useState(false);
   const viewportRef = useRef<HTMLDivElement>(null);
   const canvasElRef = useRef<HTMLCanvasElement | null>(null);
   const [autoRotate, setAutoRotate] = useState(true);
@@ -1901,6 +1927,9 @@ export function DigitalTwin() {
               <Card className="glass-panel border-white/10 overflow-hidden">
                 <CardHeader className="pb-2 border-b border-white/10">
                   <div className="flex items-center justify-between">
+                    <div className="flex justify-between items-center mb-2">
+                      <CardTitle className="text-xl text-white font-bold">{t('digital-twin-title')}</CardTitle>
+                    </div>
                     <div className="flex items-center gap-4">
                       <CardTitle className="text-base flex items-center gap-2">
                         <Factory className="w-5 h-5 text-[#00A3E0]" />
@@ -1918,6 +1947,26 @@ export function DigitalTwin() {
                             {mode}
                           </button>
                         ))}
+                        <button
+                          onClick={() => {
+                            setWalkMode(!walkMode);
+                            if (!walkMode) setViewMode('3d');
+                          }}
+                          className={`px-3 py-1 rounded text-xs capitalize transition-colors flex items-center gap-1 ${
+                            walkMode ? 'bg-[#22c55e] text-white shadow-[0_0_15px_rgba(34,197,94,0.4)]' : 'text-gray-400 hover:text-white'
+                          }`}
+                        >
+                          <Activity className="w-3 h-3" />
+                          Walk Mode
+                        </button>
+                        <button
+                          onClick={() => setDeployDrone(!deployDrone)}
+                          className={`px-3 py-1 rounded text-xs capitalize transition-colors ${
+                            deployDrone ? 'bg-orange-500 text-white' : 'text-gray-400 hover:text-white'
+                          }`}
+                        >
+                          Drone
+                        </button>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -1969,17 +2018,30 @@ export function DigitalTwin() {
                       >
                         <color attach="background" args={['#070710']} />
                         <fog attach="fog" args={['#070710', 18, 45]} />
-                        <PerspectiveCamera makeDefault position={[0, 10, 15]} />
-                        <CameraDirector
-                          focus={effectiveFocus}
-                          autoRotate={autoRotate && !selectedMachineData}
-                          onControlsReady={(c) => {
-                            controlsApiRef.current = c;
-                          }}
-                        />
+                        <PerspectiveCamera makeDefault position={walkMode ? [0, 1.7, 5] : [0, 10, 15]} />
+                        
+                        {walkMode ? (
+                          <>
+                            <PointerLockControls />
+                            <FPSController />
+                          </>
+                        ) : (
+                          <CameraDirector
+                            focus={effectiveFocus}
+                            autoRotate={autoRotate && !selectedMachineData}
+                            onControlsReady={(c) => {
+                              controlsApiRef.current = c;
+                            }}
+                          />
+                        )}
                         <GizmoHelper alignment="bottom-right" margin={[90, 90]}>
                           <GizmoViewport axisColors={['#ef4444', '#22c55e', '#3b82f6']} labelColor="#ffffff" />
                         </GizmoHelper>
+                        <EffectComposer>
+                          <Bloom luminanceThreshold={0.2} mipmapBlur intensity={1.5} />
+                          <Vignette eskil={false} offset={0.1} darkness={1.1} />
+                          <Noise opacity={0.02} />
+                        </EffectComposer>
                         <Suspense fallback={null}>
                           <FactoryFloor
                             machines={machines}
@@ -1998,7 +2060,7 @@ export function DigitalTwin() {
                               } else if (m.status === 'stopped') {
                                 toast.error(`${m.id} Stopped`, { description: 'Maintenance required' });
                               } else {
-                                toast.info(`${m.id} Selected`, { description: `OEE: ${m.oee}%, Status: ${m.status}` });
+                                toast.success(`${m.id} Selected`, { description: `OEE: ${m.oee}%` });
                               }
                             }}
                             isEditMode={isLegacyEditMode}
@@ -2010,6 +2072,7 @@ export function DigitalTwin() {
                             onPickReference={pickLegacyReference}
                             liteMode={isLiteMode}
                           />
+                          {deployDrone && <AIDrone targetMachineId={selectedMachine} machines={machines} />}
                         </Suspense>
                       </Canvas>
                     )}
@@ -2020,6 +2083,28 @@ export function DigitalTwin() {
 
                     {viewMode === 'schematic' && (
                       <SchematicView machines={machines} selectedMachine={selectedMachine} onSelect={setSelectedMachine} />
+                    )}
+
+                    {/* Time Travel DVR Slider */}
+                    {timeTravel && (
+                      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-3/4 max-w-xl bg-black/60 backdrop-blur-md border border-[#00A3E0]/30 rounded-full px-6 py-3 flex items-center gap-4 z-10">
+                        <Clock className="w-5 h-5 text-[#00A3E0] animate-pulse" />
+                        <span className="text-xs font-bold text-[#00A3E0] whitespace-nowrap">DVR Mode</span>
+                        <input 
+                          type="range" 
+                          className="w-full h-1 bg-white/20 rounded-lg appearance-none cursor-pointer"
+                          min="0"
+                          max="100"
+                          defaultValue="100"
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value);
+                            toast.info(`Rewinding to -${100 - val} minutes ago`, { id: 'dvr-toast' });
+                          }}
+                        />
+                        <button onClick={() => setTimeTravel(false)} className="text-gray-400 hover:text-white">
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
                     )}
                   </div>
                 </CardContent>

@@ -1,6 +1,6 @@
-
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useHaptics } from '@/hooks/useHaptics';
 import { 
   PlusCircle, 
   History, 
@@ -218,6 +218,7 @@ function loadGlobalAudit(recordId: string): AuditEntry[] {
 }
 
 export default function DailyDefects() {
+  const haptics = useHaptics();
   const authUser = useAuthStore((state) => state.user);
   const { isLiteMode } = useAppStore();
   const [defects, setDefects] = useState<DefectLogData[]>([]);
@@ -1083,8 +1084,10 @@ export default function DailyDefects() {
       setFormSeed(nextValues);
       setFormDraft(nextValues);
       setFormInstanceKey((key) => key + 1);
+      haptics.success();
       if (editingDefect) await loadDefects();
-    } catch (err) {
+    } catch (err: any) {
+      haptics.error();
       console.error('Save error:', err);
       toast.error('Failed to save log');
     }
