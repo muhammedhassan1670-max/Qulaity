@@ -174,21 +174,7 @@ function App() {
       {/* Mobile Bottom Navigation Bar */}
       <MobileTabBar onMenuToggle={() => setSidebarCollapsed(!sidebarCollapsed)} />
       
-      {/* Performance Mode Indicator */}
-      <div className="fixed bottom-4 right-4 z-50">
-        <div className="glass-panel px-3 py-2 flex items-center gap-2 text-xs">
-          <span className="text-gray-400">3D Mode:</span>
-          <select 
-            value={performanceMode}
-            onChange={(e) => setPerformanceMode(e.target.value as 'full' | 'lite' | '2d')}
-            className="bg-transparent border-none text-[#00A3E0] cursor-pointer outline-none"
-          >
-            <option value="full">Full 3D</option>
-            <option value="lite">3D Lite</option>
-            <option value="2d">2D Mode</option>
-          </select>
-        </div>
-      </div>
+
     </div>
   );
 }
