@@ -2003,8 +2003,10 @@ export function DigitalTwin() {
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent className="p-0">
-                  <div ref={viewportRef} className="h-[500px] bg-[#0a0a0f]">
+                <CardContent className="p-0 relative">
+                  <div ref={viewportRef} className="h-[500px] bg-[#0a0a0f] relative">
+                    {/* Mobile Scroll Overlay - Prevents OrbitControls from trapping scroll */}
+                    <div className="absolute inset-0 z-10 md:hidden" style={{ touchAction: 'pan-y' }}></div>
                     {viewMode === '3d' && (
                       <Canvas
                         style={{ touchAction: 'pan-y' }}

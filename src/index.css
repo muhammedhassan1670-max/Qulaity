@@ -1416,7 +1416,6 @@ html[dir="rtl"] .pr-4 { padding-left: 1rem; padding-right: 1rem; }
 
 /* 1. Prevent iOS pull-to-refresh & enable momentum scrolling */
 html, body {
-  overscroll-behavior-y: none;
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
   /* Prevent horizontal scroll issues */
