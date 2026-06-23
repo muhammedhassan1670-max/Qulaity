@@ -1449,3 +1449,7 @@ html, body {
     padding-bottom: calc(80px + env(safe-area-inset-bottom, 20px)) !important;
   }
 }
+
+/* Fix mobile touch scrolling */
+canvas { touch-action: pan-y !important; }
+.recharts-wrapper, .recharts-surface { touch-action: pan-y !important; }
