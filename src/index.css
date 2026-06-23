@@ -1410,3 +1410,42 @@ html[dir="rtl"] .mr-auto { margin-left: auto; margin-right: 0; }
 html[dir="rtl"] .pl-10 { padding-right: 2.5rem; padding-left: 1rem; }
 html[dir="rtl"] .pr-4 { padding-left: 1rem; padding-right: 1rem; }
 
+/* ============================================
+   MOBILE UX & TOUCH OPTIMIZATIONS
+   ============================================ */
+
+/* 1. Prevent iOS pull-to-refresh & enable momentum scrolling */
+html, body {
+  overscroll-behavior-y: none;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  /* Prevent horizontal scroll issues */
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+/* 2. Remove tap highlight (blue flash) on mobile */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 3. Tactile Feedback Class for Interactive Elements */
+.touch-scale {
+  transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.touch-scale:active {
+  transform: scale(0.96);
+}
+
+/* 4. Safe Area Paddings (Notch phones) */
+.safe-pb {
+  padding-bottom: env(safe-area-inset-bottom, 20px);
+}
+
+/* 5. Mobile Page Content Bottom Padding */
+/* Prevents content from being hidden behind the Mobile Bottom Tab Bar */
+@media (max-width: 767px) {
+  .mobile-pb-tabbar {
+    padding-bottom: calc(80px + env(safe-area-inset-bottom, 20px)) !important;
+  }
+}

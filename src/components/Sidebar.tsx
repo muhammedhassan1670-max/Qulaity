@@ -438,7 +438,13 @@ export function Sidebar({ onSectionChange, collapsed }: SidebarProps) {
             {content}
           </div>
         ) : (
-          <Link to={getPath(item.id)} onClick={() => onSectionChange(item.id)}>
+          <Link to={getPath(item.id)} onClick={() => {
+            onSectionChange(item.id);
+            if (isMobile) {
+              // Auto-close sidebar on mobile after navigating
+              document.querySelector('header button')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+            }
+          }}>
             {content}
           </Link>
         )}
@@ -454,7 +460,19 @@ export function Sidebar({ onSectionChange, collapsed }: SidebarProps) {
   };
 
   return (
-    <aside
+    <>
+      {/* Mobile Backdrop Overlay */}
+      {isMobile && !collapsed && (
+        <div 
+          className="fixed inset-0 z-[85] bg-black/50 backdrop-blur-sm transition-opacity duration-300"
+          onClick={() => {
+            // Click outside to close on mobile
+            document.querySelector('header button')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+          }}
+        />
+      )}
+      
+      <aside
       className={`
         fixed left-0 top-[70px] bottom-0 z-[90]
         bg-white dark:bg-transparent dark:glass-ultra border-r border-slate-200 dark:border-white/10
@@ -598,6 +616,7 @@ export function Sidebar({ onSectionChange, collapsed }: SidebarProps) {
         </div>
       )}
     </aside>
+    </>
   );
 }
 

@@ -4,6 +4,7 @@ import { ThreeBackground } from './components/3d/ThreeBackground';
 import { Header } from './components/Header';
 import { Sidebar } from './components/Sidebar';
 import { QualityPageAssistant } from './components/QualityPageAssistant';
+import { MobileTabBar } from './components/MobileTabBar';
 import { useAppStore } from './stores/appStore';
 import { FullPageLoader } from './components/Loading';
 import { toast } from 'sonner';
@@ -146,9 +147,9 @@ function App() {
       
       {/* Main Content with Outlet for nested routes */}
       <main 
-        className="transition-all duration-300"
+        className="transition-all duration-300 mobile-pb-tabbar"
         style={{ 
-          marginLeft: sidebarCollapsed ? (window.innerWidth < 1024 ? '0' : '80px') : '280px',
+          marginLeft: window.innerWidth < 1024 ? '0' : (sidebarCollapsed ? '80px' : '280px'),
           marginTop: '70px',
           minHeight: 'calc(100vh - 70px)'
         }}
@@ -158,6 +159,9 @@ function App() {
           <Outlet />
         </div>
       </main>
+
+      {/* Mobile Bottom Navigation Bar */}
+      <MobileTabBar onMenuToggle={() => setSidebarCollapsed(!sidebarCollapsed)} />
       
       {/* Performance Mode Indicator */}
       <div className="fixed bottom-4 right-4 z-50">
