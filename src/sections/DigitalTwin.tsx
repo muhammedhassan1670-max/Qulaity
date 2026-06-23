@@ -2007,6 +2007,7 @@ export function DigitalTwin() {
                   <div ref={viewportRef} className="h-[500px] bg-[#0a0a0f]">
                     {viewMode === '3d' && (
                       <Canvas
+                        style={{ touchAction: 'pan-y' }}
                         shadows
                         gl={{ preserveDrawingBuffer: true, antialias: true }}
                         onCreated={({ gl }) => {

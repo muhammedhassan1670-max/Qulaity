@@ -169,9 +169,9 @@ export default function SPCSystem() {
           {title}
         </h3>
         
-        <div className="h-[300px] w-full">
+        <div className="h-[300px] w-full" style={{ touchAction: 'pan-y' }}>
           <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+            <ComposedChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }} style={{ touchAction: 'pan-y' }}>
               <CartesianGrid strokeDasharray="3 3" opacity={0.2} vertical={false} />
               <XAxis dataKey="label" tick={{fontSize: 12}} />
               <YAxis domain={['auto', 'auto']} tick={{fontSize: 12}} />
@@ -386,9 +386,9 @@ export default function SPCSystem() {
               {language === 'ar' ? 'توزيع القياسات' : 'Measurements Distribution (Histogram)'}
             </h3>
             
-            <div className="h-[400px] w-full">
+            <div className="h-[400px] w-full" style={{ touchAction: 'pan-y' }}>
               <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={capabilityData.histogram} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                <ComposedChart data={capabilityData.histogram} margin={{ top: 20, right: 30, left: 20, bottom: 20 }} style={{ touchAction: 'pan-y' }}>
                   <CartesianGrid strokeDasharray="3 3" opacity={0.2} vertical={false} />
                   <XAxis dataKey="binLabel" tick={{fontSize: 12}} />
                   <YAxis yAxisId="left" domain={['auto', 'auto']} />
