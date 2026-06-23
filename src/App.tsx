@@ -155,7 +155,7 @@ function App() {
           minHeight: 'calc(100vh - 70px)'
         }}
       >
-        <div className="p-4 md:p-6 overflow-hidden">
+        <div className="p-4 md:p-6">
           <QualityPageAssistant />
           <AnimatePresence mode="wait">
             <motion.div
