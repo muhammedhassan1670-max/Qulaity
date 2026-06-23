@@ -131,17 +131,17 @@ export default function SPCSystem() {
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
-      const dataPoint = payload[0].payload;
+      const dataPoint = payload[0]?.payload || {};
       return (
         <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-3 rounded-lg shadow-xl">
           <p className="font-bold mb-2">{label}</p>
           <div className="space-y-1 text-sm">
-            <p><span className="text-slate-500">Value:</span> {payload[0].value?.toFixed(3)}</p>
-            {dataPoint.ucl !== undefined && <p><span className="text-red-500">UCL:</span> {dataPoint.ucl?.toFixed(3)}</p>}
-            {dataPoint.cl !== undefined && <p><span className="text-green-500">CL:</span> {dataPoint.cl?.toFixed(3)}</p>}
-            {dataPoint.lcl !== undefined && <p><span className="text-red-500">LCL:</span> {dataPoint.lcl?.toFixed(3)}</p>}
+            <p><span className="text-slate-500">Value:</span> {payload[0]?.value?.toFixed(3)}</p>
+            {dataPoint?.ucl !== undefined && <p><span className="text-red-500">UCL:</span> {dataPoint.ucl?.toFixed(3)}</p>}
+            {dataPoint?.cl !== undefined && <p><span className="text-green-500">Center:</span> {dataPoint.cl?.toFixed(3)}</p>}
+            {dataPoint?.lcl !== undefined && <p><span className="text-red-500">LCL:</span> {dataPoint.lcl?.toFixed(3)}</p>}
             
-            {dataPoint.violations && dataPoint.violations.length > 0 && (
+            {dataPoint?.violations && dataPoint.violations.length > 0 && (
               <div className="mt-2 pt-2 border-t border-slate-200 dark:border-slate-600">
                 <p className="text-red-500 font-bold flex items-center gap-1">
                   <AlertCircle className="w-3 h-3" /> Violations:
@@ -191,7 +191,7 @@ export default function SPCSystem() {
                 dot={((props: any) => {
                   const { cx, cy, payload } = props;
                   if (!cx || !cy) return <circle key={`dot-${props.index}`} />;
-                  const isViolation = payload.outOfControl || (payload.violations && payload.violations.length > 0);
+                  const isViolation = payload?.outOfControl || (payload?.violations && payload.violations.length > 0);
                   return (
                     <circle 
                       cx={cx} 
