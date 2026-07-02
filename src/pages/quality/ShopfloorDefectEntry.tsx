@@ -632,12 +632,12 @@ export default function ShopfloorDefectEntry() {
           </div>
         )}
 
-        <div className="flex gap-4 mb-4">
-          <div className="flex-1 rounded-3xl border border-[#00A3E0]/30 bg-gradient-to-br from-[#00A3E0]/10 to-transparent p-4 flex flex-col items-center justify-center cursor-pointer hover:bg-[#00A3E0]/20 transition-all" onClick={() => setShowAIVision(true)}>
-             <Camera className="w-8 h-8 text-[#00A3E0] mb-2" />
+        <div className="flex flex-col sm:flex-row gap-4 mb-4">
+          <div className="sm:flex-1 rounded-3xl border border-[#00A3E0]/30 bg-gradient-to-br from-[#00A3E0]/10 to-transparent p-4 flex flex-row sm:flex-col items-center justify-center gap-3 cursor-pointer hover:bg-[#00A3E0]/20 transition-all" onClick={() => setShowAIVision(true)}>
+             <Camera className="w-8 h-8 text-[#00A3E0]" />
              <span className="text-sm font-bold text-white">AI Vision Scanner</span>
           </div>
-          <div className="flex-[2]">
+          <div className="sm:flex-[2]">
             <SmartVoiceDefectLogger 
               handsFreeMode={isHandsFree}
               onSaveRequested={() => handleSave('save-new')}
@@ -688,15 +688,15 @@ export default function ShopfloorDefectEntry() {
                 }
               }}
               placeholder="Scan or type part barcode / رقم الكود"
-              className="h-16 rounded-2xl border border-white/10 bg-black/20 px-5 text-xl font-black text-white outline-none focus:border-[#00A3E0]/60"
+              className="h-14 w-full rounded-2xl border border-white/10 bg-black/20 px-5 text-lg font-black text-white outline-none focus:border-[#00A3E0]/60"
             />
-            <Button type="button" onClick={() => applyBarcodeLookup(String(formDraft.partId || ''))} className="h-16 rounded-2xl px-6 text-base font-black">
+            <Button type="button" onClick={() => applyBarcodeLookup(String(formDraft.partId || ''))} className="h-14 w-full sm:w-auto rounded-2xl px-6 text-base font-black">
               Lookup
             </Button>
           </div>
         </section>
 
-        <section className="grid grid-cols-1 gap-4 md:grid-cols-5">
+        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-5">
           <label className="rounded-3xl border border-white/10 bg-white/5 p-4">
             <span className="mb-2 block text-xs font-black uppercase tracking-widest text-white/40">Quantity</span>
             <div className="flex items-center gap-2">

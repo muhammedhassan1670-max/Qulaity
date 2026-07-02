@@ -389,7 +389,7 @@ export function SmartVoiceDefectLogger({
   };
 
   return (
-    <div className="relative overflow-hidden rounded-3xl border border-[#00A3E0]/30 bg-gradient-to-br from-[#00A3E0]/10 to-transparent p-6 mb-6">
+    <div className="relative overflow-hidden rounded-2xl border border-[#00A3E0]/30 bg-gradient-to-br from-[#00A3E0]/10 to-transparent p-3 sm:p-5 w-full">
       <AnimatePresence>
         {isListening && (
           <motion.div
@@ -401,69 +401,69 @@ export function SmartVoiceDefectLogger({
         )}
       </AnimatePresence>
 
-      <div className="relative z-10 flex flex-col items-center justify-center space-y-4">
+      <div className="relative z-10 flex flex-col items-center justify-center space-y-2 sm:space-y-3 w-full">
         
-        <div className="flex w-full items-center justify-between">
-          <div className="flex items-center gap-2 text-[#00A3E0] font-black uppercase tracking-widest text-xs">
-            <Sparkles className="w-4 h-4" />
-            {language === 'ar-SA' ? 'المسجل الصوتي الذكي' : 'Conversational Voice AI'}
+        <div className="flex w-full items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 text-[#00A3E0] font-black uppercase tracking-widest text-xs">
+            <Sparkles className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">{language === 'ar-SA' ? 'المسجل الصوتي الذكي' : 'Voice AI'}</span>
           </div>
           <button 
             onClick={() => setLanguage(l => l === 'ar-SA' ? 'en-US' : 'ar-SA')}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-colors text-xs font-bold text-white/70"
+            className="flex items-center gap-1 px-2 py-1 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-colors text-xs font-bold text-white/70 shrink-0"
           >
-            <Globe className="w-3.5 h-3.5" />
-            {language === 'ar-SA' ? 'عربي' : 'English'}
+            <Globe className="w-3 h-3" />
+            {language === 'ar-SA' ? 'عربي' : 'EN'}
           </button>
         </div>
 
-        <div className="flex items-center justify-between mb-4 w-full">
-          <div className="flex items-center gap-2">
-            <BrainCircuit className="w-5 h-5 text-indigo-400" />
-            <h3 className="text-sm font-semibold text-white">Q-Elite Voice Copilot</h3>
+        <div className="flex items-center justify-between w-full flex-wrap gap-1">
+          <div className="flex items-center gap-1.5">
+            <BrainCircuit className="w-4 h-4 text-indigo-400 shrink-0" />
+            <h3 className="text-xs font-semibold text-white">Q-Elite Voice Copilot</h3>
           </div>
           {handsFreeMode && (
-             <span className="px-2 py-0.5 rounded-full bg-green-500/20 text-green-300 text-xs font-medium border border-green-500/30 animate-pulse flex items-center gap-1">
+             <span className="px-2 py-0.5 rounded-full bg-green-500/20 text-green-300 text-xs font-medium border border-green-500/30 animate-pulse flex items-center gap-1 shrink-0">
                <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
-               Hands-Free Active
+               Hands-Free
              </span>
           )}
         </div>
 
         <button
           onClick={handleToggleListen}
-          className={`relative flex items-center justify-center w-24 h-24 rounded-full transition-all duration-300 shadow-[0_0_30px_rgba(0,163,224,0.3)] ${
+          className={`relative flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-full transition-all duration-300 shadow-[0_0_30px_rgba(0,163,224,0.3)] ${
             isListening ? 'bg-red-500 hover:bg-red-600 shadow-[0_0_40px_rgba(239,68,68,0.5)] scale-110' : 'bg-[#00A3E0] hover:bg-[#00A3E0]/80'
           }`}
         >
           {isProcessing ? (
-            <BrainCircuit className="w-10 h-10 text-white animate-pulse" />
+            <BrainCircuit className="w-7 h-7 sm:w-9 sm:h-9 text-white animate-pulse" />
           ) : isListening ? (
-             <MicOff className="w-10 h-10 text-white" />
+             <MicOff className="w-7 h-7 sm:w-9 sm:h-9 text-white" />
           ) : (
-            <Mic className="w-10 h-10 text-white" />
+            <Mic className="w-7 h-7 sm:w-9 sm:h-9 text-white" />
           )}
         </button>
 
-        <div className="text-center min-h-[4rem] w-full max-w-lg">
+        <div className="text-center min-h-[3rem] w-full">
           {aiMessage ? (
-             <div className="flex flex-col items-center gap-2">
-                <span className="text-lg font-bold text-amber-300 animate-pulse bg-black/40 px-4 py-2 rounded-xl" dir={language === 'ar-SA' ? 'rtl' : 'ltr'}>
-                  🤖: "{aiMessage}"
+             <div className="flex flex-col items-center gap-1">
+                <span className="text-xs sm:text-sm font-bold text-amber-300 animate-pulse bg-black/40 px-3 py-2 rounded-xl leading-snug break-words" dir={language === 'ar-SA' ? 'rtl' : 'ltr'}>
+                  🤖 {aiMessage}
                 </span>
              </div>
           ) : isProcessing ? (
              <div className="flex flex-col items-center gap-2 text-[#00A3E0]">
-                <Loader2 className="w-5 h-5 animate-spin" />
-                <span className="text-sm font-bold animate-pulse">{language === 'ar-SA' ? 'جاري استخراج البيانات...' : 'Extracting parameters...'}</span>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span className="text-xs font-bold animate-pulse">{language === 'ar-SA' ? 'جاري استخراج البيانات...' : 'Extracting...'}</span>
              </div>
           ) : isListening ? (
-             <p className="text-lg font-medium text-white/90 italic" dir={language === 'ar-SA' ? 'rtl' : 'ltr'}>"{transcript || (language === 'ar-SA' ? 'استمع إليك...' : 'Listening...')}"</p>
+             <p className="text-sm font-medium text-white/90 italic px-1 break-words" dir={language === 'ar-SA' ? 'rtl' : 'ltr'}>"{transcript || (language === 'ar-SA' ? 'استمع إليك...' : 'Listening...')}"</p>
           ) : (
-            <p className="text-sm font-medium text-white/50">
+            <p className="text-xs font-medium text-white/50 px-1 leading-relaxed" dir={language === 'ar-SA' ? 'rtl' : 'ltr'}>
              {handsFreeMode 
-                ? (language === 'ar-SA' ? 'الاستماع المستمر مُفعل. قل "تسجيل عيب" للبدء.' : 'Continuous listening active. Say "record defect" to start.')
-                : (language === 'ar-SA' ? 'اضغط للتحدث. جرب: "تسجيل عيب، وجدت 5 خدوش في خط أ"' : 'Tap to speak. Try saying: "Record defect, I found 5 scratches on line A"')
+                ? (language === 'ar-SA' ? 'قل "تسجيل عيب" للبدء' : 'Say "record defect" to start')
+                : (language === 'ar-SA' ? 'اضغط وتكلم. مثال: "يوجد خدش في خط أ"' : 'Tap & speak. e.g. "scratch on line A"')
              }
           </p>
           )}
