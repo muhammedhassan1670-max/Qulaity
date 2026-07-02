@@ -52,7 +52,8 @@ export function SmartVoiceDefectLogger({
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (SpeechRecognition) {
       const recognition = new SpeechRecognition();
-      recognition.continuous = handsFreeMode;
+      // Always use continuous mode so the microphone doesn't cut off if the user pauses for a second
+      recognition.continuous = true;
       recognition.interimResults = true;
       recognition.lang = language;
 
@@ -117,32 +118,43 @@ export function SmartVoiceDefectLogger({
       return false;
     };
 
+    // Match numbers in the normalized text (without \b as it can break with Arabic letters)
+    // We also handle Arabic written numbers
+    const arabicNumbersMap: Record<string, number> = {
+      'واحد': 1, 'واحده': 1, 'واحدة': 1,
+      'اثنين': 2, 'اتنين': 2, 'اثنان': 2, 'جوز': 2,
+      'ثلاثه': 3, 'ثلاثة': 3, 'تلاته': 3, 'تلاتة': 3, 'ثلاث': 3, 'تلات': 3,
+      'اربع': 4, 'اربعة': 4, 'أربعه': 4, 'أربعة': 4,
+      'خمس': 5, 'خمسه': 5, 'خمسة': 5,
+      'ست': 6, 'سته': 6, 'ستة': 6,
+      'سبع': 7, 'سبعه': 7, 'سبعة': 7,
+      'ثمان': 8, 'ثمانيه': 8, 'ثمانية': 8, 'تمانيه': 8, 'تمانية': 8,
+      'تسع': 9, 'تسعه': 9, 'تسعة': 9,
+      'عشر': 10, 'عشره': 10, 'عشرة': 10
+    };
+
     const numberMatch = normalizedText.match(/(?:^|\s)(\d+)(?:\s|$)/);
     if (numberMatch) {
       data.quantity = parseInt(numberMatch[1], 10);
     } else {
-      const writtenNumbers: Record<string, number> = { 
-        'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, 
-        'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10 
-      };
-      
-      const arabicNumbers: Record<string, number> = {
-        'واحد': 1, 'واحدة': 1, 'اثنين': 2, 'اثنان': 2, 'ثلاث': 3, 'ثلاثة': 3,
-        'اربع': 4, 'أربع': 4, 'اربعة': 4, 'أربعة': 4, 'خمس': 5, 'خمسة': 5,
-        'ست': 6, 'ستة': 6, 'سبع': 7, 'سبعة': 7, 'ثمان': 8, 'ثمانية': 8,
-        'تسع': 9, 'تسعة': 9, 'عشر': 10, 'عشرة': 10
-      };
-
-      for (const [word, num] of Object.entries(writtenNumbers)) {
-        if (normalizedText.includes(word)) {
-          data.quantity = num;
-          break;
-        }
+      // Check Arabic written numbers (full coverage including Egyptian dialect)
+      for (const [word, num] of Object.entries(arabicNumbersMap)) {
+         if (normalizedText.includes(word)) {
+            data.quantity = num;
+            break;
+         }
       }
-      for (const [word, num] of Object.entries(arabicNumbers)) {
-        if (lowerText.includes(word)) {
-          data.quantity = num;
-          break;
+      // Check English written numbers if still not found
+      if (!data.quantity) {
+        const englishNumbers: Record<string, number> = { 
+          'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, 
+          'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10 
+        };
+        for (const [word, num] of Object.entries(englishNumbers)) {
+          if (normalizedText.includes(word)) {
+            data.quantity = num;
+            break;
+          }
         }
       }
     }
@@ -250,16 +262,21 @@ export function SmartVoiceDefectLogger({
     if (!currentText.trim()) return;
     
     const lowerText = currentText.toLowerCase();
-    const wakeWords = ['تسجيل عيب', 'تسجيل العيب', 'يا جودة', 'qms', 'record defect'];
+    const wakeWords = ['تسجيل عيب', 'تسجيل العيب', 'يا جودة', 'qms', 'record defect', 'تسجيل', 'يلا'];
     const hasWakeWord = wakeWords.some(ww => lowerText.includes(ww));
     
     const isNewDraft = Object.keys(currentDraft).length === 0;
     
+    // In hands-free mode, if it's a new draft, we MUST hear a wake word to start processing
     if (handsFreeMode && isNewDraft && !hasWakeWord) {
        return;
     }
 
-    if (recognitionRef.current && !handsFreeMode) recognitionRef.current.stop();
+    if (recognitionRef.current && !handsFreeMode) {
+       recognitionRef.current.stop();
+       setIsListening(false);
+    }
+    
     setIsProcessing(true);
     
     setTimeout(() => {
@@ -354,7 +371,7 @@ export function SmartVoiceDefectLogger({
 
   const handleToggleListen = () => {
     if (!recognitionRef.current) {
-      alert("Browser not supported.");
+      alert("Browser not supported. Please use Google Chrome.");
       return;
     }
     if (isListening) {
@@ -366,6 +383,7 @@ export function SmartVoiceDefectLogger({
        }
     } else {
        setAiMessage('');
+       setTranscript(''); // Clear old transcript when starting
        try { recognitionRef.current.start(); } catch (e) {}
     }
   };
