@@ -18,8 +18,11 @@ import {
   X,
   QrCode,
   Layout,
-  LayoutGrid
+  LayoutGrid,
+  Mic,
+  MicOff
 } from 'lucide-react';
+import { useVoiceCommand } from '../hooks/useVoiceCommand';
 import { useAppStore, type User } from '../stores/appStore';
 import { useTranslation } from '../utils/translations';
 import {
@@ -44,6 +47,7 @@ export function Header({ onMenuToggle, user }: HeaderProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
   const scanner = useQRScanner();
+  const { isListening, transcript, toggleListening, isSupported } = useVoiceCommand();
 
   const navigate = useNavigate();
   
@@ -141,6 +145,36 @@ export function Header({ onMenuToggle, user }: HeaderProps) {
         
         {/* Right Section */}
         <div className="flex items-center gap-1 md:gap-2">
+          {/* Voice Command Button */}
+          {isSupported && (
+            <div className="relative">
+              <button
+                onClick={toggleListening}
+                className={`p-2.5 rounded-xl transition-all duration-300 ${
+                  isListening 
+                    ? 'bg-red-100 text-red-500 dark:bg-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.4)] animate-pulse' 
+                    : 'hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-gray-400 hover:text-[#00A3E0]'
+                }`}
+                title={isListening ? 'Listening...' : 'Voice Command'}
+              >
+                {isListening ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
+              </button>
+              
+              {/* Live Transcript Toast */}
+              {isListening && (
+                <div className="absolute top-[120%] right-0 min-w-[250px] p-3 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-xl shadow-xl border border-red-500/30 text-sm z-50 pointer-events-none">
+                  <div className="flex items-center gap-2 mb-1 text-red-500">
+                    <div className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
+                    <span className="font-bold text-xs uppercase tracking-wider">Listening</span>
+                  </div>
+                  <p className="text-slate-700 dark:text-slate-200 min-h-[1.5rem] italic text-right" dir="auto">
+                    {transcript || 'تحدث الآن...'}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Mobile Search Toggle */}
           <button
             onClick={() => setShowSearch(!showSearch)}

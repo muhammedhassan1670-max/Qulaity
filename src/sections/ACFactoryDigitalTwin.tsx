@@ -1626,7 +1626,7 @@ export default function ACFactoryDigitalTwin() {
     const numbers = existing
       .map(s => parseInt(s.id.split('-')[1]))
       .filter(n => !isNaN(n));
-    const maxNum = numbers.length > 0 ? Math.max(...numbers) : 0;
+    const maxNum = numbers?.length > 0 ? Math.max(...numbers) : 0;
     return `${prefix}-${String(maxNum + 1).padStart(2, '0')}`;
   };
 
@@ -2313,7 +2313,7 @@ export default function ACFactoryDigitalTwin() {
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4 text-orange-500" />
-                Active Alerts ({alerts.length})
+                Active Alerts ({alerts?.length || 0})
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4">

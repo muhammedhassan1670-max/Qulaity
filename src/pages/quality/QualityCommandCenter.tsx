@@ -13,6 +13,7 @@ import {
   ShieldAlert,
   TrendingUp,
   Upload,
+  Wifi,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageContainer, PageHeader, PageSection } from '@/components/PageHeader';
@@ -1352,9 +1353,15 @@ export default function QualityCommandCenter() {
                       <p className="text-xs text-white/40">Operations are local today and ready for future backend synchronization.</p>
                     </div>
                   </div>
-                  <button type="button" onClick={clearSynced} className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white/60 text-xs font-bold">
-                    Clear Synced Items
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <Link to="/quality-sync-manager" className="px-5 py-2 rounded-xl bg-gradient-to-r from-[#0066CC] to-[#00A3E0] text-white text-sm font-bold shadow-[0_0_15px_rgba(0,163,224,0.3)] hover:scale-105 transition-transform flex items-center gap-2">
+                      <Wifi className="w-4 h-4" />
+                      Open Smart Sync Manager
+                    </Link>
+                    <button type="button" onClick={clearSynced} className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white/60 text-xs font-bold">
+                      Clear Synced Items
+                    </button>
+                  </div>
                 </div>
                 {snapshot.syncQueue.length === 0 ? (
                   <p className="text-sm text-white/35">No queued local operations yet.</p>

@@ -11,11 +11,9 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import {
-  CalendarIcon,
-  ChevronDown,
   Info,
   AlertCircle,
   Check,
@@ -23,18 +21,24 @@ import {
   ScanLine,
   Calculator,
   RefreshCw,
-  X,
 } from 'lucide-react';
-import { useConfigStore, type DynamicForm, type DynamicField } from '../stores/configStore';
+import { useConfigStore } from '../stores/configStore';
+import type { DynamicForm, DynamicField } from '../stores/configStore';
 import { FormulaEvaluator } from '../utils/formulaEvaluator';
 import { unifiedApiRegistry } from '../api/unified-api';
 import { loadQualityMasterTable } from '@/services/qualityMasterData';
 import {
   loadActiveQualityFormTemplate,
   qualityTemplateToDynamicForm,
-  type ActiveQualityFormContext,
-  type QualityFormMode,
 } from '@/services/qualityFormTemplates';
+import type { ActiveQualityFormContext, QualityFormMode } from '@/services/qualityFormTemplates';
+import { 
+  TextField, NumberField, TextAreaField, SelectField, MultiSelectField, RadioField, 
+  ButtonGroupField, CheckboxGroupField, DateField, BarcodeField, SignatureField
+} from "./FormFields";
+import { DataEntryGrid } from "./DataEntryGrid";
+import type { FieldComponentProps } from "./FormFields/types";
+import { SmartFormCopilot } from "./SmartFormCopilot";
 import {
   BarChart,
   Bar,
@@ -346,451 +350,10 @@ function isFieldAllowedForRoleAndMode(
 }
 
 // ============================================================================
-// FIELD COMPONENTS
-// ============================================================================
-
-interface FieldComponentProps {
-  field: DynamicField;
-  value: unknown;
-  onChange: (value: unknown) => void;
-  error?: string;
-  disabled?: boolean;
-}
-
-const TextField: React.FC<FieldComponentProps> = ({ field, value, onChange, error, disabled }) => (
-  <div className="space-y-3">
-    <div className="relative group/input">
-      <div className="absolute -inset-0.5 bg-gradient-to-r from-[#0066CC] to-[#00A3E0] rounded-xl blur opacity-0 group-hover/input:opacity-10 transition duration-500" />
-      <input
-        type="text"
-        value={value as string || ''}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={field.placeholder}
-        disabled={disabled}
-        className={`
-          pro-input relative w-full px-5 py-4 text-base transition-all duration-300
-          ${error ? 'border-red-500/50 bg-red-500/5' : ''}
-          placeholder:text-gray-600
-        `}
-      />
-    </div>
-    {error && (
-      <p className="text-red-400 text-xs font-bold flex items-center gap-1.5 px-1 animate-in slide-in-from-top-1">
-        <AlertCircle className="w-3.5 h-3.5" />
-        {error}
-      </p>
-    )}
-  </div>
-);
-
-const NumberField: React.FC<FieldComponentProps> = ({ field, value, onChange, error, disabled }) => (
-  <div className="space-y-3">
-    <div className="relative group/input">
-      <div className="absolute -inset-0.5 bg-gradient-to-r from-[#0066CC] to-[#00A3E0] rounded-xl blur opacity-0 group-hover/input:opacity-10 transition duration-500" />
-      <input
-        type="number"
-        value={value === undefined || value === null ? '' : Number(value)}
-        onChange={(e) => {
-          const val = e.target.value;
-          onChange(val === '' ? null : Number(val));
-        }}
-        placeholder={field.placeholder}
-        disabled={disabled}
-        className={`
-          pro-input relative w-full px-5 py-4 text-base transition-all duration-300
-          ${error ? 'border-red-500/50 bg-red-500/5' : ''}
-          placeholder:text-gray-600
-        `}
-      />
-    </div>
-    {error && (
-      <p className="text-red-400 text-xs font-bold flex items-center gap-1.5 px-1 animate-in slide-in-from-top-1">
-        <AlertCircle className="w-3.5 h-3.5" />
-        {error}
-      </p>
-    )}
-  </div>
-);
-
-const TextAreaField: React.FC<FieldComponentProps> = ({ field, value, onChange, error, disabled }) => (
-  <div className="space-y-3">
-    <div className="relative group/input">
-      <div className="absolute -inset-0.5 bg-gradient-to-r from-[#0066CC] to-[#00A3E0] rounded-xl blur opacity-0 group-hover/input:opacity-10 transition duration-500" />
-      <textarea
-        value={value as string || ''}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={field.placeholder}
-        disabled={disabled}
-        rows={5}
-        className={`
-          pro-input relative w-full px-5 py-4 text-base transition-all duration-300 resize-none
-          ${error ? 'border-red-500/50 bg-red-500/5' : ''}
-          placeholder:text-gray-600
-        `}
-      />
-    </div>
-    {error && (
-      <p className="text-red-400 text-xs font-bold flex items-center gap-1.5 px-1 animate-in slide-in-from-top-1">
-        <AlertCircle className="w-3.5 h-3.5" />
-        {error}
-      </p>
-    )}
-  </div>
-);
-
-const SelectField: React.FC<FieldComponentProps> = ({ field, value, onChange, error, disabled }) => {
-  const { optionSets } = useConfigStore();
-  const options = field.optionSetId ? optionSets.find(s => s.id === field.optionSetId)?.items : field.options;
-
-  return (
-    <div className="space-y-3">
-      <div className="relative group/input">
-        <div className="absolute -inset-0.5 bg-gradient-to-r from-[#0066CC] to-[#00A3E0] rounded-xl blur opacity-0 group-hover/input:opacity-10 transition duration-500" />
-        <select
-          value={value as string || ''}
-          onChange={(e) => onChange(e.target.value)}
-          disabled={disabled}
-          className={`
-            pro-input relative w-full px-5 py-4 text-base transition-all duration-300 appearance-none
-            bg-[#1a1a1f] text-white border-white/10
-            ${error ? 'border-red-500/50 bg-red-500/5' : ''}
-          `}
-        >
-          <option value="" className="bg-[#1a1a1f] text-white/50">{field.placeholder || 'Choose an option...'}</option>
-          {options?.map((opt) => (
-            <option key={opt.value} value={opt.value} className="bg-[#1a1a1f] text-white">
-              {opt.label}
-            </option>
-          ))}
-        </select>
-        <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-white/40 group-hover/input:text-[#00A3E0] transition-colors">
-          <ChevronDown className="w-5 h-5" />
-        </div>
-      </div>
-      {error && (
-        <p className="text-red-400 text-xs font-bold flex items-center gap-1.5 px-1 animate-in slide-in-from-top-1">
-          <AlertCircle className="w-3.5 h-3.5" />
-          {error}
-        </p>
-      )}
-    </div>
-  );
-};
-
-const MultiSelectField: React.FC<FieldComponentProps> = ({ field, value, onChange, error, disabled }) => {
-  const { optionSets } = useConfigStore();
-  const options = field.optionSetId ? optionSets.find(s => s.id === field.optionSetId)?.items : field.options;
-  const selectedValues = Array.isArray(value) ? value : [];
-
-  const toggleOption = (optionValue: string) => {
-    if (selectedValues.includes(optionValue)) {
-      onChange(selectedValues.filter((v) => v !== optionValue));
-    } else {
-      onChange([...selectedValues, optionValue]);
-    }
-  };
-
-  return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap gap-2 min-h-[56px] p-3 pro-input">
-        {selectedValues.map((val) => {
-          const opt = options?.find((o) => o.value === val);
-          return (
-            <Badge
-              key={val}
-              className="bg-[#0066CC] text-white flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-none shadow-lg shadow-[#0066CC]/20 animate-in zoom-in-95 duration-200"
-            >
-              {opt?.label || val}
-              <button
-                type="button"
-                onClick={() => !disabled && toggleOption(val)}
-                className="hover:bg-white/20 rounded-full p-0.5 transition-colors"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </Badge>
-          );
-        })}
-        <select
-          value=""
-          onChange={(e) => e.target.value && toggleOption(e.target.value)}
-          disabled={disabled}
-          className="flex-1 bg-transparent border-none focus:ring-0 text-sm min-w-[120px] outline-none text-white cursor-pointer appearance-none"
-          style={{ colorScheme: 'dark' }}
-        >
-          <option value="" className="bg-[#1a1a1f] text-white/50" disabled>{selectedValues.length === 0 ? (field.placeholder || 'Select multiple...') : 'Add more...'}</option>
-          {options
-            ?.filter((opt) => !selectedValues.includes(opt.value))
-            .map((opt) => (
-              <option key={opt.value} value={opt.value} className="bg-[#1a1a1f] text-white">
-                {opt.label}
-              </option>
-            ))}
-        </select>
-      </div>
-      {error && (
-        <p className="text-red-400 text-xs font-bold flex items-center gap-1.5 px-1 animate-in slide-in-from-top-1">
-          <AlertCircle className="w-3.5 h-3.5" />
-          {error}
-        </p>
-      )}
-    </div>
-  );
-};
-
-const RadioField: React.FC<FieldComponentProps> = ({ field, value, onChange, error, disabled }) => {
-  const { optionSets } = useConfigStore();
-  const options = field.optionSetId ? optionSets.find(s => s.id === field.optionSetId)?.items : field.options;
-
-  return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {options?.map((opt) => {
-          const isSelected = value === opt.value;
-          return (
-            <label
-              key={opt.value}
-              className={`
-                relative flex items-center gap-4 p-4 rounded-xl border transition-all duration-300 cursor-pointer overflow-hidden group/radio
-                ${isSelected 
-                  ? 'bg-[#0066CC]/10 border-[#0066CC]/50 shadow-[0_0_20px_rgba(0,102,204,0.1)]' 
-                  : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
-                }
-                ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
-              `}
-            >
-              {isSelected && (
-                <div className="absolute inset-0 bg-gradient-to-r from-[#0066CC]/5 to-transparent animate-in fade-in duration-500" />
-              )}
-              <div className={`
-                w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300
-                ${isSelected ? 'border-[#0066CC] scale-110' : 'border-white/20 group-hover/radio:border-white/40'}
-              `}>
-                {isSelected && (
-                  <div className="w-3 h-3 rounded-full bg-[#0066CC] shadow-[0_0_10px_rgba(0,102,204,0.8)]" />
-                )}
-              </div>
-              <input
-                type="radio"
-                name={field.name}
-                value={opt.value}
-                checked={isSelected}
-                onChange={(e) => onChange(e.target.value)}
-                disabled={disabled}
-                className="hidden"
-              />
-              <span className={`text-sm font-bold transition-colors ${isSelected ? 'text-white' : 'text-gray-400 group-hover/radio:text-gray-200'}`}>
-                {opt.label}
-              </span>
-            </label>
-          );
-        })}
-      </div>
-      {error && (
-        <p className="text-red-400 text-xs font-bold flex items-center gap-1.5 px-1 animate-in slide-in-from-top-1">
-          <AlertCircle className="w-3.5 h-3.5" />
-          {error}
-        </p>
-      )}
-    </div>
-  );
-};
-
-const ButtonGroupField: React.FC<FieldComponentProps> = ({ field, value, onChange, error, disabled }) => {
-  const { optionSets } = useConfigStore();
-  const options = field.optionSetId ? optionSets.find(s => s.id === field.optionSetId)?.items : field.options;
-
-  return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap gap-3 p-2 bg-white/5 rounded-2xl border border-white/10">
-        {options?.map((opt) => {
-          const isSelected = value === opt.value;
-          return (
-            <button
-              key={opt.value}
-              type="button"
-              disabled={disabled}
-              onClick={() => onChange(opt.value)}
-              className={`
-                flex-1 min-w-[120px] px-6 py-4 rounded-xl text-sm font-black transition-all duration-300 relative overflow-hidden group/btn
-                ${isSelected 
-                  ? 'bg-[#0066CC] text-white shadow-xl shadow-[#0066CC]/30 scale-[1.05] z-10' 
-                  : 'text-gray-500 hover:text-white hover:bg-white/5'
-                }
-                ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
-              `}
-            >
-              {isSelected && (
-                <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent pointer-events-none" />
-              )}
-              <span className="relative z-10 tracking-wide uppercase">{opt.label}</span>
-            </button>
-          );
-        })}
-      </div>
-      {error && (
-        <p className="text-red-400 text-xs font-bold flex items-center gap-1.5 px-1 animate-in slide-in-from-top-1">
-          <AlertCircle className="w-3.5 h-3.5" />
-          {error}
-        </p>
-      )}
-    </div>
-  );
-};
-
-const CheckboxGroupField: React.FC<FieldComponentProps> = ({ field, value, onChange, error, disabled }) => {
-  const { optionSets } = useConfigStore();
-  const options = field.optionSetId ? optionSets.find(s => s.id === field.optionSetId)?.items : field.options;
-  const selectedValues = Array.isArray(value) ? value : [];
-
-  const toggleOption = (optionValue: string) => {
-    if (selectedValues.includes(optionValue)) {
-      onChange(selectedValues.filter((v) => v !== optionValue));
-    } else {
-      onChange([...selectedValues, optionValue]);
-    }
-  };
-
-  return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {options?.map((opt) => {
-          const isSelected = selectedValues.includes(opt.value);
-          return (
-            <label
-              key={opt.value}
-              className={`
-                relative flex items-center gap-4 p-5 rounded-2xl border transition-all duration-300 cursor-pointer overflow-hidden group/check
-                ${isSelected 
-                  ? 'bg-[#00A3E0]/10 border-[#00A3E0]/50 shadow-[0_0_20px_rgba(0,163,224,0.1)]' 
-                  : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10 hover:border-white/20'
-                }
-                ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
-              `}
-            >
-              {isSelected && (
-                <div className="absolute inset-0 bg-gradient-to-br from-[#00A3E0]/5 to-transparent" />
-              )}
-              <div className={`
-                w-6 h-6 rounded-lg flex items-center justify-center border-2 transition-all duration-300
-                ${isSelected ? 'bg-[#00A3E0] border-[#00A3E0] scale-110 shadow-[0_0_10px_rgba(0,163,224,0.5)]' : 'border-white/20 group-hover/check:border-white/40'}
-              `}>
-                {isSelected && <Check className="w-4 h-4 text-white stroke-[4]" />}
-              </div>
-              <input
-                type="checkbox"
-                checked={isSelected}
-                onChange={() => !disabled && toggleOption(opt.value)}
-                disabled={disabled}
-                className="hidden"
-              />
-              <span className={`text-sm font-black transition-colors ${isSelected ? 'text-white' : 'text-gray-500 group-hover/check:text-gray-300'}`}>
-                {opt.label}
-              </span>
-            </label>
-          );
-        })}
-      </div>
-      {error && (
-        <p className="text-red-400 text-xs font-bold flex items-center gap-1.5 px-1 animate-in slide-in-from-top-1">
-          <AlertCircle className="w-3.5 h-3.5" />
-          {error}
-        </p>
-      )}
-    </div>
-  );
-};
-
-const DateField: React.FC<FieldComponentProps> = ({ field, value, onChange, error, disabled }) => (
-  <div className="space-y-3">
-    <div className="relative group/input">
-      <div className="absolute -inset-0.5 bg-gradient-to-r from-[#0066CC] to-[#00A3E0] rounded-xl blur opacity-0 group-hover/input:opacity-10 transition duration-500" />
-      <input
-        type={field.type === 'datetime' ? 'datetime-local' : 'date'}
-        value={String(value || '')}
-        onChange={(e) => onChange(e.target.value || null)}
-        disabled={disabled}
-        className={`
-          pro-input relative w-full px-5 py-4 text-base transition-all duration-300
-          ${error ? 'border-red-500/50 bg-red-500/5' : ''}
-          [color-scheme:dark]
-        `}
-      />
-      <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-white/40 group-hover/input:text-[#00A3E0] transition-colors">
-        <CalendarIcon className="w-5 h-5" />
-      </div>
-    </div>
-    {error && (
-      <p className="text-red-400 text-xs font-bold flex items-center gap-1.5 px-1 animate-in slide-in-from-top-1">
-        <AlertCircle className="w-3.5 h-3.5" />
-        {error}
-      </p>
-    )}
-  </div>
-);
-
-const FileField: React.FC<FieldComponentProps> = ({ field, value, onChange, error, disabled }) => (
-  <div className="space-y-2">
-    <div
-      className={`
-        border-2 border-dashed rounded-lg p-6 text-center
-        ${error ? 'border-red-500' : 'border-white/20'}
-        ${disabled ? 'opacity-50' : 'hover:border-[#00A3E0] cursor-pointer'}
-        transition-colors
-      `}
-      onClick={() => !disabled && document.getElementById(`file-${field.name}`)?.click()}
-    >
-      <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
-      <p className="text-sm text-gray-300">
-        {value ? (value as File).name : 'Click to upload or drag and drop'}
-      </p>
-      <input
-        id={`file-${field.name}`}
-        type="file"
-        onChange={(e) => onChange(e.target.files?.[0] || null)}
-        disabled={disabled}
-        className="hidden"
-      />
-    </div>
-    {error && <p className="text-red-400 text-xs">{error}</p>}
-  </div>
-);
-
-const BarcodeField: React.FC<FieldComponentProps> = ({ value, onChange, error, disabled }) => (
-  <div className="space-y-2">
-    <div className="flex gap-2">
-      <input
-        type="text"
-        value={String(value || '')}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="Scan or enter barcode..."
-        disabled={disabled}
-        className={`
-          flex-1 px-4 py-2.5 rounded-lg border bg-transparent
-          ${error ? 'border-red-500' : 'border-white/10'}
-          ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
-          focus:outline-none focus:border-[#00A3E0] focus:ring-1 focus:ring-[#00A3E0]
-          text-white placeholder-gray-500
-        `}
-      />
-      <button
-        type="button"
-        disabled={disabled}
-        onClick={() => toast.info('Scan', { description: 'Barcode scanner integration coming soon' })}
-        className="px-3 py-2 bg-[#0066CC]/20 rounded-lg text-[#00A3E0] hover:bg-[#0066CC]/30 disabled:opacity-50"
-      >
-        <ScanLine className="w-5 h-5" />
-      </button>
-    </div>
-    {error && <p className="text-red-400 text-xs">{error}</p>}
-  </div>
-);
-
-// ============================================================================
 // MAIN FORM RENDERER
 // ============================================================================
 
-interface DynamicFormRendererProps {
+export interface DynamicFormRendererProps {
   formId?: string;
   formType?: DynamicForm['type'];
   config?: DynamicForm;
@@ -805,6 +368,9 @@ interface DynamicFormRendererProps {
   compactMode?: 'shopfloor';
   className?: string;
 }
+
+// FIELD COMPONENTS
+// ============================================================================
 
 export const DynamicFormRenderer: React.FC<DynamicFormRendererProps> = ({
   formId,
@@ -906,11 +472,19 @@ const DynamicFormContent: React.FC<DynamicFormContentProps> = ({
   showSubmitButton,
   submitLabel,
   submitActions,
-  role,
-  mode,
+  role: propRole,
+  mode: propMode,
   compactMode,
   className,
 }) => {
+  const [focusedFieldId, setFocusedFieldId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'form' | 'grid'>('form');
+  const [currentStep, setCurrentStep] = useState(0);
+  const [useWizard, setUseWizard] = useState(true);
+
+  const role = propRole || 'admin';
+  const mode = propMode || 'create';
+
   const effectiveFields = useMemo(() => (
     formConfig.fields.filter((field) => isFieldAllowedForRoleAndMode(field, role, mode).visible)
   ), [formConfig.fields, role, mode]);
@@ -920,6 +494,22 @@ const DynamicFormContent: React.FC<DynamicFormContentProps> = ({
   const submitActionRef = useRef('submit');
   const [activeLookups, setActiveLookups] = useState<Record<string, boolean>>({});
   const [lookupErrors, setLookupErrors] = useState<Record<string, string>>({});
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [aiFilledFields, setAiFilledFields] = useState<string[]>([]);
+
+  // Initialize draft from localStorage if formId exists
+  const draftKey = formConfig.id ? `qms_draft_${formConfig.id}` : null;
+  const initialData = useMemo(() => {
+    if (draftKey && !readOnly && (!initialValues || Object.keys(initialValues).length === 0)) {
+      try {
+        const saved = localStorage.getItem(draftKey);
+        if (saved) return JSON.parse(saved);
+      } catch (e) {
+        console.warn('Failed to parse draft', e);
+      }
+    }
+    return initialValues as any;
+  }, [draftKey, initialValues, readOnly]);
 
   const {
     control,
@@ -929,14 +519,60 @@ const DynamicFormContent: React.FC<DynamicFormContentProps> = ({
     watch,
   } = useForm({
     resolver: zodResolver(validationSchema),
-    defaultValues: initialValues as any,
+    defaultValues: initialData,
     mode: 'all',
   });
 
   const formValues = watch();
   const { externalDataSources, forms } = useConfigStore();
 
-  // 1. Formula / Calculated Fields Logic
+  // Auto-Save Draft
+  useEffect(() => {
+    if (readOnly || !draftKey) return;
+    const timer = setTimeout(() => {
+      if (Object.keys(formValues).length > 0) {
+        localStorage.setItem(draftKey, JSON.stringify(formValues));
+        setLastSaved(new Date());
+      }
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [formValues, readOnly, draftKey]);
+
+  // Keyboard shortcut for Submit & Save
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        handleSubmit(onSubmit as any)();
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        if (!readOnly && draftKey) {
+          localStorage.setItem(draftKey, JSON.stringify(formValues));
+          setLastSaved(new Date());
+          toast.success('Draft saved successfully', { position: 'bottom-center' });
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleSubmit, onSubmit, formValues, readOnly, draftKey]);
+
+  const handleAutoAdvance = useCallback((currentFieldId: string) => {
+    if (!formConfig) return;
+    const allVisibleFields = formConfig.fields.filter(f => {
+      const state = checkFieldVisibility(f, formValues as Record<string, unknown>);
+      const roleModeState = isFieldAllowedForRoleAndMode(f, role, mode);
+      return state.visible && roleModeState.visible;
+    });
+    
+    const currentIndex = allVisibleFields.findIndex(f => f.id === currentFieldId);
+    if (currentIndex >= 0 && currentIndex < allVisibleFields.length - 1) {
+      setFocusedFieldId(allVisibleFields[currentIndex + 1].id);
+    }
+  }, [formConfig, formValues, role, mode]);
+
+  // Handle formula calculations and field visibilityc
   useEffect(() => {
     let hasChanged = false;
     const newValues = { ...formValues };
@@ -1104,7 +740,7 @@ const DynamicFormContent: React.FC<DynamicFormContentProps> = ({
         return;
       }
 
-      await onSubmit?.({ ...data, __submitAction: currentSubmitAction });
+      await onSubmit?.({ ...data, __submitAction: submitActionRef.current });
     } catch (e: any) {
       toast.error('Failed to submit', { description: e?.message || 'Unknown error' });
       throw e;
@@ -1167,10 +803,6 @@ const DynamicFormContent: React.FC<DynamicFormContentProps> = ({
     }
   }, [formValues, formConfig.fields, setValue]);
 
-  const setNextSubmitAction = useCallback((action: string) => {
-    submitActionRef.current = action;
-    setSubmitAction(action);
-  }, []);
 
   const onInvalid = (errors: any) => {
     console.error('Form Validation Errors:', errors);
@@ -1194,17 +826,53 @@ const DynamicFormContent: React.FC<DynamicFormContentProps> = ({
 
       const commonProps = {
         field,
+        value: formValues[field.name],
+        onChange: (val: unknown) => {
+          setValue(field.name, val, { shouldValidate: true, shouldDirty: true });
+        },
+        error: lookupErrors[field.name] || (errors[field.name]?.message as string),
         disabled: readOnly || state.disabled || !roleModeState.editable,
+        required: state.required,
+        isFocused: focusedFieldId === field.id,
+        onFocus: () => setFocusedFieldId(field.id),
+        onAutoAdvance: () => handleAutoAdvance(field.id),
       };
 
+      const hasFloatingLabel = ['text', 'textarea', 'number', 'calculated', 'select'].includes(field.type);
+      const isFocused = focusedFieldId === field.id;
+      const isDimmed = focusedFieldId !== null && !isFocused;
+      const errorMsg = ((errors as any)?.[field.name]?.message as string | undefined) || lookupErrors[field.name];
+      const isAiFilled = aiFilledFields.includes(field.name);
+
       return (
-        <div key={field.id} className="space-y-3 group/field">
+        <motion.div 
+          key={field.id}
+          initial={{ opacity: 0, y: 20 }}
+          animate={
+            errorMsg 
+              ? { opacity: 1, y: 0, x: [-5, 5, -5, 5, 0], scale: 1 } 
+              : isAiFilled
+                ? { opacity: 1, y: 0, scale: [1, 1.05, 1], boxShadow: ["0 0 0px rgba(0,163,224,0)", "0 0 20px rgba(0,163,224,0.6)", "0 0 0px rgba(0,163,224,0)"] }
+                : { opacity: isDimmed ? 0.4 : 1, y: 0, scale: isFocused ? 1.02 : 1 }
+          }
+          exit={{ opacity: 0, height: 0, margin: 0 }}
+          transition={{ duration: errorMsg ? 0.4 : isAiFilled ? 1 : 0.3, ease: "easeOut" }}
+          className={`space-y-3 group/field transition-all duration-300 ${isFocused ? 'ring-2 ring-[#00A3E0]/50 rounded-xl p-2 bg-white/5' : ''} ${errorMsg ? 'ring-2 ring-red-500/50 rounded-xl p-2 bg-red-500/5' : ''} ${isAiFilled ? 'ring-2 ring-[#00A3E0] rounded-xl p-2 bg-[#00A3E0]/5' : ''}`}
+          onClick={() => {
+            setFocusedFieldId(field.id);
+            if (isAiFilled) {
+              setAiFilledFields(prev => prev.filter(f => f !== field.name));
+            }
+          }}
+        >
           <div className="flex items-center justify-between px-1">
             <div className="flex items-center gap-2">
-              <label className="text-sm font-black text-white/60 group-hover/field:text-[#00A3E0] transition-colors uppercase tracking-wider flex items-center gap-2">
-                {field.label}
-                {state.required && <span className="text-red-500">*</span>}
-              </label>
+              {!hasFloatingLabel && (
+                <label className="text-sm font-black text-white/60 group-hover/field:text-[#00A3E0] transition-colors uppercase tracking-wider flex items-center gap-2">
+                  {field.label}
+                  {state.required && <span className="text-red-500">*</span>}
+                </label>
+              )}
               {activeLookups[field.name] && (
                 <RefreshCw className="w-3 h-3 text-[#00A3E0] animate-spin" />
               )}
@@ -1223,7 +891,6 @@ const DynamicFormContent: React.FC<DynamicFormContentProps> = ({
             name={field.name}
             control={control}
             render={({ field: rhfField }) => {
-              const errorMsg = ((errors as any)?.[field.name]?.message as string | undefined) || lookupErrors[field.name];
               const props = {
                 ...commonProps,
                 value: rhfField.value,
@@ -1274,7 +941,7 @@ const DynamicFormContent: React.FC<DynamicFormContentProps> = ({
                     </div>
                   );
                 case 'signature':
-                  return <FileField {...props} />;
+                  return <SignatureField {...props} />;
                 case 'barcode':
                   return <BarcodeField {...props} />;
                 case 'formula':
@@ -1304,13 +971,27 @@ const DynamicFormContent: React.FC<DynamicFormContentProps> = ({
               }
             }}
           />
-        </div>
+        </motion.div>
       );
     },
-    [activeLookups, control, errors, formValues, lookupErrors, mode, readOnly, role]
+    [activeLookups, control, errors, formValues, lookupErrors, mode, readOnly, role, aiFilledFields]
   );
 
   const isShopfloor = compactMode === 'shopfloor';
+
+  const handleAiAutoFill = useCallback((data: Record<string, any>) => {
+    const filledNames: string[] = [];
+    Object.entries(data).forEach(([key, val]) => {
+      setValue(key, val, { shouldValidate: true, shouldDirty: true });
+      filledNames.push(key);
+    });
+    setAiFilledFields(filledNames);
+    
+    // Clear the highlight after 3 seconds
+    setTimeout(() => {
+      setAiFilledFields([]);
+    }, 3000);
+  }, [setValue]);
 
   return (
     <form
@@ -1341,102 +1022,321 @@ const DynamicFormContent: React.FC<DynamicFormContentProps> = ({
         </div>
       </div>}
 
-      {/* Form Sections */}
-      <div className={isShopfloor ? 'space-y-4' : 'space-y-8 md:space-y-16'}>
-        {formConfig.sections?.map((section) => (
-          <div key={section.id} className={`${isShopfloor ? 'rounded-2xl border border-white/10 bg-white/5 p-4 space-y-4' : 'pro-card p-4 md:p-8 space-y-6 md:space-y-8 animate-in slide-in-from-bottom-8 duration-1000 border-white/5'}`}>
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center gap-3 md:gap-4">
-                <div className={`${isShopfloor ? 'h-6 w-1' : 'h-8 md:h-10 w-1.5 md:w-2'} bg-gradient-to-b from-[#0066CC] to-[#00A3E0] rounded-full shadow-[0_0_20px_rgba(0,163,224,0.4)]`} />
-                <h3 className={`${isShopfloor ? 'text-base' : 'text-xl md:text-2xl'} font-black text-white tracking-tight`}>
-                  {section.title}
-                </h3>
-                <div className="flex-1 h-px bg-gradient-to-r from-white/10 via-white/5 to-transparent" />
-              </div>
-              {section.description && (
-                <p className="text-white/40 text-xs md:text-sm font-medium ml-4 md:ml-6 italic">{section.description}</p>
-              )}
-            </div>
+      {!readOnly && mode !== 'detail' && viewMode === 'form' && (
+        <div className="flex justify-center -mt-4 mb-4">
+          <SmartFormCopilot 
+            onAutoFill={handleAiAutoFill} 
+            fields={formConfig.fields.map(f => ({ name: f.name, label: f.label, type: f.type }))} 
+          />
+        </div>
+      )}
 
-            <div className={`grid grid-cols-1 ${isShopfloor ? 'gap-4' : 'md:grid-cols-2 gap-x-6 md:gap-x-10 gap-y-6 md:gap-y-8'}`}>
-              {section.fields.map((fieldId) => {
-                const field = formConfig.fields.find((f) => f.id === fieldId);
-                if (!field) return null;
-                
-                // Determine if field should take full width
-                const isFullWidth = field.type === 'textarea' || field.type === 'chart' || field.type === 'file' || field.type === 'checkbox-group';
-                
-                return (
-                  <div key={field.id} className={`${isFullWidth ? 'md:col-span-2' : ''} group/field`}>
-                    {renderField(field)}
-                  </div>
-                );
-              })}
-            </div>
+      {mode === 'create' && !readOnly && (
+        <div className="flex justify-end px-2">
+          <div className="flex p-1 bg-white/5 rounded-xl border border-white/10 w-fit">
+            <button
+              type="button"
+              onClick={() => setViewMode('form')}
+              className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${
+                viewMode === 'form' ? 'bg-[#00A3E0] text-white shadow-lg' : 'text-white/40 hover:text-white/80'
+              }`}
+            >
+              Form View
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('grid')}
+              className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${
+                viewMode === 'grid' ? 'bg-green-500 text-white shadow-lg' : 'text-white/40 hover:text-white/80'
+              }`}
+            >
+              Grid View (Mass Entry)
+            </button>
           </div>
-        ))}
+        </div>
+      )}
 
-        {/* Fields not in any section */}
-        {formConfig.fields.filter(f => !f.section || !formConfig.sections?.find(s => s.id === f.section)).length > 0 && (
-          <div className={`${isShopfloor ? 'rounded-2xl border border-dashed border-white/10 bg-white/5 p-4 space-y-4' : 'pro-card p-8 space-y-8 border-dashed border-white/10'}`}>
-            <div className="flex items-center gap-4">
-              <div className="h-10 w-2 bg-slate-600 rounded-full" />
-              <h3 className="text-2xl font-black text-white tracking-tight uppercase">Additional Details</h3>
-              <div className="flex-1 h-px bg-gradient-to-r from-white/10 via-white/5 to-transparent" />
+      {viewMode === 'grid' ? (
+        <DataEntryGrid 
+          formConfig={formConfig} 
+          role={role} 
+          mode={mode}
+          onSubmitAll={async (records) => {
+            if (records.length > 0) {
+              try {
+                toast.success(`Simulating mass submission of ${records.length} records!`);
+                await onSubmit?.({ ...records[0], __submitAction: 'submit' });
+              } catch (e) {
+                console.error(e);
+              }
+            }
+          }}
+        />
+      ) : (
+      <>
+        {/* Wizard Progress Bar */}
+        {useWizard && formConfig.sections && formConfig.sections.length > 1 && !isShopfloor && (
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-bold text-white/60">
+                Step {currentStep + 1} of {formConfig.sections.length + (formConfig.fields.some(f => !f.section) ? 1 : 0)}
+              </span>
+              <span className="text-sm font-bold text-[#00A3E0]">
+                {Math.round(((currentStep + 1) / (formConfig.sections.length + (formConfig.fields.some(f => !f.section) ? 1 : 0))) * 100)}% Completed
+              </span>
             </div>
-            <div className={`grid grid-cols-1 ${isShopfloor ? 'gap-4' : 'md:grid-cols-2 gap-x-10 gap-y-8'}`}>
-              {formConfig.fields
-                .filter(f => !f.section || !formConfig.sections?.find(s => s.id === f.section))
-                .map((field) => {
-                  const isFullWidth = field.type === 'textarea' || field.type === 'chart' || field.type === 'file' || field.type === 'checkbox-group';
-                  return (
-                    <div key={field.id} className={`${isFullWidth ? 'md:col-span-2' : ''} group/field`}>
-                      {renderField(field)}
-                    </div>
-                  );
-                })}
+            <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden flex">
+              <motion.div 
+                className="h-full bg-gradient-to-r from-[#0066CC] to-[#00A3E0]"
+                initial={{ width: 0 }}
+                animate={{ width: `${((currentStep + 1) / (formConfig.sections.length + (formConfig.fields.some(f => !f.section) ? 1 : 0))) * 100}%` }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+              />
+            </div>
+            <div className="flex justify-end mt-2">
+              <button
+                type="button"
+                onClick={() => setUseWizard(false)}
+                className="text-[10px] text-white/30 hover:text-white/60 uppercase tracking-widest transition-colors"
+              >
+                Disable Wizard Mode
+              </button>
             </div>
           </div>
         )}
-      </div>
 
-      {showSubmitButton && !readOnly && (
-        <div className="pt-12 flex flex-col sm:flex-row justify-center items-stretch sm:items-center gap-3">
-          {submitActions.map((action) => (
-            <Button
-              key={action.id}
-              type="submit"
-              variant="outline"
-              disabled={isSubmitting}
-              onClick={() => setNextSubmitAction(action.value)}
-              className="px-8 py-6 border-white/10 text-white hover:bg-white/10 font-black rounded-2xl"
-              title={action.description}
+        {!useWizard && formConfig.sections && formConfig.sections.length > 1 && !isShopfloor && (
+          <div className="flex justify-end mb-4">
+            <button
+              type="button"
+              onClick={() => {
+                setUseWizard(true);
+                setCurrentStep(0);
+              }}
+              className="text-[10px] text-white/30 hover:text-white/60 uppercase tracking-widest transition-colors"
             >
-              {action.label}
-            </Button>
-          ))}
-          <Button
-            type="submit"
-            disabled={isSubmitting}
-            onClick={() => setNextSubmitAction('submit')}
-            className="group relative px-16 py-8 bg-gradient-to-r from-[#0066CC] to-[#00A3E0] hover:from-[#0052a3] hover:to-[#008cc2] text-white text-xl font-black rounded-2xl shadow-2xl shadow-[#0066CC]/40 hover:scale-[1.05] active:scale-[0.95] transition-all duration-300 overflow-hidden"
-          >
-            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
-            <div className="relative z-10 flex items-center gap-3">
-              {isSubmitting ? (
+              Enable Wizard Mode
+            </button>
+          </div>
+        )}
+
+        {/* Form Sections */}
+        <div className={isShopfloor ? 'space-y-4' : 'space-y-8 md:space-y-16'}>
+        <AnimatePresence mode="wait">
+          {formConfig.sections?.map((section, idx) => {
+            if (useWizard && formConfig.sections && formConfig.sections.length > 1 && !isShopfloor && currentStep !== idx) return null;
+
+            return (
+              <motion.div 
+                key={section.id} 
+                initial={useWizard ? { opacity: 0, x: 20 } : undefined}
+                animate={useWizard ? { opacity: 1, x: 0 } : undefined}
+                exit={useWizard ? { opacity: 0, x: -20 } : undefined}
+                transition={{ duration: 0.3 }}
+                className={`${isShopfloor ? 'rounded-2xl border border-white/10 bg-white/5 p-4 space-y-4' : 'pro-card p-4 md:p-8 space-y-6 md:space-y-8 border-white/5'}`}
+              >
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-3 md:gap-4">
+                    <div className={`${isShopfloor ? 'h-6 w-1' : 'h-8 md:h-10 w-1.5 md:w-2'} bg-gradient-to-b from-[#0066CC] to-[#00A3E0] rounded-full shadow-[0_0_20px_rgba(0,163,224,0.4)]`} />
+                    <h3 className={`${isShopfloor ? 'text-base' : 'text-xl md:text-2xl'} font-black text-white tracking-tight`}>
+                      {section.title}
+                    </h3>
+                    <div className="flex-1 h-px bg-gradient-to-r from-white/10 via-white/5 to-transparent" />
+                  </div>
+                  {section.description && (
+                    <p className="text-white/40 text-xs md:text-sm font-medium ml-4 md:ml-6 italic">{section.description}</p>
+                  )}
+                </div>
+
+                <div className={`grid grid-cols-1 ${isShopfloor ? 'gap-4' : 'md:grid-cols-2 gap-x-6 md:gap-x-10 gap-y-6 md:gap-y-8'}`}>
+                  <AnimatePresence mode="popLayout">
+                    {section.fields.map((fieldId) => {
+                      const field = formConfig.fields.find((f) => f.id === fieldId);
+                      if (!field) return null;
+                      
+                      // Determine if field should take full width
+                      const isFullWidth = field.type === 'textarea' || field.type === 'chart' || field.type === 'file' || field.type === 'signature' || field.type === 'checkbox-group';
+                      
+                      return (
+                        <div key={field.id} className={`${isFullWidth ? 'md:col-span-2' : ''} group/field`}>
+                          {renderField(field)}
+                        </div>
+                      );
+                    })}
+                  </AnimatePresence>
+                </div>
+              </motion.div>
+            );
+          })}
+
+          {/* Fields not in any section */}
+          {formConfig.fields.filter(f => !f.section || !formConfig.sections?.find(s => s.id === f.section)).length > 0 && (
+            (!useWizard || isShopfloor || !formConfig.sections || currentStep === formConfig.sections.length) && (
+              <motion.div 
+                key="additional-details"
+                initial={useWizard ? { opacity: 0, x: 20 } : undefined}
+                animate={useWizard ? { opacity: 1, x: 0 } : undefined}
+                exit={useWizard ? { opacity: 0, x: -20 } : undefined}
+                transition={{ duration: 0.3 }}
+                className={`${isShopfloor ? 'rounded-2xl border border-dashed border-white/10 bg-white/5 p-4 space-y-4' : 'pro-card p-8 space-y-8 border-dashed border-white/10'}`}
+              >
+                <div className="flex items-center gap-4">
+                  <div className="h-10 w-2 bg-slate-600 rounded-full" />
+                  <h3 className="text-2xl font-black text-white tracking-tight uppercase">Additional Details</h3>
+                  <div className="flex-1 h-px bg-gradient-to-r from-white/10 via-white/5 to-transparent" />
+                </div>
+                <div className={`grid grid-cols-1 ${isShopfloor ? 'gap-4' : 'md:grid-cols-2 gap-x-10 gap-y-8'}`}>
+                  <AnimatePresence mode="popLayout">
+                    {formConfig.fields
+                      .filter(f => !f.section || !formConfig.sections?.find(s => s.id === f.section))
+                      .map((field) => {
+                        const isFullWidth = field.type === 'textarea' || field.type === 'chart' || field.type === 'file' || field.type === 'signature' || field.type === 'checkbox-group';
+                        return (
+                          <div key={field.id} className={`${isFullWidth ? 'md:col-span-2' : ''} group/field`}>
+                            {renderField(field)}
+                          </div>
+                        );
+                      })}
+                  </AnimatePresence>
+                </div>
+              </motion.div>
+            )
+          )}
+        </AnimatePresence>
+        </div>
+
+        {showSubmitButton && !readOnly && (
+          <div className="pt-12 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div className="flex items-center">
+              {lastSaved && (
+                <motion.span 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-xs font-medium text-white/50 flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/10"
+                >
+                  <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                  Draft saved {lastSaved.toLocaleTimeString()}
+                </motion.span>
+              )}
+            </div>
+            
+            <div className="flex flex-col sm:flex-row justify-end items-stretch sm:items-center gap-3">
+              {useWizard && formConfig.sections && formConfig.sections.length > 1 && !isShopfloor && (
                 <>
-                  <RefreshCw className="w-6 h-6 animate-spin" />
-                  Processing...
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={currentStep === 0}
+                    onClick={() => setCurrentStep(prev => prev - 1)}
+                    className="px-8 py-6 border-white/10 text-white hover:bg-white/10 font-black rounded-2xl"
+                  >
+                    Previous Step
+                  </Button>
+                  
+                  {currentStep < (formConfig.sections.length - 1 + (formConfig.fields.some(f => !f.section) ? 1 : 0)) ? (
+                    <Button
+                      type="button"
+                      onClick={() => setCurrentStep(prev => prev + 1)}
+                      className="group relative px-12 py-6 bg-[#0066CC] hover:bg-[#00A3E0] text-white text-lg font-black rounded-2xl shadow-xl transition-all duration-300"
+                    >
+                      Next Step
+                    </Button>
+                  ) : (
+                    // Final Submit Button
+                    <div className="flex gap-3">
+                      {submitActions.map((action) => (
+                        <Button
+                          key={action.id}
+                          type="submit"
+                          variant="outline"
+                          disabled={isSubmitting}
+                          onClick={() => {
+                            submitActionRef.current = action.value;
+                            setSubmitAction(action.value);
+                          }}
+                          className="px-8 py-6 border-white/10 text-white hover:bg-white/10 font-black rounded-2xl"
+                          title={action.description}
+                        >
+                          {action.label}
+                        </Button>
+                      ))}
+                      <Button
+                        type="submit"
+                        disabled={isSubmitting}
+                        onClick={() => {
+                          submitActionRef.current = 'submit';
+                          setSubmitAction('submit');
+                        }}
+                        className="group relative px-16 py-8 bg-gradient-to-r from-green-600 to-emerald-500 hover:from-green-500 hover:to-emerald-400 text-white text-xl font-black rounded-2xl shadow-2xl shadow-green-500/40 hover:scale-[1.05] active:scale-[0.95] transition-all duration-300 overflow-hidden"
+                      >
+                        <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+                        <div className="relative z-10 flex items-center gap-3">
+                          {isSubmitting ? (
+                            <>
+                              <RefreshCw className="w-6 h-6 animate-spin" />
+                              Processing...
+                            </>
+                          ) : (
+                            <>
+                              <Check className="w-7 h-7" />
+                              {submitLabel}
+                            </>
+                          )}
+                        </div>
+                      </Button>
+                    </div>
+                  )}
                 </>
-              ) : (
+              )}
+
+              {(!useWizard || !(formConfig.sections && formConfig.sections.length > 1) || isShopfloor) && (
                 <>
-                  <Check className="w-7 h-7" />
-                  {submitLabel}
+                  {submitActions.map((action) => (
+                    <Button
+                      key={action.id}
+                      type="submit"
+                      variant="outline"
+                      disabled={isSubmitting}
+                      onClick={() => {
+                        submitActionRef.current = action.value;
+                        setSubmitAction(action.value);
+                      }}
+                      className="px-8 py-6 border-white/10 text-white hover:bg-white/10 font-black rounded-2xl"
+                      title={action.description}
+                    >
+                      {action.label}
+                    </Button>
+                  ))}
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                    onClick={() => {
+                      submitActionRef.current = 'submit';
+                      setSubmitAction('submit');
+                    }}
+                    className="group relative px-16 py-8 bg-gradient-to-r from-[#0066CC] to-[#00A3E0] hover:from-[#0052a3] hover:to-[#008cc2] text-white text-xl font-black rounded-2xl shadow-2xl shadow-[#0066CC]/40 hover:scale-[1.05] active:scale-[0.95] transition-all duration-300 overflow-hidden"
+                  >
+                    <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+                    <div className="relative z-10 flex items-center gap-3">
+                      {isSubmitting ? (
+                        <>
+                          <RefreshCw className="w-6 h-6 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <Check className="w-7 h-7" />
+                          {submitLabel}
+                        </>
+                      )}
+                    </div>
+                  </Button>
                 </>
               )}
             </div>
-          </Button>
-        </div>
+          </div>
+        )}
+      </>
       )}
     </form>
   );

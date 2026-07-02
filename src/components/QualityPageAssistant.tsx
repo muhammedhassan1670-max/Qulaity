@@ -573,7 +573,7 @@ export function QualityPageAssistant() {
         </div>
       )}
 
-      {!isCollapsed && pageMode === 'advanced' && guide.related.length > actionItems.length && (
+      {!isCollapsed && pageMode === 'advanced' && (guide?.related?.length || 0) > actionItems.length && (
         <div className="mt-3 flex flex-wrap gap-2">
           <span className="px-1 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-white/30">
             {isArabic ? 'روابط مرتبطة' : 'Related'}

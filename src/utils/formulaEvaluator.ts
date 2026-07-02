@@ -7,6 +7,7 @@ export interface EvaluationContext {
   [fieldName: string]: unknown;
   __dataSources?: any[];
 }
+import { useIoTStore } from '../stores/iotStore';
 
 export class FormulaEvaluator {
   private context: EvaluationContext;
@@ -59,6 +60,35 @@ export class FormulaEvaluator {
 
     // Convert functions to JavaScript equivalents
     processed = this.convertFunctions(processed);
+
+    // Replace IoT references: @iot.sensorId.value → live value
+    processed = processed.replace(/@iot\.([\w-]+)\.(\w+)/g, (_match, sensorId, property) => {
+      try {
+        const state = useIoTStore.getState() as any;
+        if (property === 'value') {
+          // Check if readings is a Map or a plain object
+          const reading = state.readings instanceof Map ? state.readings.get(sensorId) : state.readings?.[sensorId];
+          return reading ? String(reading.value) : '0';
+        }
+        if (property === 'ucl' || property === 'lcl') {
+          const sensor = state.sensors.find((s: any) => s.id === sensorId);
+          if (sensor?.spcConfig?.controlLimits) {
+            const limit = sensor.spcConfig.controlLimits[property as keyof typeof sensor.spcConfig.controlLimits];
+            return limit !== undefined ? String(limit) : '0';
+          }
+          return '0';
+        }
+      } catch (e) {
+        console.warn('Could not resolve IoT reference', sensorId);
+      }
+      return '0';
+    });
+
+    // Replace SPC references: @spc.part_a.ucl
+    processed = processed.replace(/@spc\.([\w-]+)\.(\w+)/g, (_match, _partId, _property) => {
+      // Mock SPC mapping
+      return '0'; // Real SPC integration could go here
+    });
 
     return processed;
   }

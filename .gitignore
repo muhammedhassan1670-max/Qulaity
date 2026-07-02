@@ -43,3 +43,5 @@ Microsoft/
 Thumbs.db
 .idea/
 .vscode/
+
+.vercel

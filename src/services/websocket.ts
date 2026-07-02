@@ -91,6 +91,13 @@ class WebSocketService {
 
   connect(): void {
     if (this.ws?.readyState === WebSocket.OPEN || this.isSimulationMode) return;
+    
+    // If the API layer has already determined the backend is offline, skip connection attempts
+    if (localStorage.getItem('backend_offline') === 'true' || import.meta.env.PROD) {
+      this.enterSimulationMode();
+      return;
+    }
+
     this.setStatus('connecting');
 
     try {

@@ -42,7 +42,8 @@ export type QualityDesignerFieldType =
   | 'formula'
   | 'user'
   | 'status'
-  | 'linked-record';
+  | 'linked-record'
+  | 'signature';
 
 export type QualityRuleOperator =
   | 'equals'
@@ -291,9 +292,10 @@ function fieldTypeToDynamic(type: QualityDesignerFieldType): FieldType {
     image: 'file',
     calculated: 'formula',
     formula: 'formula',
-    user: 'text',
+    user: 'select',
     status: 'select',
     'linked-record': 'relation',
+    signature: 'signature',
   };
   return map[type] || 'text';
 }

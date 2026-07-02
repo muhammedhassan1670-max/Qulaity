@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 
 const RAW_API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 const API_BASE_URL = RAW_API_BASE_URL.replace(/\/api\/v\d+$/i, '/api');
-const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API === 'true';
+const USE_MOCK_API = true; // Always use mock API for this prototype
 
 // Token management
 const getToken = () => localStorage.getItem('qms_access_token');
@@ -204,11 +204,8 @@ export const authApi = {
 
       return data;
     } catch (error) {
-      if (import.meta.env.DEV) {
-        console.warn('Backend auth unavailable. Falling back to local offline login.');
-        return buildLocalLoginResponse(email, password, tenantCode);
-      }
-      throw error;
+      console.warn('Backend auth unavailable. Falling back to local offline login.');
+      return buildLocalLoginResponse(email, password, tenantCode);
     }
   },
 

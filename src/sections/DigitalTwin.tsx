@@ -29,7 +29,7 @@ import {
   MeshReflectorMaterial,
   PointerLockControls
 } from '@react-three/drei';
-import { EffectComposer, Bloom, Vignette, Noise } from '@react-three/postprocessing';
+
 import * as THREE from 'three';
 import {
   Box as BoxIcon,
@@ -314,7 +314,7 @@ function Layout2DViewer({ layout }: { layout: ProductionLayoutData }) {
   } | null>(null);
 
   const contentBounds = useMemo(() => {
-    if (nodes.length === 0) return { w: 1280, h: 720 };
+    if (!nodes || nodes.length === 0) return { w: 1280, h: 720 };
     let maxR = 0;
     let maxB = 0;
     for (const n of nodes) {
@@ -425,7 +425,9 @@ function Layout2DViewer({ layout }: { layout: ProductionLayoutData }) {
           }}
         />
 
-        {nodes.map((node: any) => (
+        {nodes.map((node: any) => {
+          if (!node) return null;
+          return (
           <div
             key={String(node.id)}
             className="absolute rounded-lg border border-white/10 shadow-sm"
@@ -442,7 +444,8 @@ function Layout2DViewer({ layout }: { layout: ProductionLayoutData }) {
               <div className="text-gray-300 text-xs">{node.type}</div>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -871,7 +874,7 @@ function ProductionFlow({ machines, enabled }: { machines: DigitalTwinMachine[];
   }, [machines]);
 
   const curve = useMemo(() => {
-    if (path.length < 2) return null;
+    if (!path || path.length < 2) return null;
     return new THREE.CatmullRomCurve3(path, false, 'catmullrom', 0.25);
   }, [path]);
 
@@ -1227,11 +1230,12 @@ function SchematicView({ machines, selectedMachine, onSelect }: { machines: Digi
         ))}
 
         {nodes.map((n) => {
-          const selected = selectedMachine === n.id;
+          if (!n) return null;
+          const selected = selectedMachine === n?.id;
           const statusColor =
             n.status === 'running' ? '#00C853' : n.status === 'idle' ? '#FFD600' : n.status === 'alarm' ? '#FF6B35' : '#FF1744';
           return (
-            <g key={n.id} onClick={() => onSelect(n.id)} style={{ cursor: 'pointer' }}>
+            <g key={n?.id} onClick={() => onSelect(n?.id)} style={{ cursor: 'pointer' }}>
               <rect
                 x={n.x - 60}
                 y={n.y - 22}
@@ -1270,8 +1274,8 @@ function AnalyticsDrawer({
   onClose: () => void;
 }) {
   const { t, language } = useTranslation();
-  const latest = telemetryHistory[telemetryHistory.length - 1];
-  const machineAlerts = alerts.filter(a => a.machineId === machine.id).slice(0, 8);
+  const latest = telemetryHistory?.[(telemetryHistory?.length || 0) - 1];
+  const machineAlerts = alerts?.filter(a => a.machineId === machine.id).slice(0, 8) || [];
 
   const metricCards = [
     { key: 'oee', label: t('oee'), unit: '%', icon: BarChart3, color: '#00A3E0', max: 100, goodUp: true },
@@ -1286,7 +1290,7 @@ function AnalyticsDrawer({
     return <Minus className="w-3 h-3 text-gray-400" />;
   };
 
-  const prev = telemetryHistory[telemetryHistory.length - 2];
+  const prev = telemetryHistory?.[(telemetryHistory?.length || 0) - 2];
 
   return (
     <div className="fixed inset-0 z-[300] flex justify-end">
@@ -1461,11 +1465,11 @@ function AnalyticsDrawer({
                 <span className="text-sm font-medium text-white">{t('alerts-log')}</span>
               </div>
               <Badge variant="outline" className="text-xs border-white/10">
-                {machineAlerts.length} {language === 'ar' ? 'تنبيهات' : 'events'}
+                {machineAlerts?.length || 0} {language === 'ar' ? 'تنبيهات' : 'events'}
               </Badge>
             </div>
             <div className="space-y-2 max-h-[280px] overflow-y-auto">
-              {machineAlerts.length === 0 ? (
+              {!machineAlerts || machineAlerts.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
                   <AlertTriangle className="w-8 h-8 mx-auto mb-2 opacity-50" />
                   <p className="text-sm">No alerts for this machine</p>
@@ -1498,7 +1502,7 @@ function AnalyticsDrawer({
                         {alert.metric}: {alert.value.toFixed(1)}
                       </p>
                     </div>
-                    {idx < machineAlerts.length - 1 && (
+                    {idx < (machineAlerts?.length || 0) - 1 && (
                       <div className="absolute left-[19px] top-[40px] bottom-[-12px] w-px bg-white/10" />
                     )}
                   </div>
@@ -1936,17 +1940,7 @@ export function DigitalTwin() {
                         {t('plant-a-floor')}
                       </CardTitle>
                       <div className="flex items-center gap-1 bg-white/5 rounded-lg p-1">
-                        {(['3d', 'heatmap', 'schematic'] as const).map((mode) => (
-                          <button
-                            key={mode}
-                            onClick={() => setViewMode(mode)}
-                            className={`px-3 py-1 rounded text-xs capitalize transition-colors ${
-                              viewMode === mode ? 'bg-[#0066CC] text-white' : 'text-gray-400 hover:text-white'
-                            }`}
-                          >
-                            {mode}
-                          </button>
-                        ))}
+
                         <button
                           onClick={() => {
                             setWalkMode(!walkMode);
@@ -2005,11 +1999,10 @@ export function DigitalTwin() {
                 </CardHeader>
                 <CardContent className="p-0 relative">
                   <div ref={viewportRef} className="h-[500px] bg-[#0a0a0f] relative">
-                    {/* Mobile Scroll Overlay - Prevents OrbitControls from trapping scroll */}
-                    <div className="absolute inset-0 z-10 md:hidden" style={{ touchAction: 'pan-y' }}></div>
+
                     {viewMode === '3d' && (
                       <Canvas
-                        style={{ touchAction: 'pan-y' }}
+                        style={{ touchAction: 'none' }}
                         shadows
                         gl={{ preserveDrawingBuffer: true, antialias: true }}
                         onCreated={({ gl }) => {
@@ -2040,11 +2033,7 @@ export function DigitalTwin() {
                         <GizmoHelper alignment="bottom-right" margin={[90, 90]}>
                           <GizmoViewport axisColors={['#ef4444', '#22c55e', '#3b82f6']} labelColor="#ffffff" />
                         </GizmoHelper>
-                        <EffectComposer>
-                          <Bloom luminanceThreshold={0.2} mipmapBlur intensity={1.5} />
-                          <Vignette eskil={false} offset={0.1} darkness={1.1} />
-                          <Noise opacity={0.02} />
-                        </EffectComposer>
+
                         <Suspense fallback={null}>
                           <FactoryFloor
                             machines={machines}
@@ -2272,7 +2261,7 @@ export function DigitalTwin() {
                 </CardHeader>
                 <CardContent className="p-4">
                   <div className="space-y-2">
-                    {alerts.length === 0 ? (
+                    {!alerts || alerts.length === 0 ? (
                       <p className="text-sm text-gray-500">No active alerts</p>
                     ) : (
                       alerts.map((alert) => (

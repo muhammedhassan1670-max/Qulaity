@@ -13,7 +13,11 @@ import {
   CheckSquare,
   Square,
   Search,
-  Filter
+  Filter,
+  Download,
+  AlignJustify,
+  Maximize2,
+  Minimize2
 } from 'lucide-react';
 
 export interface Column<T> {
@@ -61,6 +65,42 @@ export function DataTable<T>({
 }: DataTableProps<T>) {
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [density, setDensity] = useState<'compact' | 'comfortable' | 'spacious'>('comfortable');
+
+  // Density padding maps
+  const cellPadding = {
+    compact: 'px-3 py-2 text-xs',
+    comfortable: 'px-6 py-5 text-sm',
+    spacious: 'px-8 py-7 text-base'
+  }[density];
+
+  // CSV Export
+  const exportToCSV = () => {
+    if (data.length === 0) return;
+    
+    const headers = columns.map(c => c.title).join(',');
+    const rows = sortedData.map(item => {
+      return columns.map(c => {
+        let val = getNestedValue(item, c.key);
+        if (typeof val === 'object' && val !== null) {
+          val = val.label || val.name || JSON.stringify(val);
+        }
+        // Escape quotes and wrap in quotes for CSV safety
+        const safeVal = String(val || '').replace(/"/g, '""');
+        return `"${safeVal}"`;
+      }).join(',');
+    });
+    
+    const csvContent = [headers, ...rows].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `export_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   // Sorting logic
   const sortedData = useMemo(() => {
@@ -176,13 +216,29 @@ export function DataTable<T>({
               ))}
             </div>
           )}
+          {/* Right Toolbar: Export & Density */}
+          <div className="flex items-center gap-2 border border-white/10 bg-white/5 rounded-xl p-1">
+            <button onClick={exportToCSV} title="Export to CSV" className="p-2 rounded-lg text-white/50 hover:text-white hover:bg-white/10 transition-all">
+              <Download className="w-4 h-4" />
+            </button>
+            <div className="w-[1px] h-4 bg-white/10 mx-1"></div>
+            <button onClick={() => setDensity('compact')} title="Compact" className={`p-2 rounded-lg transition-all ${density === 'compact' ? 'bg-[#00A3E0]/20 text-[#00A3E0]' : 'text-white/50 hover:text-white hover:bg-white/10'}`}>
+              <Minimize2 className="w-4 h-4" />
+            </button>
+            <button onClick={() => setDensity('comfortable')} title="Comfortable" className={`p-2 rounded-lg transition-all ${density === 'comfortable' ? 'bg-[#00A3E0]/20 text-[#00A3E0]' : 'text-white/50 hover:text-white hover:bg-white/10'}`}>
+              <AlignJustify className="w-4 h-4" />
+            </button>
+            <button onClick={() => setDensity('spacious')} title="Spacious" className={`p-2 rounded-lg transition-all ${density === 'spacious' ? 'bg-[#00A3E0]/20 text-[#00A3E0]' : 'text-white/50 hover:text-white hover:bg-white/10'}`}>
+              <Maximize2 className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       )}
 
       {/* Table Container - Scrollable on mobile */}
-      <div className="relative overflow-x-auto rounded-[2rem] glass-panel border border-white/5 no-scrollbar">
+      <div className="relative overflow-x-auto rounded-[2rem] glass-panel border border-white/5 no-scrollbar max-h-[70vh]">
         <table className="w-full text-left border-collapse min-w-[800px]">
-          <thead className="bg-white/[0.02]">
+          <thead className="bg-white/[0.05] sticky top-0 z-10 backdrop-blur-md shadow-md">
             <tr>
               {/* Selection Checkbox */}
               {onSelectionChange && (
@@ -204,7 +260,7 @@ export function DataTable<T>({
               {columns.map((column) => (
                 <th
                   key={column.key}
-                  className={`px-6 py-5 text-left text-[10px] font-black text-white/40 uppercase tracking-[0.2em] border-b border-white/5 ${
+                  className={`${cellPadding} text-left text-[10px] font-black text-white/40 uppercase tracking-[0.2em] border-b border-white/5 ${
                     column.sortable ? 'cursor-pointer hover:text-[#00A3E0] transition-colors' : ''
                   }`}
                   style={{ width: column.width }}
@@ -231,7 +287,7 @@ export function DataTable<T>({
                 
               {/* Actions Column */}
               {actions && (
-                <th className="px-6 py-5 text-right text-[10px] font-black text-white/40 uppercase tracking-[0.2em] border-b border-white/5 w-24">
+                <th className={`${cellPadding} text-right text-[10px] font-black text-white/40 uppercase tracking-[0.2em] border-b border-white/5 w-24`}>
                   Actions
                 </th>
               )}
@@ -249,7 +305,7 @@ export function DataTable<T>({
                   className={`
                     transition-all duration-300 group
                     ${onRowClick ? 'cursor-pointer' : ''}
-                    ${isSelected ? 'bg-[#00A3E0]/10' : 'hover:bg-white/[0.03]'}
+                    ${isSelected ? 'bg-[#00A3E0]/10' : 'hover:bg-white/[0.05] hover:shadow-[0_0_15px_rgba(0,163,224,0.15)] hover:z-10 relative'}
                   `}
                   onClick={() => onRowClick?.(item)}
                   style={{ 
@@ -259,7 +315,7 @@ export function DataTable<T>({
                 >
                   {/* Selection */}
                   {onSelectionChange && (
-                    <td className="px-4 py-4 text-center" onClick={(e) => e.stopPropagation()}>
+                    <td className={`px-4 text-center ${density === 'compact' ? 'py-2' : 'py-4'}`} onClick={(e) => e.stopPropagation()}>
                       <button
                         onClick={() => toggleSelect(id)}
                         className="p-1.5 hover:bg-white/10 rounded-lg transition-colors inline-flex"
@@ -281,7 +337,7 @@ export function DataTable<T>({
                       : (value || '-');
 
                     return (
-                      <td key={column.key} className="px-6 py-5">
+                      <td key={column.key} className={cellPadding}>
                         {column.render ? (
                           <div className="flex items-center">
                             {column.render(item)}
@@ -297,7 +353,7 @@ export function DataTable<T>({
                     
                   {/* Actions */}
                   {actions && (
-                    <td className="px-6 py-5 text-right" onClick={(e) => e.stopPropagation()}>
+                    <td className={`${cellPadding} text-right`} onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                         {actions(item)}
                       </div>

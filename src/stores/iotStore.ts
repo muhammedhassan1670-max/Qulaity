@@ -422,6 +422,14 @@ export const useIoTStore = create<IoTState>()(
 
       // Connection Actions
       connect: (endpoint: string) => {
+        if (localStorage.getItem('backend_offline') === 'true' || import.meta.env.PROD) {
+          set((state) => {
+            state.isConnected = false;
+            state.connectionStatus = 'disconnected';
+          });
+          return;
+        }
+
         const ws = new WebSocket(endpoint);
         
         ws.onopen = () => {

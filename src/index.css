@@ -1419,6 +1419,9 @@ html[dir="rtl"] .pr-4 { padding-left: 1rem; padding-right: 1rem; }
 html, body {
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior-y: none; /* Prevent pull-to-refresh bounce which sometimes breaks scrolling */
 }
 
 /* 2. Remove tap highlight (blue flash) on mobile */
@@ -1450,3 +1453,10 @@ html, body {
 /* Fix mobile touch scrolling */
 canvas { touch-action: pan-y !important; }
 .recharts-wrapper, .recharts-surface { touch-action: pan-y !important; }
+
+/* Q-Elite Focus Styles */
+.q-elite-focus:focus-within {
+  box-shadow: 0 0 0 2px rgba(0, 163, 224, 0.5), 0 0 15px rgba(0, 163, 224, 0.2);
+  border-color: rgba(0, 163, 224, 0.8) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}

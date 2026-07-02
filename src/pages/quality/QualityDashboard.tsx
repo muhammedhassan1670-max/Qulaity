@@ -63,7 +63,7 @@ const mockKPIs: DashboardKPIs = {
   auditTrend: 0
 };
 
-import QualityDashboardFilterBar from '@/components/QualityDashboardFilterBar';
+
 import QualityAnalyticsConsistencyBadge from '@/components/QualityAnalyticsConsistencyBadge';
 import {
   loadQualityAnalyticsSnapshot,
@@ -203,15 +203,9 @@ export function QualityDashboardPage() {
           </button>
         ))}
       </div>
-
-      <div className="mb-6">
-        <QualityDashboardFilterBar value={filters} onChange={setFilters} compact />
-      </div>
-
       <div className="mb-6">
         <QualityAnalyticsConsistencyBadge dashboardName="Quality Dashboard" snapshot={analytics} compact />
       </div>
-
       {/* Module Stats Grid */}
       <PageSection>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">

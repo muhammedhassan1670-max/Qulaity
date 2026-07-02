@@ -65,6 +65,7 @@ const QualityFormDesignerPage = lazy(() => import('../pages/quality/QualityFormD
 const QualityLibraryPage = lazy(() => import('../pages/quality/QualityLibrary'));
 const QualitySlidesPage = lazy(() => import('../pages/quality/QualitySlides'));
 const QualityDashboardPage = lazy(() => import('../pages/quality/QualityDashboard'));
+const OfflineSyncManagerPage = lazy(() => import('../pages/quality/OfflineSyncManager'));
 
 // Admin Pages
 const UsersPage = lazy(() => import('../pages/admin/Users'));
@@ -196,6 +197,7 @@ const routes: RouteObject[] = [
       { path: 'quality-library', element: <LazyWrapper><QualityLibraryPage /></LazyWrapper> },
       { path: 'quality-slides', element: <LazyWrapper><QualitySlidesPage /></LazyWrapper> },
       { path: 'quality-dashboard', element: <LazyWrapper><QualityDashboardPage /></LazyWrapper> },
+      { path: 'quality-sync-manager', element: <LazyWrapper><OfflineSyncManagerPage /></LazyWrapper> },
 
       // Compatibility aliases for older deep links used inside existing pages
       { path: 'quality/ncr', element: <Navigate to="/quality/records/ncr" replace /> },

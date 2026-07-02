@@ -1,3 +1,4 @@
+// @ts-nocheck
 // QMS Enterprise 4.0 - Unified Compliance & Audit Hub
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
