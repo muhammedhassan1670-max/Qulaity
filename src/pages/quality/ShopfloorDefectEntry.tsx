@@ -609,7 +609,7 @@ export default function ShopfloorDefectEntry() {
         subtitle="Fast mobile defect capture for inspectors and operators using the active dynamic template"
       />
 
-      <div className="mx-auto max-w-5xl space-y-5 overflow-x-hidden">
+      <div className="mx-auto max-w-5xl space-y-5">
         {/* Template banner */}
         <div className="rounded-3xl border border-[#00A3E0]/20 bg-[#00A3E0]/10 px-3 py-4 sm:px-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
