@@ -617,9 +617,9 @@ export default function ShopfloorDefectEntry() {
               <div className="rounded-2xl bg-[#00A3E0]/15 p-3">
                 <Smartphone className="h-6 w-6 text-[#00A3E0]" />
               </div>
-              <div>
-                <p className="text-sm font-black text-white">{activeTemplate ? activeTemplate.name : 'Default Defect Recorder'}</p>
-                <p className="text-xs text-white/45">{activeTemplate ? `Designer template v${activeTemplate.version}` : 'Fallback to current configStore form'}</p>
+              <div className="min-w-0">
+                <p className="text-sm font-black text-white truncate">{activeTemplate ? activeTemplate.name : 'Default Defect Recorder'}</p>
+                <p className="text-xs text-white/45 truncate">{activeTemplate ? `Designer template v${activeTemplate.version}` : 'Fallback to current configStore form'}</p>
               </div>
             </div>
             <Link to="/defect-log" className="w-full sm:w-auto rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-center text-xs font-black uppercase tracking-widest text-white/70 hover:bg-white/10">
@@ -642,7 +642,7 @@ export default function ShopfloorDefectEntry() {
             onClick={() => setShowAIVision(true)}
           >
             <Camera className="w-7 h-7 sm:w-8 sm:h-8 text-[#00A3E0]" />
-            <span className="text-sm font-bold text-white">AI Vision Scanner</span>
+            <span className="text-sm font-bold text-white truncate">AI Scanner</span>
           </div>
           <div className="sm:flex-[2]">
             <SmartVoiceDefectLogger
@@ -727,7 +727,7 @@ export default function ShopfloorDefectEntry() {
                   key={shift}
                   type="button"
                   onClick={() => updateDraft({ shift }, true)}
-                  className={`h-12 sm:h-14 rounded-2xl border text-[10px] sm:text-xs font-black uppercase ${formDraft.shift === shift ? 'border-[#00A3E0]/50 bg-[#00A3E0]/20 text-white' : 'border-white/10 bg-white/5 text-white/55'}`}
+                  className={`h-12 sm:h-14 rounded-2xl border text-[10px] sm:text-xs font-black uppercase truncate px-1 ${formDraft.shift === shift ? 'border-[#00A3E0]/50 bg-[#00A3E0]/20 text-white' : 'border-white/10 bg-white/5 text-white/55'}`}
                 >
                   {shift}
                 </button>
@@ -828,13 +828,13 @@ export default function ShopfloorDefectEntry() {
         <section className="rounded-3xl border border-white/10 bg-white/5 px-3 py-4 sm:px-6">
           <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
-              <ClipboardCheck className="h-5 w-5 text-[#00A3E0]" />
-              <div>
-                <h2 className="text-base sm:text-lg font-black text-white">Inspection Plan Checks</h2>
-                <p className="text-xs text-white/45">
+              <ClipboardCheck className="h-5 w-5 shrink-0 text-[#00A3E0]" />
+              <div className="min-w-0">
+                <h2 className="text-base sm:text-lg font-black text-white truncate">Inspection Plan Checks</h2>
+                <p className="text-xs text-white/45 truncate">
                   {activeInspectionPlan
                     ? `${activeInspectionPlan.planName} v${activeInspectionPlan.version}`
-                    : 'No matching active inspection plan. Create or publish one in Inspection Plans.'}
+                    : 'No matching active plan.'}
                 </p>
               </div>
             </div>
@@ -1120,7 +1120,7 @@ export default function ShopfloorDefectEntry() {
             </Button>
             <Button type="button" onClick={() => saveRecord('save-new')} disabled={!canCreate || saving} className="h-12 sm:h-14 rounded-2xl font-black text-sm sm:text-base col-span-1">
               <Plus className="mr-1 h-4 w-4" />
-              <span className="hidden xs:inline">Save &amp; </span>New
+              <span className="hidden sm:inline">Save &amp; </span>New
             </Button>
             <Button type="button" variant="outline" onClick={() => saveRecord('draft')} disabled={!canCreate || saving} className="h-12 sm:h-14 rounded-2xl font-black text-sm sm:text-base col-span-1">
               Draft
