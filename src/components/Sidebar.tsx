@@ -20,7 +20,7 @@ import {
   Factory,
   Workflow,
   Database,
-  ScanLine,
+  Barcode,
   ClipboardCheck,
   AlertCircle,
   TrendingUp,
@@ -136,7 +136,7 @@ export function Sidebar({ onSectionChange, collapsed }: SidebarProps) {
         children: [
           { id: 'quality-layered-audits', labelKey: 'quality-layered-audits', labelEn: 'Layered Audits', labelAr: 'مراجعات المشرف', icon: ShieldCheck },
           { id: 'quality-audit', labelKey: 'quality-audit', labelEn: 'Audit Management', labelAr: 'إدارة التدقيق', icon: ClipboardCheck },
-          { id: 'quality-control-plan', labelKey: 'quality-control-plan', labelEn: 'Control Plan', labelAr: 'Control Plan', icon: ScanLine },
+          { id: 'quality-control-plan', labelKey: 'quality-control-plan', labelEn: 'Control Plan', labelAr: 'Control Plan', icon: Barcode },
           { id: 'quality-calibration', labelKey: 'quality-calibration', labelEn: 'Calibration', labelAr: 'المعايرة والأجهزة', icon: Activity },
         ]
       },

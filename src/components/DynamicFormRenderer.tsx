@@ -18,7 +18,7 @@ import {
   AlertCircle,
   Check,
   Upload,
-  ScanLine,
+  Barcode,
   Calculator,
   RefreshCw,
 } from 'lucide-react';
@@ -957,7 +957,7 @@ const DynamicFormContent: React.FC<DynamicFormContentProps> = ({
                 case 'lookup':
                   return (
                     <div className="flex items-center gap-4 px-6 py-4 bg-[#00A3E0]/5 border border-[#00A3E0]/20 rounded-xl">
-                      <ScanLine className="w-5 h-5 text-[#00A3E0]" />
+                      <Barcode className="w-5 h-5 text-[#00A3E0]" />
                       <div className="flex flex-col">
                         <span className="text-[10px] uppercase tracking-tighter text-[#00A3E0] font-black">Linked Data</span>
                         <span className="text-lg font-black text-white">{String(props.value || '---')}</span>
@@ -1018,7 +1018,7 @@ const DynamicFormContent: React.FC<DynamicFormContentProps> = ({
         <div className="absolute top-0 right-0 w-96 h-96 bg-[#00A3E0]/10 rounded-full blur-[100px] -mr-32 -mt-32" />
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#0066CC]/10 rounded-full blur-[80px] -ml-32 -mb-32" />
         <div className="absolute top-1/2 right-10 -translate-y-1/2 opacity-10">
-          <ScanLine className="w-32 h-32 text-white" />
+          <Barcode className="w-32 h-32 text-white" />
         </div>
       </div>}
 
