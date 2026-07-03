@@ -705,7 +705,7 @@ export function QualityPageAssistant() {
         </div>
       )}
 
-      <div className="fixed inset-x-3 bottom-3 z-40 mx-auto max-w-4xl rounded-2xl border border-slate-200 bg-white/95 p-2 shadow-2xl shadow-slate-900/15 backdrop-blur dark:border-white/10 dark:bg-[#0f172a]/95 lg:bottom-5">
+      <div className="hidden sm:block fixed inset-x-3 bottom-3 z-40 mx-auto max-w-4xl rounded-2xl border border-slate-200 bg-white/95 p-2 shadow-2xl shadow-slate-900/15 backdrop-blur dark:border-white/10 dark:bg-[#0f172a]/95 lg:bottom-5">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0 px-1">
             <p className="truncate text-xs font-black text-slate-900 dark:text-white">
