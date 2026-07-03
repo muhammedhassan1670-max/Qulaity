@@ -705,66 +705,7 @@ export function QualityPageAssistant() {
         </div>
       )}
 
-      <div className="hidden sm:block fixed inset-x-3 bottom-3 z-40 mx-auto max-w-4xl rounded-2xl border border-slate-200 bg-white/95 p-2 shadow-2xl shadow-slate-900/15 backdrop-blur dark:border-white/10 dark:bg-[#0f172a]/95 lg:bottom-5">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div className="min-w-0 px-1">
-            <p className="truncate text-xs font-black text-slate-900 dark:text-white">
-              {isArabic ? 'الوضع البسيط' : 'Simple mode'}: {title}
-            </p>
-            <p className="truncate text-[11px] text-slate-500 dark:text-white/45">
-              {isArabic ? 'اختار الإجراء الأساسي أو انتقل للخطوة التالية.' : 'Pick the main action or move to the next step.'}
-            </p>
-          </div>
-
-          <div className="flex shrink-0 flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                setIsStoryOpen((value) => !value);
-                setIsIntentOpen(false);
-              }}
-              className="inline-flex h-9 items-center justify-center rounded-xl bg-indigo-600 px-3 text-xs font-black text-white transition hover:bg-indigo-700"
-              aria-expanded={isStoryOpen}
-            >
-              {isArabic ? 'القصة' : 'Story'}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setIsIntentOpen((value) => !value);
-                setIsStoryOpen(false);
-              }}
-              className="inline-flex h-9 items-center justify-center rounded-xl bg-emerald-600 px-3 text-xs font-black text-white transition hover:bg-emerald-700"
-              aria-expanded={isIntentOpen}
-            >
-              {isArabic ? 'أنا عايز...' : 'I want to...'}
-            </button>
-            <Link
-              to={guide.primary.path}
-              className="inline-flex h-9 items-center justify-center gap-2 rounded-xl bg-blue-600 px-3 text-xs font-black text-white transition hover:bg-blue-700 dark:bg-[#0066CC] dark:hover:bg-[#0052a3]"
-            >
-              {primary}
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-            {guide.next && (
-              <Link
-                to={guide.next.path}
-                className="inline-flex h-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs font-bold text-slate-700 transition hover:bg-slate-100 dark:border-white/10 dark:bg-white/5 dark:text-white/70 dark:hover:bg-white/10"
-              >
-                {next}
-              </Link>
-            )}
-            <button
-              type="button"
-              onClick={() => setPageMode('advanced')}
-              className="inline-flex h-9 items-center justify-center rounded-xl border border-slate-200 px-3 text-xs font-black text-slate-500 transition hover:text-slate-900 dark:border-white/10 dark:text-white/45 dark:hover:text-white"
-            >
-              {isArabic ? 'متقدم' : 'Advanced'}
-            </button>
-          </div>
-        </div>
       </div>
-      </>
     )}
     </>
   );
