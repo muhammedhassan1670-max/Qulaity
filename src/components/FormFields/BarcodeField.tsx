@@ -3,8 +3,9 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Check, ChevronDown, AlertCircle, X, Camera, UploadCloud, 
-  FileIcon, XCircle, Trash2, CalendarIcon, Star, Plus 
+  FileIcon, XCircle, Trash2, CalendarIcon, Star, Plus, ScanLine 
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { useConfigStore } from '@/stores/configStore';
 import { FieldComponentProps } from './types';
