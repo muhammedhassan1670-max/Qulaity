@@ -1111,7 +1111,7 @@ export default function ShopfloorDefectEntry() {
           )}
         </section>
 
-        <section className="sticky bottom-0 sm:bottom-3 z-20 rounded-none sm:rounded-3xl border-t sm:border border-white/10 bg-slate-950/98 px-3 py-3 shadow-2xl backdrop-blur">
+        <section className="sticky bottom-0 sm:bottom-3 z-20 rounded-none sm:rounded-3xl border-t sm:border border-white/10 bg-slate-950/98 px-3 py-3 shadow-2xl backdrop-blur mobile-bottom-tabbar-offset">
           {/* Primary actions row */}
           <div className="grid grid-cols-3 gap-2 mb-2">
             <Button type="button" onClick={() => saveRecord('save')} disabled={!canCreate || saving} className="h-12 sm:h-14 rounded-2xl font-black text-sm sm:text-base col-span-1">

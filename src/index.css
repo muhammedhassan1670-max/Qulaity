@@ -1445,6 +1445,9 @@ html, body {
   .mobile-pb-tabbar {
     padding-bottom: calc(80px + env(safe-area-inset-bottom, 20px)) !important;
   }
+  .mobile-bottom-tabbar-offset {
+    bottom: calc(80px + env(safe-area-inset-bottom, 20px)) !important;
+  }
 }
 
 /* Fix mobile touch scrolling */
