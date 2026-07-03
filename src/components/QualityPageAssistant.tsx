@@ -705,7 +705,7 @@ export function QualityPageAssistant() {
         </div>
       )}
 
-      </div>
+      </>
     )}
     </>
   );
