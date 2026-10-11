@@ -15,7 +15,7 @@ import { useWebSocketAutoConnect, useWebSocketStatus } from './services/websocke
 
 function App() {
   const location = useLocation();
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(window.innerWidth < 1024);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [performanceMode, setPerformanceMode] = useState<'full' | 'lite' | '2d'>('full');
   const [isLoading, setIsLoading] = useState(true);
   
@@ -44,19 +44,6 @@ function App() {
     }
   }, [theme, language]);
 
-  // Handle window resize for sidebar
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 1024) {
-        setSidebarCollapsed(true);
-      } else {
-        setSidebarCollapsed(false);
-      }
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   // Get active section from URL
   const getActiveSectionFromPath = () => {
@@ -138,21 +125,22 @@ function App() {
       
       {/* Header */}
       <Header 
-        onMenuToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+        onMenuToggle={() => setSidebarOpen((prev) => !prev)}
         user={user}
       />
       
-      {/* Sidebar */}
+      {/* Sidebar Drawer */}
       <Sidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
         onSectionChange={handleSectionChange}
-        collapsed={sidebarCollapsed}
       />
       
       {/* Main Content with Outlet for nested routes */}
       <main 
         className="transition-all duration-300 mobile-pb-tabbar"
         style={{ 
-          marginLeft: window.innerWidth < 1024 ? '0' : (sidebarCollapsed ? '80px' : '280px'),
+          marginLeft: '0px',
           marginTop: '70px',
           minHeight: 'calc(100vh - 70px)'
         }}
@@ -174,7 +162,7 @@ function App() {
       </main>
 
       {/* Mobile Bottom Navigation Bar */}
-      <MobileTabBar onMenuToggle={() => setSidebarCollapsed(!sidebarCollapsed)} />
+      <MobileTabBar onMenuToggle={() => setSidebarOpen((prev) => !prev)} />
       
       {/* Global AI Copilot & Command Palette */}
       <CommandPalette />

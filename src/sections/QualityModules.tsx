@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ncrApi, capaApi, eightDApi, auditApi } from '@/services/api';
 import { useTranslation } from '../utils/translations';
+import { FactoryQualityStream } from '@/components/FactoryQualityStream';
 
 interface NCRItem { id: string; ncrNumber: string; title: string; category: string; severity: string; status: string; plant: string; detectedDate: string; }
 interface CAPAItem { id: string; capaNumber: string; title: string; type: string; status: string; priority: string; dueDate: string; }
@@ -116,6 +117,9 @@ export function QualityModules() {
           </button>
         </div>
       </div>
+
+      {/* End-to-End Factory Value Stream Pipeline */}
+      <FactoryQualityStream />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-8">
         <TabsList className="bg-white/5 border border-white/10 p-1 rounded-2xl h-14">

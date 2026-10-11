@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import QualityDashboardFilterBar from '@/components/QualityDashboardFilterBar';
 import QualityAnalyticsConsistencyBadge from '@/components/QualityAnalyticsConsistencyBadge';
+import { FactoryQualityStream } from '@/components/FactoryQualityStream';
 import {
   loadQualityAnalyticsSnapshot,
   loadQualityDashboardFilters,
@@ -120,6 +121,11 @@ export function Dashboard() {
       <div className="module-row space-y-4">
         <QualityDashboardFilterBar value={filters} onChange={setFilters} compact />
         <QualityAnalyticsConsistencyBadge dashboardName="Main Dashboard" snapshot={snapshot} compact />
+      </div>
+
+      {/* End-to-End Factory Value Stream Pipeline */}
+      <div className="module-row">
+        <FactoryQualityStream />
       </div>
 
       {/* Stats Grid */}
