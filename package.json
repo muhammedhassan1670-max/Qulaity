@@ -11,6 +11,7 @@
     "check:routes": "node scripts/check-routes.mjs",
     "test": "vitest run --exclude \"backend*/**\"",
     "verify": "npm run lint && npm run check:routes && npm run build",
+    "deploy": "npm run build && node upload.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
