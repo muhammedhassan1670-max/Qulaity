@@ -1,4 +1,4 @@
-import { Home, Search, PlusCircle, LayoutDashboard, Menu } from 'lucide-react';
+import { Home, PlusCircle, LayoutDashboard, Menu } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { useTranslation } from '../utils/translations';
 
@@ -14,28 +14,22 @@ export function MobileTabBar({ onMenuToggle }: MobileTabBarProps) {
     {
       to: '/quality',
       icon: Home,
-      labelEn: 'Home',
-      labelAr: 'الرئيسية',
+      labelEn: 'Stream',
+      labelAr: 'المسار',
       exact: true
     },
     {
-      to: '/dashboard',
-      icon: LayoutDashboard,
-      labelEn: 'Dash',
-      labelAr: 'المؤشرات'
-    },
-    {
-      to: '/quality/shopfloor',
+      to: '/quality-shopfloor',
       icon: PlusCircle,
-      labelEn: 'Defect',
+      labelEn: 'Log Defect',
       labelAr: 'تسجيل عيب',
       isPrimary: true
     },
     {
-      to: '/search',
-      icon: Search,
-      labelEn: 'Search',
-      labelAr: 'البحث'
+      to: '/quality-dashboard',
+      icon: LayoutDashboard,
+      labelEn: 'KPIs',
+      labelAr: 'المؤشرات'
     }
   ];
 

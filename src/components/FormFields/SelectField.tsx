@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useConfigStore } from '@/stores/configStore';
-import { FieldComponentProps } from './types';
+import type { FieldComponentProps } from './types';
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, 
   Tooltip, Legend, ResponsiveContainer 

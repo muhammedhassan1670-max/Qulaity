@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { 
   Menu, 
   Bell, 
@@ -15,7 +14,6 @@ import {
   CheckCircle,
   AlertTriangle,
   Info,
-  X,
   QrCode,
   Layout,
   LayoutGrid,
@@ -44,8 +42,6 @@ interface HeaderProps {
 
 export function Header({ onMenuToggle, user }: HeaderProps) {
   const { t, language } = useTranslation();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showSearch, setShowSearch] = useState(false);
   const scanner = useQRScanner();
   const { isListening, transcript, toggleListening, isSupported } = useVoiceCommand();
 
@@ -54,15 +50,6 @@ export function Header({ onMenuToggle, user }: HeaderProps) {
   const { theme, setTheme, notifications, removeNotification, setUser, isLiteMode, setLiteMode } = useAppStore();
   
   const unreadCount = notifications.filter(n => !n.read).length;
-  
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      toast.info(language === 'ar' ? 'البحث' : 'Search', {
-        description: `${language === 'ar' ? 'جاري البحث عن' : 'Searching for'}: ${searchQuery}`
-      });
-    }
-  };
   
   const handleNotificationClick = (id: string) => {
     removeNotification(id);
@@ -118,29 +105,14 @@ export function Header({ onMenuToggle, user }: HeaderProps) {
         
         {/* Center Section - Search (Desktop only) */}
         <div className="hidden lg:flex flex-1 max-w-xl mx-4">
-          {showSearch ? (
-            <form onSubmit={handleSearch} className="relative w-full shadow-sm dark:shadow-none">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={t('search-placeholder')}
-                className="w-full h-10 pl-10 pr-4 bg-white dark:bg-[#0f131a]/50 border border-slate-200 dark:border-white/10 rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:border-[var(--industrial-primary)] dark:focus:border-[var(--industrial-secondary)] focus:ring-2 focus:ring-[var(--industrial-primary)]/20 dark:focus:ring-[var(--industrial-secondary)]/20 transition-all duration-300"
-                autoFocus
-                onBlur={() => !searchQuery && setShowSearch(false)}
-              />
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-gray-400" />
-            </form>
-          ) : (
-            <button
-               onClick={() => setShowSearch(true)}
-              className="w-full h-10 flex items-center gap-3 px-4 bg-slate-100/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-500 dark:text-gray-400 hover:bg-slate-200/50 dark:hover:bg-white/10 hover:text-slate-700 transition-colors shadow-sm dark:shadow-none"
-            >
-              <Search className="w-4 h-4" />
-              <span>{t('search-placeholder')}</span>
-              <kbd className="ml-auto px-2 py-0.5 bg-slate-200 dark:bg-white/10 text-slate-500 dark:text-gray-400 rounded text-xs font-mono">⌘K</kbd>
-            </button>
-          )}
+          <button
+            onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))}
+            className="w-full h-10 flex items-center gap-3 px-4 bg-slate-100/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-500 dark:text-gray-400 hover:bg-slate-200/50 dark:hover:bg-white/10 hover:text-slate-700 dark:hover:text-slate-200 transition-colors shadow-sm dark:shadow-none"
+          >
+            <Search className="w-4 h-4 text-[#00A3E0]" />
+            <span>{t('search-placeholder')}</span>
+            <kbd className="ml-auto px-2 py-0.5 bg-slate-200 dark:bg-white/10 text-slate-500 dark:text-gray-400 rounded text-xs font-mono">⌘K / Ctrl+K</kbd>
+          </button>
         </div>
         
         {/* Right Section */}
@@ -177,10 +149,11 @@ export function Header({ onMenuToggle, user }: HeaderProps) {
 
           {/* Mobile Search Toggle */}
           <button
-            onClick={() => setShowSearch(!showSearch)}
+            onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))}
             className="lg:hidden p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 transition-all duration-300 text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white"
+            title="Search / Command Palette"
           >
-            <Search className="w-5 h-5" />
+            <Search className="w-5 h-5 text-[#00A3E0]" />
           </button>
 
           {/* Scanner Button (Mobile & Desktop) */}
@@ -389,30 +362,6 @@ export function Header({ onMenuToggle, user }: HeaderProps) {
         </div>
       </div>
 
-      {/* Mobile Search Overlay */}
-      {showSearch && (
-        <div className="lg:hidden absolute top-[70px] left-0 right-0 p-4 bg-white/95 dark:bg-[#080b11]/95 backdrop-blur-md border-b border-slate-200 dark:border-white/10 animate-in slide-in-from-top-2">
-          <form onSubmit={handleSearch} className="relative">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t('search-anything')}
-              className="w-full h-12 pl-12 pr-4 bg-slate-50 dark:bg-black/30 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white outline-none focus:border-[var(--industrial-primary)] focus:ring-2 focus:ring-[var(--industrial-primary)]/10"
-              autoFocus
-            />
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--industrial-primary)]" />
-            <button 
-              type="button"
-              onClick={() => setShowSearch(false)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </form>
-        </div>
-      )}
-
       {/* QR Scanner Overlay */}
       {scanner.isOpen && (
         <QRScanner 
@@ -424,8 +373,7 @@ export function Header({ onMenuToggle, user }: HeaderProps) {
             } else if (result.includes('NCR')) {
               navigate(`/ncr?search=${result}`);
             } else {
-              setSearchQuery(result);
-              setShowSearch(true);
+              navigate(`/quality-search?q=${encodeURIComponent(result)}`);
             }
           }} 
         />

@@ -6,6 +6,7 @@ import { Header } from './components/Header';
 import { Sidebar } from './components/Sidebar';
 import { QualityPageAssistant } from './components/QualityPageAssistant';
 import { AICopilotWidget } from './components/AICopilotWidget';
+import { CommandPalette } from './components/CommandPalette';
 import { MobileTabBar } from './components/MobileTabBar';
 import { useAppStore } from './stores/appStore';
 import { FullPageLoader } from './components/Loading';
@@ -175,7 +176,8 @@ function App() {
       {/* Mobile Bottom Navigation Bar */}
       <MobileTabBar onMenuToggle={() => setSidebarCollapsed(!sidebarCollapsed)} />
       
-      {/* Global AI Copilot */}
+      {/* Global AI Copilot & Command Palette */}
+      <CommandPalette />
       <AICopilotWidget />
 
     </div>

@@ -485,7 +485,122 @@ export function NCRPage() {
               onExport={(format) => handleExport(format, selectedIds)}
             />
 
-            {/* Data Table */}
+            {/* Mobile card view */}
+            <div className="block sm:hidden space-y-3">
+              {filteredNCRs.length === 0 ? (
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-10 text-center">
+                  <div className="w-14 h-14 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-3">
+                    <Search className="w-7 h-7 text-gray-500" />
+                  </div>
+                  <h3 className="text-base font-medium text-white mb-1">No NCRs found</h3>
+                  <p className="text-gray-400 text-sm mb-3">Try adjusting your search or filters</p>
+                  <button
+                    onClick={() => { setSearchQuery(''); setActiveFilters({}); setDateRange({ from: null, to: null }); }}
+                    className="text-[#00A3E0] text-sm hover:text-white transition-colors"
+                  >
+                    Clear all filters
+                  </button>
+                </div>
+              ) : (
+                filteredNCRs.map((ncr) => (
+                  <div
+                    key={ncr.id}
+                    className="rounded-2xl border border-white/10 bg-white/5 p-4 space-y-3 active:bg-white/10 transition-colors"
+                    onClick={() => { setEditingNcr(ncr); setIsFormOpen(true); }}
+                  >
+                    {/* Top row: ID + badges */}
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <span className="text-[#00A3E0] font-mono text-xs font-semibold tracking-wide">{ncr.id}</span>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <StatusBadge status={ncr.status} size="sm" />
+                        <PriorityBadge priority={ncr.priority} size="sm" />
+                      </div>
+                    </div>
+
+                    {/* Title & description */}
+                    <div>
+                      <p className="text-white font-medium text-sm leading-snug line-clamp-2">{ncr.title}</p>
+                      {ncr.description && (
+                        <p className="text-gray-400 text-xs mt-1 line-clamp-2">{ncr.description}</p>
+                      )}
+                    </div>
+
+                    {/* Metadata pills */}
+                    <div className="flex flex-wrap gap-2">
+                      {ncr.createdDate && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-gray-400 text-xs">
+                          <Calendar className="w-3 h-3" />
+                          {ncr.createdDate}
+                        </span>
+                      )}
+                      {ncr.assignedTo && ncr.assignedTo !== 'Unassigned' && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-gray-400 text-xs">
+                          <User className="w-3 h-3" />
+                          {ncr.assignedTo}
+                        </span>
+                      )}
+                      {ncr.department && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-gray-400 text-xs">
+                          {ncr.department}
+                        </span>
+                      )}
+                      {(ncr as any).defectType && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-gray-400 text-xs">
+                          {(ncr as any).defectType}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Footer: actions + view button */}
+                    <div className="flex items-center justify-between pt-1 border-t border-white/5">
+                      <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                        {!isLiteMode && (
+                          <>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleCreateImprovementAction(ncr); }}
+                              className="p-1.5 hover:bg-white/10 rounded-lg transition-colors"
+                              title="Improvement Action"
+                            >
+                              <Activity className="w-4 h-4 text-emerald-400" />
+                            </button>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleCreateCapa(ncr); }}
+                              className="p-1.5 hover:bg-white/10 rounded-lg transition-colors"
+                              title="Create CAPA"
+                            >
+                              <ShieldAlert className="w-4 h-4 text-blue-400" />
+                            </button>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleCreateEightD(ncr); }}
+                              className="p-1.5 hover:bg-white/10 rounded-lg transition-colors"
+                              title="Create 8D"
+                            >
+                              <ClipboardList className="w-4 h-4 text-green-400" />
+                            </button>
+                          </>
+                        )}
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleEdit(ncr); }}
+                          className="p-1.5 hover:bg-white/10 rounded-lg transition-colors"
+                          title="Edit"
+                        >
+                          <Edit3 className="w-4 h-4 text-[#00A3E0]" />
+                        </button>
+                      </div>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setEditingNcr(ncr); setIsFormOpen(true); }}
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#0066CC]/20 border border-[#00A3E0]/30 text-[#00A3E0] text-xs font-medium hover:bg-[#0066CC]/30 transition-colors"
+                      >
+                        View <Eye className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Desktop table view */}
+            <div className="hidden sm:block">
             <DataTable
               data={filteredNCRs}
               columns={[
@@ -564,6 +679,7 @@ export function NCRPage() {
                 </div>
               }
             />
+            </div>
           </div>
 
           {/* Filter Panel Sidebar */}

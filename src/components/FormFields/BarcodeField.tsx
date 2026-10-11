@@ -3,12 +3,12 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Check, ChevronDown, AlertCircle, X, Camera, UploadCloud, 
-  FileIcon, XCircle, Trash2, CalendarIcon, Star, Plus, ScanLine 
+  FileIcon, XCircle, Trash2, CalendarIcon, Star, Plus, Barcode 
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { useConfigStore } from '@/stores/configStore';
-import { FieldComponentProps } from './types';
+import type { FieldComponentProps } from './types';
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, 
   Tooltip, Legend, ResponsiveContainer 
@@ -38,7 +38,7 @@ const BarcodeField: React.FC<FieldComponentProps> = ({ value, onChange, error, d
         onClick={() => toast.info('Scan', { description: 'Barcode scanner integration coming soon' })}
         className="px-3 py-2 bg-[#0066CC]/20 rounded-lg text-[#00A3E0] hover:bg-[#0066CC]/30 disabled:opacity-50"
       >
-        <ScanLine className="w-5 h-5" />
+        <Barcode className="w-5 h-5" />
       </button>
     </div>
     {error && <p className="text-red-400 text-xs">{error}</p>}

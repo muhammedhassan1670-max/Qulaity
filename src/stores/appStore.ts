@@ -141,7 +141,7 @@ export const useAppStore = create<AppState>()(
               relatedNcrIds: ["NCR-2026-1001"]
             }
           ]));
-          localStorage.setItem('qms_local_ncrs', JSON.stringify([
+          const ncrSeed = [
             {
               id: "NCR-2026-1001",
               title: "Welding cracks detected on chassis",
@@ -161,8 +161,11 @@ export const useAppStore = create<AppState>()(
               relatedCapaIds: ["CAPA-2026-2001"],
               relatedEightDIds: ["8D-2026-3001"]
             }
-          ]));
-          localStorage.setItem('qms_local_capas', JSON.stringify([
+          ];
+          localStorage.setItem('qms_local_ncr', JSON.stringify(ncrSeed));
+          localStorage.setItem('qms_local_ncrs', JSON.stringify(ncrSeed));
+
+          const capaSeed = [
             {
               id: "CAPA-2026-2001",
               title: "Welding Temperature Parameter Optimization",
@@ -177,8 +180,11 @@ export const useAppStore = create<AppState>()(
               relatedNcrIds: ["NCR-2026-1001"],
               relatedEightDIds: ["8D-2026-3001"]
             }
-          ]));
-          localStorage.setItem('qms_local_8ds', JSON.stringify([
+          ];
+          localStorage.setItem('qms_local_capa', JSON.stringify(capaSeed));
+          localStorage.setItem('qms_local_capas', JSON.stringify(capaSeed));
+
+          const eightDSeed = [
             {
               id: "8D-2026-3001",
               subject: "Chassis Welding Crack Analysis",
@@ -192,7 +198,9 @@ export const useAppStore = create<AppState>()(
               relatedNcrIds: ["NCR-2026-1001"],
               relatedCapaIds: ["CAPA-2026-2001"]
             }
-          ]));
+          ];
+          localStorage.setItem('qms_local_eight-d', JSON.stringify(eightDSeed));
+          localStorage.setItem('qms_local_8ds', JSON.stringify(eightDSeed));
           localStorage.setItem('qms_local_inspections', JSON.stringify([
             {
               id: "INSP-2026-4001",

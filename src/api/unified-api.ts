@@ -302,15 +302,41 @@ function createModuleApi<T, Q extends BaseQueryParams>(endpoint: string) {
     if (isDefectLogsEndpoint) {
       return loadSafeLocalDefectRecords() as T[];
     }
-    const localData = localStorage.getItem(`qms_local_${endpoint}`);
-    if (!localData) return [];
-    try {
-      const parsed = JSON.parse(localData);
-      return Array.isArray(parsed) ? parsed as T[] : [];
-    } catch (error) {
-      console.error(`Failed to parse local storage data for ${endpoint}`, error);
-      return [];
+    const aliasMap: Record<string, string[]> = {
+      ncr: ['ncr', 'ncrs'],
+      capa: ['capa', 'capas'],
+      'eight-d': ['eight-d', '8ds', '8d'],
+      complaints: ['complaints', 'complaint'],
+      'control-plans': ['control-plans', 'control-plan'],
+      deviations: ['deviations', 'deviation'],
+      'change-control': ['change-control', 'change_control'],
+      audits: ['audits', 'audit'],
+      calibrations: ['calibrations', 'calibration'],
+      suppliers: ['suppliers', 'supplier'],
+      inspections: ['inspections', 'inspection'],
+    };
+    const keysToCheck = aliasMap[endpoint] || [endpoint];
+    const itemsMap = new Map<string, T>();
+
+    for (const key of keysToCheck) {
+      const localData = localStorage.getItem(`qms_local_${key}`);
+      if (localData) {
+        try {
+          const parsed = JSON.parse(localData);
+          if (Array.isArray(parsed)) {
+            parsed.forEach((item: any) => {
+              const id = item?.id || `${Date.now()}-${Math.random()}`;
+              if (!itemsMap.has(id)) {
+                itemsMap.set(id, item as T);
+              }
+            });
+          }
+        } catch (error) {
+          console.error(`Failed to parse local storage data for ${key}`, error);
+        }
+      }
     }
+    return Array.from(itemsMap.values());
   };
 
   const writeLocalItems = (items: T[], reason: string, allowEmptyOverwrite = false): void => {

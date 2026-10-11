@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageContainer, PageHeader } from '@/components/PageHeader';
+import { FactoryQualityStream } from '@/components/FactoryQualityStream';
 import { unifiedDefectLogApi, type DefectLogData } from '@/api/unified-api';
 import { loadLocalWorkflowRole, roleLabel, type QualityWorkflowRole } from '@/services/defectWorkflowGovernance';
 import { loadQualityFormTemplates } from '@/services/qualityFormTemplates';
@@ -326,10 +327,10 @@ export default function QualityHome() {
       />
 
       <div className="space-y-6">
-        <section className="rounded-3xl border border-white/10 bg-white/5 p-5">
+        <section className="rounded-3xl border border-white/10 bg-white/5 px-3 py-4 sm:px-5 sm:py-5">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <h2 className="text-2xl font-black text-white">Welcome to your quality workspace</h2>
+              <h2 className="text-xl font-black text-white sm:text-3xl">Welcome to your quality workspace</h2>
               <p className="mt-1 text-sm text-white/45">Current local role: {roleLabel(role)}. Cards below are tailored to the work this role usually performs.</p>
             </div>
             <div className="rounded-2xl border border-[#00A3E0]/20 bg-[#00A3E0]/10 px-4 py-3 text-sm font-black text-[#8be3ff]">
@@ -338,7 +339,10 @@ export default function QualityHome() {
           </div>
         </section>
 
-        <section className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-9">
+        {/* End-to-End Factory Value Stream Pipeline */}
+        <FactoryQualityStream />
+
+        <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-9">
           {[
             ['Defects', metrics.defects],
             ['Master Rows', metrics.masterRows],
@@ -357,7 +361,7 @@ export default function QualityHome() {
           ))}
         </section>
 
-        <section className="rounded-3xl border border-white/10 bg-white/5 p-5">
+        <section className="rounded-3xl border border-white/10 bg-white/5 px-3 py-4 sm:px-5 sm:py-5">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <p className="text-[10px] font-black uppercase tracking-widest text-white/35">Data Persistence Diagnostics</p>
@@ -370,7 +374,7 @@ export default function QualityHome() {
               <ShieldCheck className="h-4 w-4" /> Run Safety Check
             </button>
           </div>
-          <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-6">
+          <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-2 xl:grid-cols-6">
             <div className="rounded-2xl border border-white/10 bg-black/10 p-4">
               <p className="text-[10px] font-black uppercase tracking-widest text-white/35">Records</p>
               <p className="mt-2 text-2xl font-black text-white">{persistenceDiagnostics.recordCount}</p>
@@ -462,7 +466,7 @@ export default function QualityHome() {
             </div>
           </div>
 
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
+          <div className="rounded-3xl border border-white/10 bg-white/5 px-3 py-4 sm:px-5 sm:py-5">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
                 <h2 className="text-xl font-black text-white">Guided Setup</h2>
@@ -481,7 +485,7 @@ export default function QualityHome() {
               </div>
             </div>
 
-            <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+            <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-2 xl:grid-cols-3">
               {setupReport.guidedSteps.map((step: GuidedSetupStep) => (
                 <div key={step.id} className="rounded-2xl border border-white/10 bg-black/10 p-4">
                   <div className="flex items-start justify-between gap-3">
@@ -505,10 +509,10 @@ export default function QualityHome() {
         </section>
 
         <section className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
-            <h2 className="text-xl font-black text-white">End-to-End Journey Checklist</h2>
+          <div className="rounded-3xl border border-white/10 bg-white/5 px-3 py-4 sm:px-5 sm:py-5">
+            <h2 className="text-xl font-black text-white sm:text-3xl">End-to-End Journey Checklist</h2>
             <p className="mt-1 text-sm text-white/45">Completion is calculated from real local configuration, inspection runs, defects, actions, and knowledge records.</p>
-            <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <div className="mt-5 grid grid-cols-2 gap-4 md:grid-cols-2 xl:grid-cols-3">
               {setupReport.journeys.map((journey) => {
                 const completed = journey.items.filter((item) => item.done).length;
                 const percent = Math.round((completed / Math.max(1, journey.items.length)) * 100);
@@ -538,7 +542,7 @@ export default function QualityHome() {
             </div>
           </div>
 
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
+          <div className="rounded-3xl border border-white/10 bg-white/5 px-3 py-4 sm:px-5 sm:py-5">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <h2 className="text-xl font-black text-white">Cross-Module Health Checks</h2>
@@ -577,11 +581,11 @@ export default function QualityHome() {
           </div>
         </section>
 
-        <section className="space-y-6 rounded-3xl border border-white/10 bg-white/5 p-5">
+        <section className="space-y-6 rounded-3xl border border-white/10 bg-white/5 px-3 py-4 sm:px-5 sm:py-5">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <p className="text-[10px] font-black uppercase tracking-widest text-white/35">Pilot Readiness</p>
-              <h2 className="mt-1 text-2xl font-black text-white">Pilot Test Checklist & QA Validation Matrix</h2>
+              <h2 className="mt-1 text-xl font-black text-white sm:text-2xl">Pilot Test Checklist &amp; QA Validation Matrix</h2>
               <p className="mt-1 text-sm text-white/45">Use this before pilot rollout to confirm journeys, record feedback, and export a practical readiness report.</p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -600,7 +604,7 @@ export default function QualityHome() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-6">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-2 xl:grid-cols-6">
             {pilotReport.categories.map((category) => (
               <Link key={category.id} to={category.href} className="rounded-2xl border border-white/10 bg-black/10 p-4 hover:bg-white/10">
                 <div className="flex items-center justify-between gap-2">
@@ -791,9 +795,9 @@ export default function QualityHome() {
           </div>
         </section>
 
-        <section className="rounded-3xl border border-white/10 bg-white/5 p-5">
-          <h2 className="mb-4 text-xl font-black text-white">Quality Process Flow</h2>
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-3 xl:grid-cols-9">
+        <section className="rounded-3xl border border-white/10 bg-white/5 px-3 py-4 sm:px-5 sm:py-5">
+          <h2 className="mb-4 text-xl font-black text-white sm:text-3xl">Quality Process Flow</h2>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-9">
             {processFlow.map(([label, href], index) => (
               <Link key={label} to={href} className="rounded-2xl border border-white/10 bg-black/10 p-4 text-sm font-black text-white/70 hover:bg-white/10">
                 <span className="mb-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#0066CC] text-xs text-white">{index + 1}</span>
@@ -805,8 +809,8 @@ export default function QualityHome() {
 
         <section className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
           <div>
-            <h2 className="mb-4 text-xl font-black text-white">Recommended For {roleLabel(role)}</h2>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <h2 className="mb-4 text-xl font-black text-white sm:text-3xl">Recommended For {roleLabel(role)}</h2>
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-2 xl:grid-cols-3">
               {roleCards.map(({ title, description, href, icon: Icon, badge }) => (
                 <Link key={title} to={href} className={cardClass()}>
                   <Icon className="mb-4 h-7 w-7 text-[#00A3E0]" />
