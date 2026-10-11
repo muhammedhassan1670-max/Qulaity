@@ -1,0 +1,369 @@
+// QMS Enterprise 4.0 - User & Role Management Service
+export interface RoleDefinition {
+  id: string;
+  name: string;
+  nameAr: string;
+  description: string;
+  descriptionAr: string;
+  userCount: number;
+  permissions: string[];
+  isSystem: boolean;
+  color?: string;
+}
+
+export interface UserAccount {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  roleId: string;
+  roleName: string;
+  department: string;
+  departmentAr?: string;
+  plant: string;
+  status: 'active' | 'inactive' | 'suspended';
+  avatar?: string;
+  lastLogin: string;
+  createdAt: string;
+}
+
+export interface PermissionGroup {
+  id: string;
+  titleEn: string;
+  titleAr: string;
+  permissions: Array<{
+    id: string;
+    labelEn: string;
+    labelAr: string;
+    descriptionEn?: string;
+    descriptionAr?: string;
+  }>;
+}
+
+export const PERMISSION_GROUPS: PermissionGroup[] = [
+  {
+    id: 'stage-1-iqc',
+    titleEn: '1. Incoming & Supplier Quality (IQC)',
+    titleAr: '1. استلام الخامات والموردين (IQC)',
+    permissions: [
+      { id: 'iqc.inspect', labelEn: 'Inspect Raw Materials', labelAr: 'فحص المواد الخام الواردة' },
+      { id: 'iqc.approve_coa', labelEn: 'Approve Supplier COA', labelAr: 'اعتماد شهادات التحليل COA' },
+      { id: 'supplier.manage', labelEn: 'Manage Supplier Scorecard', labelAr: 'إدارة تقييم ومخالفات الموردين' }
+    ]
+  },
+  {
+    id: 'stage-2-ipqc',
+    titleEn: '2. In-Process & Shopfloor Quality (IPQC)',
+    titleAr: '2. جودة التصنيع والعمليات (IPQC)',
+    permissions: [
+      { id: 'shopfloor.log_defect', labelEn: 'Log Defect Records', labelAr: 'تسجيل العيوب المباشر بالورشة' },
+      { id: 'shopfloor.clearance', labelEn: 'Line Clearance & Patrol', labelAr: 'مطابقة بداية التشغيل وفحص الخطوط' },
+      { id: 'spc.view', labelEn: 'View SPC Control Charts', labelAr: 'استعراض كارتات التحكم الإحصائي' },
+      { id: 'spc.calculate', labelEn: 'Configure SPC Limits & Rules', labelAr: 'ضبط حدود التحكم وقواعد نيلسون' }
+    ]
+  },
+  {
+    id: 'stage-3-ncr',
+    titleEn: '3. Non-Conformance & Problem Solving (NCR/CAPA/8D)',
+    titleAr: '3. عدم المطابقة والحل الجذري (NCR/CAPA/8D)',
+    permissions: [
+      { id: 'ncr.create', labelEn: 'Create & Contain NCR', labelAr: 'تحرير تقارير وحجز عيوب NCR' },
+      { id: 'ncr.disposition', labelEn: 'Approve Material Disposition', labelAr: 'اعتماد قرارات التصرف والعزل' },
+      { id: 'capa.manage', labelEn: 'Manage Corrective Actions (CAPA)', labelAr: 'إدارة وتتبع إجراءات CAPA' },
+      { id: 'eight_d.solve', labelEn: 'Lead 8D Problem Solving', labelAr: 'قيادة فرق حل المشكلات 8D' }
+    ]
+  },
+  {
+    id: 'stage-4-fqc',
+    titleEn: '4. Final & Outgoing Quality (FQC/OQC)',
+    titleAr: '4. فحص وخروج المنتج النهائي (FQC/OQC)',
+    permissions: [
+      { id: 'fqc.release', labelEn: 'Release Finished Lots for Dispatch', labelAr: 'اعتماد الإفراج النهائي للشحن' },
+      { id: 'fqc.aql_sample', labelEn: 'Perform AQL Acceptance Sampling', labelAr: 'تنفيذ فحص عينات القبول AQL' }
+    ]
+  },
+  {
+    id: 'stage-5-complaints',
+    titleEn: '5. Customer Quality & Field Feedback',
+    titleAr: '5. شكاوى وملاحظات العملاء',
+    permissions: [
+      { id: 'complaints.manage', labelEn: 'Register & Investigate Complaints', labelAr: 'تسجيل والتحقيق في شكاوى العملاء' },
+      { id: 'rma.approve', labelEn: 'Approve Product Returns (RMA)', labelAr: 'اعتماد استرجاع المنتجات المعيبة' }
+    ]
+  },
+  {
+    id: 'admin-governance',
+    titleEn: 'System Administration & Master Data',
+    titleAr: 'إدارة النظام والبيانات الأساسية',
+    permissions: [
+      { id: 'users.manage', labelEn: 'Manage Users & Passwords', labelAr: 'إدارة المستخدمين والحسابات' },
+      { id: 'roles.manage', labelEn: 'Manage Security Roles & Matrix', labelAr: 'إدارة الأدوار ومصفوفة الصلاحيات' },
+      { id: 'master_data.edit', labelEn: 'Edit Plants, Lines & Defects Catalog', labelAr: 'تعديل وتكويد الخطوط والعيوب' },
+      { id: 'admin.access', labelEn: 'Full System Administrator Access', labelAr: 'صلاحيات الإدارة والتحكم الكامل' }
+    ]
+  }
+];
+
+export const ALL_PERMISSION_KEYS = PERMISSION_GROUPS.flatMap(g => g.permissions.map(p => p.id));
+
+export const DEFAULT_SYSTEM_ROLES: RoleDefinition[] = [
+  {
+    id: 'admin',
+    name: 'System Administrator',
+    nameAr: 'مدير النظام الشامل',
+    description: 'Full unrestricted access to all quality stages, master data and system security',
+    descriptionAr: 'صلاحيات كاملة غير مقيدة على كافة مراحل الجودة والبيانات الأساسية والأمان',
+    userCount: 1,
+    permissions: ['*', ...ALL_PERMISSION_KEYS],
+    isSystem: true,
+    color: '#00A3E0'
+  },
+  {
+    id: 'quality_manager',
+    name: 'Quality Assurance Manager',
+    nameAr: 'مدير توكيد الجودة',
+    description: 'Approval authority for dispositions, CAPA closures, supplier ratings, and executive reporting',
+    descriptionAr: 'صلاحيات اعتماد قرارات التصرف وإغلاق CAPA وتقييم الموردين والتقارير التنفيذية',
+    userCount: 1,
+    permissions: [
+      'iqc.inspect', 'iqc.approve_coa', 'supplier.manage',
+      'shopfloor.clearance', 'spc.view', 'spc.calculate',
+      'ncr.create', 'ncr.disposition', 'capa.manage', 'eight_d.solve',
+      'fqc.release', 'fqc.aql_sample', 'complaints.manage', 'rma.approve',
+      'master_data.edit'
+    ],
+    isSystem: true,
+    color: '#10B981'
+  },
+  {
+    id: 'quality_engineer',
+    name: 'Quality Process Engineer',
+    nameAr: 'مهندس جودة العمليات',
+    description: 'Conducts SPC capability studies, investigations, 8D facilitation, and inspection plans',
+    descriptionAr: 'إجراء دراسات مقدرة العمليات SPC وتيسير فرق 8D وتصميم خطط الفحص',
+    userCount: 2,
+    permissions: [
+      'iqc.inspect', 'iqc.approve_coa',
+      'shopfloor.log_defect', 'shopfloor.clearance', 'spc.view', 'spc.calculate',
+      'ncr.create', 'capa.manage', 'eight_d.solve',
+      'fqc.aql_sample', 'complaints.manage'
+    ],
+    isSystem: true,
+    color: '#8B5CF6'
+  },
+  {
+    id: 'shopfloor_inspector',
+    name: 'Shopfloor Quality Inspector',
+    nameAr: 'مفتش جودة خط الإنتاج',
+    description: 'Daily defect logging, line clearance verification, and first-article inspections',
+    descriptionAr: 'تسجيل العيوب اليومي والتحقق من بداية التشغيل وفحص العينات الأولى',
+    userCount: 3,
+    permissions: [
+      'shopfloor.log_defect', 'shopfloor.clearance', 'spc.view',
+      'ncr.create', 'fqc.aql_sample'
+    ],
+    isSystem: false,
+    color: '#F59E0B'
+  },
+  {
+    id: 'incoming_inspector',
+    name: 'Incoming Material Inspector (IQC)',
+    nameAr: 'فاحص استلام المواد الخام (IQC)',
+    description: 'Receiving dock inspection, certificate verification, and quarantine segregation',
+    descriptionAr: 'فحص شحنات الاستلام ومطابقة شهادات التحليل وحجز الخامات غير المطابقة',
+    userCount: 1,
+    permissions: [
+      'iqc.inspect', 'iqc.approve_coa', 'ncr.create'
+    ],
+    isSystem: false,
+    color: '#3B82F6'
+  }
+];
+
+export const PRESET_AVATARS = [
+  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=200&fit=crop&crop=faces',
+  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=faces',
+  'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&h=200&fit=crop&crop=faces',
+  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop&crop=faces',
+  'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=200&h=200&fit=crop&crop=faces',
+  'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=faces',
+];
+
+export const DEFAULT_USERS: UserAccount[] = [
+  {
+    id: 'usr-1',
+    name: 'Eng. Mohamed Hassan',
+    email: 'mohamed.hassan@qms-industrial.com',
+    phone: '+20 100 123 4567',
+    roleId: 'admin',
+    roleName: 'System Administrator',
+    department: 'Quality Leadership',
+    departmentAr: 'قيادة الجودة ونظم المعلومات',
+    plant: 'Main Plant - Assembly 01',
+    status: 'active',
+    avatar: PRESET_AVATARS[0],
+    lastLogin: 'Just now',
+    createdAt: '2026-01-15'
+  },
+  {
+    id: 'usr-2',
+    name: 'Tamer Al-Banna',
+    email: 'tamer.banna@qms-industrial.com',
+    phone: '+20 111 456 7890',
+    roleId: 'quality_manager',
+    roleName: 'Quality Assurance Manager',
+    department: 'Quality Management',
+    departmentAr: 'إدارة توكيد الجودة',
+    plant: 'Main Plant - Assembly 01',
+    status: 'active',
+    avatar: PRESET_AVATARS[1],
+    lastLogin: '2 hours ago',
+    createdAt: '2026-02-01'
+  },
+  {
+    id: 'usr-3',
+    name: 'Sara Ibrahim',
+    email: 'sara.ibrahim@qms-industrial.com',
+    phone: '+20 122 888 9999',
+    roleId: 'quality_engineer',
+    roleName: 'Quality Process Engineer',
+    department: 'Engineering & SPC',
+    departmentAr: 'هندسة العمليات والتحكم الإحصائي',
+    plant: 'Secondary Plant - Stamping',
+    status: 'active',
+    avatar: PRESET_AVATARS[2],
+    lastLogin: 'Yesterday',
+    createdAt: '2026-02-15'
+  },
+  {
+    id: 'usr-4',
+    name: 'Mahmoud Reda',
+    email: 'mahmoud.reda@qms-industrial.com',
+    phone: '+20 109 777 5555',
+    roleId: 'shopfloor_inspector',
+    roleName: 'Shopfloor Quality Inspector',
+    department: 'Production Quality',
+    departmentAr: 'جودة خطوط الإنتاج',
+    plant: 'Main Plant - Assembly 01',
+    status: 'active',
+    avatar: PRESET_AVATARS[3],
+    lastLogin: '3 days ago',
+    createdAt: '2026-03-01'
+  },
+  {
+    id: 'usr-5',
+    name: 'Hassan Sherif',
+    email: 'hassan.sherif@qms-industrial.com',
+    phone: '+20 115 333 2222',
+    roleId: 'incoming_inspector',
+    roleName: 'Incoming Material Inspector (IQC)',
+    department: 'Supply Chain Quality',
+    departmentAr: 'جودة استلام الخامات والموردين',
+    plant: 'Central Logistics Dock',
+    status: 'active',
+    avatar: PRESET_AVATARS[5],
+    lastLogin: '5 days ago',
+    createdAt: '2026-03-10'
+  }
+];
+
+const ROLES_STORAGE_KEY = 'qms_system_roles_v2';
+const USERS_STORAGE_KEY = 'qms_system_users_v2';
+
+export function loadStoredRoles(): RoleDefinition[] {
+  try {
+    const raw = localStorage.getItem(ROLES_STORAGE_KEY);
+    if (!raw) {
+      saveStoredRoles(DEFAULT_SYSTEM_ROLES);
+      return DEFAULT_SYSTEM_ROLES;
+    }
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : DEFAULT_SYSTEM_ROLES;
+  } catch {
+    return DEFAULT_SYSTEM_ROLES;
+  }
+}
+
+export function saveStoredRoles(roles: RoleDefinition[]): void {
+  try {
+    localStorage.setItem(ROLES_STORAGE_KEY, JSON.stringify(roles));
+  } catch (e) {
+    console.error('Failed to save roles:', e);
+  }
+}
+
+export function loadStoredUsers(): UserAccount[] {
+  try {
+    const raw = localStorage.getItem(USERS_STORAGE_KEY);
+    if (!raw) {
+      saveStoredUsers(DEFAULT_USERS);
+      return DEFAULT_USERS;
+    }
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : DEFAULT_USERS;
+  } catch {
+    return DEFAULT_USERS;
+  }
+}
+
+export function saveStoredUsers(users: UserAccount[]): void {
+  try {
+    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+  } catch (e) {
+    console.error('Failed to save users:', e);
+  }
+}
+
+export function createUser(data: Omit<UserAccount, 'id' | 'createdAt' | 'lastLogin'>): UserAccount {
+  const users = loadStoredUsers();
+  const newUser: UserAccount = {
+    ...data,
+    id: `usr-${Date.now().toString(36)}`,
+    lastLogin: 'Never',
+    createdAt: new Date().toISOString().split('T')[0]
+  };
+  const updated = [newUser, ...users];
+  saveStoredUsers(updated);
+
+  // Update role userCount
+  syncRoleUserCounts(updated);
+  return newUser;
+}
+
+export function updateUser(id: string, patch: Partial<UserAccount>): UserAccount | null {
+  const users = loadStoredUsers();
+  const index = users.findIndex(u => u.id === id);
+  if (index === -1) return null;
+
+  users[index] = { ...users[index], ...patch };
+  saveStoredUsers(users);
+  syncRoleUserCounts(users);
+  return users[index];
+}
+
+export function deleteUser(id: string): boolean {
+  const users = loadStoredUsers();
+  const filtered = users.filter(u => u.id !== id);
+  if (filtered.length === users.length) return false;
+
+  saveStoredUsers(filtered);
+  syncRoleUserCounts(filtered);
+  return true;
+}
+
+export function syncRoleUserCounts(usersList?: UserAccount[]): void {
+  const users = usersList || loadStoredUsers();
+  const roles = loadStoredRoles();
+
+  const countMap: Record<string, number> = {};
+  users.forEach(u => {
+    countMap[u.roleId] = (countMap[u.roleId] || 0) + 1;
+  });
+
+  const updatedRoles = roles.map(r => ({
+    ...r,
+    userCount: countMap[r.id] || 0
+  }));
+
+  saveStoredRoles(updatedRoles);
+}

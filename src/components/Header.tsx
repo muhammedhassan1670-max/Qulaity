@@ -295,7 +295,11 @@ export function Header({ onMenuToggle, user }: HeaderProps) {
             onClick={() => navigate('/profile')}
           >
             <div className="w-full h-full rounded-[10px] bg-slate-900 dark:bg-[#0a0a0f] flex items-center justify-center overflow-hidden">
-              <UserIcon className="w-4 h-4 text-white" />
+              {user?.avatar ? (
+                <img src={user.avatar} alt={user?.name || 'User'} className="w-full h-full object-cover" />
+              ) : (
+                <UserIcon className="w-4 h-4 text-white" />
+              )}
             </div>
           </button>
 

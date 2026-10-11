@@ -9,6 +9,8 @@ export interface User {
   role: string;
   avatar?: string;
   plant?: string;
+  department?: string;
+  phone?: string;
   permissions: string[];
 }
 
@@ -45,11 +47,14 @@ export interface Notification {
 }
 
 const mockUser: User = {
-  id: '1',
-  name: 'System Administrator',
-  email: 'admin@qms.com',
+  id: 'usr-1',
+  name: 'Eng. Mohamed Hassan',
+  email: 'mohamed.hassan@qms-industrial.com',
   role: 'admin',
-  plant: 'Main Plant',
+  plant: 'Main Plant - Assembly 01',
+  department: 'Quality Leadership',
+  phone: '+20 100 123 4567',
+  avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=200&fit=crop&crop=faces',
   permissions: [
     'dashboard.view',
     'quality.manage',
@@ -59,7 +64,8 @@ const mockUser: User = {
     'spc.analyze',
     'iot.manage',
     'executive.view',
-    'admin.access'
+    'admin.access',
+    '*'
   ]
 };
 
@@ -245,8 +251,11 @@ export const useAppStore = create<AppState>()(
           localStorage.setItem('qms_local_seeded', 'true');
         }
 
-        // If already authenticated (rehydrated), don't overwrite user on refresh.
+        // If already authenticated (rehydrated), don't overwrite user on refresh, but ensure avatar.
         if (get().user) {
+          if (!get().user?.avatar) {
+            set((state) => ({ user: state.user ? { ...state.user, avatar: mockUser.avatar } : null }));
+          }
           set({ isLoading: false });
           return;
         }
