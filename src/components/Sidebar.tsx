@@ -34,6 +34,7 @@ import {
 import { useConfigStore } from '../stores/configStore';
 import { useAppStore } from '../stores/appStore';
 import { MODULE_HELP } from '../data/moduleHelpData';
+import { hasPermission } from '../services/userService';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -52,11 +53,12 @@ interface MenuItem {
   badge?: string;
   badgeColor?: string;
   children?: MenuItem[];
+  permission?: string | string[];
 }
 
 export function Sidebar({ isOpen, onClose, onSectionChange }: SidebarProps) {
   const { t, language } = useTranslation();
-  const { isLiteMode } = useAppStore();
+  const { user, isLiteMode } = useAppStore();
   const currentPlant = useConfigStore((state) => state.getCurrentPlant());
   const plantLabel = currentPlant?.name || (language === 'ar' ? 'لا يوجد مصنع محدد' : 'No plant selected');
   const location = useLocation();
@@ -99,9 +101,9 @@ export function Sidebar({ isOpen, onClose, onSectionChange }: SidebarProps) {
         hintAr: 'المواد الخام وفحص الاستلام والموردين',
         icon: Factory,
         children: [
-          { id: 'quality-inspection', labelKey: 'quality-inspection', labelEn: 'Incoming Inspection (IQC)', labelAr: 'فحص الشحنات الواردة', icon: ClipboardCheck, badge: 'IQC', badgeColor: 'bg-emerald-500' },
-          { id: 'quality-supplier', labelKey: 'quality-supplier', labelEn: 'Supplier Quality & Rating', labelAr: 'جودة وتقييم الموردين', icon: Factory },
-          { id: 'quality-inspection-plans', labelKey: 'quality-inspection-plans', labelEn: 'Incoming Inspection Plans', labelAr: 'خطط فحص المواد الخام', icon: FileText },
+          { id: 'quality-inspection', labelKey: 'quality-inspection', labelEn: 'Incoming Inspection (IQC)', labelAr: 'فحص الشحنات الواردة', icon: ClipboardCheck, badge: 'IQC', badgeColor: 'bg-emerald-500', permission: 'iqc.inspect' },
+          { id: 'quality-supplier', labelKey: 'quality-supplier', labelEn: 'Supplier Quality & Rating', labelAr: 'جودة وتقييم الموردين', icon: Factory, permission: 'supplier.manage' },
+          { id: 'quality-inspection-plans', labelKey: 'quality-inspection-plans', labelEn: 'Incoming Inspection Plans', labelAr: 'خطط فحص المواد الخام', icon: FileText, permission: 'iqc.inspect' },
         ]
       },
 
@@ -115,10 +117,10 @@ export function Sidebar({ isOpen, onClose, onSectionChange }: SidebarProps) {
         hintAr: 'تسجيل الورشة والكارتات والعيوب',
         icon: Smartphone,
         children: [
-          { id: 'quality-shopfloor', labelKey: 'quality-shopfloor', labelEn: 'Fast Shopfloor Entry', labelAr: 'تسجيل سريع من الأرضية', icon: Smartphone, badge: 'FAST', badgeColor: 'bg-blue-500' },
-          { id: 'quality-defect-log', labelKey: 'quality-defect-log', labelEn: 'Daily Defect Recorder', labelAr: 'مسجل / قائمة العيوب اليومية', icon: AlertCircle, badge: 'LOG', badgeColor: 'bg-green-500' },
-          { id: 'quality-spc', labelKey: 'spc', labelEn: 'SPC Control Charts', labelAr: 'كارتات التحكم الإحصائي SPC', icon: Activity, badge: 'SPC', badgeColor: 'bg-cyan-500' },
-          { id: 'quality-execution-board', labelKey: 'quality-execution-board', labelEn: 'Inspection Execution Board', labelAr: 'متابعة تنفيذ محطات الفحص', icon: BarChart3 },
+          { id: 'quality-shopfloor', labelKey: 'quality-shopfloor', labelEn: 'Fast Shopfloor Entry', labelAr: 'تسجيل سريع من الأرضية', icon: Smartphone, badge: 'FAST', badgeColor: 'bg-blue-500', permission: 'shopfloor.log_defect' },
+          { id: 'quality-defect-log', labelKey: 'quality-defect-log', labelEn: 'Daily Defect Recorder', labelAr: 'مسجل / قائمة العيوب اليومية', icon: AlertCircle, badge: 'LOG', badgeColor: 'bg-green-500', permission: 'shopfloor.log_defect' },
+          { id: 'quality-spc', labelKey: 'spc', labelEn: 'SPC Control Charts', labelAr: 'كارتات التحكم الإحصائي SPC', icon: Activity, badge: 'SPC', badgeColor: 'bg-cyan-500', permission: 'spc.view' },
+          { id: 'quality-execution-board', labelKey: 'quality-execution-board', labelEn: 'Inspection Execution Board', labelAr: 'متابعة تنفيذ محطات الفحص', icon: BarChart3, permission: 'shopfloor.clearance' },
         ]
       },
 
@@ -132,11 +134,11 @@ export function Sidebar({ isOpen, onClose, onSectionChange }: SidebarProps) {
         hintAr: 'حلقة معالجة الخلل والتحسين',
         icon: Workflow,
         children: [
-          { id: 'quality-ncr', labelKey: 'quality-ncr', labelEn: 'NCR Non-Conformance', labelAr: 'تقارير عدم المطابقة NCR', icon: AlertCircle, badge: 'NCR', badgeColor: 'bg-amber-500' },
-          { id: 'quality-capa', labelKey: 'quality-capa', labelEn: 'CAPA Corrective Actions', labelAr: 'الإجراءات التصحيحية CAPA', icon: ClipboardCheck },
-          { id: 'quality-8d', labelKey: 'quality-8d', labelEn: '8D Problem Solving', labelAr: 'حل المشكلات المنهجي 8D', icon: FileText, badge: '8D', badgeColor: 'bg-purple-500' },
-          { id: 'quality-deviation', labelKey: 'quality-deviation', labelEn: 'Deviations & Concessions', labelAr: 'الانحرافات وتصاريح الحيود', icon: TrendingUp },
-          { id: 'quality-change', labelKey: 'quality-change', labelEn: 'Engineering Change Control', labelAr: 'ضبط التغيير الهندسي', icon: Workflow },
+          { id: 'quality-ncr', labelKey: 'quality-ncr', labelEn: 'NCR Non-Conformance', labelAr: 'تقارير عدم المطابقة NCR', icon: AlertCircle, badge: 'NCR', badgeColor: 'bg-amber-500', permission: 'ncr.create' },
+          { id: 'quality-capa', labelKey: 'quality-capa', labelEn: 'CAPA Corrective Actions', labelAr: 'الإجراءات التصحيحية CAPA', icon: ClipboardCheck, permission: 'capa.manage' },
+          { id: 'quality-8d', labelKey: 'quality-8d', labelEn: '8D Problem Solving', labelAr: 'حل المشكلات المنهجي 8D', icon: FileText, badge: '8D', badgeColor: 'bg-purple-500', permission: 'eight_d.solve' },
+          { id: 'quality-deviation', labelKey: 'quality-deviation', labelEn: 'Deviations & Concessions', labelAr: 'الانحرافات وتصاريح الحيود', icon: TrendingUp, permission: 'ncr.disposition' },
+          { id: 'quality-change', labelKey: 'quality-change', labelEn: 'Engineering Change Control', labelAr: 'ضبط التغيير الهندسي', icon: Workflow, permission: 'capa.manage' },
         ]
       },
 
@@ -150,7 +152,7 @@ export function Sidebar({ isOpen, onClose, onSectionChange }: SidebarProps) {
         hintAr: 'فحص ما قبل الشحن والإفراج',
         icon: Truck,
         children: [
-          { id: 'quality-outgoing', labelKey: 'quality-outgoing', labelEn: 'Pre-Shipment Inspection (OQC)', labelAr: 'فحص جودة الشحنات الصادرة', icon: Truck, badge: 'OQC', badgeColor: 'bg-indigo-500' },
+          { id: 'quality-outgoing', labelKey: 'quality-outgoing', labelEn: 'Pre-Shipment Inspection (OQC)', labelAr: 'فحص جودة الشحنات الصادرة', icon: Truck, badge: 'OQC', badgeColor: 'bg-indigo-500', permission: ['fqc.release', 'fqc.aql_sample'] },
         ]
       },
 
@@ -164,7 +166,7 @@ export function Sidebar({ isOpen, onClose, onSectionChange }: SidebarProps) {
         hintAr: 'شكاوى العملاء والمرتجعات',
         icon: Users,
         children: [
-          { id: 'quality-complaint', labelKey: 'quality-complaint', labelEn: 'Customer Complaints Log', labelAr: 'سجل شكاوى العملاء', icon: AlertCircle, badge: 'RMA', badgeColor: 'bg-rose-500' },
+          { id: 'quality-complaint', labelKey: 'quality-complaint', labelEn: 'Customer Complaints Log', labelAr: 'سجل شكاوى العملاء', icon: AlertCircle, badge: 'RMA', badgeColor: 'bg-rose-500', permission: 'complaints.manage' },
         ]
       },
 
@@ -178,11 +180,11 @@ export function Sidebar({ isOpen, onClose, onSectionChange }: SidebarProps) {
         hintAr: 'مراجعات وخطط تحكم ومعايرة و FMEA',
         icon: ShieldCheck,
         children: [
-          { id: 'quality-control-plan', labelKey: 'quality-control-plan', labelEn: 'Control Plan', labelAr: 'خطط التحكم Control Plan', icon: Barcode },
-          { id: 'quality-fmea', labelKey: 'quality-fmea', labelEn: 'FMEA Risk Analysis', labelAr: 'FMEA تحليل المخاطر', icon: Brain, badge: 'AP', badgeColor: 'bg-red-500' },
-          { id: 'quality-layered-audits', labelKey: 'quality-layered-audits', labelEn: 'Layered Process Audits (LPA)', labelAr: 'مراجعات المشرف LPA', icon: ShieldCheck },
-          { id: 'quality-audit', labelKey: 'quality-audit', labelEn: 'Internal Audits (ISO)', labelAr: 'التدقيق الداخلي وإدارته', icon: ClipboardCheck },
-          { id: 'quality-calibration', labelKey: 'quality-calibration', labelEn: 'Equipment Calibration & MSA', labelAr: 'معايرة الأجهزة والـ MSA', icon: Activity },
+          { id: 'quality-control-plan', labelKey: 'quality-control-plan', labelEn: 'Control Plan', labelAr: 'خطط التحكم Control Plan', icon: Barcode, permission: 'spc.calculate' },
+          { id: 'quality-fmea', labelKey: 'quality-fmea', labelEn: 'FMEA Risk Analysis', labelAr: 'FMEA تحليل المخاطر', icon: Brain, badge: 'AP', badgeColor: 'bg-red-500', permission: 'spc.calculate' },
+          { id: 'quality-layered-audits', labelKey: 'quality-layered-audits', labelEn: 'Layered Process Audits (LPA)', labelAr: 'مراجعات المشرف LPA', icon: ShieldCheck, permission: 'shopfloor.clearance' },
+          { id: 'quality-audit', labelKey: 'quality-audit', labelEn: 'Internal Audits (ISO)', labelAr: 'التدقيق الداخلي وإدارته', icon: ClipboardCheck, permission: 'capa.manage' },
+          { id: 'quality-calibration', labelKey: 'quality-calibration', labelEn: 'Equipment Calibration & MSA', labelAr: 'معايرة الأجهزة والـ MSA', icon: Activity, permission: 'spc.calculate' },
         ]
       },
 
@@ -196,13 +198,13 @@ export function Sidebar({ isOpen, onClose, onSectionChange }: SidebarProps) {
         hintAr: 'مركز القيادة وتكلفة الجودة والـ PPM',
         icon: TrendingUp,
         children: [
-          { id: 'quality-command-center', labelKey: 'quality-command-center', labelEn: 'Command Center', labelAr: 'مركز قيادة الجودة الموحد', icon: ShieldCheck, badge: 'CMD', badgeColor: 'bg-cyan-500' },
-          { id: 'quality-dashboard', labelKey: 'quality-dashboard', labelEn: 'Quality Analytics Dashboard', labelAr: 'لوحة تحليلات الجودة', icon: LayoutDashboard },
-          { id: 'quality-process-ppm', labelKey: 'quality-process-ppm', labelEn: 'Process PPM Tracking', labelAr: 'تتبع معدلات PPM', icon: Activity },
-          { id: 'quality-defect-cost', labelKey: 'quality-defect-cost', labelEn: 'Cost of Poor Quality (COPQ)', labelAr: 'تكلفة الجودة المعيبة COPQ', icon: DollarSign },
-          { id: 'quality-defect-prediction', labelKey: 'defect-prediction', labelEn: 'AI Defect Prediction', labelAr: 'توقع العيوب بالذكاء الاصطناعي', icon: Target, badge: 'AI', badgeColor: 'bg-purple-500' },
+          { id: 'quality-command-center', labelKey: 'quality-command-center', labelEn: 'Command Center', labelAr: 'مركز قيادة الجودة الموحد', icon: ShieldCheck, badge: 'CMD', badgeColor: 'bg-cyan-500', permission: ['capa.manage', 'admin.access'] },
+          { id: 'quality-dashboard', labelKey: 'quality-dashboard', labelEn: 'Quality Analytics Dashboard', labelAr: 'لوحة تحليلات الجودة', icon: LayoutDashboard, permission: ['spc.view', 'ncr.create'] },
+          { id: 'quality-process-ppm', labelKey: 'quality-process-ppm', labelEn: 'Process PPM Tracking', labelAr: 'تتبع معدلات PPM', icon: Activity, permission: 'spc.view' },
+          { id: 'quality-defect-cost', labelKey: 'quality-defect-cost', labelEn: 'Cost of Poor Quality (COPQ)', labelAr: 'تكلفة الجودة المعيبة COPQ', icon: DollarSign, permission: ['capa.manage', 'admin.access'] },
+          { id: 'quality-defect-prediction', labelKey: 'defect-prediction', labelEn: 'AI Defect Prediction', labelAr: 'توقع العيوب بالذكاء الاصطناعي', icon: Target, badge: 'AI', badgeColor: 'bg-purple-500', permission: 'spc.view' },
           { id: 'ai-chat', labelKey: 'ai-chat', labelEn: 'AI Quality Assistant', labelAr: 'مساعد الجودة الذكي', icon: MessageSquare },
-          { id: 'digital-twin', labelKey: 'digital-twin', labelEn: 'Digital Twin Plant', labelAr: 'التوأم الرقمي للمصنع', icon: Box },
+          { id: 'digital-twin', labelKey: 'digital-twin', labelEn: 'Digital Twin Plant', labelAr: 'التوأم الرقمي للمصنع', icon: Box, permission: ['spc.view', 'admin.access'] },
         ]
       },
 
@@ -216,8 +218,8 @@ export function Sidebar({ isOpen, onClose, onSectionChange }: SidebarProps) {
         hintAr: 'البيانات الرئيسية ومصمم النماذج',
         icon: Settings,
         children: [
-          { id: 'quality-master-data', labelKey: 'quality-master-data', labelEn: 'Quality Master Data', labelAr: 'البيانات الرئيسية (قطع/موديلات)', icon: Database },
-          { id: 'quality-form-designer', labelKey: 'quality-form-designer', labelEn: 'Inspection Form Designer', labelAr: 'مصمم نماذج الفحص', icon: Blocks },
+          { id: 'quality-master-data', labelKey: 'quality-master-data', labelEn: 'Quality Master Data', labelAr: 'البيانات الرئيسية (قطع/موديلات)', icon: Database, permission: 'master_data.edit' },
+          { id: 'quality-form-designer', labelKey: 'quality-form-designer', labelEn: 'Inspection Form Designer', labelAr: 'مصمم نماذج الفحص', icon: Blocks, permission: 'master_data.edit' },
           { id: 'quality-knowledge-base', labelKey: 'quality-knowledge-base', labelEn: 'Lessons Learned Knowledge Base', labelAr: 'قاعدة الدروس المستفادة', icon: Library },
           {
             id: 'admin',
@@ -225,30 +227,52 @@ export function Sidebar({ isOpen, onClose, onSectionChange }: SidebarProps) {
             labelEn: 'System Administration',
             labelAr: 'إدارة النظام',
             icon: Settings,
+            permission: ['admin.access', 'users.manage', 'roles.manage'],
             children: [
-              { id: 'admin-users', labelKey: 'admin-users', icon: Users },
-              { id: 'admin-roles', labelKey: 'admin-roles', icon: ShieldCheck },
-              { id: 'admin-plants', labelKey: 'admin-plants', icon: Globe },
-              { id: 'admin-workflow', labelKey: 'admin-workflow', icon: Workflow },
-              { id: 'admin-database', labelKey: 'admin-database', icon: Database },
-              { id: 'admin-reports', labelKey: 'admin-reports', icon: FileText }
+              { id: 'admin-users', labelKey: 'admin-users', icon: Users, permission: 'users.manage' },
+              { id: 'admin-roles', labelKey: 'admin-roles', icon: ShieldCheck, permission: 'roles.manage' },
+              { id: 'admin-plants', labelKey: 'admin-plants', icon: Globe, permission: 'admin.access' },
+              { id: 'admin-workflow', labelKey: 'admin-workflow', icon: Workflow, permission: 'admin.access' },
+              { id: 'admin-database', labelKey: 'admin-database', icon: Database, permission: 'admin.access' },
+              { id: 'admin-reports', labelKey: 'admin-reports', icon: FileText, permission: 'admin.access' }
             ]
           }
         ]
       }
     ];
 
-    if (!isLiteMode) return fullMenu;
+    // Filter items strictly by user permissions
+    const filterItem = (item: MenuItem): MenuItem | null => {
+      // Check item's own permission requirement
+      if (item.permission && !hasPermission(user, item.permission)) {
+        return null;
+      }
 
-    return [
-      fullMenu[0],
-      fullMenu[1],
-      fullMenu[2],
-      fullMenu[3],
-      fullMenu[4],
-      fullMenu[6]
-    ];
-  }, [isLiteMode]);
+      // If item has children, recursively filter them
+      if (item.children && item.children.length > 0) {
+        const allowedChildren = item.children
+          .map(filterItem)
+          .filter((child): child is MenuItem => child !== null);
+        
+        // If all sub-items are disallowed, omit the parent category completely
+        if (allowedChildren.length === 0) {
+          return null;
+        }
+
+        return { ...item, children: allowedChildren };
+      }
+
+      return item;
+    };
+
+    const permittedMenu = fullMenu
+      .map(filterItem)
+      .filter((item): item is MenuItem => item !== null);
+
+    if (!isLiteMode) return permittedMenu;
+
+    return permittedMenu.slice(0, 5);
+  }, [isLiteMode, user]);
 
   // Professional ID-to-Path mapping for robust active state detection
   const PATH_MAP: Record<string, string> = useMemo(() => ({
@@ -510,15 +534,26 @@ export function Sidebar({ isOpen, onClose, onSectionChange }: SidebarProps) {
           {menuItems.map(item => renderMenuItem(item))}
         </nav>
 
-        {/* Bottom Status */}
-        <div className="mt-auto p-4 border-t border-slate-200 dark:border-white/10 bg-slate-50/30 dark:bg-black/10">
-          <div className="flex items-center gap-3 p-2 bg-white/40 dark:bg-[#0f131a]/40 border border-slate-200/50 dark:border-white/5 rounded-xl">
-            <div className="w-8 h-8 rounded-lg bg-[var(--industrial-success)]/10 dark:bg-[var(--industrial-success)]/20 flex items-center justify-center shrink-0">
-              <img src="/logo.png" alt="Logo" className="h-6 w-auto opacity-70" />
+        {/* Bottom Status & Active Profile */}
+        <div className="mt-auto p-3.5 border-t border-slate-200 dark:border-white/10 bg-slate-50/60 dark:bg-black/20">
+          <div className="flex items-center gap-3 p-2.5 bg-white/60 dark:bg-[#0f131a]/60 border border-slate-200/80 dark:border-white/5 rounded-2xl">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[var(--industrial-primary)] to-[var(--industrial-secondary)] p-0.5 shrink-0 overflow-hidden shadow">
+              <div className="w-full h-full rounded-[10px] bg-slate-900 flex items-center justify-center text-white text-xs font-black overflow-hidden">
+                {user?.avatar ? (
+                  <img src={user.avatar} alt={user?.name || 'User'} className="w-full h-full object-cover" />
+                ) : (
+                  <span>{user?.name?.charAt(0) || 'U'}</span>
+                )}
+              </div>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">{t('system-status')}</p>
-              <p className="text-xs font-black text-[var(--industrial-success)]">{t('operational')}</p>
+              <p className="text-xs font-black text-slate-800 dark:text-white truncate">{user?.name || 'Quality Operator'}</p>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <p className="text-[10px] font-bold text-[#00A3E0] truncate tracking-tight">
+                  {user?.role || 'Active User'}
+                </p>
+              </div>
             </div>
           </div>
         </div>

@@ -83,13 +83,13 @@ export function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validateEmail(credentials.email)) {
-      toast.error('Invalid email format');
+    if (!credentials.email.trim()) {
+      toast.error('Please enter your email or username / يرجى إدخال البريد أو اسم المستخدم');
       return;
     }
     
-    if (credentials.password.length < 6) {
-      toast.error('Password must be at least 6 characters');
+    if (credentials.password.length < 4) {
+      toast.error('Password must be at least 4 characters');
       return;
     }
 
@@ -97,7 +97,7 @@ export function LoginPage() {
     
     try {
       const result = await api.auth.login(
-        credentials.email,
+        credentials.email.trim(),
         credentials.password,
         credentials.tenantCode.trim() || undefined
       );
@@ -109,23 +109,26 @@ export function LoginPage() {
       const u = result.data.user;
       setUser({
         id: u.id,
-        name: `${u.firstName} ${u.lastName}`.trim(),
+        name: `${u.firstName} ${u.lastName}`.trim() || u.name,
         email: u.email,
         role: Array.isArray(u.roles) && u.roles.length > 0 ? u.roles[0] : 'user',
-        plant: u.plantId,
+        plant: u.plant || u.plantId || 'Main Plant - Assembly 01',
+        department: u.department || 'Quality Assurance',
+        phone: u.phone,
+        avatar: u.avatar,
         permissions: u.permissions || [],
       });
       
       // Success
-      toast.success('Welcome back!', {
-        description: 'Successfully logged in to QMS Enterprise 4.0'
+      toast.success('Welcome back / مرحباً بك مجدداً', {
+        description: `Logged in as: ${u.firstName} (${Array.isArray(u.roles) ? u.roles[0] : 'user'})`
       });
       
       // Navigate to dashboard
       navigate('/', { replace: true });
-    } catch (error) {
-      toast.error('Login failed', {
-        description: 'Invalid email or password'
+    } catch (error: any) {
+      toast.error('Login failed / فشل تسجيل الدخول', {
+        description: error?.message || 'Invalid email/username or password'
       });
     } finally {
       setIsLoading(false);
@@ -184,15 +187,15 @@ export function LoginPage() {
             <form onSubmit={handleLogin} className="space-y-5">
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Email Address
+                  Email or Username / اسم المستخدم أو البريد
                 </label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
                   <input
-                    type="email"
+                    type="text"
                     value={credentials.email}
                     onChange={(e) => setCredentials({ ...credentials, email: e.target.value })}
-                    placeholder="Enter your email"
+                    placeholder="admin or user@qms-industrial.com"
                     className="w-full h-12 pl-11 pr-4 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#00A3E0] focus:ring-1 focus:ring-[#00A3E0] transition-all"
                     required
                   />
@@ -276,6 +279,36 @@ export function LoginPage() {
                   </>
                 )}
               </button>
+
+              {/* Quick Role Fill for Testing */}
+              <div className="pt-3 border-t border-white/10 text-center">
+                <p className="text-[11px] font-bold text-gray-400 mb-2">
+                  تجربة الدخول الفوري بالأدوار المختلفة (1-Click Test):
+                </p>
+                <div className="grid grid-cols-3 gap-2 text-[11px]">
+                  <button
+                    type="button"
+                    onClick={() => setCredentials({ ...credentials, email: 'admin', password: 'admin123' })}
+                    className="p-2 rounded-xl bg-blue-500/10 border border-blue-500/20 text-[#00A3E0] hover:bg-blue-500/20 font-bold transition-colors"
+                  >
+                    👑 مدير النظام
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCredentials({ ...credentials, email: 'manager', password: '123456' })}
+                    className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 font-bold transition-colors"
+                  >
+                    🛡️ مدير الجودة
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCredentials({ ...credentials, email: 'inspector', password: '123456' })}
+                    className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 hover:bg-amber-500/20 font-bold transition-colors"
+                  >
+                    📋 مفتش ورشة
+                  </button>
+                </div>
+              </div>
             </form>
           )}
 

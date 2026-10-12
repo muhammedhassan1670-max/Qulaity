@@ -2,6 +2,7 @@
 // This layer can connect to real backend or use simulated responses
 
 import { toast } from 'sonner';
+import { authenticateUser } from './userService';
 
 const RAW_API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 const API_BASE_URL = RAW_API_BASE_URL.replace(/\/api\/v\d+$/i, '/api');
@@ -136,15 +137,53 @@ const mockData = {
 // Simulate API delay
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-const localAuthUsers = [
-  { email: 'admin@qms.com', password: 'admin123', name: 'System Administrator', role: 'admin' },
-];
+function buildLocalLoginResponse(identifier: string, password: string, tenantCode?: string) {
+  // First attempt authentication using stored user accounts (localStorage)
+  const authResult = authenticateUser(identifier, password);
+  
+  let userPayload: {
+    id: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    tenant: { id: string; name: string; code: string };
+    roles: string[];
+    permissions: string[];
+    plant?: string;
+    department?: string;
+    phone?: string;
+    avatar?: string;
+  };
 
-function buildLocalLoginResponse(email: string, password: string, tenantCode?: string) {
-  const normalizedEmail = email.trim().toLowerCase();
-  const user = localAuthUsers.find((item) => item.email === normalizedEmail && item.password === password);
-  if (!user) {
-    throw new Error('Invalid credentials');
+  if (authResult) {
+    const { user, permissions } = authResult;
+    const nameParts = user.name.trim().split(' ');
+    userPayload = {
+      id: user.id,
+      email: user.email,
+      firstName: nameParts[0] || 'User',
+      lastName: nameParts.slice(1).join(' ') || '',
+      plant: user.plant,
+      department: user.department,
+      phone: user.phone,
+      avatar: user.avatar,
+      tenant: { id: 'local-tenant-id', name: 'QMS Enterprise', code: tenantCode || 'QMS' },
+      roles: [user.roleId],
+      permissions: permissions,
+    };
+  } else if (identifier.trim().toLowerCase() === 'admin@qms.com' && password === 'admin123') {
+    // Fallback for default hardcoded admin
+    userPayload = {
+      id: 'usr-1',
+      email: 'admin@qms.com',
+      firstName: 'System',
+      lastName: 'Administrator',
+      tenant: { id: 'local-tenant-id', name: 'QMS Enterprise', code: tenantCode || 'QMS' },
+      roles: ['admin'],
+      permissions: ['*', 'admin.access'],
+    };
+  } else {
+    throw new Error('Invalid email, username, or password');
   }
 
   const localToken = 'local_jwt_token_' + Date.now();
@@ -157,19 +196,11 @@ function buildLocalLoginResponse(email: string, password: string, tenantCode?: s
   return {
     success: true,
     data: {
-      user: {
-        id: '1',
-        email: user.email,
-        firstName: user.name.split(' ')[0],
-        lastName: user.name.split(' ').slice(1).join(' '),
-        tenant: { id: 'local-tenant-id', name: 'QMS Enterprise', code: tenantCode || 'QMS' },
-        roles: [user.role],
-        permissions: ['dashboard.view', 'quality.manage', 'builder.use', 'ai.access', 'digital-twin.view', 'spc.analyze', 'iot.manage', 'executive.view', 'admin.access'],
-      },
+      user: userPayload,
       tokens: {
         accessToken: localToken,
         refreshToken: localRefreshToken,
-        expiresIn: '15m',
+        expiresIn: '24h',
       },
     },
   };

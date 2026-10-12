@@ -75,24 +75,54 @@ export function ProtectedRoute({
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (requiredRole && user.role !== requiredRole) {
+  const isAdmin = user.role === 'admin' || user.permissions?.includes('*') || user.permissions?.includes('admin.access');
+
+  if (requiredRole && user.role !== requiredRole && !isAdmin) {
     if (fallback) return <>{fallback}</>;
     return (
       <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center p-4">
-        <div className="glass-panel rounded-2xl p-8 text-center max-w-md">
-          <h2 className="text-xl font-bold text-white mb-2">Access Denied</h2>
-          <p className="text-gray-400 mb-6">Unauthorized role access.</p>
-          <button onClick={() => window.history.back()} className="px-4 py-2 bg-[#0066CC] text-white rounded-lg">Go Back</button>
+        <div className="glass-panel rounded-2xl p-8 text-center max-w-md border border-white/10 shadow-2xl">
+          <div className="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-400 mx-auto mb-4 flex items-center justify-center font-bold text-xl">
+            🔒
+          </div>
+          <h2 className="text-xl font-bold text-white mb-2">غير مصرح بالدخول / Access Restricted</h2>
+          <p className="text-gray-400 text-sm mb-6">
+            هذه الشاشة تتطلب دور ({requiredRole}). دورك الحالي: ({user.role}).
+          </p>
+          <button 
+            onClick={() => window.location.href = '/quality-home'} 
+            className="px-5 py-2.5 bg-[#0066CC] hover:bg-[#0055b3] text-white font-bold rounded-xl text-sm transition-colors"
+          >
+            العودة للرئيسية / Return to Home
+          </button>
         </div>
       </div>
     );
   }
 
-  if (requiredPermissions.length > 0) {
-    const hasAll = requiredPermissions.every(p => user.permissions?.includes(p));
-    if (!hasAll) {
+  if (requiredPermissions.length > 0 && !isAdmin) {
+    const hasClearance = requiredPermissions.some(p => user.permissions?.includes(p));
+    if (!hasClearance) {
       if (fallback) return <>{fallback}</>;
-      return <div className="min-h-screen flex items-center justify-center text-white font-black italic">PRIORITY CLEARANCE REQUIRED</div>;
+      return (
+        <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center p-4">
+          <div className="glass-panel rounded-2xl p-8 text-center max-w-md border border-white/10 shadow-2xl">
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-400 mx-auto mb-4 flex items-center justify-center font-bold text-xl">
+              🛡️
+            </div>
+            <h2 className="text-xl font-bold text-white mb-2">صلاحية محجوبة / Permission Required</h2>
+            <p className="text-gray-400 text-sm mb-6 leading-relaxed">
+              حسابك الحالي لا يمتلك الصلاحية المطلوبة لفتح هذا القسم. يُرجى مراجعة مسؤول إدارة النظام إذا كنت بحاجة للوصول.
+            </p>
+            <button 
+              onClick={() => window.location.href = '/quality-home'} 
+              className="px-5 py-2.5 bg-gradient-to-r from-[#0066CC] to-[#00A3E0] text-white font-bold rounded-xl text-sm transition-all hover:scale-105"
+            >
+              العودة للرئيسية / Return to Value Stream
+            </button>
+          </div>
+        </div>
+      );
     }
   }
 

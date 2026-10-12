@@ -13,7 +13,9 @@ import {
   Edit2,
   Trash2,
   Camera,
-  X
+  X,
+  Lock,
+  Key
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -47,11 +49,14 @@ export function UsersPage() {
   // Modals state
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<UserAccount | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Form State
   const [userForm, setUserForm] = useState({
     name: '',
     email: '',
+    username: '',
+    password: '',
     phone: '',
     roleId: roles[0]?.id || 'quality_engineer',
     department: 'Quality Engineering',
@@ -88,6 +93,8 @@ export function UsersPage() {
     setUserForm({
       name: '',
       email: '',
+      username: '',
+      password: '',
       phone: '',
       roleId: roles[0]?.id || 'quality_engineer',
       department: 'Quality Assurance',
@@ -95,6 +102,7 @@ export function UsersPage() {
       status: 'active',
       avatar: PRESET_AVATARS[Math.floor(Math.random() * PRESET_AVATARS.length)]
     });
+    setShowPassword(false);
     setIsCreateOpen(true);
   };
 
@@ -103,6 +111,8 @@ export function UsersPage() {
     setUserForm({
       name: user.name,
       email: user.email,
+      username: user.username || '',
+      password: user.password || '',
       phone: user.phone || '',
       roleId: user.roleId,
       department: user.department,
@@ -110,6 +120,7 @@ export function UsersPage() {
       status: user.status,
       avatar: user.avatar || PRESET_AVATARS[0]
     });
+    setShowPassword(false);
   };
 
   const handleAvatarFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -145,6 +156,8 @@ export function UsersPage() {
       const res = updateUser(editingUser.id, {
         name: userForm.name.trim(),
         email: userForm.email.trim(),
+        username: userForm.username.trim() || undefined,
+        password: userForm.password.trim() || undefined,
         phone: userForm.phone.trim(),
         roleId: userForm.roleId,
         roleName: roleName,
@@ -155,7 +168,7 @@ export function UsersPage() {
       });
       if (res) {
         setUsers(loadStoredUsers());
-        toast.success(isAr ? 'تم تحديث بيانات المستخدم' : 'User updated successfully');
+        toast.success(isAr ? 'تم تحديث بيانات المستخدم وكلمة المرور' : 'User updated successfully');
       }
       setEditingUser(null);
     } else {
@@ -163,6 +176,8 @@ export function UsersPage() {
       createUser({
         name: userForm.name.trim(),
         email: userForm.email.trim(),
+        username: userForm.username.trim() || undefined,
+        password: userForm.password.trim() || '123456',
         phone: userForm.phone.trim(),
         roleId: userForm.roleId,
         roleName: roleName,
@@ -173,7 +188,7 @@ export function UsersPage() {
       });
       setUsers(loadStoredUsers());
       setIsCreateOpen(false);
-      toast.success(isAr ? 'تمت إضافة المستخدم الجديد بنجاح' : 'New user created successfully');
+      toast.success(isAr ? 'تمت إضافة المستخدم وتعيين الصلاحيات وكلمة المرور' : 'New user created successfully');
     }
   };
 
@@ -368,7 +383,18 @@ export function UsersPage() {
                           </div>
                           <div className="min-w-0">
                             <p className="font-bold text-white truncate">{user.name}</p>
-                            <p className="text-xs text-gray-400 truncate mt-0.5">{user.email}</p>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <span className="text-xs text-gray-400 truncate">{user.email}</span>
+                              {user.username && (
+                                <span className="text-[10px] text-[#00A3E0] font-mono bg-[#00A3E0]/10 px-1.5 py-0.5 rounded">
+                                  @{user.username}
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-[10px] text-amber-400/80 font-mono mt-1 flex items-center gap-1">
+                              <Key className="w-3 h-3" />
+                              <span>{isAr ? 'الباسورد:' : 'Pass:'} {user.password || '123456'}</span>
+                            </div>
                           </div>
                         </div>
                       </td>
@@ -538,6 +564,43 @@ export function UsersPage() {
                     required
                     value={userForm.email}
                     onChange={(e) => setUserForm({ ...userForm, email: e.target.value })}
+                    className="w-full h-11 px-4 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-[#00A3E0]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 mb-1.5 flex items-center gap-1.5">
+                    <Key className="w-3.5 h-3.5 text-[#00A3E0]" />
+                    {isAr ? 'اسم الدخول (Username)' : 'Username'}
+                  </label>
+                  <input
+                    type="text"
+                    value={userForm.username}
+                    onChange={(e) => setUserForm({ ...userForm, username: e.target.value })}
+                    placeholder={isAr ? 'اسم مستخدم مختصر لتسجيل الدخول' : 'Short login username'}
+                    className="w-full h-11 px-4 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-[#00A3E0]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 mb-1.5 flex items-center justify-between">
+                    <span className="flex items-center gap-1.5">
+                      <Lock className="w-3.5 h-3.5 text-[#00A3E0]" />
+                      {isAr ? 'كلمة المرور (Password)' : 'Password'} *
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="text-[11px] text-[#00A3E0] hover:underline"
+                    >
+                      {showPassword ? (isAr ? 'إخفاء' : 'Hide') : (isAr ? 'إظهار' : 'Show')}
+                    </button>
+                  </label>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={userForm.password}
+                    onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
+                    placeholder={isAr ? 'اترك فارغاً للافتراضي (123456)' : 'Leave empty for default (123456)'}
                     className="w-full h-11 px-4 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-[#00A3E0]"
                   />
                 </div>

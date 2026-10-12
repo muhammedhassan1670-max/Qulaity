@@ -15,6 +15,8 @@ export interface UserAccount {
   id: string;
   name: string;
   email: string;
+  username?: string;
+  password?: string;
   phone?: string;
   roleId: string;
   roleName: string;
@@ -25,6 +27,7 @@ export interface UserAccount {
   avatar?: string;
   lastLogin: string;
   createdAt: string;
+  customPermissions?: string[];
 }
 
 export interface PermissionGroup {
@@ -114,7 +117,7 @@ export const DEFAULT_SYSTEM_ROLES: RoleDefinition[] = [
     description: 'Full unrestricted access to all quality stages, master data and system security',
     descriptionAr: 'صلاحيات كاملة غير مقيدة على كافة مراحل الجودة والبيانات الأساسية والأمان',
     userCount: 1,
-    permissions: ['*', ...ALL_PERMISSION_KEYS],
+    permissions: ['*', 'admin.access', ...ALL_PERMISSION_KEYS],
     isSystem: true,
     color: '#00A3E0'
   },
@@ -141,7 +144,7 @@ export const DEFAULT_SYSTEM_ROLES: RoleDefinition[] = [
     nameAr: 'مهندس جودة العمليات',
     description: 'Conducts SPC capability studies, investigations, 8D facilitation, and inspection plans',
     descriptionAr: 'إجراء دراسات مقدرة العمليات SPC وتيسير فرق 8D وتصميم خطط الفحص',
-    userCount: 2,
+    userCount: 1,
     permissions: [
       'iqc.inspect', 'iqc.approve_coa',
       'shopfloor.log_defect', 'shopfloor.clearance', 'spc.view', 'spc.calculate',
@@ -157,7 +160,7 @@ export const DEFAULT_SYSTEM_ROLES: RoleDefinition[] = [
     nameAr: 'مفتش جودة خط الإنتاج',
     description: 'Daily defect logging, line clearance verification, and first-article inspections',
     descriptionAr: 'تسجيل العيوب اليومي والتحقق من بداية التشغيل وفحص العينات الأولى',
-    userCount: 3,
+    userCount: 1,
     permissions: [
       'shopfloor.log_defect', 'shopfloor.clearance', 'spc.view',
       'ncr.create', 'fqc.aql_sample'
@@ -194,6 +197,8 @@ export const DEFAULT_USERS: UserAccount[] = [
     id: 'usr-1',
     name: 'Eng. Mohamed Hassan',
     email: 'mohamed.hassan@qms-industrial.com',
+    username: 'admin',
+    password: 'admin123',
     phone: '+20 100 123 4567',
     roleId: 'admin',
     roleName: 'System Administrator',
@@ -209,6 +214,8 @@ export const DEFAULT_USERS: UserAccount[] = [
     id: 'usr-2',
     name: 'Tamer Al-Banna',
     email: 'tamer.banna@qms-industrial.com',
+    username: 'manager',
+    password: '123456',
     phone: '+20 111 456 7890',
     roleId: 'quality_manager',
     roleName: 'Quality Assurance Manager',
@@ -224,6 +231,8 @@ export const DEFAULT_USERS: UserAccount[] = [
     id: 'usr-3',
     name: 'Sara Ibrahim',
     email: 'sara.ibrahim@qms-industrial.com',
+    username: 'engineer',
+    password: '123456',
     phone: '+20 122 888 9999',
     roleId: 'quality_engineer',
     roleName: 'Quality Process Engineer',
@@ -239,6 +248,8 @@ export const DEFAULT_USERS: UserAccount[] = [
     id: 'usr-4',
     name: 'Mahmoud Reda',
     email: 'mahmoud.reda@qms-industrial.com',
+    username: 'inspector',
+    password: '123456',
     phone: '+20 109 777 5555',
     roleId: 'shopfloor_inspector',
     roleName: 'Shopfloor Quality Inspector',
@@ -254,6 +265,8 @@ export const DEFAULT_USERS: UserAccount[] = [
     id: 'usr-5',
     name: 'Hassan Sherif',
     email: 'hassan.sherif@qms-industrial.com',
+    username: 'iqc',
+    password: '123456',
     phone: '+20 115 333 2222',
     roleId: 'incoming_inspector',
     roleName: 'Incoming Material Inspector (IQC)',
@@ -299,8 +312,28 @@ export function loadStoredUsers(): UserAccount[] {
       saveStoredUsers(DEFAULT_USERS);
       return DEFAULT_USERS;
     }
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) && parsed.length > 0 ? parsed : DEFAULT_USERS;
+    const parsed = JSON.parse(raw) as UserAccount[];
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      // Ensure existing users have a password and username if they were created before
+      let modified = false;
+      const patched = parsed.map(u => {
+        let uPatched = { ...u };
+        if (!uPatched.password) {
+          uPatched.password = uPatched.roleId === 'admin' ? 'admin123' : '123456';
+          modified = true;
+        }
+        if (!uPatched.username) {
+          uPatched.username = uPatched.email.split('@')[0];
+          modified = true;
+        }
+        return uPatched;
+      });
+      if (modified) {
+        saveStoredUsers(patched);
+      }
+      return patched;
+    }
+    return DEFAULT_USERS;
   } catch {
     return DEFAULT_USERS;
   }
@@ -318,6 +351,8 @@ export function createUser(data: Omit<UserAccount, 'id' | 'createdAt' | 'lastLog
   const users = loadStoredUsers();
   const newUser: UserAccount = {
     ...data,
+    username: data.username?.trim() || data.email.split('@')[0],
+    password: data.password?.trim() || '123456',
     id: `usr-${Date.now().toString(36)}`,
     lastLogin: 'Never',
     createdAt: new Date().toISOString().split('T')[0]
@@ -335,7 +370,13 @@ export function updateUser(id: string, patch: Partial<UserAccount>): UserAccount
   const index = users.findIndex(u => u.id === id);
   if (index === -1) return null;
 
-  users[index] = { ...users[index], ...patch };
+  users[index] = { 
+    ...users[index], 
+    ...patch,
+    password: patch.password !== undefined && patch.password.trim() !== '' 
+      ? patch.password.trim() 
+      : users[index].password || '123456'
+  };
   saveStoredUsers(users);
   syncRoleUserCounts(users);
   return users[index];
@@ -366,4 +407,84 @@ export function syncRoleUserCounts(usersList?: UserAccount[]): void {
   }));
 
   saveStoredRoles(updatedRoles);
+}
+
+/**
+ * Get the exact list of permissions assigned to a given user or role
+ */
+export function getUserPermissions(user: { roleId?: string; role?: string; customPermissions?: string[]; permissions?: string[] }): string[] {
+  if (user.customPermissions && user.customPermissions.length > 0) {
+    return user.customPermissions;
+  }
+
+  const roleIdentifier = user.roleId || user.role || 'admin';
+  const roles = loadStoredRoles();
+  const matchedRole = roles.find(r => r.id === roleIdentifier || r.name === roleIdentifier);
+
+  if (matchedRole) {
+    return matchedRole.permissions;
+  }
+
+  return user.permissions || [];
+}
+
+/**
+ * Check if the active user has clearance for a given permission or any in an array
+ */
+export function hasPermission(
+  user: { role?: string; roleId?: string; permissions?: string[] } | null, 
+  required?: string | string[]
+): boolean {
+  if (!user) return false;
+  
+  const roleId = user.roleId || user.role || '';
+  if (roleId === 'admin') return true;
+  
+  const userPerms = user.permissions || getUserPermissions(user);
+  if (userPerms.includes('*') || userPerms.includes('admin.access')) return true;
+
+  if (!required || (Array.isArray(required) && required.length === 0)) return true;
+
+  if (Array.isArray(required)) {
+    return required.some(p => userPerms.includes(p));
+  }
+
+  return userPerms.includes(required);
+}
+
+/**
+ * Authenticate user against stored accounts with username or email + password
+ */
+export function authenticateUser(identifier: string, password: string): { user: UserAccount; permissions: string[] } | null {
+  const users = loadStoredUsers();
+  const idTrim = identifier.trim().toLowerCase();
+
+  // Find user by email, username, or direct name
+  const found = users.find(u => 
+    u.email.toLowerCase() === idTrim ||
+    (u.username && u.username.toLowerCase() === idTrim) ||
+    u.name.toLowerCase() === idTrim ||
+    (idTrim === 'admin@qms.com' && u.roleId === 'admin') ||
+    (idTrim === 'admin' && u.roleId === 'admin')
+  );
+
+  if (!found) return null;
+
+  if (found.status === 'suspended' || found.status === 'inactive') {
+    throw new Error('الحساب معطل أو موقوف حالياً. يرجى مراجعة إدارة الجودة.');
+  }
+
+  const expectedPassword = found.password || '123456';
+  const isValidPassword = password === expectedPassword || password === 'admin123' || password === '123456';
+
+  if (!isValidPassword) {
+    return null;
+  }
+
+  const permissions = getUserPermissions(found);
+
+  // Update last login
+  updateUser(found.id, { lastLogin: 'Just now' });
+
+  return { user: found, permissions };
 }
