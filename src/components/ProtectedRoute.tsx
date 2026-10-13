@@ -2,6 +2,7 @@ import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAppStore } from '../stores/appStore';
 import { Loader2 } from 'lucide-react';
+import { getFirstPermittedRoute } from '../services/userService';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -90,10 +91,10 @@ export function ProtectedRoute({
             هذه الشاشة تتطلب دور ({requiredRole}). دورك الحالي: ({user.role}).
           </p>
           <button 
-            onClick={() => window.location.href = '/quality-home'} 
+            onClick={() => window.location.href = getFirstPermittedRoute(user)} 
             className="px-5 py-2.5 bg-[#0066CC] hover:bg-[#0055b3] text-white font-bold rounded-xl text-sm transition-colors"
           >
-            العودة للرئيسية / Return to Home
+            العودة للقسم المصرح به / Return to Permitted Area
           </button>
         </div>
       </div>
@@ -115,10 +116,10 @@ export function ProtectedRoute({
               حسابك الحالي لا يمتلك الصلاحية المطلوبة لفتح هذا القسم. يُرجى مراجعة مسؤول إدارة النظام إذا كنت بحاجة للوصول.
             </p>
             <button 
-              onClick={() => window.location.href = '/quality-home'} 
+              onClick={() => window.location.href = getFirstPermittedRoute(user)} 
               className="px-5 py-2.5 bg-gradient-to-r from-[#0066CC] to-[#00A3E0] text-white font-bold rounded-xl text-sm transition-all hover:scale-105"
             >
-              العودة للرئيسية / Return to Value Stream
+              الذهاب للقسم المصرح لك به / Go to Permitted Area
             </button>
           </div>
         </div>

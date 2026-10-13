@@ -89,6 +89,7 @@ export function Sidebar({ isOpen, onClose, onSectionChange }: SidebarProps) {
         icon: LayoutDashboard,
         badge: 'STREAM',
         badgeColor: 'bg-blue-500',
+        permission: 'stream.view'
       },
 
       // Stage 1: Incoming & Supplier Quality (IQC)
@@ -103,7 +104,7 @@ export function Sidebar({ isOpen, onClose, onSectionChange }: SidebarProps) {
         children: [
           { id: 'quality-inspection', labelKey: 'quality-inspection', labelEn: 'Incoming Inspection (IQC)', labelAr: 'فحص الشحنات الواردة', icon: ClipboardCheck, badge: 'IQC', badgeColor: 'bg-emerald-500', permission: 'iqc.inspect' },
           { id: 'quality-supplier', labelKey: 'quality-supplier', labelEn: 'Supplier Quality & Rating', labelAr: 'جودة وتقييم الموردين', icon: Factory, permission: 'supplier.manage' },
-          { id: 'quality-inspection-plans', labelKey: 'quality-inspection-plans', labelEn: 'Incoming Inspection Plans', labelAr: 'خطط فحص المواد الخام', icon: FileText, permission: 'iqc.inspect' },
+          { id: 'quality-inspection-plans', labelKey: 'quality-inspection-plans', labelEn: 'Incoming Inspection Plans', labelAr: 'خطط فحص المواد الخام', icon: FileText, permission: ['iqc.plans', 'iqc.inspect'] },
         ]
       },
 
@@ -117,10 +118,10 @@ export function Sidebar({ isOpen, onClose, onSectionChange }: SidebarProps) {
         hintAr: 'تسجيل الورشة والكارتات والعيوب',
         icon: Smartphone,
         children: [
-          { id: 'quality-shopfloor', labelKey: 'quality-shopfloor', labelEn: 'Fast Shopfloor Entry', labelAr: 'تسجيل سريع من الأرضية', icon: Smartphone, badge: 'FAST', badgeColor: 'bg-blue-500', permission: 'shopfloor.log_defect' },
+          { id: 'quality-shopfloor', labelKey: 'quality-shopfloor', labelEn: 'Fast Shopfloor Entry', labelAr: 'تسجيل سريع من الأرضية', icon: Smartphone, badge: 'FAST', badgeColor: 'bg-blue-500', permission: ['shopfloor.fast_entry', 'shopfloor.log_defect'] },
           { id: 'quality-defect-log', labelKey: 'quality-defect-log', labelEn: 'Daily Defect Recorder', labelAr: 'مسجل / قائمة العيوب اليومية', icon: AlertCircle, badge: 'LOG', badgeColor: 'bg-green-500', permission: 'shopfloor.log_defect' },
           { id: 'quality-spc', labelKey: 'spc', labelEn: 'SPC Control Charts', labelAr: 'كارتات التحكم الإحصائي SPC', icon: Activity, badge: 'SPC', badgeColor: 'bg-cyan-500', permission: 'spc.view' },
-          { id: 'quality-execution-board', labelKey: 'quality-execution-board', labelEn: 'Inspection Execution Board', labelAr: 'متابعة تنفيذ محطات الفحص', icon: BarChart3, permission: 'shopfloor.clearance' },
+          { id: 'quality-execution-board', labelKey: 'quality-execution-board', labelEn: 'Inspection Execution Board', labelAr: 'متابعة تنفيذ محطات الفحص', icon: BarChart3, permission: ['shopfloor.clearance', 'shopfloor.log_defect'] },
         ]
       },
 
@@ -137,8 +138,8 @@ export function Sidebar({ isOpen, onClose, onSectionChange }: SidebarProps) {
           { id: 'quality-ncr', labelKey: 'quality-ncr', labelEn: 'NCR Non-Conformance', labelAr: 'تقارير عدم المطابقة NCR', icon: AlertCircle, badge: 'NCR', badgeColor: 'bg-amber-500', permission: 'ncr.create' },
           { id: 'quality-capa', labelKey: 'quality-capa', labelEn: 'CAPA Corrective Actions', labelAr: 'الإجراءات التصحيحية CAPA', icon: ClipboardCheck, permission: 'capa.manage' },
           { id: 'quality-8d', labelKey: 'quality-8d', labelEn: '8D Problem Solving', labelAr: 'حل المشكلات المنهجي 8D', icon: FileText, badge: '8D', badgeColor: 'bg-purple-500', permission: 'eight_d.solve' },
-          { id: 'quality-deviation', labelKey: 'quality-deviation', labelEn: 'Deviations & Concessions', labelAr: 'الانحرافات وتصاريح الحيود', icon: TrendingUp, permission: 'ncr.disposition' },
-          { id: 'quality-change', labelKey: 'quality-change', labelEn: 'Engineering Change Control', labelAr: 'ضبط التغيير الهندسي', icon: Workflow, permission: 'capa.manage' },
+          { id: 'quality-deviation', labelKey: 'quality-deviation', labelEn: 'Deviations & Concessions', labelAr: 'الانحرافات وتصاريح الحيود', icon: TrendingUp, permission: ['ncr.disposition', 'ncr.create'] },
+          { id: 'quality-change', labelKey: 'quality-change', labelEn: 'Engineering Change Control', labelAr: 'ضبط التغيير الهندسي', icon: Workflow, permission: ['change.control', 'capa.manage'] },
         ]
       },
 
@@ -180,11 +181,11 @@ export function Sidebar({ isOpen, onClose, onSectionChange }: SidebarProps) {
         hintAr: 'مراجعات وخطط تحكم ومعايرة و FMEA',
         icon: ShieldCheck,
         children: [
-          { id: 'quality-control-plan', labelKey: 'quality-control-plan', labelEn: 'Control Plan', labelAr: 'خطط التحكم Control Plan', icon: Barcode, permission: 'spc.calculate' },
-          { id: 'quality-fmea', labelKey: 'quality-fmea', labelEn: 'FMEA Risk Analysis', labelAr: 'FMEA تحليل المخاطر', icon: Brain, badge: 'AP', badgeColor: 'bg-red-500', permission: 'spc.calculate' },
-          { id: 'quality-layered-audits', labelKey: 'quality-layered-audits', labelEn: 'Layered Process Audits (LPA)', labelAr: 'مراجعات المشرف LPA', icon: ShieldCheck, permission: 'shopfloor.clearance' },
-          { id: 'quality-audit', labelKey: 'quality-audit', labelEn: 'Internal Audits (ISO)', labelAr: 'التدقيق الداخلي وإدارته', icon: ClipboardCheck, permission: 'capa.manage' },
-          { id: 'quality-calibration', labelKey: 'quality-calibration', labelEn: 'Equipment Calibration & MSA', labelAr: 'معايرة الأجهزة والـ MSA', icon: Activity, permission: 'spc.calculate' },
+          { id: 'quality-control-plan', labelKey: 'quality-control-plan', labelEn: 'Control Plan', labelAr: 'خطط التحكم Control Plan', icon: Barcode, permission: ['control_plan.manage', 'spc.calculate'] },
+          { id: 'quality-fmea', labelKey: 'quality-fmea', labelEn: 'FMEA Risk Analysis', labelAr: 'FMEA تحليل المخاطر', icon: Brain, badge: 'AP', badgeColor: 'bg-red-500', permission: ['fmea.manage', 'spc.calculate'] },
+          { id: 'quality-layered-audits', labelKey: 'quality-layered-audits', labelEn: 'Layered Process Audits (LPA)', labelAr: 'مراجعات المشرف LPA', icon: ShieldCheck, permission: ['lpa.manage', 'shopfloor.clearance'] },
+          { id: 'quality-audit', labelKey: 'quality-audit', labelEn: 'Internal Audits (ISO)', labelAr: 'التدقيق الداخلي وإدارته', icon: ClipboardCheck, permission: ['audit.manage', 'capa.manage'] },
+          { id: 'quality-calibration', labelKey: 'quality-calibration', labelEn: 'Equipment Calibration & MSA', labelAr: 'معايرة الأجهزة والـ MSA', icon: Activity, permission: ['calibration.manage', 'spc.calculate'] },
         ]
       },
 
@@ -198,13 +199,13 @@ export function Sidebar({ isOpen, onClose, onSectionChange }: SidebarProps) {
         hintAr: 'مركز القيادة وتكلفة الجودة والـ PPM',
         icon: TrendingUp,
         children: [
-          { id: 'quality-command-center', labelKey: 'quality-command-center', labelEn: 'Command Center', labelAr: 'مركز قيادة الجودة الموحد', icon: ShieldCheck, badge: 'CMD', badgeColor: 'bg-cyan-500', permission: ['capa.manage', 'admin.access'] },
-          { id: 'quality-dashboard', labelKey: 'quality-dashboard', labelEn: 'Quality Analytics Dashboard', labelAr: 'لوحة تحليلات الجودة', icon: LayoutDashboard, permission: ['spc.view', 'ncr.create'] },
-          { id: 'quality-process-ppm', labelKey: 'quality-process-ppm', labelEn: 'Process PPM Tracking', labelAr: 'تتبع معدلات PPM', icon: Activity, permission: 'spc.view' },
-          { id: 'quality-defect-cost', labelKey: 'quality-defect-cost', labelEn: 'Cost of Poor Quality (COPQ)', labelAr: 'تكلفة الجودة المعيبة COPQ', icon: DollarSign, permission: ['capa.manage', 'admin.access'] },
-          { id: 'quality-defect-prediction', labelKey: 'defect-prediction', labelEn: 'AI Defect Prediction', labelAr: 'توقع العيوب بالذكاء الاصطناعي', icon: Target, badge: 'AI', badgeColor: 'bg-purple-500', permission: 'spc.view' },
-          { id: 'ai-chat', labelKey: 'ai-chat', labelEn: 'AI Quality Assistant', labelAr: 'مساعد الجودة الذكي', icon: MessageSquare },
-          { id: 'digital-twin', labelKey: 'digital-twin', labelEn: 'Digital Twin Plant', labelAr: 'التوأم الرقمي للمصنع', icon: Box, permission: ['spc.view', 'admin.access'] },
+          { id: 'quality-command-center', labelKey: 'quality-command-center', labelEn: 'Command Center', labelAr: 'مركز قيادة الجودة الموحد', icon: ShieldCheck, badge: 'CMD', badgeColor: 'bg-cyan-500', permission: ['command_center.view', 'capa.manage', 'admin.access'] },
+          { id: 'quality-dashboard', labelKey: 'quality-dashboard', labelEn: 'Quality Analytics Dashboard', labelAr: 'لوحة تحليلات الجودة', icon: LayoutDashboard, permission: ['analytics.dashboard', 'spc.view', 'ncr.create'] },
+          { id: 'quality-process-ppm', labelKey: 'quality-process-ppm', labelEn: 'Process PPM Tracking', labelAr: 'تتبع معدلات PPM', icon: Activity, permission: ['ppm.track', 'spc.view'] },
+          { id: 'quality-defect-cost', labelKey: 'quality-defect-cost', labelEn: 'Cost of Poor Quality (COPQ)', labelAr: 'تكلفة الجودة المعيبة COPQ', icon: DollarSign, permission: ['copq.view', 'capa.manage', 'admin.access'] },
+          { id: 'quality-defect-prediction', labelKey: 'defect-prediction', labelEn: 'AI Defect Prediction', labelAr: 'توقع العيوب بالذكاء الاصطناعي', icon: Target, badge: 'AI', badgeColor: 'bg-purple-500', permission: ['ai.access', 'spc.view'] },
+          { id: 'ai-chat', labelKey: 'ai-chat', labelEn: 'AI Quality Assistant', labelAr: 'مساعد الجودة الذكي', icon: MessageSquare, permission: ['ai.access', 'admin.access'] },
+          { id: 'digital-twin', labelKey: 'digital-twin', labelEn: 'Digital Twin Plant', labelAr: 'التوأم الرقمي للمصنع', icon: Box, permission: ['digital_twin.view', 'spc.view', 'admin.access'] },
         ]
       },
 
@@ -219,8 +220,8 @@ export function Sidebar({ isOpen, onClose, onSectionChange }: SidebarProps) {
         icon: Settings,
         children: [
           { id: 'quality-master-data', labelKey: 'quality-master-data', labelEn: 'Quality Master Data', labelAr: 'البيانات الرئيسية (قطع/موديلات)', icon: Database, permission: 'master_data.edit' },
-          { id: 'quality-form-designer', labelKey: 'quality-form-designer', labelEn: 'Inspection Form Designer', labelAr: 'مصمم نماذج الفحص', icon: Blocks, permission: 'master_data.edit' },
-          { id: 'quality-knowledge-base', labelKey: 'quality-knowledge-base', labelEn: 'Lessons Learned Knowledge Base', labelAr: 'قاعدة الدروس المستفادة', icon: Library },
+          { id: 'quality-form-designer', labelKey: 'quality-form-designer', labelEn: 'Inspection Form Designer', labelAr: 'مصمم نماذج الفحص', icon: Blocks, permission: ['forms.designer', 'master_data.edit'] },
+          { id: 'quality-knowledge-base', labelKey: 'quality-knowledge-base', labelEn: 'Lessons Learned Knowledge Base', labelAr: 'قاعدة الدروس المستفادة', icon: Library, permission: ['knowledge.view', 'master_data.edit'] },
           {
             id: 'admin',
             labelKey: 'admin',

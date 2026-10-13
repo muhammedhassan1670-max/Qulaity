@@ -47,35 +47,44 @@ export interface PermissionGroup {
 
 export const PERMISSION_GROUPS: PermissionGroup[] = [
   {
+    id: 'stage-0-overview',
+    titleEn: '0. Quality Overview & Value Stream',
+    titleAr: '0. نظرة عامة وشريان الجودة المباشر',
+    permissions: [
+      { id: 'stream.view', labelEn: 'Quality Stream Map & Value Stream', labelAr: 'عرض شريان الجودة ومسار المصنع الحي' }
+    ]
+  },
+  {
     id: 'stage-1-iqc',
     titleEn: '1. Incoming & Supplier Quality (IQC)',
     titleAr: '1. استلام الخامات والموردين (IQC)',
     permissions: [
-      { id: 'iqc.inspect', labelEn: 'Inspect Raw Materials', labelAr: 'فحص المواد الخام الواردة' },
-      { id: 'iqc.approve_coa', labelEn: 'Approve Supplier COA', labelAr: 'اعتماد شهادات التحليل COA' },
-      { id: 'supplier.manage', labelEn: 'Manage Supplier Scorecard', labelAr: 'إدارة تقييم ومخالفات الموردين' }
+      { id: 'iqc.inspect', labelEn: 'Incoming Inspection (IQC)', labelAr: 'فحص الشحنات الواردة والمواد الخام' },
+      { id: 'supplier.manage', labelEn: 'Supplier Quality & Scorecard', labelAr: 'إدارة وتقييم الموردين' },
+      { id: 'iqc.plans', labelEn: 'Incoming Inspection Plans', labelAr: 'خطط فحص المواد الخام' }
     ]
   },
   {
     id: 'stage-2-ipqc',
     titleEn: '2. In-Process & Shopfloor Quality (IPQC)',
-    titleAr: '2. جودة التصنيع والعمليات (IPQC)',
+    titleAr: '2. جودة التصنيع والعمليات بالورشة (IPQC)',
     permissions: [
-      { id: 'shopfloor.log_defect', labelEn: 'Log Defect Records', labelAr: 'تسجيل العيوب المباشر بالورشة' },
-      { id: 'shopfloor.clearance', labelEn: 'Line Clearance & Patrol', labelAr: 'مطابقة بداية التشغيل وفحص الخطوط' },
-      { id: 'spc.view', labelEn: 'View SPC Control Charts', labelAr: 'استعراض كارتات التحكم الإحصائي' },
-      { id: 'spc.calculate', labelEn: 'Configure SPC Limits & Rules', labelAr: 'ضبط حدود التحكم وقواعد نيلسون' }
+      { id: 'shopfloor.fast_entry', labelEn: 'Fast Shopfloor Entry', labelAr: 'تسجيل سريع من أرضية الورشة' },
+      { id: 'shopfloor.log_defect', labelEn: 'Daily Defect Recorder', labelAr: 'مسجل وقائمة العيوب اليومية' },
+      { id: 'spc.view', labelEn: 'SPC Control Charts', labelAr: 'كارتات التحكم الإحصائي SPC' },
+      { id: 'shopfloor.clearance', labelEn: 'Station Execution Board', labelAr: 'متابعة تنفيذ محطات الفحص والتشغيل' }
     ]
   },
   {
     id: 'stage-3-ncr',
-    titleEn: '3. Non-Conformance & Problem Solving (NCR/CAPA/8D)',
-    titleAr: '3. عدم المطابقة والحل الجذري (NCR/CAPA/8D)',
+    titleEn: '3. Non-Conformance & Problem Solving (NCR/8D)',
+    titleAr: '3. عدم المطابقة وحل المشكلات (NCR / CAPA / 8D)',
     permissions: [
-      { id: 'ncr.create', labelEn: 'Create & Contain NCR', labelAr: 'تحرير تقارير وحجز عيوب NCR' },
-      { id: 'ncr.disposition', labelEn: 'Approve Material Disposition', labelAr: 'اعتماد قرارات التصرف والعزل' },
-      { id: 'capa.manage', labelEn: 'Manage Corrective Actions (CAPA)', labelAr: 'إدارة وتتبع إجراءات CAPA' },
-      { id: 'eight_d.solve', labelEn: 'Lead 8D Problem Solving', labelAr: 'قيادة فرق حل المشكلات 8D' }
+      { id: 'ncr.create', labelEn: 'NCR Non-Conformance Reports', labelAr: 'تحرير تقارير وحجز عيوب NCR' },
+      { id: 'capa.manage', labelEn: 'CAPA Corrective Actions', labelAr: 'الإجراءات التصحيحية والوقائية CAPA' },
+      { id: 'eight_d.solve', labelEn: '8D Problem Solving Methodology', labelAr: 'حل المشكلات المنهجي 8D' },
+      { id: 'ncr.disposition', labelEn: 'Deviations & Concessions', labelAr: 'تصاريح الحيود والانحرافات' },
+      { id: 'change.control', labelEn: 'Engineering Change Control', labelAr: 'ضبط التغيير الهندسي والعمليات' }
     ]
   },
   {
@@ -83,33 +92,145 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
     titleEn: '4. Final & Outgoing Quality (FQC/OQC)',
     titleAr: '4. فحص وخروج المنتج النهائي (FQC/OQC)',
     permissions: [
-      { id: 'fqc.release', labelEn: 'Release Finished Lots for Dispatch', labelAr: 'اعتماد الإفراج النهائي للشحن' },
-      { id: 'fqc.aql_sample', labelEn: 'Perform AQL Acceptance Sampling', labelAr: 'تنفيذ فحص عينات القبول AQL' }
+      { id: 'fqc.release', labelEn: 'Outgoing Quality & Lot Release', labelAr: 'فحص الشحنات الصادرة والإفراج النهائي' }
     ]
   },
   {
     id: 'stage-5-complaints',
     titleEn: '5. Customer Quality & Field Feedback',
-    titleAr: '5. شكاوى وملاحظات العملاء',
+    titleAr: '5. شكاوى وملاحظات العملاء الميدانية',
     permissions: [
-      { id: 'complaints.manage', labelEn: 'Register & Investigate Complaints', labelAr: 'تسجيل والتحقيق في شكاوى العملاء' },
-      { id: 'rma.approve', labelEn: 'Approve Product Returns (RMA)', labelAr: 'اعتماد استرجاع المنتجات المعيبة' }
+      { id: 'complaints.manage', labelEn: 'Customer Complaints & RMA', labelAr: 'تسجيل ومتابعة شكاوى العملاء والمرتجعات' }
+    ]
+  },
+  {
+    id: 'stage-6-lab',
+    titleEn: '6. Engineering Lab & Compliance',
+    titleAr: '6. المختبر الهندسي والتدقيق ومخاطر FMEA',
+    permissions: [
+      { id: 'control_plan.manage', labelEn: 'Control Plans', labelAr: 'خطط التحكم ومحددات الجودة Control Plan' },
+      { id: 'fmea.manage', labelEn: 'FMEA Risk Analysis', labelAr: 'تحليل المخاطر FMEA' },
+      { id: 'lpa.manage', labelEn: 'Layered Process Audits (LPA)', labelAr: 'مراجعات المشرف ذات الطبقات LPA' },
+      { id: 'audit.manage', labelEn: 'Internal Audits (ISO)', labelAr: 'التدقيق الداخلي وإدارته' },
+      { id: 'calibration.manage', labelEn: 'Equipment Calibration & MSA', labelAr: 'معايرة الأجهزة والـ MSA' }
+    ]
+  },
+  {
+    id: 'stage-7-analytics',
+    titleEn: '7. Analytics & Executive KPIs',
+    titleAr: '7. التحليلات ومركز القيادة والذكاء الاصطناعي',
+    permissions: [
+      { id: 'command_center.view', labelEn: 'Unified Command Center', labelAr: 'مركز قيادة الجودة الموحد' },
+      { id: 'analytics.dashboard', labelEn: 'Quality Analytics Dashboard', labelAr: 'لوحة تحليلات الجودة والـ KPIs' },
+      { id: 'ppm.track', labelEn: 'Process PPM Tracking', labelAr: 'تتبع معدلات PPM' },
+      { id: 'copq.view', labelEn: 'Cost of Poor Quality (COPQ)', labelAr: 'تكلفة الجودة المعيبة COPQ' },
+      { id: 'ai.access', labelEn: 'AI Assistant & Defect Prediction', labelAr: 'مساعد الجودة الذكي وتوقع العيوب' },
+      { id: 'digital_twin.view', labelEn: 'Digital Twin Plant', labelAr: 'التوأم الرقمي لمصنع الجودة' }
+    ]
+  },
+  {
+    id: 'stage-8-setup',
+    titleEn: '8. Factory Setup & Master Data',
+    titleAr: '8. تهيئة المصنع والبيانات والمعرفة',
+    permissions: [
+      { id: 'master_data.edit', labelEn: 'Quality Master Data (Parts/Lines)', labelAr: 'البيانات الرئيسية للقطع والموديلات والعيوب' },
+      { id: 'forms.designer', labelEn: 'Inspection Form Designer', labelAr: 'مصمم نماذج وقوائم الفحص' },
+      { id: 'knowledge.view', labelEn: 'Lessons Learned Knowledge Base', labelAr: 'قاعدة الدروس المستفادة والمعرفة' }
     ]
   },
   {
     id: 'admin-governance',
-    titleEn: 'System Administration & Master Data',
-    titleAr: 'إدارة النظام والبيانات الأساسية',
+    titleEn: '9. System Administration & Security',
+    titleAr: '9. إدارة النظام والمستخدمين والأمان',
     permissions: [
-      { id: 'users.manage', labelEn: 'Manage Users & Passwords', labelAr: 'إدارة المستخدمين والحسابات' },
+      { id: 'users.manage', labelEn: 'Manage Users & Passwords', labelAr: 'إدارة حسابات المستخدمين وكلمات المرور' },
       { id: 'roles.manage', labelEn: 'Manage Security Roles & Matrix', labelAr: 'إدارة الأدوار ومصفوفة الصلاحيات' },
-      { id: 'master_data.edit', labelEn: 'Edit Plants, Lines & Defects Catalog', labelAr: 'تعديل وتكويد الخطوط والعيوب' },
       { id: 'admin.access', labelEn: 'Full System Administrator Access', labelAr: 'صلاحيات الإدارة والتحكم الكامل' }
     ]
   }
 ];
 
 export const ALL_PERMISSION_KEYS = PERMISSION_GROUPS.flatMap(g => g.permissions.map(p => p.id));
+
+export interface ClearancePreset {
+  id: string;
+  labelEn: string;
+  labelAr: string;
+  descriptionEn: string;
+  descriptionAr: string;
+  color: string;
+  permissions: string[];
+}
+
+export const CLEARANCE_PRESETS: ClearancePreset[] = [
+  {
+    id: 'preset_shopfloor',
+    labelEn: 'Shopfloor Inspector Only',
+    labelAr: 'مفتش ورشة فقط',
+    descriptionEn: 'Only Fast Shopfloor Entry & Daily Defect Recorder',
+    descriptionAr: 'يفتح فقط: التسجيل السريع للورشة ومسجل العيوب ومحطات الفحص',
+    color: '#F59E0B',
+    permissions: ['shopfloor.fast_entry', 'shopfloor.log_defect', 'shopfloor.clearance']
+  },
+  {
+    id: 'preset_iqc',
+    labelEn: 'Incoming Inspector (IQC)',
+    labelAr: 'فاحص استلام IQC فقط',
+    descriptionEn: 'Only Incoming Inspection, Suppliers, and Inspection Plans',
+    descriptionAr: 'يفتح فقط: فحص الشحنات الواردة، الموردين، وخطط فحص الخامات',
+    color: '#3B82F6',
+    permissions: ['iqc.inspect', 'supplier.manage', 'iqc.plans']
+  },
+  {
+    id: 'preset_ncr_8d',
+    labelEn: 'NCR & Problem Solving',
+    labelAr: 'مسؤول عيوب وحل مشكلات',
+    descriptionEn: 'Only NCR, CAPA, 8D, and Deviations',
+    descriptionAr: 'يفتح فقط: تقارير عدم المطابقة NCR، إجراءات CAPA، وحل المشكلات 8D',
+    color: '#8B5CF6',
+    permissions: ['ncr.create', 'capa.manage', 'eight_d.solve', 'ncr.disposition']
+  },
+  {
+    id: 'preset_oqc',
+    labelEn: 'Outgoing Inspector (OQC)',
+    labelAr: 'مفتش شحن نهائي OQC',
+    descriptionEn: 'Only Outgoing Inspection & PPM Tracking',
+    descriptionAr: 'يفتح فقط: فحص جودة الشحنات الصادرة والإفراج النهائي ومعدلات PPM',
+    color: '#06B6D4',
+    permissions: ['fqc.release', 'ppm.track']
+  },
+  {
+    id: 'preset_quality_engineer',
+    labelEn: 'Full Quality Engineer',
+    labelAr: 'مهندس جودة شامل',
+    descriptionEn: 'Complete access to operations, SPC, engineering lab, and analytics',
+    descriptionAr: 'يفتح كافة مراحل الجودة والتحكم الإحصائي والمختبر والتحليلات',
+    color: '#10B981',
+    permissions: [
+      'stream.view', 'iqc.inspect', 'supplier.manage', 'shopfloor.fast_entry', 'shopfloor.log_defect',
+      'spc.view', 'shopfloor.clearance', 'ncr.create', 'capa.manage', 'eight_d.solve', 'fqc.release',
+      'control_plan.manage', 'fmea.manage', 'calibration.manage', 'analytics.dashboard', 'ppm.track', 'knowledge.view'
+    ]
+  },
+  {
+    id: 'preset_admin',
+    labelEn: 'Full Administrator',
+    labelAr: 'مدير نظام كامل',
+    descriptionEn: 'Full unrestricted access to all screens and system configuration',
+    descriptionAr: 'صلاحيات كاملة غير مقيدة على جميع الشاشات وإدارة المستخدمين',
+    color: '#00A3E0',
+    permissions: ['*', 'admin.access', ...ALL_PERMISSION_KEYS]
+  },
+  {
+    id: 'preset_clear_all',
+    labelEn: 'Clear All (Start Fresh)',
+    labelAr: 'تفريغ الكل (اختيار حر)',
+    descriptionEn: 'Remove all permissions to select specific screens from scratch',
+    descriptionAr: 'إلغاء جميع الشاشات لتحديد ما تريده يدويًا خطوة بخطوة',
+    color: '#EF4444',
+    permissions: []
+  }
+];
 
 export const DEFAULT_SYSTEM_ROLES: RoleDefinition[] = [
   {
@@ -131,11 +252,13 @@ export const DEFAULT_SYSTEM_ROLES: RoleDefinition[] = [
     descriptionAr: 'صلاحيات اعتماد قرارات التصرف وإغلاق CAPA وتقييم الموردين والتقارير التنفيذية',
     userCount: 1,
     permissions: [
-      'iqc.inspect', 'iqc.approve_coa', 'supplier.manage',
-      'shopfloor.clearance', 'spc.view', 'spc.calculate',
-      'ncr.create', 'ncr.disposition', 'capa.manage', 'eight_d.solve',
-      'fqc.release', 'fqc.aql_sample', 'complaints.manage', 'rma.approve',
-      'master_data.edit'
+      'stream.view', 'iqc.inspect', 'supplier.manage', 'iqc.plans',
+      'shopfloor.fast_entry', 'shopfloor.log_defect', 'shopfloor.clearance', 'spc.view',
+      'ncr.create', 'ncr.disposition', 'capa.manage', 'eight_d.solve', 'change.control',
+      'fqc.release', 'complaints.manage',
+      'control_plan.manage', 'fmea.manage', 'lpa.manage', 'audit.manage', 'calibration.manage',
+      'command_center.view', 'analytics.dashboard', 'ppm.track', 'copq.view', 'ai.access', 'digital_twin.view',
+      'master_data.edit', 'knowledge.view'
     ],
     isSystem: true,
     color: '#10B981'
@@ -148,10 +271,11 @@ export const DEFAULT_SYSTEM_ROLES: RoleDefinition[] = [
     descriptionAr: 'إجراء دراسات مقدرة العمليات SPC وتيسير فرق 8D وتصميم خطط الفحص',
     userCount: 1,
     permissions: [
-      'iqc.inspect', 'iqc.approve_coa',
-      'shopfloor.log_defect', 'shopfloor.clearance', 'spc.view', 'spc.calculate',
-      'ncr.create', 'capa.manage', 'eight_d.solve',
-      'fqc.aql_sample', 'complaints.manage'
+      'stream.view', 'iqc.inspect', 'supplier.manage',
+      'shopfloor.fast_entry', 'shopfloor.log_defect', 'shopfloor.clearance', 'spc.view',
+      'ncr.create', 'capa.manage', 'eight_d.solve', 'change.control',
+      'control_plan.manage', 'fmea.manage', 'calibration.manage',
+      'analytics.dashboard', 'ppm.track', 'ai.access', 'knowledge.view'
     ],
     isSystem: true,
     color: '#8B5CF6'
@@ -164,8 +288,7 @@ export const DEFAULT_SYSTEM_ROLES: RoleDefinition[] = [
     descriptionAr: 'تسجيل العيوب اليومي والتحقق من بداية التشغيل وفحص العينات الأولى',
     userCount: 1,
     permissions: [
-      'shopfloor.log_defect', 'shopfloor.clearance', 'spc.view',
-      'ncr.create', 'fqc.aql_sample'
+      'shopfloor.fast_entry', 'shopfloor.log_defect', 'shopfloor.clearance', 'spc.view'
     ],
     isSystem: false,
     color: '#F59E0B'
@@ -178,7 +301,7 @@ export const DEFAULT_SYSTEM_ROLES: RoleDefinition[] = [
     descriptionAr: 'فحص شحنات الاستلام ومطابقة شهادات التحليل وحجز الخامات غير المطابقة',
     userCount: 1,
     permissions: [
-      'iqc.inspect', 'iqc.approve_coa', 'ncr.create'
+      'iqc.inspect', 'supplier.manage', 'iqc.plans', 'ncr.create'
     ],
     isSystem: false,
     color: '#3B82F6'
@@ -191,7 +314,7 @@ export const DEFAULT_SYSTEM_ROLES: RoleDefinition[] = [
     descriptionAr: 'فحص عينات القبول AQL واعتماد شهادات الإفراج للشحن وصلاحيات الحجز النهائي',
     userCount: 0,
     permissions: [
-      'fqc.release', 'fqc.aql_sample', 'ncr.create'
+      'fqc.release', 'ppm.track', 'ncr.create'
     ],
     isSystem: false,
     color: '#06B6D4'
@@ -204,7 +327,7 @@ export const DEFAULT_SYSTEM_ROLES: RoleDefinition[] = [
     descriptionAr: 'صلاحيات تدقيق واستعراض شامل لكافة مراحل الجودة وسجلات عدم المطابقة والتحكم الإحصائي',
     userCount: 0,
     permissions: [
-      'iqc.inspect', 'shopfloor.clearance', 'spc.view', 'ncr.create', 'capa.manage', 'eight_d.solve', 'fqc.aql_sample', 'complaints.manage'
+      'stream.view', 'audit.manage', 'lpa.manage', 'ncr.create', 'capa.manage', 'eight_d.solve', 'analytics.dashboard', 'knowledge.view'
     ],
     isSystem: false,
     color: '#EC4899'
@@ -508,16 +631,18 @@ export function getUserPermissions(user: { roleId?: string; role?: string; custo
  * Check if the active user has clearance for a given permission or any in an array
  */
 export function hasPermission(
-  user: { role?: string; roleId?: string; permissions?: string[] } | null, 
+  user: { role?: string; roleId?: string; customPermissions?: string[]; permissions?: string[] } | null, 
   required?: string | string[]
 ): boolean {
   if (!user) return false;
   
-  const roleId = user.roleId || user.role || '';
-  if (roleId === 'admin') return true;
-  
   const userPerms = user.permissions || getUserPermissions(user);
   if (userPerms.includes('*') || userPerms.includes('admin.access')) return true;
+
+  const roleId = user.roleId || user.role || '';
+  if (roleId === 'admin' && (!user.customPermissions || user.customPermissions.length === 0 || user.customPermissions.includes('*'))) {
+    return true;
+  }
 
   if (!required || (Array.isArray(required) && required.length === 0)) return true;
 
@@ -526,6 +651,35 @@ export function hasPermission(
   }
 
   return userPerms.includes(required);
+}
+
+/**
+ * Automatically determine the first permitted landing route for a given user
+ */
+export function getFirstPermittedRoute(user: { role?: string; roleId?: string; customPermissions?: string[]; permissions?: string[] } | null): string {
+  if (!user) return '/login';
+  
+  // If user has full access or stream.view, take them to Quality Stream Home
+  if (hasPermission(user, ['stream.view', '*', 'admin.access'])) {
+    return '/quality-home';
+  }
+
+  // Check specific operational screens in logical sequence
+  if (hasPermission(user, 'shopfloor.fast_entry')) return '/quality-shopfloor';
+  if (hasPermission(user, 'shopfloor.log_defect')) return '/defect-log';
+  if (hasPermission(user, 'iqc.inspect')) return '/inspection';
+  if (hasPermission(user, 'supplier.manage')) return '/supplier-quality';
+  if (hasPermission(user, 'spc.view')) return '/spc';
+  if (hasPermission(user, 'ncr.create')) return '/quality/records/ncr';
+  if (hasPermission(user, 'capa.manage')) return '/quality/records/capa';
+  if (hasPermission(user, 'eight_d.solve')) return '/8d';
+  if (hasPermission(user, 'fqc.release')) return '/outgoing-quality';
+  if (hasPermission(user, 'complaints.manage')) return '/complaints';
+  if (hasPermission(user, 'analytics.dashboard')) return '/quality-dashboard';
+  if (hasPermission(user, 'master_data.edit')) return '/quality-master-data';
+  if (hasPermission(user, 'users.manage')) return '/admin/users';
+
+  return '/quality-home';
 }
 
 /**

@@ -41,6 +41,7 @@ import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/utils/translations';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '@/stores/appStore';
+import { useAuthStore } from '@/stores/authStore';
 import { 
   loadStoredUsers, 
   loadStoredRoles, 
@@ -51,11 +52,14 @@ import {
   getShiftInfo,
   PERMISSION_GROUPS,
   ALL_PERMISSION_KEYS,
+  CLEARANCE_PRESETS,
+  getFirstPermittedRoute,
   PRESET_AVATARS,
   PRESET_PRODUCTION_LINES,
   PRESET_SHIFTS,
   type UserAccount,
-  type RoleDefinition
+  type RoleDefinition,
+  type ClearancePreset
 } from '@/services/userService';
 
 const statusConfig = {
@@ -292,7 +296,7 @@ export function UsersPage() {
 
     const matchedRole = roles.find(r => r.id === userForm.roleId);
     const roleName = matchedRole ? (isAr ? matchedRole.nameAr : matchedRole.name) : userForm.roleId;
-    const customPerms = userForm.useCustomPermissions ? userForm.customPermissions : undefined;
+    const customPerms = userForm.customPermissions;
 
     if (editingUser) {
       // Update
@@ -314,7 +318,7 @@ export function UsersPage() {
       });
       if (res) {
         setUsers(loadStoredUsers());
-        toast.success(isAr ? 'تم تحديث بيانات المستخدم وكلمة المرور والصلاحيات' : 'User updated successfully');
+        toast.success(isAr ? 'تم تحديث بيانات المستخدم وكلمة المرور والصلاحيات المخصصة' : 'User updated successfully');
       }
       setEditingUser(null);
     } else {
@@ -339,6 +343,20 @@ export function UsersPage() {
       setIsCreateOpen(false);
       toast.success(isAr ? 'تمت إضافة المستخدم وتعيين الصلاحيات وكلمة المرور' : 'New user created successfully');
     }
+  };
+
+  // One-click clearance preset
+  const handleApplyPreset = (preset: ClearancePreset) => {
+    setUserForm(prev => ({
+      ...prev,
+      customPermissions: [...preset.permissions],
+      useCustomPermissions: true
+    }));
+    toast.success(
+      isAr 
+        ? `تم تطبيق قالب الصلاحيات: ${preset.labelAr} (${preset.permissions.length} شاشة)` 
+        : `Applied preset: ${preset.labelEn} (${preset.permissions.length} screens)`
+    );
   };
 
   // Delete User
@@ -405,12 +423,34 @@ export function UsersPage() {
       avatar: targetUser.avatar,
       permissions: perms
     });
+
+    useAuthStore.setState({
+      user: {
+        id: targetUser.id,
+        email: targetUser.email,
+        firstName: targetUser.name.split(' ')[0] || targetUser.name,
+        lastName: targetUser.name.split(' ').slice(1).join(' ') || '',
+        name: targetUser.name,
+        role: targetUser.roleId,
+        avatar: targetUser.avatar,
+        permissions: perms,
+        plant: { id: '1', name: targetUser.plant, code: 'PLANT-01' },
+        department: { id: '1', name: targetUser.department },
+        isActive: targetUser.status === 'active',
+        twoFactorEnabled: false,
+        lastLogin: new Date()
+      },
+      isAuthenticated: true
+    });
+
     toast.success(
       isAr 
         ? `تم التبديل الآن والدخول بحساب: ${targetUser.name} (${targetUser.roleName})` 
         : `Switched account to: ${targetUser.name}`
     );
-    navigate('/quality-home');
+
+    const targetRoute = getFirstPermittedRoute(targetUser);
+    navigate(targetRoute);
   };
 
   // Quick Password Change
@@ -1724,19 +1764,28 @@ export function UsersPage() {
                 </div>
               </div>
 
-              {/* SECTION 3: GRANULAR PERMISSIONS MATRIX OVERRIDE */}
-              <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <Shield className="w-4 h-4 text-[#00A3E0]" />
-                    <span className="text-sm font-black text-white">
-                      {isAr ? 'مصفوفة الصلاحيات الفردية الممنوحة لهذا المستخدم' : 'Granular Permissions Matrix'}
-                    </span>
-                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-[#00A3E0]/20 text-[#00A3E0]">
-                      {userForm.customPermissions.includes('*') 
-                        ? ALL_PERMISSION_KEYS.length 
-                        : userForm.customPermissions.length} / {ALL_PERMISSION_KEYS.length}
-                    </span>
+              {/* SECTION 3: GRANULAR SCREEN CLEARANCE & PERMISSIONS */}
+              <div className="p-5 rounded-2xl bg-white/[0.02] border border-[#00A3E0]/20 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-white/10">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 rounded-xl bg-[#00A3E0]/15 text-[#00A3E0] border border-[#00A3E0]/30">
+                      <ShieldCheck className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-black text-white flex items-center gap-2">
+                        {isAr ? 'تحديد الشاشات والأقسام المسموح بها للمستخدم' : 'User Screen Clearance & Permissions'}
+                        <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded-full bg-[#00A3E0]/20 text-[#00A3E0] border border-[#00A3E0]/30">
+                          {userForm.customPermissions.includes('*') 
+                            ? ALL_PERMISSION_KEYS.length 
+                            : userForm.customPermissions.length} / {ALL_PERMISSION_KEYS.length} {isAr ? 'شاشة مفعلة' : 'screens'}
+                        </span>
+                      </h4>
+                      <p className="text-[11px] text-gray-400">
+                        {isAr 
+                          ? 'الشاشات المحددة هنا فقط هي التي ستظهر للمستخدم في القائمة الجانبية والشاشات الرئيسية' 
+                          : 'Only screens selected below will appear in the sidebar and navigation for this user'}
+                      </p>
+                    </div>
                   </div>
 
                   <div className="flex items-center gap-2">
@@ -1748,26 +1797,78 @@ export function UsersPage() {
                           customPermissions: ALL_PERMISSION_KEYS,
                           useCustomPermissions: true
                         }));
+                        toast.success(isAr ? 'تم تحديد كافة شاشات النظام' : 'Selected all system screens');
                       }}
-                      className="text-xs text-[#00A3E0] hover:underline font-bold"
+                      className="text-xs text-[#00A3E0] hover:underline font-bold px-2 py-1 rounded bg-[#00A3E0]/10 border border-[#00A3E0]/20"
                     >
-                      {isAr ? 'تحديد الكل' : 'Select All'}
+                      {isAr ? 'تحديد كافة الشاشات' : 'Select All'}
                     </button>
-                    <span className="text-gray-600">|</span>
                     <button
                       type="button"
                       onClick={() => {
-                        const r = roles.find(rl => rl.id === userForm.roleId);
                         setUserForm(prev => ({
                           ...prev,
-                          customPermissions: r ? [...r.permissions] : [],
-                          useCustomPermissions: false
+                          customPermissions: [],
+                          useCustomPermissions: true
                         }));
+                        toast.info(isAr ? 'تم تفريغ كافة الصلاحيات' : 'Cleared all screens');
                       }}
-                      className="text-xs text-amber-400 hover:underline font-bold"
+                      className="text-xs text-rose-400 hover:underline font-bold px-2 py-1 rounded bg-rose-500/10 border border-rose-500/20"
                     >
-                      {isAr ? 'استعادة افتراضي الدور' : 'Reset to Role'}
+                      {isAr ? 'تفريغ الكل' : 'Clear All'}
                     </button>
+                  </div>
+                </div>
+
+                {/* Notice Banner */}
+                <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-200/90 text-xs flex items-center gap-2.5 font-medium">
+                  <Lock className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span>
+                    {isAr 
+                      ? '⚠️ نظام الأمان المشدد: لن يظهر لهذا المستخدم إلا الشاشات والأقسام التي تحددها له في هذه القائمة فقط.' 
+                      : '⚠️ Strict Access Control: Unselected screens will be completely hidden from the sidebar and navigation for this user.'}
+                  </span>
+                </div>
+
+                {/* ONE-CLICK CLEARANCE PRESETS */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-xs font-bold text-gray-300">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                    <span>{isAr ? 'قوالب صلاحيات جاهزة بنقرة واحدة (Quick Clearance Presets):' : 'One-Click Clearance Presets:'}</span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                    {CLEARANCE_PRESETS.map((preset) => {
+                      const isMatched = 
+                        preset.id === 'preset_admin'
+                          ? userForm.customPermissions.includes('*') || userForm.customPermissions.length === ALL_PERMISSION_KEYS.length
+                          : preset.permissions.length > 0 && preset.permissions.every(p => userForm.customPermissions.includes(p)) && userForm.customPermissions.length === preset.permissions.length;
+
+                      return (
+                        <button
+                          key={preset.id}
+                          type="button"
+                          onClick={() => handleApplyPreset(preset)}
+                          className={`p-2.5 rounded-xl text-left rtl:text-right border transition-all text-xs flex flex-col justify-between ${
+                            isMatched
+                              ? 'bg-[#00A3E0]/20 border-[#00A3E0] shadow-md shadow-[#00A3E0]/15'
+                              : 'bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/[0.08]'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between w-full mb-1">
+                            <span className="font-bold text-white text-xs truncate">
+                              {isAr ? preset.labelAr : preset.labelEn}
+                            </span>
+                            <span 
+                              className="w-2.5 h-2.5 rounded-full shrink-0" 
+                              style={{ backgroundColor: preset.color }}
+                            />
+                          </div>
+                          <span className="text-[10px] text-gray-400 line-clamp-2">
+                            {isAr ? preset.descriptionAr : preset.descriptionEn}
+                          </span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -1778,13 +1879,13 @@ export function UsersPage() {
                     type="text"
                     value={permissionSearch}
                     onChange={(e) => setPermissionSearch(e.target.value)}
-                    placeholder={isAr ? 'تصفية الصلاحيات بالاسم...' : 'Filter permissions by keyword...'}
+                    placeholder={isAr ? 'تصفية الشاشات بالاسم أو المرحلة...' : 'Filter screens by name or stage...'}
                     className="w-full h-9 pl-9 pr-4 rtl:pr-9 rtl:pl-4 bg-white/5 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-[#00A3E0]"
                   />
                 </div>
 
                 {/* Categorized Permissions Grid */}
-                <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
+                <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
                   {PERMISSION_GROUPS.map((group) => {
                     const isExpanded = expandedStage === group.id || Boolean(permissionSearch);
                     const matchingPerms = permissionSearch 
@@ -1798,10 +1899,10 @@ export function UsersPage() {
                     if (matchingPerms.length === 0) return null;
 
                     const groupPermIds = group.permissions.map(p => p.id);
-                    const activeCount = groupPermIds.filter(id => userForm.customPermissions.includes(id)).length;
+                    const activeCount = groupPermIds.filter(id => userForm.customPermissions.includes(id) || userForm.customPermissions.includes('*')).length;
 
                     return (
-                      <div key={group.id} className="rounded-xl border border-white/5 bg-white/[0.02] overflow-hidden">
+                      <div key={group.id} className="rounded-xl border border-white/10 bg-white/[0.02] overflow-hidden">
                         <div 
                           className="flex items-center justify-between p-3 cursor-pointer hover:bg-white/5 transition-colors"
                           onClick={() => setExpandedStage(isExpanded && !permissionSearch ? null : group.id)}
@@ -1810,8 +1911,14 @@ export function UsersPage() {
                             <span className="text-xs font-bold text-white">
                               {isAr ? group.titleAr : group.titleEn}
                             </span>
-                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#00A3E0]/10 text-[#00A3E0] font-bold">
-                              {activeCount} / {groupPermIds.length}
+                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                              activeCount === groupPermIds.length
+                                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                                : activeCount > 0
+                                  ? 'bg-[#00A3E0]/20 text-[#00A3E0] border border-[#00A3E0]/30'
+                                  : 'bg-white/5 text-gray-400'
+                            }`}>
+                              {activeCount} / {groupPermIds.length} {isAr ? 'مسموح' : 'granted'}
                             </span>
                           </div>
                           <div className="flex items-center gap-2">
@@ -1821,26 +1928,26 @@ export function UsersPage() {
                                 e.stopPropagation();
                                 handleSelectGroupPermissions(group.id, activeCount < groupPermIds.length);
                               }}
-                              className="text-[11px] text-gray-400 hover:text-white"
+                              className="text-[11px] font-bold text-sky-400 hover:text-white px-2 py-0.5 rounded bg-sky-500/10 border border-sky-500/20"
                             >
                               {activeCount === groupPermIds.length 
-                                ? (isAr ? 'إلغاء المرحلة' : 'Clear') 
-                                : (isAr ? 'تحديد المرحلة' : 'Select')}
+                                ? (isAr ? 'إلغاء المرحلة' : 'Clear Stage') 
+                                : (isAr ? 'تحديد كل المرحلة' : 'Select Stage')}
                             </button>
                             {isExpanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
                           </div>
                         </div>
 
                         {isExpanded && (
-                          <div className="p-3 pt-0 grid grid-cols-1 sm:grid-cols-2 gap-2 border-t border-white/5 bg-black/20">
+                          <div className="p-3 pt-0 grid grid-cols-1 sm:grid-cols-2 gap-2 border-t border-white/5 bg-black/30">
                             {matchingPerms.map((perm) => {
                               const isChecked = userForm.customPermissions.includes(perm.id) || userForm.customPermissions.includes('*');
                               return (
                                 <label 
                                   key={perm.id} 
-                                  className={`flex items-center gap-2.5 p-2 rounded-lg cursor-pointer text-xs border transition-colors ${
+                                  className={`flex items-center gap-2.5 p-2.5 rounded-xl cursor-pointer text-xs border transition-colors ${
                                     isChecked 
-                                      ? 'bg-[#00A3E0]/10 border-[#00A3E0]/30 text-white' 
+                                      ? 'bg-[#00A3E0]/15 border-[#00A3E0]/40 text-white font-bold' 
                                       : 'bg-white/5 border-white/5 text-gray-400 hover:text-gray-200'
                                   }`}
                                 >
@@ -1848,11 +1955,16 @@ export function UsersPage() {
                                     type="checkbox"
                                     checked={isChecked}
                                     onChange={() => handleToggleFormPermission(perm.id)}
-                                    className="accent-[#00A3E0]"
+                                    className="accent-[#00A3E0] w-4 h-4 rounded"
                                   />
-                                  <span className="font-medium">
-                                    {isAr ? perm.labelAr : perm.labelEn}
-                                  </span>
+                                  <div className="min-w-0">
+                                    <span className="block truncate">
+                                      {isAr ? perm.labelAr : perm.labelEn}
+                                    </span>
+                                    <span className="block text-[10px] text-gray-500 font-mono truncate">
+                                      {perm.id}
+                                    </span>
+                                  </div>
                                 </label>
                               );
                             })}

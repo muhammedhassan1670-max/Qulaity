@@ -26,7 +26,7 @@ import { useAppStore } from '../stores/appStore';
 import { useAuthStore } from '../stores/authStore';
 import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../services/api';
-import { loadStoredUsers, type UserAccount } from '../services/userService';
+import { loadStoredUsers, getFirstPermittedRoute, type UserAccount } from '../services/userService';
 
 // Types
 interface LoginCredentials {
@@ -134,7 +134,8 @@ export function LoginPage() {
       toast.success('Welcome back / مرحباً بك مجدداً', {
         description: `Logged in as: ${u.firstName} (${Array.isArray(u.roles) ? u.roles[0] : 'user'})`
       });
-      navigate('/', { replace: true });
+      const targetRoute = getFirstPermittedRoute({ role: Array.isArray(u.roles) ? u.roles[0] : 'user', permissions: u.permissions });
+      navigate(targetRoute, { replace: true });
     } catch (error: any) {
       toast.error('Login failed / فشل تسجيل الدخول', {
         description: error?.message || 'Invalid credentials'
@@ -214,8 +215,9 @@ export function LoginPage() {
         description: `Logged in as: ${u.firstName} (${Array.isArray(u.roles) ? u.roles[0] : 'user'})`
       });
       
-      // Navigate to dashboard
-      navigate('/', { replace: true });
+      // Navigate to first permitted screen
+      const targetRoute = getFirstPermittedRoute({ role: Array.isArray(u.roles) ? u.roles[0] : 'user', permissions: u.permissions });
+      navigate(targetRoute, { replace: true });
     } catch (error: any) {
       toast.error('Login failed / فشل تسجيل الدخول', {
         description: error?.message || 'Invalid email/username or password'

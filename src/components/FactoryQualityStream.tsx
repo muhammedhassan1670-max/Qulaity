@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Truck, 
@@ -13,7 +13,8 @@ import {
 } from 'lucide-react';
 import { useTranslation } from '../utils/translations';
 import { unifiedNcrApi, unifiedDefectLogApi, unifiedCapaApi, unifiedEightDApi, unifiedComplaintsApi } from '../api/unified-api';
-import { useState, useEffect } from 'react';
+import { useAppStore } from '../stores/appStore';
+import { hasPermission } from '../services/userService';
 
 interface StageCard {
   id: string;
@@ -28,12 +29,14 @@ interface StageCard {
   countLabelEn: string;
   countLabelAr: string;
   count: number;
-  tools: Array<{ labelEn: string; labelAr: string; path: string }>;
+  permission?: string | string[];
+  tools: Array<{ labelEn: string; labelAr: string; path: string; permission?: string | string[] }>;
 }
 
 export function FactoryQualityStream() {
   const { language } = useTranslation();
   const isAr = language === 'ar';
+  const { user } = useAppStore();
 
   const [counts, setCounts] = useState({
     defectsToday: 0,
@@ -104,10 +107,11 @@ export function FactoryQualityStream() {
       countLabelEn: 'Suppliers Monitored',
       countLabelAr: 'موردين تحت المتابعة',
       count: 12,
+      permission: ['iqc.inspect', 'supplier.manage', 'iqc.plans'],
       tools: [
-        { labelEn: 'Inspection Run', labelAr: 'فحص الشحنات', path: '/compliance/hub/inspection' },
-        { labelEn: 'Suppliers', labelAr: 'الموردين', path: '/supplier-quality' },
-        { labelEn: 'Raw Material Plans', labelAr: 'خطط فحص الخام', path: '/quality-inspection-plans' }
+        { labelEn: 'Inspection Run', labelAr: 'فحص الشحنات', path: '/compliance/hub/inspection', permission: 'iqc.inspect' },
+        { labelEn: 'Suppliers', labelAr: 'الموردين', path: '/supplier-quality', permission: 'supplier.manage' },
+        { labelEn: 'Raw Material Plans', labelAr: 'خطط فحص الخام', path: '/quality-inspection-plans', permission: ['iqc.plans', 'iqc.inspect'] }
       ]
     },
     {
@@ -123,11 +127,12 @@ export function FactoryQualityStream() {
       countLabelEn: 'Defects Logged',
       countLabelAr: 'عيوب مسجلة اليوم',
       count: counts.defectsToday,
+      permission: ['shopfloor.fast_entry', 'shopfloor.log_defect', 'spc.view', 'shopfloor.clearance'],
       tools: [
-        { labelEn: 'Fast Entry', labelAr: 'تسجيل سريع', path: '/quality-shopfloor' },
-        { labelEn: 'Defect Log', labelAr: 'مسجل العيوب', path: '/defect-log' },
-        { labelEn: 'Live SPC', labelAr: 'كارتات SPC', path: '/spc' },
-        { labelEn: 'Checkpoints', labelAr: 'محطات الفحص', path: '/quality-execution-board' }
+        { labelEn: 'Fast Entry', labelAr: 'تسجيل سريع', path: '/quality-shopfloor', permission: ['shopfloor.fast_entry', 'shopfloor.log_defect'] },
+        { labelEn: 'Defect Log', labelAr: 'مسجل العيوب', path: '/defect-log', permission: 'shopfloor.log_defect' },
+        { labelEn: 'Live SPC', labelAr: 'كارتات SPC', path: '/spc', permission: 'spc.view' },
+        { labelEn: 'Checkpoints', labelAr: 'محطات الفحص', path: '/quality-execution-board', permission: ['shopfloor.clearance', 'shopfloor.log_defect'] }
       ]
     },
     {
@@ -143,11 +148,12 @@ export function FactoryQualityStream() {
       countLabelEn: 'Active Issues',
       countLabelAr: 'حالات مفتوحة',
       count: counts.openNcr + counts.activeCapa + counts.active8D,
+      permission: ['ncr.create', 'capa.manage', 'eight_d.solve', 'ncr.disposition', 'change.control'],
       tools: [
-        { labelEn: 'NCR Reports', labelAr: 'تقارير NCR', path: '/quality/records/ncr' },
-        { labelEn: 'CAPA Actions', labelAr: 'إجراءات CAPA', path: '/quality/records/capa' },
-        { labelEn: '8D Problem Solving', labelAr: 'تقارير 8D', path: '/quality/records/8d' },
-        { labelEn: 'Deviations', labelAr: 'تصاريح الحيود', path: '/quality/records/deviation' }
+        { labelEn: 'NCR Reports', labelAr: 'تقارير NCR', path: '/quality/records/ncr', permission: 'ncr.create' },
+        { labelEn: 'CAPA Actions', labelAr: 'إجراءات CAPA', path: '/quality/records/capa', permission: 'capa.manage' },
+        { labelEn: '8D Problem Solving', labelAr: 'تقارير 8D', path: '/quality/records/8d', permission: 'eight_d.solve' },
+        { labelEn: 'Deviations', labelAr: 'تصاريح الحيود', path: '/quality/records/deviation', permission: ['ncr.disposition', 'ncr.create'] }
       ]
     },
     {
@@ -163,9 +169,10 @@ export function FactoryQualityStream() {
       countLabelEn: 'Ready for Release',
       countLabelAr: 'جاهز للإفراج',
       count: 8,
+      permission: ['fqc.release', 'ppm.track'],
       tools: [
-        { labelEn: 'Outgoing Check', labelAr: 'فحص الشحن', path: '/outgoing-quality' },
-        { labelEn: 'PPM Tracking', labelAr: 'معدل PPM', path: '/process-ppm' }
+        { labelEn: 'Outgoing Check', labelAr: 'فحص الشحن', path: '/outgoing-quality', permission: 'fqc.release' },
+        { labelEn: 'PPM Tracking', labelAr: 'معدل PPM', path: '/process-ppm', permission: 'ppm.track' }
       ]
     },
     {
@@ -181,12 +188,26 @@ export function FactoryQualityStream() {
       countLabelEn: 'Open Complaints',
       countLabelAr: 'شكاوى جارية',
       count: counts.complaints,
+      permission: ['complaints.manage', 'copq.view'],
       tools: [
-        { labelEn: 'Complaints Log', labelAr: 'سجل الشكاوى', path: '/quality/records/complaints' },
-        { labelEn: 'COPQ Impact', labelAr: 'تكلفة العيوب COPQ', path: '/defect-cost' }
+        { labelEn: 'Complaints Log', labelAr: 'سجل الشكاوى', path: '/quality/records/complaints', permission: 'complaints.manage' },
+        { labelEn: 'COPQ Impact', labelAr: 'تكلفة العيوب COPQ', path: '/defect-cost', permission: ['copq.view', 'complaints.manage'] }
       ]
     }
   ], [counts]);
+
+  const visibleStages = useMemo(() => {
+    return stages
+      .filter(stage => !stage.permission || hasPermission(user, stage.permission))
+      .map(stage => ({
+        ...stage,
+        tools: stage.tools.filter(tool => !tool.permission || hasPermission(user, tool.permission))
+      }));
+  }, [stages, user]);
+
+  if (visibleStages.length === 0) {
+    return null;
+  }
 
   return (
     <div className="w-full my-6">
@@ -213,26 +234,30 @@ export function FactoryQualityStream() {
 
         {/* Quick Links */}
         <div className="flex items-center gap-2 text-xs">
-          <Link 
-            to="/spc" 
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 hover:border-[var(--industrial-primary)]/50 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors font-bold text-slate-700 dark:text-slate-300"
-          >
-            <Activity className="w-3.5 h-3.5 text-cyan-500" />
-            <span>{isAr ? 'مختبر SPC' : 'SPC Lab'}</span>
-          </Link>
-          <Link 
-            to="/quality-command-center" 
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 hover:border-[var(--industrial-primary)]/50 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors font-bold text-slate-700 dark:text-slate-300"
-          >
-            <Activity className="w-3.5 h-3.5 text-amber-500" />
-            <span>{isAr ? 'مركز القيادة' : 'Command Center'}</span>
-          </Link>
+          {hasPermission(user, 'spc.view') && (
+            <Link 
+              to="/spc" 
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 hover:border-[var(--industrial-primary)]/50 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors font-bold text-slate-700 dark:text-slate-300"
+            >
+              <Activity className="w-3.5 h-3.5 text-cyan-500" />
+              <span>{isAr ? 'مختبر SPC' : 'SPC Lab'}</span>
+            </Link>
+          )}
+          {hasPermission(user, ['command_center.view', 'capa.manage', 'admin.access']) && (
+            <Link 
+              to="/quality-command-center" 
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 hover:border-[var(--industrial-primary)]/50 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors font-bold text-slate-700 dark:text-slate-300"
+            >
+              <Activity className="w-3.5 h-3.5 text-amber-500" />
+              <span>{isAr ? 'مركز القيادة' : 'Command Center'}</span>
+            </Link>
+          )}
         </div>
       </div>
 
-      {/* Grid of 5 Sequential Stations */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-3.5 relative">
-        {stages.map((stage, idx) => {
+      {/* Grid of Sequential Stations */}
+      <div className={`grid grid-cols-1 md:grid-cols-${Math.min(visibleStages.length, 5)} gap-3.5 relative`}>
+        {visibleStages.map((stage, idx) => {
           const Icon = stage.icon;
           const isLast = idx === stages.length - 1;
 
