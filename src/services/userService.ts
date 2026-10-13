@@ -384,7 +384,7 @@ export function loadStoredUsers(): UserAccount[] {
       let modified = false;
       const patched = parsed.map(u => {
         let uPatched = { ...u };
-        if (!uPatched.password) {
+        if (!uPatched.password || uPatched.password.trim() === '') {
           uPatched.password = uPatched.roleId === 'admin' ? 'admin123' : '123456';
           modified = true;
         }

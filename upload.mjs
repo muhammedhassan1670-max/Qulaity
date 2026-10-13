@@ -17,7 +17,11 @@ async function upload() {
         await client.ensureDir("htdocs");
         
         console.log("Clearing old files...");
-        await client.clearWorkingDir();
+        try {
+            await client.clearWorkingDir();
+        } catch (e) {
+            console.warn("clearWorkingDir warning (proceeding with upload):", e.message);
+        }
         
         console.log("Uploading new build (dist)...");
         await client.uploadFromDir("dist");

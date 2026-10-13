@@ -15,12 +15,18 @@ import {
   Factory,
   CheckCircle2,
   AlertCircle,
-  Loader2
+  Loader2,
+  Key,
+  Copy,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAppStore } from '../stores/appStore';
+import { useAuthStore } from '../stores/authStore';
 import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../services/api';
+import { loadStoredUsers, type UserAccount } from '../services/userService';
 
 // Types
 interface LoginCredentials {
@@ -68,6 +74,8 @@ export function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'login' | 'register' | 'forgot'>('login');
+  const [availableUsers] = useState<UserAccount[]>(() => loadStoredUsers());
+  const [showAccountsList, setShowAccountsList] = useState(true);
   
   const { setUser } = useAppStore();
   const navigate = useNavigate();
@@ -79,6 +87,62 @@ export function LoginPage() {
     else if (p === '/forgot-password') setActiveTab('forgot');
     else setActiveTab('login');
   }, [location.pathname]);
+
+  const executeDirectLogin = async (email: string, pass: string) => {
+    setCredentials(prev => ({ ...prev, email, password: pass }));
+    setIsLoading(true);
+    try {
+      const result = await api.auth.login(email.trim(), pass);
+      if (!result?.success) throw new Error(result?.message || 'Login failed');
+      const u = result.data.user;
+      setUser({
+        id: u.id,
+        name: `${u.firstName} ${u.lastName}`.trim() || u.name,
+        email: u.email,
+        role: Array.isArray(u.roles) && u.roles.length > 0 ? u.roles[0] : 'user',
+        plant: u.plant || u.plantId || 'Main Plant - Assembly 01',
+        department: u.department || 'Quality Assurance',
+        phone: u.phone,
+        avatar: u.avatar,
+        permissions: u.permissions || [],
+      });
+      useAuthStore.setState({
+        user: {
+          id: u.id,
+          email: u.email,
+          firstName: u.firstName,
+          lastName: u.lastName,
+          name: `${u.firstName} ${u.lastName}`.trim() || u.name,
+          role: Array.isArray(u.roles) && u.roles.length > 0 ? u.roles[0] : 'user',
+          avatar: u.avatar,
+          permissions: u.permissions || [],
+          plant: { id: '1', name: u.plant || 'Main Plant', code: 'PLANT-01' },
+          department: { id: '1', name: u.department || 'Quality Assurance' },
+          isActive: true,
+          twoFactorEnabled: false,
+          lastLogin: new Date()
+        },
+        tokens: {
+          accessToken: result.data.tokens.accessToken,
+          refreshToken: result.data.tokens.refreshToken,
+          expiresAt: Date.now() + 24 * 60 * 60 * 1000
+        },
+        isAuthenticated: true,
+        isLoading: false,
+        error: null
+      });
+      toast.success('Welcome back / مرحباً بك مجدداً', {
+        description: `Logged in as: ${u.firstName} (${Array.isArray(u.roles) ? u.roles[0] : 'user'})`
+      });
+      navigate('/', { replace: true });
+    } catch (error: any) {
+      toast.error('Login failed / فشل تسجيل الدخول', {
+        description: error?.message || 'Invalid credentials'
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,6 +181,32 @@ export function LoginPage() {
         phone: u.phone,
         avatar: u.avatar,
         permissions: u.permissions || [],
+      });
+
+      useAuthStore.setState({
+        user: {
+          id: u.id,
+          email: u.email,
+          firstName: u.firstName,
+          lastName: u.lastName,
+          name: `${u.firstName} ${u.lastName}`.trim() || u.name,
+          role: Array.isArray(u.roles) && u.roles.length > 0 ? u.roles[0] : 'user',
+          avatar: u.avatar,
+          permissions: u.permissions || [],
+          plant: { id: '1', name: u.plant || 'Main Plant', code: 'PLANT-01' },
+          department: { id: '1', name: u.department || 'Quality Assurance' },
+          isActive: true,
+          twoFactorEnabled: false,
+          lastLogin: new Date()
+        },
+        tokens: {
+          accessToken: result.data.tokens.accessToken,
+          refreshToken: result.data.tokens.refreshToken,
+          expiresAt: Date.now() + 24 * 60 * 60 * 1000
+        },
+        isAuthenticated: true,
+        isLoading: false,
+        error: null
       });
       
       // Success
@@ -280,34 +370,84 @@ export function LoginPage() {
                 )}
               </button>
 
-              {/* Quick Role Fill for Testing */}
-              <div className="pt-3 border-t border-white/10 text-center">
-                <p className="text-[11px] font-bold text-gray-400 mb-2">
-                  تجربة الدخول الفوري بالأدوار المختلفة (1-Click Test):
-                </p>
-                <div className="grid grid-cols-3 gap-2 text-[11px]">
-                  <button
-                    type="button"
-                    onClick={() => setCredentials({ ...credentials, email: 'admin', password: 'admin123' })}
-                    className="p-2 rounded-xl bg-blue-500/10 border border-blue-500/20 text-[#00A3E0] hover:bg-blue-500/20 font-bold transition-colors"
-                  >
-                    👑 مدير النظام
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCredentials({ ...credentials, email: 'manager', password: '123456' })}
-                    className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 font-bold transition-colors"
-                  >
-                    🛡️ مدير الجودة
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCredentials({ ...credentials, email: 'inspector', password: '123456' })}
-                    className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 hover:bg-amber-500/20 font-bold transition-colors"
-                  >
-                    📋 مفتش ورشة
-                  </button>
-                </div>
+              {/* Registered Accounts & Credentials Directory */}
+              <div className="pt-4 border-t border-white/10 space-y-3">
+                <button
+                  type="button"
+                  onClick={() => setShowAccountsList(!showAccountsList)}
+                  className="w-full flex items-center justify-between text-xs font-bold text-gray-300 hover:text-white p-2.5 rounded-xl bg-white/5 border border-white/10 transition-colors"
+                >
+                  <span className="flex items-center gap-1.5 text-[#00A3E0]">
+                    <Key className="w-3.5 h-3.5 text-amber-400" />
+                    دليل حسابات الدخول المعتمدة (الميل والباسورد)
+                  </span>
+                  <span className="flex items-center gap-1 text-[11px] text-gray-400">
+                    ({availableUsers.length} حسابات)
+                    {showAccountsList ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                  </span>
+                </button>
+
+                {showAccountsList && (
+                  <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                    {availableUsers.map(u => {
+                      const pass = u.password || '123456';
+                      return (
+                        <div 
+                          key={u.id} 
+                          className="p-2.5 rounded-xl bg-slate-950/80 border border-white/10 flex flex-col gap-1.5 text-xs hover:border-[#00A3E0]/40 transition-colors"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-white truncate max-w-[170px]">{u.name}</span>
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#00A3E0]/15 text-[#00A3E0] border border-[#00A3E0]/30 truncate max-w-[130px]">
+                              {u.roleName}
+                            </span>
+                          </div>
+
+                          <div className="grid grid-cols-1 gap-1 text-[11px] font-mono">
+                            <div className="flex items-center justify-between bg-white/5 px-2 py-1 rounded-lg">
+                              <span className="text-gray-400 truncate">الميل: <strong className="text-sky-300">{u.email}</strong></span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(u.email);
+                                  toast.success(`تم نسخ البريد الإلكتروني: ${u.email}`);
+                                }}
+                                className="p-1 text-gray-400 hover:text-white shrink-0"
+                                title="نسخ البريد"
+                              >
+                                <Copy className="w-3 h-3" />
+                              </button>
+                            </div>
+                            <div className="flex items-center justify-between bg-amber-500/10 px-2 py-1 rounded-lg border border-amber-500/20">
+                              <span className="text-amber-300 truncate">الباسورد: <strong className="text-amber-200">{pass}</strong></span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(pass);
+                                  toast.success(`تم نسخ كلمة المرور: ${pass}`);
+                                }}
+                                className="p-1 text-amber-400 hover:text-white shrink-0"
+                                title="نسخ كلمة المرور"
+                              >
+                                <Copy className="w-3 h-3" />
+                              </button>
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            disabled={isLoading}
+                            onClick={() => executeDirectLogin(u.email, pass)}
+                            className="w-full mt-0.5 py-1.5 bg-gradient-to-r from-sky-500/20 to-[#00A3E0]/20 hover:from-sky-500/30 hover:to-[#00A3E0]/30 text-sky-300 border border-sky-500/30 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5"
+                          >
+                            <Zap className="w-3.5 h-3.5 text-[#00A3E0]" />
+                            دخول فوري بهذا الحساب (1-Click)
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </form>
           )}

@@ -33,7 +33,8 @@ import {
   Clock,
   Factory,
   Send,
-  Smartphone
+  Smartphone,
+  Mail
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -99,6 +100,8 @@ export function UsersPage() {
 
   // Visibility states for passwords
   const [visiblePasswords, setVisiblePasswords] = useState<Record<string, boolean>>({});
+  const [showAllPasswords, setShowAllPasswords] = useState(false);
+  const [showQuickDirectory, setShowQuickDirectory] = useState(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   // Form State
@@ -365,11 +368,26 @@ export function UsersPage() {
   const handleCopyCredentials = (user: UserAccount) => {
     const uname = user.username || user.email.split('@')[0];
     const pass = user.password || '123456';
-    const text = `QMS Login Credentials:\nUsername/Email: ${user.email} (${uname})\nPassword: ${pass}\nRole: ${user.roleName}`;
+    const text = `QMS Login Credentials:\nEmail: ${user.email}\nUsername: ${uname}\nPassword: ${pass}\nRole: ${user.roleName}`;
     navigator.clipboard.writeText(text);
     setCopiedId(user.id);
     setTimeout(() => setCopiedId(null), 2000);
-    toast.success(isAr ? `تم نسخ بيانات الدخول للمستخدم ${user.name}` : `Credentials copied for ${user.name}`);
+    toast.success(isAr ? `تم نسخ كافة بيانات الدخول للمستخدم ${user.name}` : `Credentials copied for ${user.name}`);
+  };
+
+  const handleCopyEmail = (email: string) => {
+    navigator.clipboard.writeText(email);
+    toast.success(isAr ? `تم نسخ البريد الإلكتروني: ${email}` : `Copied email: ${email}`);
+  };
+
+  const handleCopyPassword = (pass: string) => {
+    navigator.clipboard.writeText(pass);
+    toast.success(isAr ? `تم نسخ كلمة المرور: ${pass}` : `Copied password: ${pass}`);
+  };
+
+  const handleCopyUsername = (uname: string) => {
+    navigator.clipboard.writeText(uname);
+    toast.success(isAr ? `تم نسخ اسم المستخدم: ${uname}` : `Copied username: ${uname}`);
   };
 
   // Switch / Impersonate User
@@ -517,6 +535,35 @@ export function UsersPage() {
             </button>
           </div>
 
+          {/* Show All Passwords Toggle */}
+          <Button 
+            variant="outline"
+            onClick={() => setShowAllPasswords(!showAllPasswords)}
+            className={`border rounded-2xl h-11 px-4 font-bold transition-all ${
+              showAllPasswords
+                ? 'bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-lg shadow-amber-500/20'
+                : 'bg-white/5 border-white/10 text-gray-300 hover:text-white hover:bg-white/10'
+            }`}
+            title={isAr ? 'إظهار كافة كلمات المرور في البطاقات والجدول' : 'Reveal all passwords in cards and table'}
+          >
+            {showAllPasswords ? <EyeOff className="w-4 h-4 mr-2 rtl:ml-2 rtl:mr-0 text-amber-400" /> : <Eye className="w-4 h-4 mr-2 rtl:ml-2 rtl:mr-0 text-amber-400" />}
+            {isAr ? (showAllPasswords ? 'إخفاء كلمات المرور' : 'إظهار كل كلمات المرور') : (showAllPasswords ? 'Hide Passwords' : 'Show All Passwords')}
+          </Button>
+
+          {/* Toggle Quick Credentials Directory */}
+          <Button
+            variant="outline"
+            onClick={() => setShowQuickDirectory(!showQuickDirectory)}
+            className={`border rounded-2xl h-11 px-4 font-bold transition-all ${
+              showQuickDirectory
+                ? 'bg-[#00A3E0]/20 text-[#00A3E0] border-[#00A3E0]/50 shadow-lg shadow-[#00A3E0]/20'
+                : 'bg-white/5 border-white/10 text-gray-300 hover:text-white hover:bg-white/10'
+            }`}
+          >
+            <Key className="w-4 h-4 mr-2 rtl:ml-2 rtl:mr-0 text-[#00A3E0]" />
+            {isAr ? 'دليل الدخول المباشر' : 'Credentials Sheet'}
+          </Button>
+
           <Button 
             variant="outline" 
             onClick={handleExportCSV}
@@ -549,6 +596,165 @@ export function UsersPage() {
           </div>
         ))}
       </div>
+
+      {/* QUICK CREDENTIALS DIRECTORY ACCORDION */}
+      {showQuickDirectory && (
+        <div className="rounded-3xl border border-amber-500/30 bg-gradient-to-r from-slate-900/95 via-slate-900/90 to-slate-900/95 backdrop-blur-xl p-5 shadow-2xl space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/10">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-400">
+                <Key className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-base font-black text-white flex items-center gap-2">
+                  {isAr ? 'دليل بيانات الدخول المعتمدة لجميع المستخدمين (البريد الإلكتروني وكلمة المرور)' : 'Live User Login Directory (Emails & Passwords)'}
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                    {isAr ? 'جاهز للدخول الفوري' : 'Ready to Login'}
+                  </span>
+                </h2>
+                <p className="text-xs text-gray-400">
+                  {isAr 
+                    ? 'البيانات المعتمدة لكل مستخدم للدخول إلى المنصة عبر شاشة الدخول (/login) أو التجربة الفورية'
+                    : 'Authorized credentials for each user to sign in via (/login) or test directly'}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setShowAllPasswords(!showAllPasswords)}
+                className="bg-amber-500/10 border-amber-500/30 text-amber-300 hover:bg-amber-500/20 text-xs rounded-xl h-9 font-bold"
+              >
+                {showAllPasswords ? <EyeOff className="w-3.5 h-3.5 mr-1.5 rtl:ml-1.5 rtl:mr-0" /> : <Eye className="w-3.5 h-3.5 mr-1.5 rtl:ml-1.5 rtl:mr-0" />}
+                {isAr ? (showAllPasswords ? 'إخفاء كلمات المرور' : 'إظهار كافة كلمات المرور') : (showAllPasswords ? 'Hide' : 'Reveal All')}
+              </Button>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="text-gray-400 border-b border-white/10 text-right rtl:text-right ltr:text-left">
+                  <th className="py-2.5 px-3 font-bold">{isAr ? 'المستخدم والدور' : 'User & Role'}</th>
+                  <th className="py-2.5 px-3 font-bold">{isAr ? 'البريد الإلكتروني للدخول (Email)' : 'Email'}</th>
+                  <th className="py-2.5 px-3 font-bold">{isAr ? 'كلمة المرور (Password)' : 'Password'}</th>
+                  <th className="py-2.5 px-3 font-bold">{isAr ? 'اسم المستخدم (Username)' : 'Username'}</th>
+                  <th className="py-2.5 px-3 font-bold text-center">{isAr ? 'إجراءات سريعة' : 'Actions'}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5 font-mono">
+                {users.map(u => {
+                  const isVisible = showAllPasswords || visiblePasswords[u.id];
+                  const pass = u.password || '123456';
+                  const uname = u.username || u.email.split('@')[0];
+                  return (
+                    <tr key={u.id} className="hover:bg-white/[0.03] transition-colors">
+                      <td className="py-2.5 px-3 font-sans">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-xl overflow-hidden bg-slate-800 shrink-0 border border-white/10">
+                            {u.avatar ? <img src={u.avatar} alt={u.name} className="w-full h-full object-cover" /> : <span className="font-bold text-xs text-white p-1">{u.name.charAt(0)}</span>}
+                          </div>
+                          <div>
+                            <div className="font-bold text-white text-xs">{u.name}</div>
+                            <span className="text-[10px] text-[#00A3E0] font-sans font-bold">{u.roleName}</span>
+                          </div>
+                        </div>
+                      </td>
+
+                      <td className="py-2.5 px-3">
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-sky-500/10 border border-sky-500/25">
+                          <Mail className="w-3.5 h-3.5 text-sky-400" />
+                          <span className="text-sky-300 font-bold">{u.email}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleCopyEmail(u.email)}
+                            className="p-1 text-gray-400 hover:text-white rounded"
+                            title={isAr ? 'نسخ البريد الإلكتروني' : 'Copy email'}
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+
+                      <td className="py-2.5 px-3">
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-amber-500/10 border border-amber-500/30">
+                          <Lock className="w-3.5 h-3.5 text-amber-400" />
+                          <span className="text-amber-300 font-bold tracking-wider">
+                            {isVisible ? pass : '••••••••'}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setVisiblePasswords(prev => ({ ...prev, [u.id]: !isVisible }))}
+                            className="p-1 text-gray-400 hover:text-white"
+                            title={isVisible ? (isAr ? 'إخفاء' : 'Hide') : (isAr ? 'إظهار' : 'Show')}
+                          >
+                            {isVisible ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleCopyPassword(pass)}
+                            className="p-1 text-amber-400 hover:text-white"
+                            title={isAr ? 'نسخ كلمة المرور' : 'Copy password'}
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+
+                      <td className="py-2.5 px-3 text-gray-300">
+                        <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-white/5 border border-white/5">
+                          <span>@{uname}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleCopyUsername(uname)}
+                            className="p-0.5 text-gray-400 hover:text-white rounded"
+                            title={isAr ? 'نسخ اسم المستخدم' : 'Copy username'}
+                          >
+                            <Copy className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </td>
+
+                      <td className="py-2.5 px-3 text-center font-sans">
+                        <div className="inline-flex items-center gap-1.5 justify-center">
+                          <Button
+                            size="sm"
+                            onClick={() => handleImpersonateUser(u)}
+                            className="h-7 px-2.5 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/30 text-[11px] font-bold"
+                          >
+                            <LogIn className="w-3 h-3 mr-1 rtl:ml-1 rtl:mr-0" />
+                            {isAr ? 'دخول بحسابه' : 'Login As'}
+                          </Button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleCopyCredentials(u)}
+                            className="p-1.5 rounded-lg text-emerald-400 hover:text-white hover:bg-emerald-500/20 border border-emerald-500/20"
+                            title={isAr ? 'نسخ كافة بيانات الدخول' : 'Copy all credentials'}
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setShareCredentialsUser(u)}
+                            className="p-1.5 rounded-lg text-emerald-400 hover:text-white hover:bg-emerald-500/20 border border-emerald-500/20"
+                            title={isAr ? 'مشاركة عبر واتساب' : 'Share via WhatsApp'}
+                          >
+                            <Share2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Filter Bar */}
       <div className="p-4 sm:p-5 rounded-3xl border border-white/10 bg-slate-900/60 backdrop-blur-xl shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -635,7 +841,7 @@ export function UsersPage() {
               const statusInfo = statusConfig[user.status] || statusConfig.active;
               const StatusIcon = statusInfo.icon;
               const userPerms = getUserPermissions(user);
-              const isPassVisible = visiblePasswords[user.id] || false;
+              const isPassVisible = showAllPasswords || visiblePasswords[user.id] || false;
               const roleObj = roles.find(r => r.id === user.roleId);
               const shiftInfo = getShiftInfo(user.shift);
 
@@ -723,58 +929,107 @@ export function UsersPage() {
                       </span>
                     </div>
 
-                    {/* Credentials & Password Box */}
-                    <div className="p-3 rounded-2xl bg-black/40 border border-white/5 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider flex items-center gap-1">
-                          <UserIcon className="w-3 h-3 text-[#00A3E0]" />
-                          {isAr ? 'اسم الدخول:' : 'Login ID:'}
+                    {/* High-Visibility Credentials & Password Box */}
+                    <div className="p-3.5 rounded-2xl bg-black/60 border border-[#00A3E0]/30 space-y-2.5 shadow-inner">
+                      <div className="flex items-center justify-between pb-1.5 border-b border-white/5">
+                        <span className="text-[11px] font-black text-[#00A3E0] uppercase tracking-wider flex items-center gap-1.5">
+                          <Key className="w-3.5 h-3.5 text-amber-400" />
+                          {isAr ? 'بيانات تسجيل الدخول المعتمدة:' : 'Login Credentials:'}
                         </span>
-                        <span className="text-xs text-[#00A3E0] font-mono font-bold bg-[#00A3E0]/10 px-2 py-0.5 rounded-lg border border-[#00A3E0]/20">
-                          @{user.username || user.email.split('@')[0]}
-                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyCredentials(user)}
+                          className="text-[10px] text-emerald-400 hover:underline flex items-center gap-1 font-bold"
+                          title={isAr ? 'نسخ كافة بيانات الدخول (الميل والباسورد)' : 'Copy all credentials'}
+                        >
+                          <Copy className="w-3 h-3" />
+                          {copiedId === user.id ? (isAr ? 'تم النسخ!' : 'Copied!') : (isAr ? 'نسخ الكل' : 'Copy All')}
+                        </button>
                       </div>
 
-                      <div className="flex items-center justify-between gap-2 p-1.5 rounded-xl bg-slate-950/80 border border-amber-500/25">
+                      {/* 1. EMAIL */}
+                      <div className="flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-900/90 border border-sky-500/25">
                         <div className="flex items-center gap-2 min-w-0">
-                          <Key className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                          <span className="font-mono text-xs font-bold text-amber-300 tracking-wider truncate">
-                            {isPassVisible ? (user.password || '123456') : '••••••••'}
-                          </span>
+                          <Mail className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+                          <div className="min-w-0">
+                            <span className="text-[9px] text-gray-400 block font-bold">{isAr ? 'البريد الإلكتروني للدخول:' : 'Email Address:'}</span>
+                            <span className="font-mono text-xs font-bold text-white truncate block">
+                              {user.email}
+                            </span>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyEmail(user.email)}
+                          className="p-1.5 text-gray-400 hover:text-sky-300 rounded hover:bg-white/5 shrink-0"
+                          title={isAr ? 'نسخ البريد الإلكتروني' : 'Copy email'}
+                        >
+                          <Copy className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
+                      {/* 2. PASSWORD */}
+                      <div className="flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-900/90 border border-amber-500/35">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Lock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                          <div className="min-w-0">
+                            <span className="text-[9px] text-gray-400 block font-bold">{isAr ? 'كلمة المرور:' : 'Password:'}</span>
+                            <span className="font-mono text-xs font-bold text-amber-300 tracking-wider truncate block">
+                              {isPassVisible ? (user.password || '123456') : '••••••••'}
+                            </span>
+                          </div>
                         </div>
 
                         <div className="flex items-center gap-1 shrink-0">
-                          {/* Toggle View */}
                           <button
                             type="button"
                             onClick={() => setVisiblePasswords(prev => ({ ...prev, [user.id]: !isPassVisible }))}
-                            className="p-1 text-gray-400 hover:text-white rounded transition-colors"
+                            className="p-1.5 text-gray-400 hover:text-white rounded hover:bg-white/5 transition-colors"
                             title={isPassVisible ? (isAr ? 'إخفاء' : 'Hide') : (isAr ? 'إظهار' : 'Show')}
                           >
                             {isPassVisible ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                           </button>
 
-                          {/* Copy */}
                           <button
                             type="button"
-                            onClick={() => handleCopyCredentials(user)}
-                            className="p-1 text-gray-400 hover:text-emerald-400 rounded transition-colors"
-                            title={isAr ? 'نسخ بيانات الدخول' : 'Copy Credentials'}
+                            onClick={() => handleCopyPassword(user.password || '123456')}
+                            className="p-1.5 text-amber-400 hover:text-white rounded hover:bg-white/5 transition-colors"
+                            title={isAr ? 'نسخ كلمة المرور' : 'Copy Password'}
                           >
-                            {copiedId === user.id ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                            <Copy className="w-3.5 h-3.5" />
                           </button>
 
-                          {/* Quick Password Change */}
                           <button
                             type="button"
                             onClick={() => {
                               setQuickPasswordUser(user);
                               setNewQuickPassword(user.password || '123456');
                             }}
-                            className="p-1 text-gray-400 hover:text-[#00A3E0] rounded transition-colors"
+                            className="p-1.5 text-gray-400 hover:text-[#00A3E0] rounded hover:bg-white/5 transition-colors"
                             title={isAr ? 'تغيير كلمة المرور' : 'Reset Password'}
                           >
-                            <Lock className="w-3.5 h-3.5" />
+                            <Key className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* 3. USERNAME */}
+                      <div className="flex items-center justify-between text-xs pt-0.5 px-1">
+                        <span className="text-[10px] text-gray-400 font-bold flex items-center gap-1">
+                          <UserIcon className="w-3 h-3 text-slate-400" />
+                          {isAr ? 'اسم المستخدم البديل:' : 'Alternative Username:'}
+                        </span>
+                        <div className="flex items-center gap-1">
+                          <span className="font-mono text-xs text-[#00A3E0] font-bold">
+                            @{user.username || user.email.split('@')[0]}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleCopyUsername(user.username || user.email.split('@')[0])}
+                            className="p-0.5 text-gray-400 hover:text-white"
+                            title={isAr ? 'نسخ اسم المستخدم' : 'Copy username'}
+                          >
+                            <Copy className="w-3 h-3" />
                           </button>
                         </div>
                       </div>
@@ -920,7 +1175,7 @@ export function UsersPage() {
                     const statusInfo = statusConfig[user.status] || statusConfig.active;
                     const StatusIcon = statusInfo.icon;
                     const userPerms = getUserPermissions(user);
-                    const isPassVisible = visiblePasswords[user.id] || false;
+                    const isPassVisible = showAllPasswords || visiblePasswords[user.id] || false;
                     const roleObj = roles.find(r => r.id === user.roleId);
                     const shiftInfo = getShiftInfo(user.shift);
 
@@ -952,24 +1207,34 @@ export function UsersPage() {
 
                         {/* Credentials & Password */}
                         <td className="px-6 py-4">
-                          <div className="space-y-1 min-w-[190px]">
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-[10px] text-gray-400 font-bold uppercase">{isAr ? 'الدخول:' : 'Login:'}</span>
-                              <span className="text-xs text-[#00A3E0] font-mono font-bold bg-[#00A3E0]/10 px-2 py-0.5 rounded border border-[#00A3E0]/20">
-                                @{user.username || user.email.split('@')[0]}
+                          <div className="space-y-1.5 min-w-[230px]">
+                            {/* Email Row */}
+                            <div className="flex items-center justify-between gap-1 p-1 px-2 rounded-lg bg-slate-950/80 border border-sky-500/25">
+                              <span className="text-[10px] text-gray-400 font-bold shrink-0">{isAr ? 'الميل:' : 'Email:'}</span>
+                              <span className="text-xs text-sky-300 font-mono font-bold truncate flex-1">
+                                {user.email}
                               </span>
+                              <button
+                                type="button"
+                                onClick={() => handleCopyEmail(user.email)}
+                                className="p-0.5 text-gray-400 hover:text-white"
+                                title={isAr ? 'نسخ البريد الإلكتروني' : 'Copy email'}
+                              >
+                                <Copy className="w-3 h-3" />
+                              </button>
                             </div>
 
-                            <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-950/70 border border-amber-500/30">
-                              <Key className="w-3 h-3 text-amber-400 shrink-0" />
-                              <span className="font-mono text-xs font-bold text-amber-300 tracking-wider flex-1 truncate">
+                            {/* Password Row */}
+                            <div className="flex items-center justify-between gap-1 p-1 px-2 rounded-lg bg-slate-950/80 border border-amber-500/30">
+                              <span className="text-[10px] text-gray-400 font-bold shrink-0">{isAr ? 'الباسورد:' : 'Pass:'}</span>
+                              <span className="font-mono text-xs font-bold text-amber-300 tracking-wider truncate flex-1">
                                 {isPassVisible ? (user.password || '123456') : '••••••••'}
                               </span>
                               
                               <button
                                 type="button"
                                 onClick={() => setVisiblePasswords(prev => ({ ...prev, [user.id]: !isPassVisible }))}
-                                className="p-1 text-gray-400 hover:text-white rounded"
+                                className="p-0.5 text-gray-400 hover:text-white"
                                 title={isPassVisible ? (isAr ? 'إخفاء' : 'Hide') : (isAr ? 'إظهار' : 'Show')}
                               >
                                 {isPassVisible ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
@@ -977,11 +1242,11 @@ export function UsersPage() {
 
                               <button
                                 type="button"
-                                onClick={() => handleCopyCredentials(user)}
-                                className="p-1 text-gray-400 hover:text-emerald-400 rounded"
-                                title={isAr ? 'نسخ بيانات الدخول' : 'Copy Credentials'}
+                                onClick={() => handleCopyPassword(user.password || '123456')}
+                                className="p-0.5 text-amber-400 hover:text-white"
+                                title={isAr ? 'نسخ كلمة المرور' : 'Copy Password'}
                               >
-                                {copiedId === user.id ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                                <Copy className="w-3 h-3" />
                               </button>
 
                               <button
@@ -990,10 +1255,23 @@ export function UsersPage() {
                                   setQuickPasswordUser(user);
                                   setNewQuickPassword(user.password || '123456');
                                 }}
-                                className="p-1 text-gray-400 hover:text-[#00A3E0] rounded"
+                                className="p-0.5 text-gray-400 hover:text-[#00A3E0]"
                                 title={isAr ? 'تعديل سريع لكلمة المرور' : 'Reset Password'}
                               >
                                 <Lock className="w-3 h-3" />
+                              </button>
+                            </div>
+
+                            {/* Username & Copy All */}
+                            <div className="flex items-center justify-between text-[11px] text-gray-400 px-1 font-mono">
+                              <span>@{user.username || user.email.split('@')[0]}</span>
+                              <button
+                                type="button"
+                                onClick={() => handleCopyCredentials(user)}
+                                className="text-[10px] text-emerald-400 hover:underline flex items-center gap-1 font-bold font-sans"
+                              >
+                                <Copy className="w-2.5 h-2.5" />
+                                {copiedId === user.id ? (isAr ? 'تم النسخ!' : 'Copied!') : (isAr ? 'نسخ الكل' : 'Copy All')}
                               </button>
                             </div>
                           </div>
@@ -1216,66 +1494,82 @@ export function UsersPage() {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-gray-400 mb-1.5">
-                    {isAr ? 'البريد الإلكتروني' : 'Email Address'} *
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={userForm.email}
-                    onChange={(e) => setUserForm({ ...userForm, email: e.target.value })}
-                    placeholder="user@qms-industrial.com"
-                    className="w-full h-11 px-4 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-[#00A3E0]"
-                  />
-                </div>
+                {/* HIGHLIGHTED LOGIN CREDENTIALS CONTAINER */}
+                <div className="col-span-full p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 space-y-4 shadow-lg">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-amber-500/20">
+                    <span className="text-xs font-black text-amber-300 flex items-center gap-2">
+                      <Key className="w-4 h-4 text-amber-400" />
+                      {isAr ? 'بيانات تسجيل الدخول الأساسية (البريد الإلكتروني وكلمة المرور)' : 'User Login Credentials (Email & Password)'}
+                    </span>
+                    <span className="text-[11px] text-amber-200/90 font-bold bg-amber-500/20 px-2.5 py-0.5 rounded-full border border-amber-500/30">
+                      {isAr ? '⚠️ يُستخدم هذا البريد وكلمة المرور للدخول إلى النظام' : 'Required for platform authentication'}
+                    </span>
+                  </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-gray-400 mb-1.5 flex items-center gap-1.5">
-                    <Key className="w-3.5 h-3.5 text-[#00A3E0]" />
-                    {isAr ? 'اسم الدخول (Username)' : 'Username'}
-                  </label>
-                  <input
-                    type="text"
-                    value={userForm.username}
-                    onChange={(e) => setUserForm({ ...userForm, username: e.target.value })}
-                    placeholder="e.g. mohamed or inspector"
-                    className="w-full h-11 px-4 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-[#00A3E0]"
-                  />
-                </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-200 mb-1.5 flex items-center gap-1.5">
+                        <Mail className="w-3.5 h-3.5 text-sky-400" />
+                        {isAr ? 'البريد الإلكتروني للدخول (Login Email)' : 'Login Email'} *
+                      </label>
+                      <input
+                        type="email"
+                        required
+                        value={userForm.email}
+                        onChange={(e) => setUserForm({ ...userForm, email: e.target.value })}
+                        placeholder="user@qms-industrial.com"
+                        className="w-full h-11 px-4 bg-black/60 border border-sky-500/40 rounded-xl text-white font-mono text-sm focus:outline-none focus:border-[#00A3E0]"
+                      />
+                    </div>
 
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-xs font-bold text-gray-400 flex items-center gap-1.5">
-                      <Lock className="w-3.5 h-3.5 text-amber-400" />
-                      {isAr ? 'كلمة المرور (Password)' : 'Password'} *
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={handleGeneratePassword}
-                        className="text-[11px] text-[#00A3E0] hover:underline flex items-center gap-1 font-bold"
-                      >
-                        <Sparkles className="w-3 h-3" />
-                        {isAr ? 'توليد تلقائي' : 'Generate'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setShowFormPassword(!showFormPassword)}
-                        className="text-[11px] text-gray-400 hover:text-white"
-                      >
-                        {showFormPassword ? (isAr ? 'إخفاء' : 'Hide') : (isAr ? 'إظهار' : 'Show')}
-                      </button>
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-xs font-bold text-gray-200 flex items-center gap-1.5">
+                          <Lock className="w-3.5 h-3.5 text-amber-400" />
+                          {isAr ? 'كلمة المرور (Login Password)' : 'Login Password'} *
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={handleGeneratePassword}
+                            className="text-[11px] text-[#00A3E0] hover:underline flex items-center gap-1 font-bold"
+                          >
+                            <Sparkles className="w-3 h-3" />
+                            {isAr ? 'توليد تلقائي' : 'Generate'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setShowFormPassword(!showFormPassword)}
+                            className="text-[11px] text-gray-400 hover:text-white"
+                          >
+                            {showFormPassword ? (isAr ? 'إخفاء' : 'Hide') : (isAr ? 'إظهار' : 'Show')}
+                          </button>
+                        </div>
+                      </div>
+                      <input
+                        type={showFormPassword ? 'text' : 'password'}
+                        required
+                        value={userForm.password}
+                        onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
+                        placeholder="Enter password (e.g. 123456)"
+                        className="w-full h-11 px-4 bg-black/60 border border-amber-500/40 rounded-xl text-amber-300 font-mono text-sm focus:outline-none focus:border-amber-400 font-bold"
+                      />
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <label className="block text-xs font-bold text-gray-300 mb-1.5 flex items-center gap-1.5">
+                        <UserIcon className="w-3.5 h-3.5 text-slate-400" />
+                        {isAr ? 'اسم المستخدم البديل (اختياري، للدخول السريع)' : 'Alternative Username (Optional)'}
+                      </label>
+                      <input
+                        type="text"
+                        value={userForm.username}
+                        onChange={(e) => setUserForm({ ...userForm, username: e.target.value })}
+                        placeholder="e.g. mohamed or inspector"
+                        className="w-full h-11 px-4 bg-black/40 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-[#00A3E0]"
+                      />
                     </div>
                   </div>
-                  <input
-                    type={showFormPassword ? 'text' : 'password'}
-                    required
-                    value={userForm.password}
-                    onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
-                    placeholder="Enter password (e.g. 123456)"
-                    className="w-full h-11 px-4 bg-white/5 border border-white/10 rounded-xl text-white font-mono text-sm focus:outline-none focus:border-[#00A3E0]"
-                  />
                 </div>
 
                 <div>

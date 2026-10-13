@@ -4,6 +4,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { toast } from 'sonner';
+import { authenticateUser } from '@/services/userService';
 
 export interface AuthUser {
   id: string;
@@ -133,25 +134,48 @@ export const useAuthStore = create<AuthState>()(
           // Simulate API delay
           await new Promise(resolve => setTimeout(resolve, 1000));
           
-          // Check local users when the backend API is unavailable.
-          const mockUser = mockUsers[email.toLowerCase()];
+          // Authenticate against stored users (localStorage) or fallback to mock admin
+          const authResult = authenticateUser(email, password);
           
-          if (!mockUser || mockUser.password !== password) {
-            set({ 
-              isLoading: false, 
-              error: 'Invalid email or password',
-              isAuthenticated: false 
-            });
-            toast.error('Login failed', {
-              description: 'Invalid email or password'
-            });
-            return false;
+          let authUserToSet: AuthUser;
+          if (authResult) {
+            const { user: localUser, permissions } = authResult;
+            const nameParts = localUser.name.trim().split(' ');
+            authUserToSet = {
+              id: localUser.id,
+              email: localUser.email,
+              firstName: nameParts[0] || 'User',
+              lastName: nameParts.slice(1).join(' ') || '',
+              name: localUser.name,
+              role: localUser.roleId,
+              avatar: localUser.avatar,
+              permissions: permissions,
+              plant: { id: '1', name: localUser.plant || 'Main Plant', code: 'PLANT-01' },
+              department: { id: '1', name: localUser.department || 'Quality Assurance' },
+              isActive: localUser.status === 'active',
+              twoFactorEnabled: false,
+              lastLogin: new Date()
+            };
+          } else {
+            const mockUser = mockUsers[email.toLowerCase()];
+            if (!mockUser || mockUser.password !== password) {
+              set({ 
+                isLoading: false, 
+                error: 'Invalid email or password',
+                isAuthenticated: false 
+              });
+              toast.error('Login failed', {
+                description: 'Invalid email or password'
+              });
+              return false;
+            }
+            authUserToSet = mockUser.user;
           }
 
           const tokens = generateTokens();
           
           set({
-            user: mockUser.user,
+            user: authUserToSet,
             tokens,
             isAuthenticated: true,
             isLoading: false,
@@ -159,7 +183,7 @@ export const useAuthStore = create<AuthState>()(
           });
 
           toast.success('Welcome back!', {
-            description: `Logged in as ${mockUser.user.name}`
+            description: `Logged in as ${authUserToSet.name}`
           });
 
           return true;
