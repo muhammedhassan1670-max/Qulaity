@@ -1,7 +1,6 @@
-// QMS Enterprise 4.0 - 8D Report Page - Professional Edition
+// QMS Enterprise 4.0 - 8D Problem Solving Workspace - Professional Edition
 import { useState, useEffect, useMemo } from 'react';
 import { PageHeader, PageContainer, PageSection, StatsBar } from '../../components/PageHeader';
-import DynamicFormRenderer from '../../components/DynamicFormRenderer';
 import { DataTable } from '../../components/DataTable';
 import { FilterPanel } from '../../components/FilterPanel';
 import { BulkActionBar } from '../../components/BulkActionBar';
@@ -18,35 +17,36 @@ import {
   Eye,
   Target,
   ShieldAlert,
-  FileText,
-  Activity
+  Calendar,
+  Building,
+  CheckCircle2,
+  AlertCircle,
+  Clock,
+  Sparkles,
+  Trash2,
+  LayoutGrid,
+  Table as TableIcon,
+  ExternalLink,
+  Users,
+  Award
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { 
   unifiedEightDApi as eightDApi,
-  unifiedCapaApi,
-  unifiedNcrApi,
+  type EightDData,
 } from '../../api/unified-api';
-import { RelatedRecords } from '../../components/RelatedRecords';
-import QualityRelationshipManager from '@/components/QualityRelationshipManager';
-import QualityKnowledgeSuggestions from '@/components/QualityKnowledgeSuggestions';
 import { exportData, prepareDataForExport } from '../../utils/exportUtils';
 import {
   createImprovementAction,
-  loadImprovementActions,
-  type QualityImprovementAction,
 } from '@/services/qualityImprovementActions';
-import { buildClosedLoopSourceLinks } from '@/services/qualityClosedLoopIntegration';
 import { enqueueQualitySyncItem } from '@/services/qualitySyncQueue';
-import { buildKnowledgeContextFromSource } from '@/services/qualityKnowledgeBase';
-import type { CapaData, DefectLogData, EightDData, NcrData } from '@/api/unified-api';
 import {
   buildLocalWorkflowUser,
-  hasDefectPermission,
   loadLocalWorkflowRole,
 } from '@/services/defectWorkflowGovernance';
-import { loadSafeLocalDefectRecords } from '@/services/safeDefectStorage';
+import { useTranslation } from '@/utils/translations';
 
-interface D8Report {
+export interface D8Report {
   id: string;
   eightDNumber: string;
   symptomDescription: string;
@@ -80,10 +80,118 @@ interface D8Report {
   lessonsLearned?: string;
   status: 'd0' | 'd1' | 'd2' | 'd3' | 'd4' | 'd5' | 'd6' | 'd7' | 'd8' | 'closed';
   closureDate?: string;
+  sourceNCRId?: string;
   [key: string]: unknown;
 }
 
-const mock8Ds: D8Report[] = [];
+export const DEFAULT_8DS: D8Report[] = [
+  {
+    id: '8D-2026-1042',
+    eightDNumber: '8D-2026-1042',
+    problemTitle: 'تسريب زيت هيدروليكي وتوقف مكبس التشكيل رقم 04',
+    symptomDescription: 'توقف مفاجئ لخط الهياكل بسبب تسريب حاد عند صمام الهيدروليك الرئيسي للمكبس 04.',
+    emergencyResponse: 'فصل الطاقة فوراً، نشر بودرة امتصاص الزيوت، وعزل خط الإنتاج لمنع الانزلاق.',
+    dateDetected: '2026-03-18',
+    teamLeader: 'Eng. Ahmed Khaled',
+    teamMembers: ['Khaled Omar', 'Mostafa Salem', 'Hany Adel'],
+    department: 'Stamping & Press',
+    champion: 'Dr. Hesham QMS',
+    productName: 'Chassis Main Crossmember',
+    productionLine: 'Line 01 - Heavy Press',
+    lotNumber: 'LOT-PR4-092',
+    problemDescription: 'انخفاض مفاجئ في ضغط خط الهيدروليك للمكبس الرئيسي وظهور تسريب حاد عند صمام التوزيع مما أدى لتوقف خط إنتاج الهياكل لمدة 3 ساعات وحجز 120 قطعة للفحص.',
+    customerImpact: 'تأخر تسليم دفعة الهياكل لخط التجميع لمدة 4 ساعات دون تأثير على العميل النهائي.',
+    immediateAction: 'إيقاف المكبس فوراً، احتواء الزيت المتسرب بفرش مواد ماصة، فحص 120 قطعة منتجة قبل التوقف وحجزها للفحص، وتفعيل خط المكبس البديل #02.',
+    containmentResponsible: 'Khaled Omar (Maintenance Lead)',
+    containmentDate: '2026-03-18',
+    quantityContained: 120,
+    analysisMethod: '5why',
+    whyAnalysis: '1. لماذا تسرب الزيت؟ لتلف مانع التسرب المطاطي (O-Ring).\n2. لماذا تلف المانع؟ لارتفاع درجة حرارة الزيت فوق 70°C.\n3. لماذا ارتفعت الحرارة؟ لانسداد مجاري التبريد في المبادل الحراري.\n4. لماذا انسدت المجاري؟ لتراكم الرواسب الدقيقة لعدم تنظيف الفلتر.\n5. السبب الجذري: غياب بند تنظيف مبادل التبريد ضمن جدول الصيانة الدورية.',
+    rootCauseDescription: 'تلف وتآكل مانع التسرب (O-ring) نتيجة ارتفاع حرارة الزيت عن 65°C بسبب انسداد جزئي في مبادل التبريد الحراري وغياب جدول فحص دوري لنظافة المبادل.',
+    correctiveActionDesc: 'استبدال مانع التسرب بنوعية مقاومة للحرارة العالية (Viton FKM)، وتنظيف مبادل التبريد وتغيير زيت الهيدروليك بالكامل.',
+    correctiveResponsible: 'Mostafa Salem (Fluid Power Eng)',
+    targetDateCorrective: '2026-03-22',
+    implementationDate: '2026-03-21',
+    validationResults: 'تشغيل المكبس لمدة 48 ساعة متواصلة ومراقبة الحرارة والضغط بمعدل قراءة كل 15 دقيقة مع ثبات تام لدرجة الحرارة عند 48°C وضغط 210 بار.',
+    effectivenessCheck: 'effective',
+    preventiveActionPlan: 'تركيب حساس حرارة رقمي متصل بنظام الإنذار المبكر IoT، وإدراج تنظيف مبادل التبريد شهرياً ضمن خطة الصيانة الوقائية PM.',
+    lessonsLearned: 'أهمية المراقبة المستمرة لدرجة حرارة زيوت الضغط العالي وربطها بإنذار رقمي مبكر بدلاً من الفحص البصري فقط.',
+    status: 'd7',
+    closureDate: '2026-04-05',
+    sourceNCRId: 'NCR-2026-089',
+  },
+  {
+    id: '8D-2026-1088',
+    eightDNumber: '8D-2026-1088',
+    problemTitle: 'خلل في تطابق ألوان الأجزاء البلاستيكية المحقونة (Color Deviation)',
+    symptomDescription: 'ظهور اختلاف لوني في أجزاء لوحة التحكم الأمامية مقارنة بالعينة المرجعية.',
+    emergencyResponse: 'إيقاف ماكينة الحقن رقم 06 فوراً وعزل آخر شحنة محقونة.',
+    dateDetected: '2026-03-24',
+    teamLeader: 'Mona Zakaria (Quality Lead)',
+    teamMembers: ['Amr Nabil', 'Fatma Tarek'],
+    department: 'Plastics & Trim',
+    champion: 'Eng. Tamer Al-Banna',
+    productName: 'Dashboard Bezel Trim',
+    productionLine: 'Line 03 - Plastic Injection',
+    lotNumber: 'LOT-PL6-440',
+    problemDescription: 'شكوى من محطة الفحص النهائي بوجود اختلاف في درجة لون لوحة التحكم الأمامية (Delta E > 2.5) مقارنة بالعينة المعتمدة Master Sample.',
+    customerImpact: 'احتمالية ظهور تفاوت لوني واضح في مقصورة القيادة في حال وصول القطع لخط التركيبات.',
+    immediateAction: 'فرز وعزل 350 قطعة في منطقة الحجز Quarantine، وإلزام خط التجميع باستخدام دفعة الصبغة المعتمدة رقم Lot-B4.',
+    containmentResponsible: 'Amr Nabil (Quality Inspector)',
+    containmentDate: '2026-03-24',
+    quantityContained: 350,
+    analysisMethod: 'fishbone',
+    fishboneAnalysis: 'المعدة: خلل بحساس الوزن في وحدة الجرعات.\nالخامة: تباين طفيف في كثافة خرزات الصبغة.\nالطريقة: غياب الفحص الطيفي الدوري كل وردية.\nالعنصر البشري: إدخال نسبة الخلط يدوياً دون تأكيد باركود.',
+    rootCauseDescription: 'اختلاط نسبة المستر باتش (Color Masterbatch) بنسبة 1.8% بدلاً من 2.5% بسبب خلل في وحدة الخلط الوزني الأوتوماتيكي بالمحقن وعدم مطابقة الباركود.',
+    correctiveActionDesc: 'إعادة ضبط ومعايرة خلاط الجرعات الوزني، واستبدال حساس الوزن المعطوب وتفعيل قفل الشاشة بكلمة مرور للمهندس المشرف.',
+    correctiveResponsible: 'Fatma Tarek (Process Specialist)',
+    targetDateCorrective: '2026-03-28',
+    implementationDate: '2026-03-27',
+    validationResults: 'حقن دفعة تجريبية 50 قطعة وفحصها بجهاز قياس الطيف اللوني Spectrophotometer وكانت النتائج Delta E = 0.38 (ضمن المسموح به < 0.8).',
+    effectivenessCheck: 'effective',
+    preventiveActionPlan: 'تطبيق نظام Poka-Yoke يوقف ماكينة الحقن تلقائياً في حال انحراف نسبة التغذية الوزنية للصبغة بأكثر من ±0.1% مع إلزام الفحص الطيفي لبداية كل وردية.',
+    lessonsLearned: 'توحيد مواصفة التوريد لكثافة الصبغة وإلزام قراءة الباركود قبل تحميل المادة في القادوس.',
+    status: 'd8',
+    closureDate: '2026-04-02',
+    sourceNCRId: 'NCR-2026-104',
+  },
+  {
+    id: '8D-2026-1105',
+    eightDNumber: '8D-2026-1105',
+    problemTitle: 'انخفاض عزم ربط مسامير تثبيت قواعد المحرك (Low Torque Mounts)',
+    symptomDescription: 'قراءات عزم ربط أقل من المواصفة الهندسية المحددة في 8 سيارات أثناء التدقيق العشوائي.',
+    emergencyResponse: 'حجز السيارات الـ 8 وإعادة ربط المسامير يدوياً بمفتاح عزم معاير.',
+    dateDetected: '2026-04-02',
+    teamLeader: 'Eng. Youssef Mahdy',
+    teamMembers: ['Sameh Fathy', 'Ibrahim Adel'],
+    department: 'Final Assembly 02',
+    champion: 'Quality Director',
+    productName: 'Powertrain Mount Bracket',
+    productionLine: 'Line 02 - Assembly',
+    lotNumber: 'LOT-ASM2-811',
+    problemDescription: 'رصد عزم ربط 38 Nm بدلاً من العزم القياسي 55 ± 3 Nm في 8 وحدات تم فحصها بمحطة مراقبة الجودة عشوائياً في نهاية الخط.',
+    customerImpact: 'خطورة اهتزاز المحرك أو فك التثبيت أثناء السير في حال وصول العيب للعميل.',
+    immediateAction: 'إعادة ربط وفحص 100% من الوحدات المنتجة خلال الوردية الأولى (64 وحدة) وتوثيق عزم الربط في سجل التتبع وفحص جميع مفكات الخط.',
+    containmentResponsible: 'Sameh Fathy (Assembly Supervisor)',
+    containmentDate: '2026-04-02',
+    quantityContained: 64,
+    analysisMethod: '5why',
+    whyAnalysis: '1. لماذا انخفض عزم الربط؟ لتوقف مفك العزم قبل الوصول لـ 55 Nm.\n2. لماذا توقف مبكراً؟ لانخفاض جهد البطارية اللاسلكية بشكل مفاجئ.\n3. لماذا انخفض الجهد أثناء العمل؟ لعدم تغيير البطارية بعد 4 ساعات تشغيل.\n4. لماذا لم ينتبه المشغل؟ لأن شاشة المفك لا تحتوي على إنذار صوتي للبطارية الضعيفة.\n5. السبب الجذري: عدم ربط مفكات العزم بوحدة تحكم ذكية مركزية تعتمد الربط اللاسلكي وتمنع تجاوز المحطة دون إشارة OK.',
+    rootCauseDescription: 'انخفاض شحن بطارية مفك العزم الإلكتروني اللاسلكي وفقدان المعايرة لنظام إيقاف العزم التلقائي مع غياب ربط شبكي مع خط التجميع.',
+    correctiveActionDesc: 'سحب المفك المعطوب واستبداله بمفك عزم رقمي ذكي مزود بمغذي طاقة ثابت عبر كابل وإعادة معايرة لكافة أدوات الخط 02.',
+    correctiveResponsible: 'Ibrahim Adel (Tooling Eng)',
+    targetDateCorrective: '2026-04-08',
+    implementationDate: '2026-04-06',
+    validationResults: 'فحص وتوثيق عزم 150 وحدة منتجة متتالية بمفتاح عزم رقمي مستقل ولم تسجل أي حالة انحراف (المتوسط 54.8 Nm).',
+    effectivenessCheck: 'pending',
+    preventiveActionPlan: 'ربط جميع مفاتيح عزم الربط في محطات الأمان الحرجة (Torque-Secured Stations) بنظام PLC يمنع تمرير الحامل (Skid) دون إشارة OK الرقمية.',
+    lessonsLearned: 'الأدوات اللاسلكية الحرجة تتطلب مراقبة شحن رقمية أو استبدالها بأدوات سلكية بمغذيات تيار ثابتة.',
+    status: 'd4',
+    sourceNCRId: 'NCR-2026-112',
+  }
+];
+
+export const mock8Ds: D8Report[] = DEFAULT_8DS;
 
 function generate8DNumber(): string {
   const now = new Date();
@@ -101,258 +209,465 @@ const analysisMethodConfig = {
   'scatter': { color: 'bg-green-500/20 text-green-400', label: 'Scatter' }
 };
 
-const effectivenessConfig = {
-  'pending': { color: 'bg-yellow-500/20 text-yellow-400', label: 'Pending' },
-  'effective': { color: 'bg-green-500/20 text-green-400', label: 'Effective' },
-  'ineffective': { color: 'bg-red-500/20 text-red-400', label: 'Ineffective' }
-};
-
 const dSteps = [
-  { key: 'd0', label: 'D0: Plan', color: 'bg-gray-500' },
-  { key: 'd1', label: 'D1: Team', color: 'bg-blue-500' },
-  { key: 'd2', label: 'D2: Problem', color: 'bg-cyan-500' },
-  { key: 'd3', label: 'D3: Containment', color: 'bg-yellow-500' },
-  { key: 'd4', label: 'D4: Root Cause', color: 'bg-orange-500' },
-  { key: 'd5', label: 'D5: Actions', color: 'bg-purple-500' },
-  { key: 'd6', label: 'D6: Implement', color: 'bg-pink-500' },
-  { key: 'd7', label: 'D7: Prevent', color: 'bg-teal-500' },
-  { key: 'd8', label: 'D8: Congratulate', color: 'bg-green-500' },
-  { key: 'closed', label: 'Closed', color: 'bg-emerald-500' }
+  { key: 'd0', label: 'D0: Plan', labelAr: 'D0: التخطيط والاستجابة', color: 'bg-gray-500' },
+  { key: 'd1', label: 'D1: Team', labelAr: 'D1: تشكيل الفريق', color: 'bg-blue-500' },
+  { key: 'd2', label: 'D2: Problem', labelAr: 'D2: توصيف المشكلة', color: 'bg-cyan-500' },
+  { key: 'd3', label: 'D3: Containment', labelAr: 'D3: خطة الاحتواء', color: 'bg-yellow-500' },
+  { key: 'd4', label: 'D4: Root Cause', labelAr: 'D4: السبب الجذري', color: 'bg-orange-500' },
+  { key: 'd5', label: 'D5: Actions', labelAr: 'D5: الإجراءات الدائمة', color: 'bg-purple-500' },
+  { key: 'd6', label: 'D6: Implement', labelAr: 'D6: التنفيذ والتحقق', color: 'bg-pink-500' },
+  { key: 'd7', label: 'D7: Prevent', labelAr: 'D7: منع التكرار', color: 'bg-teal-500' },
+  { key: 'd8', label: 'D8: Congratulate', labelAr: 'D8: التكريم والإغلاق', color: 'bg-green-500' },
+  { key: 'closed', label: 'Closed', labelAr: 'مغلق ومكتمل', color: 'bg-emerald-500' }
 ];
 
 export function D8Page() {
-  const [reports, setReports] = useState<D8Report[]>([]);
+  const { language } = useTranslation();
+  const isAr = language === 'ar';
+  const navigate = useNavigate();
+  const location = useLocation();
+  const params = useParams();
+
+  const [reports, setReports] = useState<D8Report[]>(() => {
+    try {
+      const local = localStorage.getItem('qms_local_8d');
+      if (local) {
+        const parsed = JSON.parse(local);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {
+      // ignore
+    }
+    return DEFAULT_8DS;
+  });
+
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [activeFilters, setActiveFilters] = useState<Record<string, string | string[]>>({});
   const [dateRange, setDateRange] = useState<{ from: string | null; to: string | null }>({ from: null, to: null });
+
+  // View Mode: cards vs table
+  const [viewMode, setViewMode] = useState<'cards' | 'table'>(() => {
+    return (localStorage.getItem('qms_8d_view_mode') as 'cards' | 'table') || 'cards';
+  });
+
+  // Modal States
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingReport, setEditingReport] = useState<D8Report | null>(null);
-  const [defectRecords, setDefectRecords] = useState<DefectLogData[]>([]);
-  const [improvementActions, setImprovementActions] = useState<QualityImprovementAction[]>([]);
-  const [linkedNcrs, setLinkedNcrs] = useState<NcrData[]>([]);
-  const [linkedCapas, setLinkedCapas] = useState<CapaData[]>([]);
+  const [viewingReport, setViewingReport] = useState<D8Report | null>(null);
+  const [reportToDelete, setReportToDelete] = useState<D8Report | null>(null);
 
-  const navigate = useNavigate();
-  const location = useLocation();
-  const params = useParams();
-  const workflowUser = buildLocalWorkflowUser(null, loadLocalWorkflowRole());
+  // Form State
+  const [formData, setFormData] = useState({
+    problemTitle: '',
+    eightDNumber: '',
+    department: 'Quality Engineering',
+    productName: '',
+    productionLine: '',
+    lotNumber: '',
+    dateDetected: new Date().toISOString().split('T')[0],
+    teamLeader: '',
+    champion: '',
+    teamMembers: '',
+    symptomDescription: '',
+    emergencyResponse: '',
+    problemDescription: '',
+    customerImpact: '',
+    immediateAction: '',
+    containmentResponsible: '',
+    containmentDate: new Date().toISOString().split('T')[0],
+    quantityContained: 0,
+    analysisMethod: '5why' as D8Report['analysisMethod'],
+    whyAnalysis: '',
+    fishboneAnalysis: '',
+    rootCauseDescription: '',
+    correctiveActionDesc: '',
+    correctiveResponsible: '',
+    targetDateCorrective: new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0],
+    implementationDate: '',
+    validationResults: '',
+    effectivenessCheck: 'pending' as D8Report['effectivenessCheck'],
+    preventiveActionPlan: '',
+    lessonsLearned: '',
+    status: 'd2' as D8Report['status'],
+    closureDate: '',
+    sourceNCRId: '',
+  });
 
-  const createPrefill = useMemo(() => {
-    const params = new URLSearchParams(location.search);
-    const title = params.get('title');
-    const description = params.get('description');
-    const open = params.get('create') === '1' || !!title || !!description;
+  buildLocalWorkflowUser(null, loadLocalWorkflowRole());
 
-    return {
-      open,
-      values: {
-        problemTitle: title ?? undefined,
-        problemDescription: description ?? undefined,
-      } satisfies Record<string, unknown>,
-    };
-  }, [location.search]);
+  const handleSetViewMode = (mode: 'cards' | 'table') => {
+    setViewMode(mode);
+    localStorage.setItem('qms_8d_view_mode', mode);
+  };
+
+  const saveReports = (items: D8Report[]) => {
+    setReports(items);
+    try {
+      localStorage.setItem('qms_local_8d', JSON.stringify(items));
+    } catch (e) {
+      console.error('Failed to save 8D reports locally:', e);
+    }
+  };
 
   const loadReports = async () => {
     try {
       setIsLoading(true);
-      const [response, ncrResponse, capaResponse] = await Promise.all([
-        eightDApi.getAll(),
-        unifiedNcrApi.getAll().catch(() => ({ data: [] as NcrData[] })),
-        unifiedCapaApi.getAll().catch(() => ({ data: [] as CapaData[] })),
-      ]);
-      const transformed = response.data.map((report: any) => ({
-        id: report.id,
-        eightDNumber: report.dNumber || report.eightDNumber || report.id,
-        symptomDescription: report.symptomDescription || report.title,
-        emergencyResponse: report.emergencyResponse || '',
-        dateDetected: report.dateDetected || report.createdAt?.split('T')[0],
-        teamLeader: report.teamLeader?.name || report.ownerUser?.name || 'Unassigned',
-        teamMembers: report.teamMembers?.map((m: any) => m.name || m) || [],
-        department: report.department || 'Quality',
-        champion: report.champion,
-        problemTitle: report.problemTitle || report.title || report.subject,
-        productName: report.productName || report.product,
-        productionLine: report.productionLine,
-        lotNumber: report.lotNumber,
-        problemDescription: report.problemDescription || report.description,
-        customerImpact: report.customerImpact,
-        immediateAction: report.immediateAction || '',
-        containmentResponsible: report.containmentResponsible || '',
-        containmentDate: report.containmentDate,
-        quantityContained: report.quantityContained,
-        analysisMethod: report.analysisMethod || '5why',
-        whyAnalysis: report.whyAnalysis,
-        fishboneAnalysis: report.fishboneAnalysis,
-        rootCauseDescription: report.rootCauseDescription || '',
-        correctiveActionDesc: report.correctiveActionDesc || '',
-        correctiveResponsible: report.correctiveResponsible || '',
-        targetDateCorrective: report.targetDateCorrective,
-        implementationDate: report.implementationDate,
-        validationResults: report.validationResults,
-        effectivenessCheck: report.effectivenessCheck || 'pending',
-        preventiveActionPlan: report.preventiveActionPlan,
-        lessonsLearned: report.lessonsLearned,
-        status: ((): D8Report['status'] => {
-          const raw = String(report.status || '').toLowerCase();
-          if (!raw) return 'd0';
-          if (raw === 'in_progress' || raw === 'open') return 'd0';
-          if (raw === 'completed') return 'd8';
-          if (raw === 'closed') return 'closed';
-          return raw as any;
-        })(),
-        closureDate: report.closedAt?.split('T')[0] || report.closureDate,
-        ...report
-      }));
-      setReports(transformed);
-      setDefectRecords(loadSafeLocalDefectRecords());
-      setImprovementActions(loadImprovementActions());
-      setLinkedNcrs(ncrResponse.data || []);
-      setLinkedCapas(capaResponse.data || []);
-    } catch (err) {
-      setReports(mock8Ds);
-      toast.info('Backend unavailable - no records loaded');
+      const response = await eightDApi.getAll().catch(() => ({ data: [] as EightDData[] }));
+
+      if (response?.data && response.data.length > 0) {
+        const transformed: D8Report[] = response.data.map((report: any) => ({
+          id: report.id,
+          eightDNumber: report.dNumber || report.eightDNumber || report.id,
+          symptomDescription: report.symptomDescription || report.title,
+          emergencyResponse: report.emergencyResponse || '',
+          dateDetected: report.dateDetected || report.createdAt?.split('T')[0],
+          teamLeader: report.teamLeader?.name || report.ownerUser?.name || report.teamLeader || 'Unassigned',
+          teamMembers: Array.isArray(report.teamMembers) ? report.teamMembers.map((m: any) => m.name || m) : [],
+          department: report.department || 'Quality',
+          champion: report.champion,
+          problemTitle: report.problemTitle || report.title || report.subject,
+          productName: report.productName || report.product || 'Standard Part',
+          productionLine: report.productionLine || 'Line 01',
+          lotNumber: report.lotNumber || '',
+          problemDescription: report.problemDescription || report.description || '',
+          customerImpact: report.customerImpact || '',
+          immediateAction: report.immediateAction || report.containmentActions || '',
+          containmentResponsible: report.containmentResponsible || '',
+          containmentDate: report.containmentDate || report.createdAt?.split('T')[0],
+          quantityContained: report.quantityContained || 0,
+          analysisMethod: report.analysisMethod || '5why',
+          whyAnalysis: report.whyAnalysis || '',
+          fishboneAnalysis: report.fishboneAnalysis || '',
+          rootCauseDescription: report.rootCauseDescription || report.rootCause || '',
+          correctiveActionDesc: report.correctiveActionDesc || report.correctiveActions || '',
+          correctiveResponsible: report.correctiveResponsible || '',
+          targetDateCorrective: report.targetDateCorrective || '',
+          implementationDate: report.implementationDate || '',
+          validationResults: report.validationResults || '',
+          effectivenessCheck: report.effectivenessCheck || 'pending',
+          preventiveActionPlan: report.preventiveActionPlan || report.preventiveActions || '',
+          lessonsLearned: report.lessonsLearned || '',
+          status: (report.status?.toLowerCase() as any) || 'd2',
+          closureDate: report.closedAt?.split('T')[0] || report.closureDate || '',
+          sourceNCRId: report.ncrReportId || report.sourceNCRId || '',
+          ...report
+        }));
+        saveReports(transformed);
+      } else {
+        const stored = localStorage.getItem('qms_local_8d');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setReports(parsed);
+          } else {
+            saveReports(DEFAULT_8DS);
+          }
+        } else {
+          saveReports(DEFAULT_8DS);
+        }
+      }
+    } catch {
+      const stored = localStorage.getItem('qms_local_8d');
+      if (stored) {
+        setReports(JSON.parse(stored));
+      } else {
+        saveReports(DEFAULT_8DS);
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Load data from API
   useEffect(() => {
     loadReports();
   }, []);
 
+  // Deep-link /8d/:id support
   useEffect(() => {
-    if (isLoading) return;
     const id = params.id;
-    if (!id) return;
-    const found = reports.find((r) => r.id === id);
+    if (!id || reports.length === 0) return;
+    const found = reports.find((r) => r.id === id || r.eightDNumber === id);
     if (found) {
-      setEditingReport(found);
-      setIsFormOpen(true);
+      setViewingReport(found);
     }
-  }, [params.id, reports, isLoading]);
+  }, [params.id, reports]);
 
+  // Support create via query parameters
   useEffect(() => {
-    if (isLoading) return;
-    if (!createPrefill.open) return;
-    setEditingReport(null);
-    setIsFormOpen(true);
-  }, [createPrefill.open, isLoading]);
+    const p = new URLSearchParams(location.search);
+    if (p.get('create') === '1' || p.get('sourceNCRId')) {
+      handleOpenCreate(p.get('sourceNCRId') || undefined, p.get('title') || undefined);
+    }
+  }, [location.search]);
 
-  if (isLoading) {
-    return (
-      <PageContainer>
-        <div className="flex items-center justify-center h-72">
-          <div className="text-gray-400">Loading 8D reports...</div>
-        </div>
-      </PageContainer>
-    );
-  }
+  const stats = useMemo(() => [
+    { label: isAr ? 'تقارير 8D النشطة' : 'Active 8Ds', value: reports.filter(r => r.status !== 'closed' && r.status !== 'd8').length, change: '0', trend: 'neutral' as const },
+    { label: isAr ? 'مرحلة التحليل الجذري (D4)' : 'In Root Cause', value: reports.filter(r => ['d2', 'd3', 'd4'].includes(r.status)).length, change: '0', trend: 'neutral' as const },
+    { label: isAr ? 'مرحلة الوقاية (D7)' : 'In Prevention', value: reports.filter(r => r.status === 'd7').length, change: '0', trend: 'neutral' as const },
+    { label: isAr ? 'المكتمل والمغلق' : 'Completed', value: reports.filter(r => r.status === 'd8' || r.status === 'closed').length, change: '0', trend: 'neutral' as const }
+  ], [reports, isAr]);
 
-  const stats = [
-    { label: 'Active 8Ds', value: reports.filter(r => r.status !== 'closed' && r.status !== 'd8').length, change: '0', trend: 'neutral' as const },
-    { label: 'Team Formed', value: reports.filter(r => r.status !== 'd0' && r.status !== 'd1' && r.status !== 'closed').length, change: '0', trend: 'neutral' as const },
-    { label: 'In Analysis', value: reports.filter(r => ['d2', 'd3', 'd4'].includes(r.status)).length, change: '0', trend: 'neutral' as const },
-    { label: 'Completed', value: reports.filter(r => r.status === 'd8' || r.status === 'closed').length, change: '0', trend: 'neutral' as const }
-  ];
-
-  const filteredReports = reports.filter(report => {
-    const matchesSearch = !searchQuery || 
-      report.problemTitle?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      report.eightDNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      report.problemDescription?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      report.productName?.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const statusFilter = activeFilters['status'] as string[];
-    const matchesStatus = !statusFilter || statusFilter.length === 0 || statusFilter.includes(report.status);
-    
-    const analysisFilter = activeFilters['analysisMethod'] as string[];
-    const matchesAnalysis = !analysisFilter || analysisFilter.length === 0 || analysisFilter.includes(report.analysisMethod);
-    
-    const effectivenessFilter = activeFilters['effectivenessCheck'] as string[];
-    const matchesEffectiveness = !effectivenessFilter || effectivenessFilter.length === 0 || effectivenessFilter.includes(report.effectivenessCheck);
-    
-    return matchesSearch && matchesStatus && matchesAnalysis && matchesEffectiveness;
-  });
+  const filteredReports = useMemo(() => {
+    return reports.filter(report => {
+      const matchesSearch = !searchQuery || 
+        report.problemTitle?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        report.eightDNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        report.problemDescription?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        report.productName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        report.teamLeader?.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const statusFilter = activeFilters['status'] as string[];
+      const matchesStatus = !statusFilter || statusFilter.length === 0 || statusFilter.includes(report.status);
+      
+      const analysisFilter = activeFilters['analysisMethod'] as string[];
+      const matchesAnalysis = !analysisFilter || analysisFilter.length === 0 || analysisFilter.includes(report.analysisMethod);
+      
+      const effectivenessFilter = activeFilters['effectivenessCheck'] as string[];
+      const matchesEffectiveness = !effectivenessFilter || effectivenessFilter.length === 0 || effectivenessFilter.includes(report.effectivenessCheck);
+      
+      return matchesSearch && matchesStatus && matchesAnalysis && matchesEffectiveness;
+    });
+  }, [reports, searchQuery, activeFilters]);
 
   const getStepIndex = (status: string) => dSteps.findIndex(s => s.key === status);
 
-  const handleCreate = () => {
+  const handleOpenCreate = (sourceNcr?: string, initialTitle?: string) => {
+    const newNum = generate8DNumber();
+    setFormData({
+      problemTitle: initialTitle || '',
+      eightDNumber: newNum,
+      department: 'Quality Engineering',
+      productName: '',
+      productionLine: 'Line 01',
+      lotNumber: '',
+      dateDetected: new Date().toISOString().split('T')[0],
+      teamLeader: 'Eng. Quality Team',
+      champion: 'Quality Director',
+      teamMembers: '',
+      symptomDescription: '',
+      emergencyResponse: '',
+      problemDescription: '',
+      customerImpact: '',
+      immediateAction: '',
+      containmentResponsible: '',
+      containmentDate: new Date().toISOString().split('T')[0],
+      quantityContained: 0,
+      analysisMethod: '5why',
+      whyAnalysis: '',
+      fishboneAnalysis: '',
+      rootCauseDescription: '',
+      correctiveActionDesc: '',
+      correctiveResponsible: '',
+      targetDateCorrective: new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0],
+      implementationDate: '',
+      validationResults: '',
+      effectivenessCheck: 'pending',
+      preventiveActionPlan: '',
+      lessonsLearned: '',
+      status: 'd2',
+      closureDate: '',
+      sourceNCRId: sourceNcr || '',
+    });
     setEditingReport(null);
     setIsFormOpen(true);
   };
 
-  const handleEdit = (report: D8Report) => {
+  const handleOpenEdit = (report: D8Report) => {
+    setFormData({
+      problemTitle: report.problemTitle || '',
+      eightDNumber: report.eightDNumber || report.id,
+      department: report.department || 'Quality Engineering',
+      productName: report.productName || '',
+      productionLine: report.productionLine || '',
+      lotNumber: report.lotNumber || '',
+      dateDetected: report.dateDetected || new Date().toISOString().split('T')[0],
+      teamLeader: report.teamLeader || '',
+      champion: report.champion || '',
+      teamMembers: Array.isArray(report.teamMembers) ? report.teamMembers.join(', ') : '',
+      symptomDescription: report.symptomDescription || '',
+      emergencyResponse: report.emergencyResponse || '',
+      problemDescription: report.problemDescription || '',
+      customerImpact: report.customerImpact || '',
+      immediateAction: report.immediateAction || '',
+      containmentResponsible: report.containmentResponsible || '',
+      containmentDate: report.containmentDate || '',
+      quantityContained: report.quantityContained || 0,
+      analysisMethod: report.analysisMethod || '5why',
+      whyAnalysis: report.whyAnalysis || '',
+      fishboneAnalysis: report.fishboneAnalysis || '',
+      rootCauseDescription: report.rootCauseDescription || '',
+      correctiveActionDesc: report.correctiveActionDesc || '',
+      correctiveResponsible: report.correctiveResponsible || '',
+      targetDateCorrective: report.targetDateCorrective || '',
+      implementationDate: report.implementationDate || '',
+      validationResults: report.validationResults || '',
+      effectivenessCheck: report.effectivenessCheck || 'pending',
+      preventiveActionPlan: report.preventiveActionPlan || '',
+      lessonsLearned: report.lessonsLearned || '',
+      status: report.status || 'd2',
+      closureDate: report.closureDate || '',
+      sourceNCRId: report.sourceNCRId || '',
+    });
     setEditingReport(report);
     setIsFormOpen(true);
   };
 
+  const handleOpenView = (report: D8Report) => {
+    setViewingReport(report);
+  };
 
-  const handleFormSubmit = async (data: Record<string, unknown>) => {
-    try {
-      const eightDNumber = (data.eightDNumber as string) || (data.dNumber as string) || generate8DNumber();
-      const title = (data.problemTitle as string) || (data.title as string) || '8D Report';
+  const handleSaveForm = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-      const backendPayload = {
-        dNumber: eightDNumber,
-        title,
-        teamMembers: (data.teamMembers as any) || [],
-        problemDescription: (data.problemDescription as string) || (data.description as string) || '',
-        containmentActions: (data.immediateAction as string) || (data.containmentActions as string) || '',
-        rootCause: (data.rootCauseDescription as string) || (data.rootCause as string) || '',
-        correctiveActions: (data.correctiveActionDesc as string) || (data.correctiveActions as string) || '',
-        preventiveActions: (data.preventiveActionPlan as string) || (data.preventiveActions as string) || '',
-        lessonsLearned: (data.lessonsLearned as string) || '',
-        status: (data.status as string) || 'in_progress',
+    const membersArray = formData.teamMembers
+      ? formData.teamMembers.split(',').map((m) => m.trim()).filter(Boolean)
+      : [];
+
+    if (editingReport) {
+      // Update existing
+      const updatedItem: D8Report = {
+        ...editingReport,
+        problemTitle: formData.problemTitle.trim(),
+        department: formData.department.trim(),
+        productName: formData.productName.trim(),
+        productionLine: formData.productionLine.trim(),
+        lotNumber: formData.lotNumber.trim(),
+        dateDetected: formData.dateDetected,
+        teamLeader: formData.teamLeader.trim(),
+        champion: formData.champion.trim(),
+        teamMembers: membersArray,
+        symptomDescription: formData.symptomDescription.trim(),
+        emergencyResponse: formData.emergencyResponse.trim(),
+        problemDescription: formData.problemDescription.trim(),
+        customerImpact: formData.customerImpact.trim(),
+        immediateAction: formData.immediateAction.trim(),
+        containmentResponsible: formData.containmentResponsible.trim(),
+        containmentDate: formData.containmentDate,
+        quantityContained: Number(formData.quantityContained) || 0,
+        analysisMethod: formData.analysisMethod,
+        whyAnalysis: formData.whyAnalysis.trim(),
+        fishboneAnalysis: formData.fishboneAnalysis.trim(),
+        rootCauseDescription: formData.rootCauseDescription.trim(),
+        correctiveActionDesc: formData.correctiveActionDesc.trim(),
+        correctiveResponsible: formData.correctiveResponsible.trim(),
+        targetDateCorrective: formData.targetDateCorrective,
+        implementationDate: formData.implementationDate,
+        validationResults: formData.validationResults.trim(),
+        effectivenessCheck: formData.effectivenessCheck,
+        preventiveActionPlan: formData.preventiveActionPlan.trim(),
+        lessonsLearned: formData.lessonsLearned.trim(),
+        status: formData.status,
+        closureDate: formData.closureDate,
+        sourceNCRId: formData.sourceNCRId.trim() || undefined,
       };
 
-      if (editingReport) {
-        await (eightDApi as any).update(editingReport.id, backendPayload);
-        toast.success('8D report updated successfully');
-      } else {
-        await (eightDApi as any).create(backendPayload);
-        toast.success('8D report created successfully');
+      const updatedList = reports.map((r) => (r.id === editingReport.id ? updatedItem : r));
+      saveReports(updatedList);
+
+      // Background API sync
+      (eightDApi.update as any)(editingReport.id, {
+        dNumber: updatedItem.eightDNumber,
+        title: updatedItem.problemTitle,
+        problemDescription: updatedItem.problemDescription,
+        rootCause: updatedItem.rootCauseDescription,
+        containmentActions: updatedItem.immediateAction,
+        correctiveActions: updatedItem.correctiveActionDesc,
+        preventiveActions: updatedItem.preventiveActionPlan,
+        status: updatedItem.status as any,
+      }).catch(() => null);
+
+      if (viewingReport?.id === editingReport.id) {
+        setViewingReport(updatedItem);
       }
 
-      await loadReports();
+      toast.success(isAr ? `تم تحديث تقرير 8D (${updatedItem.eightDNumber}) بنجاح` : `8D ${updatedItem.eightDNumber} updated successfully`);
       setIsFormOpen(false);
       setEditingReport(null);
-      if (params.id) {
-        navigate('/8d', { replace: true });
-      }
-    } catch (err) {
-      toast.error(editingReport ? 'Failed to update 8D report' : 'Failed to create 8D report');
+    } else {
+      // Create New
+      const newId = formData.eightDNumber || generate8DNumber();
+      const newReport: D8Report = {
+        id: newId,
+        eightDNumber: newId,
+        problemTitle: formData.problemTitle.trim(),
+        department: formData.department.trim(),
+        productName: formData.productName.trim() || 'General Part',
+        productionLine: formData.productionLine.trim() || 'Line 01',
+        lotNumber: formData.lotNumber.trim(),
+        dateDetected: formData.dateDetected,
+        teamLeader: formData.teamLeader.trim() || 'Quality Lead',
+        champion: formData.champion.trim() || 'Operations Manager',
+        teamMembers: membersArray,
+        symptomDescription: formData.symptomDescription.trim(),
+        emergencyResponse: formData.emergencyResponse.trim(),
+        problemDescription: formData.problemDescription.trim(),
+        customerImpact: formData.customerImpact.trim(),
+        immediateAction: formData.immediateAction.trim(),
+        containmentResponsible: formData.containmentResponsible.trim(),
+        containmentDate: formData.containmentDate,
+        quantityContained: Number(formData.quantityContained) || 0,
+        analysisMethod: formData.analysisMethod,
+        whyAnalysis: formData.whyAnalysis.trim(),
+        fishboneAnalysis: formData.fishboneAnalysis.trim(),
+        rootCauseDescription: formData.rootCauseDescription.trim(),
+        correctiveActionDesc: formData.correctiveActionDesc.trim(),
+        correctiveResponsible: formData.correctiveResponsible.trim(),
+        targetDateCorrective: formData.targetDateCorrective,
+        implementationDate: formData.implementationDate,
+        validationResults: formData.validationResults.trim(),
+        effectivenessCheck: formData.effectivenessCheck,
+        preventiveActionPlan: formData.preventiveActionPlan.trim(),
+        lessonsLearned: formData.lessonsLearned.trim(),
+        status: formData.status,
+        closureDate: formData.closureDate,
+        sourceNCRId: formData.sourceNCRId.trim() || undefined,
+      };
+
+      const nextList = [newReport, ...reports];
+      saveReports(nextList);
+
+      (eightDApi.create as any)({
+        dNumber: newReport.eightDNumber,
+        title: newReport.problemTitle,
+        problemDescription: newReport.problemDescription,
+        rootCause: newReport.rootCauseDescription,
+        containmentActions: newReport.immediateAction,
+        correctiveActions: newReport.correctiveActionDesc,
+        preventiveActions: newReport.preventiveActionPlan,
+        status: newReport.status as any,
+      }).catch(() => null);
+
+      toast.success(isAr ? `تم إنشاء تقرير 8D جديد برقم: ${newId}` : `New 8D created: ${newId}`);
+      setIsFormOpen(false);
     }
   };
 
+  const handleConfirmDelete = () => {
+    if (!reportToDelete) return;
+    const filtered = reports.filter((r) => r.id !== reportToDelete.id);
+    saveReports(filtered);
+    toast.success(isAr ? `تم حذف التقرير ${reportToDelete.eightDNumber}` : `Report ${reportToDelete.eightDNumber} deleted`);
+    setReportToDelete(null);
+    if (viewingReport?.id === reportToDelete.id) setViewingReport(null);
+  };
+
   const handleCreateImprovementAction = async (report: D8Report) => {
-    const confirmed = window.confirm('Create an improvement action from this 8D report? You can edit the action later in the Command Center.');
-    if (!confirmed) return;
-    const metadata = (report.metadata && typeof report.metadata === 'object' ? report.metadata : {}) as Record<string, unknown>;
     const action = createImprovementAction({
       title: `Verify 8D effectiveness: ${report.problemTitle || report.eightDNumber}`,
       description: 'Improvement action created from 8D. Verify D5/D6 implementation, D7 prevention, and before/after effectiveness signal.',
       sourceType: 'eightD',
       sourceId: report.id,
       relatedEightDId: report.id,
-      relatedNcrId: String(report.ncrReportId || metadata.ncrReportId || ''),
-      relatedCapaId: String(report.relatedCapaId || metadata.relatedCapaId || ''),
-      linkedDefectType: String(report.defectType || metadata.defectType || ''),
-      linkedProductionLine: String(report.productionLine || metadata.productionLine || ''),
-      linkedModel: String(report.productName || metadata.model || ''),
-      linkedPartNumber: String(report.partNumber || metadata.partNumber || ''),
-      linkedCustomer: String(report.customerName || metadata.customerName || ''),
+      relatedNcrId: report.sourceNCRId || '',
+      linkedProductionLine: report.productionLine || '',
+      linkedModel: report.productName || '',
       actionType: 'verification',
       priority: report.customerImpact ? 'high' : 'medium',
       status: 'open',
-    });
-    const relatedActionIds = Array.from(new Set([...(Array.isArray(report.relatedActionIds) ? report.relatedActionIds.map(String) : []), ...((Array.isArray(metadata.relatedActionIds) ? metadata.relatedActionIds.map(String) : [])), action.id]));
-    await (eightDApi as { update: (id: string, data: Partial<EightDData>) => Promise<unknown> }).update(report.id, {
-      relatedActionIds,
-      metadata: { ...metadata, relatedActionIds, effectivenessResult: action.effectivenessResult || metadata.effectivenessResult },
     });
     enqueueQualitySyncItem({
       entityType: 'eight-d',
@@ -360,31 +675,7 @@ export function D8Page() {
       operation: 'link-action',
       payloadSummary: `Linked improvement action ${action.id} to 8D ${report.id}`,
     });
-    await loadReports();
-    toast.success('Improvement action linked to 8D');
-  };
-
-  const closedLoopForEightD = (report: D8Report) => buildClosedLoopSourceLinks({
-    sourceType: 'eightD',
-    source: report as unknown as EightDData,
-    defects: defectRecords,
-    actions: improvementActions,
-    ncrs: linkedNcrs,
-    capas: linkedCapas,
-  });
-
-  const getInitialValues = () => {
-    if (editingReport) {
-      return editingReport;
-    }
-    return {
-      eightDNumber: generate8DNumber(),
-      dateDetected: new Date().toISOString().split('T')[0],
-      status: 'd0',
-      analysisMethod: '5why',
-      effectivenessCheck: 'pending',
-      ...createPrefill.values,
-    };
+    toast.success(isAr ? `تم ربط خطة التحسين ${action.id} بتقرير 8D` : 'Improvement action linked to 8D');
   };
 
   const handleExport = (format: 'excel' | 'csv' | 'json' = 'excel', ids?: string[]) => {
@@ -402,7 +693,9 @@ export function D8Page() {
         eightDNumber: '8D Number',
         problemTitle: 'Title',
         productName: 'Product',
+        productionLine: 'Line',
         teamLeader: 'Team Leader',
+        department: 'Department',
         analysisMethod: 'Analysis Method',
         status: 'Status',
         dateDetected: 'Date Detected',
@@ -413,10 +706,9 @@ export function D8Page() {
       };
 
       const preparedData = prepareDataForExport(dataToExport, mapping);
-      exportData(preparedData, `8D_Report`, '8D Reports', format);
+      exportData(preparedData, `8D_Problem_Solving_Report`, '8D Reports', format);
       toast.success(`Successfully exported ${dataToExport.length} reports`);
-    } catch (err) {
-      console.error('Export failed:', err);
+    } catch {
       toast.error('Export failed');
     }
   };
@@ -424,11 +716,11 @@ export function D8Page() {
   return (
     <PageContainer>
       <PageHeader
-        title="8D Problem Solving"
-        subtitle="Structured problem solving methodology"
+        title={isAr ? 'منهجية حل المشكلات 8D (Problem Solving)' : '8D Problem Solving Methodology'}
+        subtitle={isAr ? 'إدارة وتتبع الانضباطات الثمانية للتحليل الجذري، الاحتواء، والإجراءات التصحيحية والوقائية' : 'Structured 8D problem-solving methodology from D0 containment to D8 recognition'}
         breadcrumbs={[{ label: 'Quality 4.0' }, { label: '8D Report' }]}
         actions={{
-          create: handleCreate,
+          create: () => handleOpenCreate(),
           refresh: loadReports,
           export: () => handleExport('excel')
         }}
@@ -439,46 +731,73 @@ export function D8Page() {
       <PageSection>
         <div className="flex flex-col lg:flex-row gap-6">
           <div className="flex-1 space-y-4">
-            <div className="flex flex-col sm:flex-row gap-4">
+            {/* Top Toolbar */}
+            <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                <Search className="absolute left-3.5 rtl:right-3.5 rtl:left-auto top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Search 8D reports..."
+                  placeholder={isAr ? 'بحث برقم 8D، عنوان المشكلة، المنتج، قائد الفريق...' : 'Search by 8D ID, problem title, product, leader...'}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full h-11 pl-11 pr-4 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#00A3E0]"
+                  className="w-full h-11 pl-10 pr-4 rtl:pr-10 rtl:pl-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:border-[#00A3E0] transition-colors text-sm"
                 />
               </div>
-              
-              <div className="flex gap-2">
-                <button 
+
+              <div className="flex items-center gap-2 self-end sm:self-auto">
+                {/* View Toggle */}
+                <div className="flex items-center bg-white/5 p-1 rounded-2xl border border-white/10">
+                  <button
+                    type="button"
+                    onClick={() => handleSetViewMode('cards')}
+                    className={`p-2 rounded-xl transition-all ${
+                      viewMode === 'cards' 
+                        ? 'bg-[#00A3E0] text-slate-950 font-bold shadow-md' 
+                        : 'text-gray-400 hover:text-white'
+                    }`}
+                    title={isAr ? 'عرض البطاقات' : 'Cards View'}
+                  >
+                    <LayoutGrid className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSetViewMode('table')}
+                    className={`p-2 rounded-xl transition-all ${
+                      viewMode === 'table' 
+                        ? 'bg-[#00A3E0] text-slate-950 font-bold shadow-md' 
+                        : 'text-gray-400 hover:text-white'
+                    }`}
+                    title={isAr ? 'عرض الجدول' : 'Table View'}
+                  >
+                    <TableIcon className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Filter Toggle */}
+                <button
+                  type="button"
                   onClick={() => setShowFilters(!showFilters)}
-                  className={`h-11 px-4 border rounded-lg transition-colors flex items-center gap-2 ${
-                    showFilters || Object.keys(activeFilters).length > 0
-                      ? 'bg-[#0066CC]/20 border-[#00A3E0] text-[#00A3E0]'
-                      : 'bg-white/5 border-white/10 text-white hover:bg-white/10'
+                  className={`h-11 px-3.5 rounded-2xl border flex items-center gap-2 text-sm transition-all ${
+                    showFilters || Object.values(activeFilters).flat().length > 0
+                      ? 'bg-[#00A3E0]/15 border-[#00A3E0] text-[#00A3E0]'
+                      : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10'
                   }`}
                 >
                   <Filter className="w-4 h-4" />
-                  <span className="hidden sm:inline">Filters</span>
-                  {Object.keys(activeFilters).length > 0 && (
-                    <span className="ml-1 px-1.5 py-0.5 bg-[#0066CC] text-white text-xs rounded-full">
-                      {Object.values(activeFilters).flat().length}
-                    </span>
-                  )}
+                  <span className="hidden sm:inline">{isAr ? 'تصفية' : 'Filters'}</span>
                 </button>
-                
-                <button 
-                  onClick={handleCreate}
-                  className="h-11 px-4 bg-[#0066CC] text-white rounded-lg hover:bg-[#0052a3] transition-colors flex items-center gap-2"
+
+                <Button 
+                  onClick={() => handleOpenCreate()}
+                  className="h-11 px-5 bg-gradient-to-r from-[#0066CC] to-[#00A3E0] text-white rounded-2xl hover:opacity-90 font-bold shadow-lg shadow-[#0066CC]/20 flex items-center gap-2"
                 >
                   <Plus className="w-4 h-4" />
-                  <span className="hidden sm:inline">New 8D</span>
-                </button>
+                  <span>{isAr ? 'تقرير 8D جديد' : 'New 8D'}</span>
+                </Button>
               </div>
             </div>
 
+            {/* Bulk Actions Bar */}
             <BulkActionBar
               selectedCount={selectedIds.length}
               itemName="8D Reports"
@@ -486,130 +805,239 @@ export function D8Page() {
               onExport={(format) => handleExport(format, selectedIds)}
             />
 
-            <DataTable
-              data={filteredReports}
-              columns={[
-                { key: 'eightDNumber', title: '8D Number', width: '120px', sortable: true, render: (item) => (
-                  <span className="text-[#00A3E0] font-mono text-sm font-medium">{item.eightDNumber}</span>
-                )},
-                { key: 'problemTitle', title: 'Problem Title & Description', sortable: true, render: (item) => {
-                  const currentStep = getStepIndex(item.status);
-                  return (
+            {/* VIEW MODE 1: CARDS GRID */}
+            {viewMode === 'cards' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                {isLoading ? (
+                  <div className="col-span-full py-16 text-center text-gray-400 rounded-3xl border border-white/10 bg-slate-900/60 flex flex-col items-center justify-center">
+                    <div className="w-8 h-8 border-2 border-[#00A3E0] border-t-transparent rounded-full animate-spin mb-3" />
+                    <p className="text-sm font-bold text-gray-300">{isAr ? 'جاري تحميل تقارير 8D...' : 'Loading 8D reports...'}</p>
+                  </div>
+                ) : filteredReports.length === 0 ? (
+                  <div className="col-span-full py-16 text-center text-gray-500 rounded-3xl border border-white/10 bg-slate-900/60">
+                    <AlertCircle className="w-12 h-12 mx-auto mb-3 opacity-30 text-[#00A3E0]" />
+                    <p className="text-base font-bold text-gray-300">
+                      {isAr ? 'لا توجد تقارير 8D مطابقة' : 'No 8D reports found'}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {isAr ? 'انقر على "تقرير 8D جديد" للبدء بحل مشكلة' : 'Click "New 8D" to initiate problem-solving'}
+                    </p>
+                  </div>
+                ) : (
+                  filteredReports.map((report) => {
+                    const stepIdx = getStepIndex(report.status);
+                    const progress = Math.round(((stepIdx + 1) / 10) * 100);
+                    return (
+                      <div
+                        key={report.id}
+                        onClick={() => handleOpenView(report)}
+                        className="rounded-3xl border border-white/10 bg-slate-900/80 backdrop-blur-xl p-5 shadow-2xl flex flex-col justify-between hover:border-[#00A3E0]/40 transition-all duration-300 group cursor-pointer"
+                      >
+                        <div className="space-y-3.5">
+                          {/* Header ID & Status */}
+                          <div className="flex items-start justify-between gap-2 flex-wrap">
+                            <span className="text-[#00A3E0] font-mono font-bold text-xs bg-[#00A3E0]/10 px-2.5 py-1 rounded-xl border border-[#00A3E0]/20">
+                              {report.eightDNumber || report.id}
+                            </span>
+                            <StatusBadge status={report.status} size="sm" />
+                          </div>
+
+                          {/* Title & Description */}
+                          <div>
+                            <h4 className="text-white font-bold text-base leading-snug line-clamp-2 group-hover:text-[#00A3E0] transition-colors">
+                              {report.problemTitle}
+                            </h4>
+                            <p className="text-gray-400 text-xs mt-1.5 line-clamp-2 leading-relaxed">
+                              {report.problemDescription || report.symptomDescription}
+                            </p>
+                          </div>
+
+                          {/* Progress Bar */}
+                          <div>
+                            <div className="flex justify-between text-[11px] text-gray-400 mb-1">
+                              <span>{isAr ? dSteps[stepIdx]?.labelAr : dSteps[stepIdx]?.label}</span>
+                              <span className="font-bold text-[#00A3E0]">{progress}%</span>
+                            </div>
+                            <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-gradient-to-r from-[#0066CC] to-[#00A3E0] rounded-full transition-all duration-500"
+                                style={{ width: `${progress}%` }}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Leader & Line */}
+                          <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/5 text-xs text-gray-300">
+                            <div className="flex items-center gap-1.5 truncate">
+                              <User className="w-3.5 h-3.5 text-[#00A3E0] shrink-0" />
+                              <span className="truncate">{report.teamLeader}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5 truncate">
+                              <Building className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                              <span className="truncate">{report.productionLine || report.department}</span>
+                            </div>
+                          </div>
+
+                          {/* Method & Effectiveness */}
+                          <div className="flex items-center justify-between text-[11px] pt-1">
+                            <span className={`px-2 py-0.5 rounded-lg border text-[10px] font-bold ${
+                              analysisMethodConfig[report.analysisMethod]?.color || 'bg-blue-500/10 text-blue-300 border-blue-500/20'
+                            }`}>
+                              {analysisMethodConfig[report.analysisMethod]?.label || report.analysisMethod}
+                            </span>
+                            <span className={`font-bold px-2 py-0.5 rounded-md ${
+                              report.effectivenessCheck === 'effective' ? 'bg-emerald-500/20 text-emerald-300' :
+                              report.effectivenessCheck === 'ineffective' ? 'bg-rose-500/20 text-rose-300' : 'bg-amber-500/20 text-amber-300'
+                            }`}>
+                              {report.effectivenessCheck === 'effective' ? (isAr ? '✓ فاعل' : 'Effective') :
+                               report.effectivenessCheck === 'ineffective' ? (isAr ? '✗ غير فاعل' : 'Ineffective') : (isAr ? '⏳ قيد المراقبة' : 'Pending')}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Card Actions Footer */}
+                        <div className="pt-4 mt-4 border-t border-white/10 flex items-center justify-between gap-2">
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); handleOpenView(report); }}
+                            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white transition-colors flex items-center gap-1 text-xs font-bold"
+                          >
+                            <Eye className="w-3.5 h-3.5 text-[#00A3E0]" />
+                            <span>{isAr ? 'عرض' : 'View'}</span>
+                          </button>
+
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); handleOpenEdit(report); }}
+                              className="p-2 rounded-xl bg-white/5 hover:bg-[#00A3E0]/20 text-gray-300 hover:text-[#00A3E0] transition-colors"
+                              title={isAr ? 'تعديل' : 'Edit'}
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); setReportToDelete(report); }}
+                              className="p-2 rounded-xl bg-white/5 hover:bg-rose-500/20 text-gray-300 hover:text-rose-400 transition-colors"
+                              title={isAr ? 'حذف' : 'Delete'}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            )}
+
+            {/* VIEW MODE 2: TABLE VIEW */}
+            {viewMode === 'table' && (
+              <DataTable
+                data={filteredReports}
+                columns={[
+                  { key: 'eightDNumber', title: isAr ? 'رقم التقرير' : '8D Number', width: '140px', sortable: true, render: (item) => (
+                    <span className="text-[#00A3E0] font-mono text-sm font-bold">{item.eightDNumber || item.id}</span>
+                  )},
+                  { key: 'problemTitle', title: isAr ? 'عنوان المشكلة' : 'Problem Title', sortable: true, render: (item) => (
                     <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${dSteps[currentStep]?.color || 'bg-gray-500'} text-white`}>
-                          {dSteps[currentStep]?.label || item.status}
-                        </span>
+                      <p className="text-white font-bold text-sm line-clamp-1">{item.problemTitle}</p>
+                      <p className="text-gray-400 text-xs mt-0.5 line-clamp-1">{item.problemDescription}</p>
+                    </div>
+                  )},
+                  { key: 'status', title: isAr ? 'المرحلة' : 'Status', width: '130px', sortable: true, render: (item) => (
+                    <StatusBadge status={item.status} size="sm" />
+                  )},
+                  { key: 'progress', title: isAr ? 'نسبة الإنجاز' : 'Progress', width: '130px', sortable: false, render: (item) => {
+                    const stepIdx = getStepIndex(item.status);
+                    const progress = Math.round(((stepIdx + 1) / 10) * 100);
+                    return (
+                      <div className="w-full">
+                        <span className="text-xs text-gray-400 block mb-1 font-mono">{progress}%</span>
+                        <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                          <div className="h-full bg-gradient-to-r from-[#0066CC] to-[#00A3E0]" style={{ width: `${progress}%` }} />
+                        </div>
                       </div>
-                      <p className="text-white font-medium text-sm line-clamp-1">{item.problemTitle}</p>
-                      <p className="text-gray-400 text-xs mt-1 line-clamp-1">{item.problemDescription}</p>
+                    );
+                  }},
+                  { key: 'teamLeader', title: isAr ? 'قائد الفريق' : 'Team Leader', width: '150px', sortable: true, render: (item) => (
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-full bg-[#0066CC]/20 flex items-center justify-center shrink-0">
+                        <User className="w-3.5 h-3.5 text-[#00A3E0]" />
+                      </div>
+                      <span className="text-gray-300 text-xs font-medium truncate">{item.teamLeader}</span>
                     </div>
-                  );
-                }},
-                { key: 'productName', title: 'Product', width: '150px', sortable: true, render: (item) => (
-                  <span className="text-gray-300 text-sm">{item.productName}</span>
-                )},
-                { key: 'teamLeader', title: 'Team Leader', width: '140px', sortable: true, render: (item) => (
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-full bg-[#0066CC]/20 flex items-center justify-center">
-                      <User className="w-3.5 h-3.5 text-[#00A3E0]" />
+                  )},
+                  { key: 'analysisMethod', title: isAr ? 'المنهجية' : 'Method', width: '110px', sortable: true, render: (item) => (
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-lg border ${
+                      analysisMethodConfig[item.analysisMethod]?.color || 'bg-blue-500/10 text-blue-300 border-blue-500/20'
+                    }`}>
+                      {analysisMethodConfig[item.analysisMethod]?.label || item.analysisMethod}
+                    </span>
+                  )},
+                  { key: 'dateDetected', title: isAr ? 'تاريخ الرصد' : 'Date', width: '120px', sortable: true, render: (item) => (
+                    <div className="flex items-center gap-1.5 text-gray-400 text-xs font-mono">
+                      <Calendar className="w-3.5 h-3.5 text-amber-400" />
+                      {item.dateDetected}
                     </div>
-                    <span className="text-gray-300 text-sm">{item.teamLeader}</span>
+                  )}
+                ]}
+                keyExtractor={(item) => item.id}
+                selectedItems={selectedIds}
+                onSelectionChange={setSelectedIds}
+                onRowClick={(row) => handleOpenView(row)}
+                pageSize={10}
+                actions={(item) => (
+                  <div className="flex items-center gap-1">
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); handleOpenView(item); }} 
+                      className="p-2 hover:bg-white/10 rounded-lg transition-colors text-[#00A3E0]" 
+                      title={isAr ? 'عرض' : 'View'}
+                    >
+                      <Eye className="w-4 h-4" />
+                    </button>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); handleOpenEdit(item); }} 
+                      className="p-2 hover:bg-white/10 rounded-lg transition-colors text-gray-300 hover:text-white" 
+                      title={isAr ? 'تعديل' : 'Edit'}
+                    >
+                      <Edit3 className="w-4 h-4" />
+                    </button>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); setReportToDelete(item); }} 
+                      className="p-2 hover:bg-white/10 rounded-lg transition-colors text-rose-400" 
+                      title={isAr ? 'حذف' : 'Delete'}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
-                )},
-                { key: 'analysisMethod', title: 'Analysis', width: '100px', sortable: true, render: (item) => (
-                  <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${analysisMethodConfig[item.analysisMethod].color}`}>
-                    {analysisMethodConfig[item.analysisMethod].label}
-                  </span>
-                )},
-                { key: 'effectivenessCheck', title: 'Effectiveness', width: '110px', sortable: true, render: (item) => (
-                  <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${effectivenessConfig[item.effectivenessCheck].color}`}>
-                    {effectivenessConfig[item.effectivenessCheck].label}
-                  </span>
-                )},
-                { key: 'status', title: 'Status', width: '110px', sortable: true, render: (item) => (
-                  <StatusBadge status={item.status} size="sm" />
-                )},
-                { key: 'progress', title: 'Progress', width: '140px', sortable: false, render: (item) => {
-                  const currentStep = getStepIndex(item.status);
-                  const progress = Math.round(((currentStep + 1) / 10) * 100);
-                  return (
-                    <div className="w-full">
-                      <div className="flex justify-between text-xs text-gray-400 mb-1">
-                        <span>{progress}%</span>
-                      </div>
-                      <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-gradient-to-r from-[#0066CC] to-[#00A3E0] rounded-full transition-all"
-                          style={{ width: `${progress}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                }}
-              ]}
-              keyExtractor={(item) => item.id}
-              selectedItems={selectedIds}
-              onSelectionChange={setSelectedIds}
-              onRowClick={(row) => {
-                setEditingReport(row);
-                setIsFormOpen(true);
-              }}
-              pageSize={10}
-              actions={(item) => (
-                <div className="flex items-center gap-1">
-                  <button onClick={(e) => { e.stopPropagation(); handleCreateImprovementAction(item); }} className="p-2 hover:bg-white/10 rounded-lg transition-colors" title="Create Improvement Action">
-                    <Activity className="w-4 h-4 text-emerald-400" />
-                  </button>
-                  <button onClick={(e) => { e.stopPropagation(); setEditingReport(item); setIsFormOpen(true); }} className="p-2 hover:bg-white/10 rounded-lg transition-colors" title="View">
-                    <Eye className="w-4 h-4 text-gray-400" />
-                  </button>
-                  <button onClick={(e) => { e.stopPropagation(); handleEdit(item); }} className="p-2 hover:bg-white/10 rounded-lg transition-colors" title="Edit">
-                    <Edit3 className="w-4 h-4 text-[#00A3E0]" />
-                  </button>
-                </div>
-              )}
-              emptyState={
-                <div className="glass-panel rounded-xl p-12 text-center">
-                  <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-4">
-                    <Target className="w-8 h-8 text-gray-500" />
-                  </div>
-                  <h3 className="text-lg font-medium text-white mb-2">No 8D reports found</h3>
-                  <p className="text-gray-400 mb-4">Try adjusting your search or filters</p>
-                  <button onClick={() => { setSearchQuery(''); setActiveFilters({}); setDateRange({ from: null, to: null }); }} className="text-[#00A3E0] hover:text-white transition-colors">
-                    Clear all filters
-                  </button>
-                </div>
-              }
-            />
+                )}
+              />
+            )}
           </div>
 
+          {/* Filters Sidebar */}
           {showFilters && (
             <div className="w-full lg:w-72 shrink-0">
               <FilterPanel
                 filters={[
-                  { key: 'status', title: 'Status', multi: true, options: [
-                    { value: 'd0', label: 'D0: Plan', count: reports.filter(r => r.status === 'd0').length, color: '#6B7280' },
-                    { value: 'd1', label: 'D1: Team', count: reports.filter(r => r.status === 'd1').length, color: '#3B82F6' },
-                    { value: 'd2', label: 'D2: Problem', count: reports.filter(r => r.status === 'd2').length, color: '#06B6D4' },
-                    { value: 'd3', label: 'D3: Containment', count: reports.filter(r => r.status === 'd3').length, color: '#EAB308' },
-                    { value: 'd4', label: 'D4: Root Cause', count: reports.filter(r => r.status === 'd4').length, color: '#F97316' },
-                    { value: 'd5', label: 'D5: Actions', count: reports.filter(r => r.status === 'd5').length, color: '#A855F7' },
-                    { value: 'd6', label: 'D6: Implement', count: reports.filter(r => r.status === 'd6').length, color: '#EC4899' },
-                    { value: 'd7', label: 'D7: Prevent', count: reports.filter(r => r.status === 'd7').length, color: '#14B8A6' },
-                    { value: 'd8', label: 'D8: Congratulate', count: reports.filter(r => r.status === 'd8').length, color: '#22C55E' },
-                    { value: 'closed', label: 'Closed', count: reports.filter(r => r.status === 'closed').length, color: '#10B981' }
-                  ]},
-                  { key: 'analysisMethod', title: 'Analysis Method', multi: true, options: [
+                  { key: 'status', title: isAr ? 'مرحلة سير العمل' : 'Status', multi: true, options: dSteps.map(s => ({
+                    value: s.key,
+                    label: isAr ? s.labelAr : s.label,
+                    count: reports.filter(r => r.status === s.key).length,
+                    color: '#00A3E0'
+                  }))},
+                  { key: 'analysisMethod', title: isAr ? 'طريقة التحليل' : 'Analysis Method', multi: true, options: [
                     { value: '5why', label: '5 Why', count: reports.filter(r => r.analysisMethod === '5why').length, color: '#3B82F6' },
                     { value: 'fishbone', label: 'Fishbone', count: reports.filter(r => r.analysisMethod === 'fishbone').length, color: '#06B6D4' },
                     { value: 'fmea', label: 'FMEA', count: reports.filter(r => r.analysisMethod === 'fmea').length, color: '#A855F7' },
                     { value: 'fault-tree', label: 'Fault Tree', count: reports.filter(r => r.analysisMethod === 'fault-tree').length, color: '#DC2626' }
                   ]},
-                  { key: 'effectivenessCheck', title: 'Effectiveness', multi: true, options: [
-                    { value: 'pending', label: 'Pending', count: reports.filter(r => r.effectivenessCheck === 'pending').length, color: '#EAB308' },
-                    { value: 'effective', label: 'Effective', count: reports.filter(r => r.effectivenessCheck === 'effective').length, color: '#22C55E' },
-                    { value: 'ineffective', label: 'Ineffective', count: reports.filter(r => r.effectivenessCheck === 'ineffective').length, color: '#DC2626' }
+                  { key: 'effectivenessCheck', title: isAr ? 'الفاعلية' : 'Effectiveness', multi: true, options: [
+                    { value: 'pending', label: isAr ? 'قيد المراقبة' : 'Pending', count: reports.filter(r => r.effectivenessCheck === 'pending').length, color: '#EAB308' },
+                    { value: 'effective', label: isAr ? 'فاعل ومطابق' : 'Effective', count: reports.filter(r => r.effectivenessCheck === 'effective').length, color: '#22C55E' },
+                    { value: 'ineffective', label: isAr ? 'غير فاعل' : 'Ineffective', count: reports.filter(r => r.effectivenessCheck === 'ineffective').length, color: '#DC2626' }
                   ]}
                 ]}
                 activeFilters={activeFilters}
@@ -631,137 +1059,655 @@ export function D8Page() {
         </div>
       </PageSection>
 
-      {isFormOpen && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="glass-panel w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-2xl">
-            <div className="sticky top-0 z-10 flex items-center justify-between p-6 border-b border-white/10 bg-[#0a0a0f]">
-              <div>
-                <h2 className="text-xl font-semibold text-white">
-                  {editingReport ? 'Edit 8D Report' : 'Create New 8D Report'}
-                </h2>
-                <p className="text-sm text-gray-400 mt-1">
-                  {editingReport ? 'Edit 8D problem solving information' : 'Create a new 8D problem solving report'}
-                </p>
+      {/* ======================================================================== */}
+      {/* MODAL 1: DEDICATED 8D VIEW DETAILS MODAL */}
+      {/* ======================================================================== */}
+      {viewingReport && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
+          <div className="w-full max-w-4xl bg-slate-900 border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl my-8 space-y-6">
+            {/* Modal Header */}
+            <div className="flex items-start justify-between pb-4 border-b border-white/10">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2.5">
+                  <span className="text-[#00A3E0] font-mono font-bold text-sm bg-[#00A3E0]/15 px-3 py-1 rounded-xl border border-[#00A3E0]/30">
+                    {viewingReport.eightDNumber || viewingReport.id}
+                  </span>
+                  <StatusBadge status={viewingReport.status} size="sm" />
+                  <span className="text-xs font-bold px-2.5 py-0.5 rounded-lg bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
+                    {analysisMethodConfig[viewingReport.analysisMethod]?.label || viewingReport.analysisMethod}
+                  </span>
+                </div>
+                <h3 className="text-xl font-black text-white mt-2">
+                  {viewingReport.problemTitle}
+                </h3>
               </div>
-              <button 
-                onClick={() => setIsFormOpen(false)}
-                className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+
+              <button
+                onClick={() => setViewingReport(null)}
+                className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
               >
-                <X className="w-5 h-5 text-gray-400" />
+                <X className="w-5 h-5" />
               </button>
             </div>
-            
-            <div className="p-6">
-              <DynamicFormRenderer
-                formType="8d"
-                initialValues={getInitialValues()}
-                onSubmit={handleFormSubmit}
-                readOnly={false}
-                showSubmitButton={true}
-                submitLabel={editingReport ? 'Update 8D Report' : 'Create 8D Report'}
-              />
 
-              {editingReport && (
-                <div className="mt-6 space-y-5">
-                  {(() => {
-                    const closedLoop = closedLoopForEightD(editingReport);
-                    return (
-                      <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                        <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
-                          <div>
-                            <h3 className="text-lg font-black text-white">8D Closed-Loop Integration</h3>
-                            <p className="text-xs text-white/45 mt-1">Connects D-sections, linked defects, NCR/CAPA, improvement actions, and effectiveness verification.</p>
-                          </div>
-                          <button type="button" onClick={() => handleCreateImprovementAction(editingReport)} className="px-3 py-2 rounded-xl bg-emerald-400/10 border border-emerald-400/20 text-emerald-200 text-xs font-black">
-                            Create Improvement Action
-                          </button>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mt-5">
-                          {[
-                            ['Linked Defects', closedLoop.linkedDefects.length],
-                            ['Linked Actions', closedLoop.linkedActions.length],
-                            ['Before Metric', closedLoop.beforeMetric],
-                            ['After Metric', closedLoop.afterMetric],
-                          ].map(([label, value]) => (
-                            <div key={String(label)} className="rounded-xl border border-white/10 bg-black/10 p-3">
-                              <p className="text-[10px] text-white/35 uppercase font-black">{String(label)}</p>
-                              <p className="text-xl font-black text-white mt-1">{String(value)}</p>
-                            </div>
-                          ))}
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">
-                          <div className="rounded-xl border border-white/10 bg-black/10 p-3">
-                            <p className="text-[10px] text-white/35 uppercase font-black">Effectiveness</p>
-                            <p className="text-sm font-black text-[#00A3E0] mt-1">{closedLoop.effectivenessStatus}</p>
-                          </div>
-                          <div className="rounded-xl border border-white/10 bg-black/10 p-3">
-                            <p className="text-[10px] text-white/35 uppercase font-black">Confidence</p>
-                            <p className="text-sm font-black text-white mt-1">{closedLoop.confidenceLabel}</p>
-                          </div>
-                          <div className="rounded-xl border border-white/10 bg-black/10 p-3">
-                            <p className="text-[10px] text-white/35 uppercase font-black">Improvement</p>
-                            <p className="text-sm font-black text-white mt-1">{closedLoop.improvementPercent === null ? 'N/A' : `${closedLoop.improvementPercent}%`}</p>
-                          </div>
-                        </div>
-                        <div className="mt-4 space-y-2">
-                          {closedLoop.dataLimitations.map((item) => (
-                            <p key={item} className="text-xs text-white/45">{item}</p>
-                          ))}
-                          <p className="text-xs text-emerald-200">{closedLoop.recommendedFollowUp}</p>
-                        </div>
-                      </div>
-                    );
-                  })()}
-                  <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                    <h3 className="text-lg font-black text-white mb-4">Structured 8D Sections</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
-                      {[
-                        ['D1 Team', editingReport.teamLeader || 'Owner not set'],
-                        ['D2 Problem Description', editingReport.problemDescription || 'Needs definition'],
-                        ['D3 Containment', editingReport.immediateAction || 'Containment not set'],
-                        ['D4 Root Cause Analysis', editingReport.rootCauseDescription || 'Requires verification'],
-                        ['D5 Corrective Actions', editingReport.correctiveActionDesc || 'Action not set'],
-                        ['D6 Implementation', editingReport.implementationDate || 'Implementation date not set'],
-                        ['D7 Prevention', editingReport.preventiveActionPlan || 'Prevention not set'],
-                        ['D8 Closure / Recognition', editingReport.closureDate || 'Not closed'],
-                      ].map(([label, value]) => (
-                        <div key={label} className="rounded-xl border border-white/10 bg-black/10 p-3">
-                          <p className="text-xs font-black text-white">{label}</p>
-                          <p className="text-xs text-white/50 mt-2 line-clamp-3">{value}</p>
-                        </div>
-                      ))}
+            {/* 8D Visual Stepper Bar */}
+            <div className="bg-slate-950/60 p-4 rounded-2xl border border-white/5 space-y-2">
+              <div className="flex justify-between items-center text-xs font-bold text-gray-400">
+                <span>{isAr ? 'مسار المراحل الثمانية (8 Disciplines Progress)' : '8D Disciplines Stepper'}</span>
+                <span className="text-[#00A3E0] font-mono font-bold">
+                  {Math.round(((getStepIndex(viewingReport.status) + 1) / 10) * 100)}%
+                </span>
+              </div>
+              <div className="grid grid-cols-5 sm:grid-cols-10 gap-1.5">
+                {dSteps.map((step, idx) => {
+                  const currentIdx = getStepIndex(viewingReport.status);
+                  const isDone = currentIdx >= idx;
+                  const isCurrent = currentIdx === idx;
+                  return (
+                    <div
+                      key={step.key}
+                      className={`p-1.5 rounded-lg text-center text-[10px] font-bold border transition-all ${
+                        isCurrent 
+                          ? 'bg-[#00A3E0] text-slate-950 border-[#00A3E0] shadow-md' 
+                          : isDone 
+                          ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' 
+                          : 'bg-white/5 text-gray-500 border-white/5'
+                      }`}
+                      title={step.label}
+                    >
+                      {step.key.toUpperCase()}
                     </div>
-                    <p className="text-xs text-white/35 mt-4">D-section content is shown as structured decision-support. Evidence and closure still require user verification.</p>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Operational Info Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+              <div className="bg-white/5 p-3 rounded-2xl border border-white/5">
+                <span className="text-gray-400 block">{isAr ? 'المنتج / الموديل' : 'Product'}</span>
+                <span className="font-bold text-gray-200 mt-1 block truncate">{viewingReport.productName}</span>
+              </div>
+              <div className="bg-white/5 p-3 rounded-2xl border border-white/5">
+                <span className="text-gray-400 block">{isAr ? 'خط الإنتاج' : 'Line'}</span>
+                <span className="font-bold text-gray-200 mt-1 block truncate">{viewingReport.productionLine || 'Line 01'}</span>
+              </div>
+              <div className="bg-white/5 p-3 rounded-2xl border border-white/5">
+                <span className="text-gray-400 block">{isAr ? 'قائد الفريق (D1)' : 'Team Leader'}</span>
+                <span className="font-bold text-gray-200 mt-1 block truncate">{viewingReport.teamLeader}</span>
+              </div>
+              <div className="bg-white/5 p-3 rounded-2xl border border-white/5">
+                <span className="text-gray-400 block">{isAr ? 'الراعي (Champion)' : 'Champion'}</span>
+                <span className="font-bold text-gray-200 mt-1 block truncate">{viewingReport.champion || 'N/A'}</span>
+              </div>
+            </div>
+
+            {/* The 8 Disciplines Content Blocks */}
+            <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-1">
+              {/* D1 Team Members */}
+              {viewingReport.teamMembers && viewingReport.teamMembers.length > 0 && (
+                <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+                  <div className="flex items-center gap-2 text-[#00A3E0] text-xs font-bold mb-2">
+                    <Users className="w-4 h-4" />
+                    <span>D1 - {isAr ? 'أعضاء فريق العمل' : 'Team Members'}</span>
                   </div>
-                  <QualityRelationshipManager
-                    currentType="eightD"
-                    currentId={editingReport.id}
-                    currentLabel={`8D ${editingReport.problemTitle || editingReport.eightDNumber}`}
-                    canManage={hasDefectPermission(workflowUser, 'defect.edit')}
-                    disabledReason="Requires edit defect permission to link or unlink quality records."
-                    records={{
-                      defects: defectRecords,
-                      ncrs: linkedNcrs,
-                      capas: linkedCapas,
-                      eightDs: reports as unknown as EightDData[],
-                      actions: improvementActions,
-                    }}
-                    onChanged={loadReports}
-                  />
-                  <QualityKnowledgeSuggestions
-                    context={buildKnowledgeContextFromSource('eightD', editingReport as unknown as EightDData)}
-                    title="Related Lessons Learned"
-                    canApply={hasDefectPermission(workflowUser, 'defect.edit')}
-                  />
-                  <RelatedRecords 
-                    currentId={editingReport.id}
-                    relations={[
-                      { targetModule: 'ncr', filterField: 'id', label: 'Source NCR', icon: <ShieldAlert className="w-4 h-4" /> },
-                      { targetModule: 'defect-logs', filterField: 'relatedNcrId', label: 'Original Defect', icon: <FileText className="w-4 h-4" /> }
-                    ]}
-                  />
+                  <div className="flex flex-wrap gap-2">
+                    {viewingReport.teamMembers.map((member, i) => (
+                      <span key={i} className="px-3 py-1 rounded-xl bg-white/5 border border-white/10 text-xs text-gray-300">
+                        {member}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               )}
+
+              {/* D2 Problem Description */}
+              <div className="bg-white/5 p-4 rounded-2xl border border-white/5 space-y-1.5">
+                <div className="flex items-center gap-2 text-cyan-400 text-xs font-bold">
+                  <Target className="w-4 h-4" />
+                  <span>D2 - {isAr ? 'توصيف المشكلة وأثرها (Problem Description)' : 'Problem Description'}</span>
+                </div>
+                <p className="text-xs text-gray-300 leading-relaxed">
+                  {viewingReport.problemDescription || viewingReport.symptomDescription}
+                </p>
+                {viewingReport.customerImpact && (
+                  <p className="text-[11px] text-amber-300/90 pt-1">
+                    <strong>{isAr ? 'الأثر على العميل:' : 'Customer Impact:'}</strong> {viewingReport.customerImpact}
+                  </p>
+                )}
+              </div>
+
+              {/* D3 Containment Action */}
+              <div className="bg-yellow-500/5 p-4 rounded-2xl border border-yellow-500/20 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-yellow-400 text-xs font-bold">
+                    <ShieldAlert className="w-4 h-4" />
+                    <span>D3 - {isAr ? 'إجراءات الاحتواء الفوري (Containment Actions - ICA)' : 'Interim Containment Actions (ICA)'}</span>
+                  </div>
+                  {viewingReport.quantityContained ? (
+                    <span className="text-[11px] font-bold text-yellow-300 px-2 py-0.5 rounded-lg bg-yellow-500/10">
+                      {isAr ? `الكمية المحجوزة: ${viewingReport.quantityContained} قطعة` : `Contained: ${viewingReport.quantityContained} pcs`}
+                    </span>
+                  ) : null}
+                </div>
+                <p className="text-xs text-gray-300 leading-relaxed">
+                  {viewingReport.immediateAction || viewingReport.emergencyResponse || (isAr ? 'لم تسجل إجراءات احتواء' : 'No containment actions documented')}
+                </p>
+                <div className="text-[11px] text-gray-400 flex items-center gap-3 pt-1">
+                  <span><strong>{isAr ? 'المسؤول:' : 'Resp:'}</strong> {viewingReport.containmentResponsible || 'N/A'}</span>
+                  <span><strong>{isAr ? 'التاريخ:' : 'Date:'}</strong> {viewingReport.containmentDate || 'N/A'}</span>
+                </div>
+              </div>
+
+              {/* D4 Root Cause & Analysis */}
+              <div className="bg-orange-500/5 p-4 rounded-2xl border border-orange-500/20 space-y-2">
+                <div className="flex items-center gap-2 text-orange-400 text-xs font-bold">
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>D4 - {isAr ? 'السبب الجذري والتحليل (Root Cause Analysis - RCA)' : 'Root Cause Analysis'}</span>
+                </div>
+                <p className="text-xs text-gray-200 font-medium leading-relaxed">
+                  {viewingReport.rootCauseDescription || (isAr ? 'قيد التحليل الجذري' : 'Under root cause investigation')}
+                </p>
+                {viewingReport.whyAnalysis && (
+                  <div className="bg-black/30 p-3 rounded-xl border border-white/5 font-mono text-[11px] text-gray-300 whitespace-pre-line">
+                    {viewingReport.whyAnalysis}
+                  </div>
+                )}
+                {viewingReport.fishboneAnalysis && (
+                  <div className="bg-black/30 p-3 rounded-xl border border-white/5 font-mono text-[11px] text-gray-300 whitespace-pre-line">
+                    {viewingReport.fishboneAnalysis}
+                  </div>
+                )}
+              </div>
+
+              {/* D5 & D6 Corrective Actions & Implementation */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="bg-purple-500/5 p-4 rounded-2xl border border-purple-500/20 space-y-1.5">
+                  <div className="flex items-center gap-2 text-purple-400 text-xs font-bold">
+                    <Target className="w-4 h-4" />
+                    <span>D5 - {isAr ? 'الإجراءات التصحيحية الدائمة' : 'Permanent Actions (PCA)'}</span>
+                  </div>
+                  <p className="text-xs text-gray-300 leading-relaxed">
+                    {viewingReport.correctiveActionDesc || (isAr ? 'لم تحدد بعد' : 'Not defined yet')}
+                  </p>
+                  <p className="text-[11px] text-gray-400 pt-1">
+                    <strong>{isAr ? 'المسؤول:' : 'Resp:'}</strong> {viewingReport.correctiveResponsible || 'N/A'}
+                  </p>
+                </div>
+
+                <div className="bg-pink-500/5 p-4 rounded-2xl border border-pink-500/20 space-y-1.5">
+                  <div className="flex items-center gap-2 text-pink-400 text-xs font-bold">
+                    <Clock className="w-4 h-4" />
+                    <span>D6 - {isAr ? 'التنفيذ ونتائج التحقق' : 'Validation Results'}</span>
+                  </div>
+                  <p className="text-xs text-gray-300 leading-relaxed">
+                    {viewingReport.validationResults || (isAr ? 'قيد التحقق والمراقبة' : 'Pending validation')}
+                  </p>
+                  <p className="text-[11px] text-gray-400 pt-1">
+                    <strong>{isAr ? 'تاريخ التنفيذ:' : 'Date:'}</strong> {viewingReport.implementationDate || 'N/A'}
+                  </p>
+                </div>
+              </div>
+
+              {/* D7 Prevention & D8 Recognition */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="bg-teal-500/5 p-4 rounded-2xl border border-teal-500/20 space-y-1.5">
+                  <div className="flex items-center gap-2 text-teal-400 text-xs font-bold">
+                    <ShieldAlert className="w-4 h-4" />
+                    <span>D7 - {isAr ? 'منع التكرار (Prevent Recurrence)' : 'Prevent Recurrence'}</span>
+                  </div>
+                  <p className="text-xs text-gray-300 leading-relaxed">
+                    {viewingReport.preventiveActionPlan || (isAr ? 'لم يوثق بعد' : 'Not documented yet')}
+                  </p>
+                </div>
+
+                <div className="bg-emerald-500/5 p-4 rounded-2xl border border-emerald-500/20 space-y-1.5">
+                  <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold">
+                    <Award className="w-4 h-4" />
+                    <span>D8 - {isAr ? 'الدروس المستفادة وتكريم الفريق' : 'Team Recognition & Close'}</span>
+                  </div>
+                  <p className="text-xs text-gray-300 leading-relaxed">
+                    {viewingReport.lessonsLearned || (isAr ? 'تم إغلاق التقرير بنجاح' : 'Successful closure')}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Actions Footer */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4 border-t border-white/10">
+              <div className="flex items-center gap-2">
+                {viewingReport.sourceNCRId && (
+                  <button
+                    onClick={() => navigate(`/ncr?search=${viewingReport.sourceNCRId}`)}
+                    className="text-xs text-[#00A3E0] hover:underline flex items-center gap-1 font-bold"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    <span>{isAr ? `تقرير عدم المطابقة (${viewingReport.sourceNCRId})` : `NCR (${viewingReport.sourceNCRId})`}</span>
+                  </button>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2.5">
+                <Button
+                  variant="outline"
+                  onClick={() => handleCreateImprovementAction(viewingReport)}
+                  className="bg-teal-500/10 text-teal-300 border-teal-500/30 hover:bg-teal-500/20 rounded-xl h-11"
+                >
+                  <Sparkles className="w-4 h-4 mr-1.5 rtl:ml-1.5 rtl:mr-0" />
+                  {isAr ? 'ربط خطة تحسين' : 'Link Action'}
+                </Button>
+
+                <Button
+                  onClick={() => { setViewingReport(null); handleOpenEdit(viewingReport); }}
+                  className="bg-[#00A3E0] hover:bg-[#008cc0] text-slate-950 font-black rounded-xl h-11 px-6 shadow-lg shadow-[#00A3E0]/20"
+                >
+                  <Edit3 className="w-4 h-4 mr-1.5 rtl:ml-1.5 rtl:mr-0" />
+                  {isAr ? 'تعديل تقرير 8D' : 'Edit 8D'}
+                </Button>
+
+                <Button
+                  variant="outline"
+                  onClick={() => setViewingReport(null)}
+                  className="bg-white/5 border-white/10 text-white hover:bg-white/10 rounded-xl h-11"
+                >
+                  {isAr ? 'إغلاق' : 'Close'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================================== */}
+      {/* MODAL 2: EDIT & CREATE 8D MODAL */}
+      {/* ======================================================================== */}
+      {isFormOpen && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
+          <div className="w-full max-w-4xl bg-slate-900 border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl my-8">
+            <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-6">
+              <div className="flex items-center gap-3">
+                <div className="p-3 rounded-2xl bg-[#00A3E0]/10 text-[#00A3E0] border border-[#00A3E0]/20">
+                  <Edit3 className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black text-white">
+                    {editingReport 
+                      ? (isAr ? `تعديل تقرير 8D (${editingReport.eightDNumber || editingReport.id})` : `Edit 8D (${editingReport.eightDNumber})`) 
+                      : (isAr ? 'إنشاء تقرير 8D لحل المشكلات (New 8D Report)' : 'Create New 8D Report')}
+                  </h3>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {isAr ? 'توثيق خطوات الانضباطات الثمانية من الاحتواء وحتى التحقق الجذري' : 'Document 8-disciplines lifecycle, root-cause and containment'}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => { setIsFormOpen(false); setEditingReport(null); }}
+                className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveForm} className="space-y-5">
+              {/* Problem Title & 8D Number */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-bold text-gray-400 mb-1.5">
+                    {isAr ? 'عنوان المشكلة (Problem Title)' : 'Problem Title'} *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.problemTitle}
+                    onChange={(e) => setFormData({ ...formData, problemTitle: e.target.value })}
+                    placeholder={isAr ? 'مثال: تسريب زيت هيدروليكي في المكبس 04' : 'e.g. Hydraulic oil leak on press 04'}
+                    className="w-full h-11 px-4 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-[#00A3E0]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 mb-1.5">
+                    {isAr ? 'رقم التقرير (8D Number)' : '8D Number'}
+                  </label>
+                  <input
+                    type="text"
+                    disabled
+                    value={formData.eightDNumber}
+                    className="w-full h-11 px-4 bg-white/5 border border-white/10 rounded-xl text-gray-400 text-sm font-mono cursor-not-allowed"
+                  />
+                </div>
+              </div>
+
+              {/* Status, Analysis Method, Effectiveness */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 mb-1.5">
+                    {isAr ? 'المرحلة الحالية (Status Phase)' : 'Status Phase'}
+                  </label>
+                  <select
+                    value={formData.status}
+                    onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+                    className="w-full h-11 px-4 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-[#00A3E0]"
+                  >
+                    {dSteps.map((s) => (
+                      <option key={s.key} value={s.key} className="bg-slate-900">
+                        {isAr ? s.labelAr : s.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 mb-1.5">
+                    {isAr ? 'طريقة التحليل (Analysis Method)' : 'Analysis Method'}
+                  </label>
+                  <select
+                    value={formData.analysisMethod}
+                    onChange={(e) => setFormData({ ...formData, analysisMethod: e.target.value as any })}
+                    className="w-full h-11 px-4 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-[#00A3E0]"
+                  >
+                    <option value="5why" className="bg-slate-900">5-Why Analysis</option>
+                    <option value="fishbone" className="bg-slate-900">Fishbone (Ishikawa)</option>
+                    <option value="fmea" className="bg-slate-900">FMEA</option>
+                    <option value="fault-tree" className="bg-slate-900">Fault Tree</option>
+                    <option value="pareto" className="bg-slate-900">Pareto Analysis</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 mb-1.5">
+                    {isAr ? 'فحص الفاعلية (Effectiveness Check)' : 'Effectiveness Check'}
+                  </label>
+                  <select
+                    value={formData.effectivenessCheck}
+                    onChange={(e) => setFormData({ ...formData, effectivenessCheck: e.target.value as any })}
+                    className="w-full h-11 px-4 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-[#00A3E0]"
+                  >
+                    <option value="pending" className="bg-slate-900">{isAr ? 'قيد المراقبة (Pending)' : 'Pending'}</option>
+                    <option value="effective" className="bg-slate-900">{isAr ? 'فاعل ومطابق (Effective)' : 'Effective'}</option>
+                    <option value="ineffective" className="bg-slate-900">{isAr ? 'غير فاعل (Ineffective)' : 'Ineffective'}</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* D1 Team Members, Leader, Champion */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 mb-1.5">
+                    {isAr ? 'قائد الفريق (D1 Team Leader)' : 'Team Leader'} *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.teamLeader}
+                    onChange={(e) => setFormData({ ...formData, teamLeader: e.target.value })}
+                    className="w-full h-11 px-4 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-[#00A3E0]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 mb-1.5">
+                    {isAr ? 'الراعي / المدير (Champion)' : 'Champion'}
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.champion}
+                    onChange={(e) => setFormData({ ...formData, champion: e.target.value })}
+                    className="w-full h-11 px-4 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-[#00A3E0]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 mb-1.5">
+                    {isAr ? 'الأعضاء (مفصولين بفاصلة)' : 'Members (comma separated)'}
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.teamMembers}
+                    onChange={(e) => setFormData({ ...formData, teamMembers: e.target.value })}
+                    placeholder="Ahmed, Khaled, Mona"
+                    className="w-full h-11 px-4 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-[#00A3E0]"
+                  />
+                </div>
+              </div>
+
+              {/* Product, Line, Lot, NCR */}
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 mb-1.5">
+                    {isAr ? 'اسم المنتج / القطعة' : 'Product / Part'}
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.productName}
+                    onChange={(e) => setFormData({ ...formData, productName: e.target.value })}
+                    className="w-full h-11 px-4 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-[#00A3E0]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 mb-1.5">
+                    {isAr ? 'خط الإنتاج' : 'Production Line'}
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.productionLine}
+                    onChange={(e) => setFormData({ ...formData, productionLine: e.target.value })}
+                    className="w-full h-11 px-4 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-[#00A3E0]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 mb-1.5">
+                    {isAr ? 'رقم التشغيلة (Lot #)' : 'Lot Number'}
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.lotNumber}
+                    onChange={(e) => setFormData({ ...formData, lotNumber: e.target.value })}
+                    className="w-full h-11 px-4 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-[#00A3E0]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 mb-1.5">
+                    {isAr ? 'تقرير عدم المطابقة (Source NCR)' : 'Source NCR'}
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.sourceNCRId}
+                    onChange={(e) => setFormData({ ...formData, sourceNCRId: e.target.value })}
+                    placeholder="NCR-2026-089"
+                    className="w-full h-11 px-4 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-[#00A3E0]"
+                  />
+                </div>
+              </div>
+
+              {/* D2 Problem Description */}
+              <div>
+                <label className="block text-xs font-bold text-cyan-400 mb-1.5">
+                  {isAr ? 'D2 - توصيف المشكلة بالتفصيل (Problem Description - 5W2H)' : 'D2 - Problem Description'}
+                </label>
+                <textarea
+                  rows={2}
+                  value={formData.problemDescription}
+                  onChange={(e) => setFormData({ ...formData, problemDescription: e.target.value })}
+                  placeholder={isAr ? 'ما الذي حدث؟ أين؟ متى؟ كم قطعة؟ وما هو الأثر؟' : 'Describe the exact failure, where, when, and how much...'}
+                  className="w-full p-3 bg-white/5 border border-cyan-500/20 rounded-xl text-white text-xs focus:outline-none focus:border-cyan-400"
+                />
+              </div>
+
+              {/* D3 Containment Action & Quantity */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-bold text-yellow-400 mb-1.5">
+                    {isAr ? 'D3 - إجراءات الاحتواء الفوري (Interim Containment - ICA)' : 'D3 - Containment Action (ICA)'}
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.immediateAction}
+                    onChange={(e) => setFormData({ ...formData, immediateAction: e.target.value })}
+                    placeholder={isAr ? 'الفرز، العزل، وتأمين المخزون والعميل...' : 'Sorting, quarantine, customer alert...'}
+                    className="w-full h-11 px-4 bg-white/5 border border-yellow-500/20 rounded-xl text-white text-sm focus:outline-none focus:border-yellow-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-yellow-400 mb-1.5">
+                    {isAr ? 'الكمية المحجوزة (Contained Qty)' : 'Contained Qty'}
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.quantityContained}
+                    onChange={(e) => setFormData({ ...formData, quantityContained: Number(e.target.value) })}
+                    className="w-full h-11 px-4 bg-white/5 border border-yellow-500/20 rounded-xl text-white text-sm focus:outline-none focus:border-yellow-400"
+                  />
+                </div>
+              </div>
+
+              {/* D4 Root Cause & 5-Why */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-orange-400 mb-1.5">
+                    {isAr ? 'D4 - السبب الجذري المؤكد (Root Cause)' : 'D4 - Root Cause'}
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={formData.rootCauseDescription}
+                    onChange={(e) => setFormData({ ...formData, rootCauseDescription: e.target.value })}
+                    placeholder={isAr ? 'السبب الفني الذي ثبتت مسؤوليته عن حدوث المشكلة...' : 'Verified underlying root cause...'}
+                    className="w-full p-3 bg-white/5 border border-orange-500/20 rounded-xl text-white text-xs focus:outline-none focus:border-orange-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-orange-400 mb-1.5">
+                    {isAr ? 'تحليل لماذا الخماسي (5-Why Breakdown)' : '5-Why Breakdown'}
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={formData.whyAnalysis}
+                    onChange={(e) => setFormData({ ...formData, whyAnalysis: e.target.value })}
+                    placeholder="1. Why? ... 2. Why? ... 3. Why? ..."
+                    className="w-full p-3 bg-white/5 border border-orange-500/20 rounded-xl text-white text-xs font-mono focus:outline-none focus:border-orange-400"
+                  />
+                </div>
+              </div>
+
+              {/* D5 & D6 Permanent Actions & Validation */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-purple-400 mb-1.5">
+                    {isAr ? 'D5 - الإجراءات التصحيحية الدائمة (PCA)' : 'D5 - Corrective Actions (PCA)'}
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={formData.correctiveActionDesc}
+                    onChange={(e) => setFormData({ ...formData, correctiveActionDesc: e.target.value })}
+                    placeholder={isAr ? 'الخطوات الهندسية لمنع السبب الجذري...' : 'Engineering actions to eliminate root cause...'}
+                    className="w-full p-3 bg-white/5 border border-purple-500/20 rounded-xl text-white text-xs focus:outline-none focus:border-purple-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-pink-400 mb-1.5">
+                    {isAr ? 'D6 - نتائج التحقق والفاعلية (Validation)' : 'D6 - Validation Results'}
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={formData.validationResults}
+                    onChange={(e) => setFormData({ ...formData, validationResults: e.target.value })}
+                    placeholder={isAr ? 'نتائج القياسات بعد التطبيق لإثبات النجاح...' : 'Verification data proving PCA success...'}
+                    className="w-full p-3 bg-white/5 border border-pink-500/20 rounded-xl text-white text-xs focus:outline-none focus:border-pink-400"
+                  />
+                </div>
+              </div>
+
+              {/* D7 Prevention & D8 Lessons */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-teal-400 mb-1.5">
+                    {isAr ? 'D7 - خطة منع التكرار النظامية (Prevention)' : 'D7 - Preventive Plan'}
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={formData.preventiveActionPlan}
+                    onChange={(e) => setFormData({ ...formData, preventiveActionPlan: e.target.value })}
+                    placeholder={isAr ? 'تعديل FMEA، خطة المراقبة، وتعميم الدرس...' : 'Update FMEA, Control Plan, Poke-yoke...'}
+                    className="w-full p-3 bg-white/5 border border-teal-500/20 rounded-xl text-white text-xs focus:outline-none focus:border-teal-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-emerald-400 mb-1.5">
+                    {isAr ? 'D8 - الدروس المستفادة والتكريم (Closure)' : 'D8 - Lessons Learned'}
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={formData.lessonsLearned}
+                    onChange={(e) => setFormData({ ...formData, lessonsLearned: e.target.value })}
+                    placeholder={isAr ? 'الدروس المستفادة وتكريم جهود الفريق...' : 'Team recognition and organizational learning...'}
+                    className="w-full p-3 bg-white/5 border border-emerald-500/20 rounded-xl text-white text-xs focus:outline-none focus:border-emerald-400"
+                  />
+                </div>
+              </div>
+
+              {/* Form Buttons */}
+              <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => { setIsFormOpen(false); setEditingReport(null); }}
+                  className="bg-white/5 border-white/10 text-white rounded-xl h-11"
+                >
+                  {isAr ? 'إلغاء' : 'Cancel'}
+                </Button>
+                <Button
+                  type="submit"
+                  className="bg-[#00A3E0] hover:bg-[#008cc0] text-slate-950 font-black rounded-xl h-11 px-6 shadow-lg shadow-[#00A3E0]/20"
+                >
+                  {editingReport ? (isAr ? 'حفظ التعديلات' : 'Save Changes') : (isAr ? 'إنشاء التقرير' : 'Create 8D')}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================================== */}
+      {/* MODAL 3: DELETE CONFIRMATION DIALOG */}
+      {/* ======================================================================== */}
+      {reportToDelete && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+          <div className="w-full max-w-md bg-slate-900 border border-rose-500/30 rounded-3xl p-6 shadow-2xl text-center space-y-4">
+            <div className="w-14 h-14 rounded-2xl bg-rose-500/15 text-rose-400 mx-auto flex items-center justify-center border border-rose-500/30">
+              <Trash2 className="w-7 h-7" />
+            </div>
+            <div>
+              <h3 className="text-xl font-black text-white">
+                {isAr ? 'تأكيد حذف تقرير 8D؟' : 'Confirm 8D Deletion?'}
+              </h3>
+              <p className="text-xs text-gray-400 mt-2 leading-relaxed">
+                {isAr 
+                  ? `هل أنت متأكد من حذف التقرير "${reportToDelete.problemTitle}" (${reportToDelete.eightDNumber})؟ لا يمكن التراجع عن هذا الإجراء.`
+                  : `Are you sure you want to delete 8D report "${reportToDelete.eightDNumber}"?`}
+              </p>
+            </div>
+            <div className="flex justify-center gap-3 pt-2">
+              <Button
+                variant="outline"
+                onClick={() => setReportToDelete(null)}
+                className="bg-white/5 border-white/10 text-white rounded-xl h-11"
+              >
+                {isAr ? 'إلغاء' : 'Cancel'}
+              </Button>
+              <Button
+                onClick={handleConfirmDelete}
+                className="bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl h-11 px-6 shadow-lg shadow-rose-600/30"
+              >
+                {isAr ? 'تأكيد الحذف' : 'Delete 8D'}
+              </Button>
             </div>
           </div>
         </div>
