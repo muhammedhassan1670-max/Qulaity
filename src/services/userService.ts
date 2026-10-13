@@ -23,6 +23,8 @@ export interface UserAccount {
   department: string;
   departmentAr?: string;
   plant: string;
+  assignedLines?: string[];
+  shift?: string;
   status: 'active' | 'inactive' | 'suspended';
   avatar?: string;
   lastLogin: string;
@@ -180,8 +182,62 @@ export const DEFAULT_SYSTEM_ROLES: RoleDefinition[] = [
     ],
     isSystem: false,
     color: '#3B82F6'
+  },
+  {
+    id: 'oqc_inspector',
+    name: 'Outgoing Quality Inspector (OQC)',
+    nameAr: 'مفتش جودة المنتج النهائي (OQC)',
+    description: 'Final acceptance sampling (AQL), release certifications, and dispatch hold authorizations',
+    descriptionAr: 'فحص عينات القبول AQL واعتماد شهادات الإفراج للشحن وصلاحيات الحجز النهائي',
+    userCount: 0,
+    permissions: [
+      'fqc.release', 'fqc.aql_sample', 'ncr.create'
+    ],
+    isSystem: false,
+    color: '#06B6D4'
+  },
+  {
+    id: 'internal_auditor',
+    name: 'Internal Quality Auditor',
+    nameAr: 'مدقق جودة داخلي',
+    description: 'Read-only audit view across all quality stages, records, SPC charts, and compliance matrices',
+    descriptionAr: 'صلاحيات تدقيق واستعراض شامل لكافة مراحل الجودة وسجلات عدم المطابقة والتحكم الإحصائي',
+    userCount: 0,
+    permissions: [
+      'iqc.inspect', 'shopfloor.clearance', 'spc.view', 'ncr.create', 'capa.manage', 'eight_d.solve', 'fqc.aql_sample', 'complaints.manage'
+    ],
+    isSystem: false,
+    color: '#EC4899'
   }
 ];
+
+export const PRESET_PRODUCTION_LINES = [
+  'Line 1 - Stamping (الكبس والتشكيل)',
+  'Line 2 - Welding (اللحام والتجميع الآلي)',
+  'Line 3 - Painting (الدهان والمعالجة)',
+  'Line 4 - Sub-Assembly (التجميع الفرعي)',
+  'Line 5 - Final Assembly (التجميع النهائي)',
+  'Line 6 - Testing & Packing (الفحص والتغليف)'
+];
+
+export interface ShiftOption {
+  id: string;
+  labelEn: string;
+  labelAr: string;
+  timeEn: string;
+  timeAr: string;
+}
+
+export const PRESET_SHIFTS: ShiftOption[] = [
+  { id: 'shift_1', labelEn: '1st Shift (Morning)', labelAr: 'الوردية الأولى (صباحية)', timeEn: '07:00 - 15:30', timeAr: '٠٧:٠٠ - ١٥:٣٠' },
+  { id: 'shift_2', labelEn: '2nd Shift (Evening)', labelAr: 'الوردية الثانية (مسائية)', timeEn: '15:30 - 23:30', timeAr: '١٥:٣٠ - ٢٣:٣٠' },
+  { id: 'shift_3', labelEn: '3rd Shift (Night)', labelAr: 'الوردية الثالثة (ليلية)', timeEn: '23:30 - 07:00', timeAr: '٢٣:٣٠ - ٠٧:٠٠' },
+  { id: 'shift_general', labelEn: 'General Day Shift', labelAr: 'الوردية العامة (نهارية)', timeEn: '08:00 - 17:00', timeAr: '٠٨:٠٠ - ١٧:٠٠' }
+];
+
+export function getShiftInfo(shiftId?: string): ShiftOption {
+  return PRESET_SHIFTS.find(s => s.id === shiftId) || PRESET_SHIFTS[0];
+}
 
 export const PRESET_AVATARS = [
   'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=200&fit=crop&crop=faces',
@@ -205,6 +261,8 @@ export const DEFAULT_USERS: UserAccount[] = [
     department: 'Quality Leadership',
     departmentAr: 'قيادة الجودة ونظم المعلومات',
     plant: 'Main Plant - Assembly 01',
+    assignedLines: ['Line 1 - Stamping (الكبس والتشكيل)', 'Line 2 - Welding (اللحام والتجميع الآلي)', 'Line 5 - Final Assembly (التجميع النهائي)'],
+    shift: 'shift_general',
     status: 'active',
     avatar: PRESET_AVATARS[0],
     lastLogin: 'Just now',
@@ -222,6 +280,8 @@ export const DEFAULT_USERS: UserAccount[] = [
     department: 'Quality Management',
     departmentAr: 'إدارة توكيد الجودة',
     plant: 'Main Plant - Assembly 01',
+    assignedLines: ['Line 1 - Stamping (الكبس والتشكيل)', 'Line 4 - Sub-Assembly (التجميع الفرعي)', 'Line 5 - Final Assembly (التجميع النهائي)'],
+    shift: 'shift_general',
     status: 'active',
     avatar: PRESET_AVATARS[1],
     lastLogin: '2 hours ago',
@@ -239,6 +299,8 @@ export const DEFAULT_USERS: UserAccount[] = [
     department: 'Engineering & SPC',
     departmentAr: 'هندسة العمليات والتحكم الإحصائي',
     plant: 'Secondary Plant - Stamping',
+    assignedLines: ['Line 1 - Stamping (الكبس والتشكيل)', 'Line 2 - Welding (اللحام والتجميع الآلي)'],
+    shift: 'shift_1',
     status: 'active',
     avatar: PRESET_AVATARS[2],
     lastLogin: 'Yesterday',
@@ -256,6 +318,8 @@ export const DEFAULT_USERS: UserAccount[] = [
     department: 'Production Quality',
     departmentAr: 'جودة خطوط الإنتاج',
     plant: 'Main Plant - Assembly 01',
+    assignedLines: ['Line 4 - Sub-Assembly (التجميع الفرعي)', 'Line 5 - Final Assembly (التجميع النهائي)'],
+    shift: 'shift_1',
     status: 'active',
     avatar: PRESET_AVATARS[3],
     lastLogin: '3 days ago',
@@ -273,6 +337,8 @@ export const DEFAULT_USERS: UserAccount[] = [
     department: 'Supply Chain Quality',
     departmentAr: 'جودة استلام الخامات والموردين',
     plant: 'Central Logistics Dock',
+    assignedLines: ['Line 1 - Stamping (الكبس والتشكيل)'],
+    shift: 'shift_1',
     status: 'active',
     avatar: PRESET_AVATARS[5],
     lastLogin: '5 days ago',
@@ -326,6 +392,14 @@ export function loadStoredUsers(): UserAccount[] {
           uPatched.username = uPatched.email.split('@')[0];
           modified = true;
         }
+        if (!uPatched.assignedLines || !Array.isArray(uPatched.assignedLines) || uPatched.assignedLines.length === 0) {
+          uPatched.assignedLines = [PRESET_PRODUCTION_LINES[0]];
+          modified = true;
+        }
+        if (!uPatched.shift) {
+          uPatched.shift = uPatched.roleId === 'admin' || uPatched.roleId === 'quality_manager' ? 'shift_general' : 'shift_1';
+          modified = true;
+        }
         return uPatched;
       });
       if (modified) {
@@ -353,6 +427,8 @@ export function createUser(data: Omit<UserAccount, 'id' | 'createdAt' | 'lastLog
     ...data,
     username: data.username?.trim() || data.email.split('@')[0],
     password: data.password?.trim() || '123456',
+    assignedLines: data.assignedLines && data.assignedLines.length > 0 ? data.assignedLines : [PRESET_PRODUCTION_LINES[0]],
+    shift: data.shift || 'shift_1',
     id: `usr-${Date.now().toString(36)}`,
     lastLogin: 'Never',
     createdAt: new Date().toISOString().split('T')[0]
