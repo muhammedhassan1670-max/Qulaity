@@ -488,3 +488,19 @@ export function authenticateUser(identifier: string, password: string): { user: 
 
   return { user: found, permissions };
 }
+
+/**
+ * Helper to get readable permission label in Arabic or English
+ */
+export function getPermissionLabel(permId: string, isAr: boolean = true): string {
+  if (permId === '*' || permId === 'admin.access') {
+    return isAr ? 'تحكم كامل بالنظام' : 'Full System Access';
+  }
+  for (const group of PERMISSION_GROUPS) {
+    const found = group.permissions.find(p => p.id === permId);
+    if (found) {
+      return isAr ? found.labelAr : found.labelEn;
+    }
+  }
+  return permId;
+}
