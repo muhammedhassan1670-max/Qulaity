@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { useConfigStore } from './configStore';
+import { seedComprehensiveQualityLifecycle } from '@/services/seedLifecycleDemo';
 
 export interface User {
   id: string;
@@ -250,6 +251,15 @@ export const useAppStore = create<AppState>()(
             }
           ]));
           localStorage.setItem('qms_local_seeded', 'true');
+        }
+
+        if (typeof localStorage !== 'undefined' && !localStorage.getItem('qms_comprehensive_seeded_v1')) {
+          try {
+            seedComprehensiveQualityLifecycle();
+            localStorage.setItem('qms_comprehensive_seeded_v1', 'true');
+          } catch (e) {
+            console.warn('Could not seed comprehensive lifecycle demo', e);
+          }
         }
 
         // If already authenticated (rehydrated), don't overwrite user on refresh, but ensure avatar.
