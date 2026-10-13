@@ -3234,7 +3234,20 @@ export const useConfigStore = create<ConfigState>()(
     persist(
       (set, get) => ({
         // Initial State
-        forms: [],
+        forms: [
+          defaultNCRForm,
+          defaultCAPAForm,
+          defaultAuditForm,
+          default8DForm,
+          defaultDeviationForm,
+          defaultChangeControlForm,
+          defaultComplaintForm,
+          defaultControlPlanForm,
+          defaultSupplierForm,
+          defaultInspectionForm,
+          defaultCalibrationForm,
+          defaultDefectLogForm,
+        ],
         activeForm: null,
         externalDataSources: [],
         optionSets: [],
@@ -3413,9 +3426,25 @@ export const useConfigStore = create<ConfigState>()(
         },
 
         getFormByType: (type) => {
-          const active = get().forms.find((f: DynamicForm) => f.type === type && f.isActive);
+          const active = get().forms?.find((f: DynamicForm) => f.type === type && f.isActive);
           if (active) return active;
-          return get().forms.find((f: DynamicForm) => f.type === type);
+          const anyType = get().forms?.find((f: DynamicForm) => f.type === type);
+          if (anyType) return anyType;
+          const fallbackMap: Record<string, DynamicForm> = {
+            ncr: defaultNCRForm,
+            capa: defaultCAPAForm,
+            audit: defaultAuditForm,
+            '8d': default8DForm,
+            deviation: defaultDeviationForm,
+            'change-control': defaultChangeControlForm,
+            complaint: defaultComplaintForm,
+            'control-plan': defaultControlPlanForm,
+            supplier: defaultSupplierForm,
+            inspection: defaultInspectionForm,
+            calibration: defaultCalibrationForm,
+            'defect-log': defaultDefectLogForm,
+          };
+          return fallbackMap[type];
         },
 
         upsertOptionSet: (setArg) => {
@@ -3660,7 +3689,34 @@ export const useConfigStore = create<ConfigState>()(
           plants: state.plants,
           currentPlantId: state.currentPlantId,
           chartSettings: state.chartSettings
-        })
+        }),
+        onRehydrateStorage: () => (state) => {
+          if (state) {
+            const defaults = [
+              defaultNCRForm,
+              defaultCAPAForm,
+              defaultAuditForm,
+              default8DForm,
+              defaultDeviationForm,
+              defaultChangeControlForm,
+              defaultComplaintForm,
+              defaultControlPlanForm,
+              defaultSupplierForm,
+              defaultInspectionForm,
+              defaultCalibrationForm,
+              defaultDefectLogForm,
+            ];
+            if (!state.forms || state.forms.length === 0) {
+              state.forms = defaults;
+            } else {
+              defaults.forEach((defForm) => {
+                if (!state.forms.some((f: DynamicForm) => f.type === defForm.type)) {
+                  state.forms.push(defForm);
+                }
+              });
+            }
+          }
+        }
       }
     )
   )

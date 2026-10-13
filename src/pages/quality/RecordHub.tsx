@@ -70,11 +70,11 @@ export function QualityRecordHub() {
   const [viewMode, setViewMode] = useState<'table' | 'kanban'>('table');
 
   const config = MODULES[activeType] || MODULES.ncr;
-  const { forms } = useConfigStore();
+  const { forms, getFormByType } = useConfigStore();
   
   const formConfig = useMemo(() => 
-    forms.find(f => f.type === activeType && f.isActive),
-  [forms, activeType]);
+    forms.find(f => f.type === activeType && f.isActive) || getFormByType(activeType),
+  [forms, activeType, getFormByType]);
 
   const recordsByStage = useMemo(() => {
     const grouped: Record<string, any[]> = {};
