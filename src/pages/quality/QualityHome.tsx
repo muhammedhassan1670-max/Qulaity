@@ -12,6 +12,8 @@ import {
   Download,
   FileText,
   FileJson,
+  Factory,
+  ArrowRight,
   LayoutTemplate,
   Network,
   Plus,
@@ -340,6 +342,37 @@ export default function QualityHome() {
             </div>
           </div>
         </section>
+
+        {/* Prominent Plant Floor Map Callout Banner */}
+        <Link 
+          to="/quality-control-tower" 
+          className="group relative block w-full p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-amber-500/25 via-orange-500/15 to-amber-500/25 border-2 border-amber-500/50 hover:border-amber-400 transition-all shadow-xl hover:shadow-amber-500/20 overflow-hidden"
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/40 shrink-0 group-hover:scale-110 transition-transform">
+                <Factory className="w-6 h-6 text-white animate-pulse" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base sm:text-lg font-black text-white group-hover:text-amber-300 transition-colors">
+                    خريطة صالة المصنع التفاعلية (Live Plant Floor Map & Layout)
+                  </h3>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500/30 text-amber-200 border border-amber-500/40 animate-pulse">
+                    جديد حي
+                  </span>
+                </div>
+                <p className="text-xs text-white/70 mt-1">
+                  مسقط أفقي حقيقي لصالة الإنتاج، الماكينات، رصيف الاستلام، قفص الحجز، وكابينة اختبار الضغط 280 بار مع نقاط التوقف الحية.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-xs font-black text-amber-300 bg-amber-500/20 px-4 py-2.5 rounded-2xl border border-amber-500/40 group-hover:bg-amber-500 group-hover:text-slate-950 transition-all shrink-0">
+              <span>فتح خريطة المصنع الآن</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </div>
+          </div>
+        </Link>
 
         {/* End-to-End Factory Value Stream Pipeline */}
         <FactoryQualityStream />

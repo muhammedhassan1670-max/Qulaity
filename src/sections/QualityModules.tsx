@@ -53,6 +53,10 @@ export function QualityModules() {
       description: 'Compliance and process audit management', count: auditData.length, trend: 0
     },
     {
+      id: 'factory-floorplan', name: 'Plant Floor Layout', shortName: 'LAYOUT', icon: Factory, color: '#F59E0B',
+      description: '2D Factory plant map: machines, test cells & live Andon stop-points', count: 1, trend: 0
+    },
+    {
       id: 'supplier', name: 'Supplier Quality', shortName: 'SQM', icon: Factory, color: '#795548',
       description: 'Incoming material quality control', count: ncrData.filter(n => n.category === 'supplier').length, trend: 0
     }
@@ -79,7 +83,8 @@ export function QualityModules() {
       'ncr': '/quality/records/ncr',
       'capa': '/quality/records/capa',
       '8d': '/quality/records/8d',
-      'audit': '/compliance/hub/audit'
+      'audit': '/compliance/hub/audit',
+      'factory-floorplan': '/quality-control-tower'
     };
     if (hubMap[moduleId]) navigate(hubMap[moduleId]);
     else { setSelectedModule(moduleId); setActiveTab('active'); }

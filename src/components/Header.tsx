@@ -17,6 +17,7 @@ import {
   QrCode,
   Layout,
   LayoutGrid,
+  Factory,
   Mic,
   MicOff
 } from 'lucide-react';
@@ -163,6 +164,16 @@ export function Header({ onMenuToggle, user }: HeaderProps) {
             title="Scan QR/Barcode"
           >
             <QrCode className="w-5 h-5" />
+          </button>
+
+          {/* Plant Floor Map Button (Always visible) */}
+          <button
+            className="inline-flex items-center gap-1.5 md:gap-2 px-3 md:px-4 h-10 rounded-xl border border-amber-500/40 bg-amber-500/15 hover:bg-amber-500/25 text-amber-500 dark:text-amber-400 transition-all duration-300 text-xs md:text-sm font-black shadow-sm hover:scale-105 active:scale-95"
+            onClick={() => navigate('/quality-control-tower')}
+            title="خريطة صالة المصنع (Floor Layout)"
+          >
+            <Factory className="w-4 h-4 text-amber-500 dark:text-amber-400 animate-pulse" />
+            <span className="font-black">{language === 'ar' ? 'خريطة المصنع' : 'Plant Map'}</span>
           </button>
 
           {/* Admin - Desktop only */}

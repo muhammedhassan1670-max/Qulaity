@@ -199,7 +199,11 @@ const routes: RouteObject[] = [
       { path: 'quality-slides', element: <LazyWrapper><QualitySlidesPage /></LazyWrapper> },
       { path: 'quality-dashboard', element: <ProtectedRoute requiredPermissions={['analytics.dashboard', 'spc.view', 'ncr.create', 'admin.access']}><LazyWrapper><QualityDashboardPage /></LazyWrapper></ProtectedRoute> },
       { path: 'quality-sync-manager', element: <LazyWrapper><OfflineSyncManagerPage /></LazyWrapper> },
-      { path: 'quality-control-tower', element: <ProtectedRoute requiredPermissions={['stream.view', '*', 'admin.access']}><LazyWrapper><QualityControlTowerPage /></LazyWrapper></ProtectedRoute> },
+      { path: 'quality-control-tower', element: <LazyWrapper><QualityControlTowerPage /></LazyWrapper> },
+      { path: 'plant-map', element: <Navigate to="/quality-control-tower" replace /> },
+      { path: 'factory-map', element: <Navigate to="/quality-control-tower" replace /> },
+      { path: 'plant-layout', element: <Navigate to="/quality-control-tower" replace /> },
+      { path: 'floor-layout', element: <Navigate to="/quality-control-tower" replace /> },
       { path: 'quality-stream-map', element: <Navigate to="/quality-control-tower" replace /> },
       { path: 'traceability-tower', element: <Navigate to="/quality-control-tower" replace /> },
 

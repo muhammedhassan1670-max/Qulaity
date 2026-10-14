@@ -29,7 +29,6 @@ import {
   Target,
   Smartphone,
   Info,
-  Network,
   X
 } from 'lucide-react';
 import { useConfigStore } from '../stores/configStore';
@@ -95,14 +94,13 @@ export function Sidebar({ isOpen, onClose, onSectionChange }: SidebarProps) {
       {
         id: 'quality-control-tower',
         labelKey: 'quality-control-tower',
-        labelEn: 'Control Tower & Traceability',
-        labelAr: 'برج مراقبة وتتبع الجودة (Tower)',
-        hintEn: 'Visual stop-point flow & record cockpit',
-        hintAr: 'خريطة نقاط التوقف والتتبع التفاعلية',
-        icon: Network,
-        badge: 'TOWER',
-        badgeColor: 'bg-cyan-500',
-        permission: 'stream.view'
+        labelEn: 'Plant Floor Map & Layout',
+        labelAr: 'خريطة صالة المصنع (Floor Layout)',
+        hintEn: 'Physical plant floor layout & stop points',
+        hintAr: 'لاي أوت أرضية المصنع الحقيقي ومحطات التوقف',
+        icon: Factory,
+        badge: 'LAYOUT',
+        badgeColor: 'bg-amber-500'
       },
 
       // Stage 1: Incoming & Supplier Quality (IQC)
