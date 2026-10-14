@@ -411,6 +411,11 @@ export interface ScadaConnection {
   type: 'motor-roller' | 'gravity-roller' | 'belt' | 'chute' | 'pneumatic' | 'bridge' | 'dock-ramp';
   fromAnchor?: 'top' | 'bottom' | 'left' | 'right';
   toAnchor?: 'top' | 'bottom' | 'left' | 'right';
+  velocityMs?: number;
+  motorKw?: number;
+  capacityUnits?: number;
+  currentWip?: number;
+  sensorType?: string;
 }
 
 export const FACTORY_CONNECTIONS: ScadaConnection[] = [
@@ -424,6 +429,11 @@ export const FACTORY_CONNECTIONS: ScadaConnection[] = [
     type: 'gravity-roller',
     fromAnchor: 'bottom',
     toAnchor: 'top',
+    velocityMs: 0.35,
+    motorKw: 0.55,
+    capacityUnits: 15,
+    currentWip: 6,
+    sensorType: 'Photoelectric Retroreflective',
   },
   {
     id: 'CONN-IQC-BUF',
@@ -434,6 +444,11 @@ export const FACTORY_CONNECTIONS: ScadaConnection[] = [
     type: 'motor-roller',
     fromAnchor: 'bottom',
     toAnchor: 'top',
+    velocityMs: 0.48,
+    motorKw: 0.75,
+    capacityUnits: 20,
+    currentWip: 11,
+    sensorType: 'Optical Barcode Scanner',
   },
   {
     id: 'CONN-IQC-QRN',
@@ -444,6 +459,11 @@ export const FACTORY_CONNECTIONS: ScadaConnection[] = [
     type: 'chute',
     fromAnchor: 'bottom',
     toAnchor: 'top',
+    velocityMs: 0.60,
+    motorKw: 0.37,
+    capacityUnits: 10,
+    currentWip: 2,
+    sensorType: 'Motorized Diverter Gate Blade',
   },
   // CROSSING AISLE: Bay A to Bay B
   {
@@ -455,6 +475,11 @@ export const FACTORY_CONNECTIONS: ScadaConnection[] = [
     type: 'bridge',
     fromAnchor: 'right',
     toAnchor: 'left',
+    velocityMs: 0.42,
+    motorKw: 0.75,
+    capacityUnits: 16,
+    currentWip: 7,
+    sensorType: 'RFID Transponder Reader Gate',
   },
   // BAY B: Assembly Line 01 Inter-Station Motorized Conveyors
   {
@@ -466,6 +491,11 @@ export const FACTORY_CONNECTIONS: ScadaConnection[] = [
     type: 'motor-roller',
     fromAnchor: 'right',
     toAnchor: 'left',
+    velocityMs: 0.50,
+    motorKw: 1.10,
+    capacityUnits: 25,
+    currentWip: 14,
+    sensorType: 'Laser Distance Sensor & Proximity',
   },
   {
     id: 'CONN-ASM-TRQ',
@@ -476,6 +506,11 @@ export const FACTORY_CONNECTIONS: ScadaConnection[] = [
     type: 'motor-roller',
     fromAnchor: 'right',
     toAnchor: 'left',
+    velocityMs: 0.45,
+    motorKw: 0.75,
+    capacityUnits: 20,
+    currentWip: 9,
+    sensorType: 'Poka-Yoke Indexing Stop Gate',
   },
   {
     id: 'CONN-TRQ-PRS',
@@ -486,6 +521,11 @@ export const FACTORY_CONNECTIONS: ScadaConnection[] = [
     type: 'motor-roller',
     fromAnchor: 'right',
     toAnchor: 'right',
+    velocityMs: 0.38,
+    motorKw: 1.50,
+    capacityUnits: 18,
+    currentWip: 5,
+    sensorType: 'Heavy Friction Rollers & Safety Guide',
   },
   {
     id: 'CONN-PRS-IPQC',
@@ -496,6 +536,11 @@ export const FACTORY_CONNECTIONS: ScadaConnection[] = [
     type: 'belt',
     fromAnchor: 'right',
     toAnchor: 'left',
+    velocityMs: 0.40,
+    motorKw: 0.75,
+    capacityUnits: 15,
+    currentWip: 8,
+    sensorType: 'Optical Vision Clearance Arch',
   },
   // BAY B to BAY C: Quality Lab Sampling
   {
@@ -507,6 +552,11 @@ export const FACTORY_CONNECTIONS: ScadaConnection[] = [
     type: 'pneumatic',
     fromAnchor: 'bottom',
     toAnchor: 'top',
+    velocityMs: 2.80,
+    motorKw: 2.20,
+    capacityUnits: 5,
+    currentWip: 1,
+    sensorType: 'Vacuum Pressure Transducer',
   },
   {
     id: 'CONN-IPQC-MRB',
@@ -517,6 +567,11 @@ export const FACTORY_CONNECTIONS: ScadaConnection[] = [
     type: 'pneumatic',
     fromAnchor: 'bottom',
     toAnchor: 'top',
+    velocityMs: 2.50,
+    motorKw: 2.20,
+    capacityUnits: 5,
+    currentWip: 1,
+    sensorType: 'High-Speed Pneumatic Shuttle',
   },
   // BAY B to BAY D: Cross-Plant Elevated Bridge
   {
@@ -528,6 +583,11 @@ export const FACTORY_CONNECTIONS: ScadaConnection[] = [
     type: 'bridge',
     fromAnchor: 'right',
     toAnchor: 'left',
+    velocityMs: 0.55,
+    motorKw: 1.10,
+    capacityUnits: 30,
+    currentWip: 18,
+    sensorType: 'Elevated Safety Net & Sensor Eye',
   },
   // BAY D & BAY E: Final Packaging & Shipping
   {
@@ -539,6 +599,11 @@ export const FACTORY_CONNECTIONS: ScadaConnection[] = [
     type: 'gravity-roller',
     fromAnchor: 'bottom',
     toAnchor: 'top',
+    velocityMs: 0.40,
+    motorKw: 0.75,
+    capacityUnits: 20,
+    currentWip: 10,
+    sensorType: 'Pallet Centering Photo-Eyes',
   },
   {
     id: 'CONN-PCK-SHP',
@@ -549,6 +614,11 @@ export const FACTORY_CONNECTIONS: ScadaConnection[] = [
     type: 'motor-roller',
     fromAnchor: 'bottom',
     toAnchor: 'top',
+    velocityMs: 0.35,
+    motorKw: 1.50,
+    capacityUnits: 15,
+    currentWip: 5,
+    sensorType: 'Heavy Duty Pallet Scale & Scanner',
   },
   {
     id: 'CONN-SHP-DSP',
@@ -559,6 +629,11 @@ export const FACTORY_CONNECTIONS: ScadaConnection[] = [
     type: 'dock-ramp',
     fromAnchor: 'bottom',
     toAnchor: 'top',
+    velocityMs: 0.25,
+    motorKw: 2.20,
+    capacityUnits: 8,
+    currentWip: 3,
+    sensorType: 'Hydraulic Leveler Safety Sensor',
   },
 ];
 
@@ -780,11 +855,36 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedStationId, setSelectedStationId] = useState<string | null>('STATION-PRESSURE-TEST');
+  const [selectedConveyorId, setSelectedConveyorId] = useState<string | null>(null);
+  const [eStopConveyors, setEStopConveyors] = useState<Record<string, boolean>>({});
   const [zoomLevel, setZoomLevel] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Selected Conveyor lookup for real-time telemetry HUD
+  const selectedConveyor = useMemo(() => {
+    if (!selectedConveyorId) return null;
+    return FACTORY_CONNECTIONS.find(c => c.id === selectedConveyorId) || null;
+  }, [selectedConveyorId]);
+
+  const toggleConveyorEStop = (connId: string) => {
+    const isStopped = Boolean(eStopConveyors[connId]);
+    if (!isStopped) {
+      if (soundEnabled) playIndustrialChime('alert');
+      setEStopConveyors(prev => ({ ...prev, [connId]: true }));
+      toast.error(isAr ? `🛑 تم إيقاف طوارئ للخط الناقل (${connId})` : `🛑 Conveyor (${connId}) Emergency Stopped`);
+    } else {
+      if (soundEnabled) playIndustrialChime('success');
+      setEStopConveyors(prev => {
+        const next = { ...prev };
+        delete next[connId];
+        return next;
+      });
+      toast.success(isAr ? `✓ تم استئناف حركة الخط الناقل (${connId})` : `✓ Conveyor (${connId}) resumed motion`);
+    }
+  };
 
   // Real System Records State
   const [realDefects, setRealDefects] = useState<any[]>([]);
@@ -1228,6 +1328,88 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
           <path d="M 40 20 L 40 38" strokeWidth="2" />
           <circle cx="40" cy="41" r="3" fill="#ec4899" />
         </svg>
+      );
+    }
+    return null;
+  };
+
+  // Interactive Live Animated Machine Cockpit Mechanisms
+  const renderMachineCockpit = (code: string, isAlert: boolean, isAndonActive: boolean) => {
+    if (code.startsWith('CNC')) {
+      return (
+        <div className="flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg bg-black/40 border border-cyan-500/20 my-0.5 z-10">
+          <div className="relative w-4 h-4 flex items-center justify-center shrink-0">
+            <div className={`w-3.5 h-3.5 rounded-full border-2 border-dashed border-cyan-400 ${isAndonActive ? '' : 'animate-[spin_1.2s_linear_infinite]'}`} />
+            <div className="w-1 h-1 rounded-full bg-amber-400" />
+          </div>
+          <div className="flex-1 flex justify-between items-center text-[8px] font-mono">
+            <span className="text-slate-400">SPINDLE</span>
+            <span className={`font-bold ${isAndonActive ? 'text-red-400' : 'text-cyan-300'}`}>
+              {isAndonActive ? '0 RPM' : '12,500 RPM'}
+            </span>
+          </div>
+        </div>
+      );
+    }
+    if (code.startsWith('PRS')) {
+      return (
+        <div className="flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg bg-black/40 border border-red-500/20 my-0.5 z-10">
+          <div className="relative w-4 h-4 flex items-center justify-center shrink-0">
+            <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-red-400">
+              <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="14,4" />
+              <line x1="12" y1="12" x2="16" y2="7" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" className={isAndonActive ? '' : 'animate-pulse'} />
+            </svg>
+          </div>
+          <div className="flex-1 flex justify-between items-center text-[8px] font-mono">
+            <span className="text-slate-400">PRESS.</span>
+            <span className={`font-bold ${isAlert ? 'text-red-400' : 'text-emerald-400'}`}>
+              6.12 BAR
+            </span>
+          </div>
+        </div>
+      );
+    }
+    if (code.startsWith('TRQ')) {
+      return (
+        <div className="flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg bg-black/40 border border-amber-500/20 my-0.5 z-10">
+          <div className="relative w-4 h-4 flex items-center justify-center shrink-0">
+            <div className={`w-3 h-3 border-2 border-amber-400 rounded-sm ${isAndonActive ? '' : 'animate-bounce'}`} />
+          </div>
+          <div className="flex-1 flex justify-between items-center text-[8px] font-mono">
+            <span className="text-slate-400">TORQUE</span>
+            <span className="font-bold text-amber-300">42.5 N·m</span>
+          </div>
+        </div>
+      );
+    }
+    if (code.startsWith('IPQC') || code.startsWith('OQC')) {
+      return (
+        <div className="relative overflow-hidden px-1.5 py-0.5 rounded-lg bg-black/40 border border-emerald-500/20 my-0.5 z-10">
+          {!isAndonActive && (
+            <div className="absolute inset-y-0 w-8 bg-gradient-to-r from-transparent via-emerald-400/30 to-transparent animate-[dash_2s_linear_infinite]" />
+          )}
+          <div className="flex justify-between items-center text-[8px] font-mono relative z-10">
+            <span className="text-slate-400 flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+              VISION AI
+            </span>
+            <span className="font-bold text-emerald-300">100% SCAN</span>
+          </div>
+        </div>
+      );
+    }
+    if (code.startsWith('CMM')) {
+      return (
+        <div className="flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg bg-black/40 border border-purple-500/20 my-0.5 z-10">
+          <div className="relative w-4 h-4 flex items-center justify-center shrink-0">
+            <div className="w-2 h-2 rounded-full bg-pink-500/80 animate-ping" />
+            <div className="absolute w-1 h-1 rounded-full bg-white" />
+          </div>
+          <div className="flex-1 flex justify-between items-center text-[8px] font-mono">
+            <span className="text-slate-400">PROBE</span>
+            <span className="font-bold text-purple-300">±0.002 mm</span>
+          </div>
+        </div>
       );
     }
     return null;
@@ -1677,10 +1859,37 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                   <marker id="scada-arrow-emerald" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
                     <path d="M 0 1 L 10 5 L 0 9 z" fill="#10b981" />
                   </marker>
+
+                  {/* Rotating Emergency Siren Light Gradient */}
+                  <radialGradient id="scada-emergency-siren" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#ef4444" stopOpacity="0.32" />
+                    <stop offset="35%" stopColor="#dc2626" stopOpacity="0.18" />
+                    <stop offset="70%" stopColor="#991b1b" stopOpacity="0.06" />
+                    <stop offset="100%" stopColor="#000000" stopOpacity="0" />
+                  </radialGradient>
+                  <linearGradient id="scada-siren-beam" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#ef4444" stopOpacity="0.35" />
+                    <stop offset="100%" stopColor="#ef4444" stopOpacity="0" />
+                  </linearGradient>
                 </defs>
 
                 {/* Grid Floor */}
                 <rect width="1200" height="640" fill="url(#scada-grid)" />
+
+                {/* ROTATING EMERGENCY SIREN SWEEP LIGHT (TRIGGERED ON ANDON / CRITICAL ALERTS) */}
+                {(summaryMetrics.andonCount > 0 || summaryMetrics.alertCount > 0) && (
+                  <g className="pointer-events-none mix-blend-screen">
+                    <circle cx="600" cy="320" r="660" fill="url(#scada-emergency-siren)" className="animate-pulse" />
+                    <g transform="translate(600, 320)">
+                      <polygon points="0,0 -700,-180 -700,180" fill="url(#scada-siren-beam)" opacity="0.65">
+                        <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="4s" repeatCount="indefinite" />
+                      </polygon>
+                      <polygon points="0,0 700,-180 700,180" fill="url(#scada-siren-beam)" opacity="0.65">
+                        <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="4s" repeatCount="indefinite" />
+                      </polygon>
+                    </g>
+                  </g>
+                )}
 
                 {/* Outer Plant Wall with Metallic Industrial Bevel */}
                 <rect x="12" y="12" width="1176" height="616" fill="none" stroke={ambientTheme === 'cleanroom' ? '#94a3b8' : '#1e293b'} strokeWidth="4" rx="18" />
@@ -1804,11 +2013,21 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                   const isSourceSelected = selectedStationId === conn.fromId;
                   const isTargetSelected = selectedStationId === conn.toId;
                   const isConnActive = isSourceSelected || isTargetSelected;
+                  const isSelectedConveyor = selectedConveyorId === conn.id;
+                  const isConveyorStopped = Boolean(eStopConveyors[conn.id]);
                   const targetStationStatus = stationStatuses[conn.toId];
                   const hasLineHold = Boolean(targetStationStatus?.isAndonActive || targetStationStatus?.status === 'alert');
 
                   return (
-                    <g key={conn.id} className="transition-all duration-300">
+                    <g 
+                      key={conn.id} 
+                      className="transition-all duration-300 pointer-events-auto cursor-pointer group"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedConveyorId(conn.id);
+                        if (soundEnabled) playIndustrialChime('camera');
+                      }}
+                    >
                       {/* Conveyor Bed Drop Shadow */}
                       <path 
                         d={pathInfo.pathD} 
@@ -1818,6 +2037,27 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                         strokeLinecap="round" 
                         strokeLinejoin="round" 
                       />
+
+                      {/* Clickable Invisible Thick Hit Path for ultra-responsive clicks */}
+                      <path 
+                        d={pathInfo.pathD} 
+                        fill="none" 
+                        stroke="transparent" 
+                        strokeWidth={32} 
+                        className="pointer-events-auto cursor-pointer" 
+                      />
+
+                      {/* Conveyor Selection Highlight Aura */}
+                      {isSelectedConveyor && (
+                        <path 
+                          d={pathInfo.pathD} 
+                          fill="none" 
+                          stroke="#38bdf8" 
+                          strokeWidth={28} 
+                          strokeOpacity={0.4} 
+                          className="animate-pulse pointer-events-none" 
+                        />
+                      )}
 
                       {/* Conveyor Outer Metallic Steel Guide Rails */}
                       {conn.type !== 'pneumatic' && (
@@ -1848,7 +2088,7 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                             stroke="#38bdf8" 
                             strokeWidth={3} 
                             strokeDasharray="6,8" 
-                            className="animate-[dash_1s_linear_infinite]" 
+                            className={isConveyorStopped ? "" : "animate-[dash_1s_linear_infinite]"} 
                           />
                         </>
                       ) : conn.type === 'chute' ? (
@@ -1884,27 +2124,52 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                             stroke={ambientTheme === 'cleanroom' ? '#64748b' : '#334155'} 
                             strokeWidth={12} 
                             strokeDasharray="4,6" 
-                            className={isMaterialFlowActive ? "animate-[dash_2s_linear_infinite]" : ""} 
+                            className={isMaterialFlowActive && !isConveyorStopped ? "animate-[dash_2s_linear_infinite]" : ""} 
                           />
                         </>
                       )}
 
+                      {/* Photoelectric Sensor Bracket with Pulsing Infrared Beam */}
+                      {conn.type !== 'pneumatic' && (() => {
+                        const sensorX = pathInfo.startX + (pathInfo.endX - pathInfo.startX) * 0.55;
+                        const sensorY = pathInfo.startY + (pathInfo.endY - pathInfo.startY) * 0.55;
+                        return (
+                          <g transform={`translate(${sensorX}, ${sensorY})`} className="pointer-events-none">
+                            <rect x="-5" y="-12" width="10" height="5" rx="1" fill="#1e293b" stroke="#38bdf8" strokeWidth="0.8" />
+                            <rect x="-5" y="7" width="10" height="5" rx="1" fill="#1e293b" stroke="#38bdf8" strokeWidth="0.8" />
+                            <line x1="0" y1="-7" x2="0" y2="7" stroke="#ef4444" strokeWidth="1.2" strokeDasharray="2,1" className="animate-pulse" opacity="0.85" />
+                            <circle cx="0" cy="-9.5" r="1.5" fill={isConveyorStopped ? "#ef4444" : "#22c55e"} className={isConveyorStopped ? "animate-ping" : ""} />
+                            <circle cx="0" cy="9.5" r="1.5" fill={isConveyorStopped ? "#ef4444" : "#22c55e"} />
+                          </g>
+                        );
+                      })()}
+
                       {/* Cyber Data Conduit / Glowing Pulse Line (Hybrid or Laser mode) */}
-                      {(connectionStyle === 'laser' || connectionStyle === 'hybrid' || isConnActive) && (
+                      {(connectionStyle === 'laser' || connectionStyle === 'hybrid' || isConnActive || isSelectedConveyor) && (
                         <path 
                           d={pathInfo.pathD} 
                           fill="none" 
-                          stroke={hasLineHold ? '#ef4444' : isSourceSelected ? '#06b6d4' : isTargetSelected ? '#f59e0b' : '#38bdf8'} 
-                          strokeWidth={isConnActive ? 4 : 2} 
-                          strokeDasharray={hasLineHold ? "6,4" : "10,8"} 
-                          strokeOpacity={isConnActive ? 1 : 0.65}
-                          className={hasLineHold ? "animate-pulse" : isMaterialFlowActive ? "animate-[pulse_1.5s_infinite]" : ""}
-                          markerEnd={hasLineHold ? undefined : "url(#scada-arrow-cyan)"}
+                          stroke={isConveyorStopped || hasLineHold ? '#ef4444' : isSelectedConveyor ? '#38bdf8' : isSourceSelected ? '#06b6d4' : isTargetSelected ? '#f59e0b' : '#38bdf8'} 
+                          strokeWidth={isSelectedConveyor || isConnActive ? 4 : 2} 
+                          strokeDasharray={isConveyorStopped || hasLineHold ? "6,4" : "10,8"} 
+                          strokeOpacity={isSelectedConveyor || isConnActive ? 1 : 0.65}
+                          className={isConveyorStopped || hasLineHold ? "animate-pulse" : isMaterialFlowActive ? "animate-[pulse_1.5s_infinite]" : ""}
+                          markerEnd={isConveyorStopped || hasLineHold ? undefined : "url(#scada-arrow-cyan)"}
                         />
                       )}
 
+                      {/* E-Stopped Emergency Badge */}
+                      {isConveyorStopped && (
+                        <g transform={`translate(${(pathInfo.startX + pathInfo.endX) / 2}, ${(pathInfo.startY + pathInfo.endY) / 2})`}>
+                          <rect x="-44" y="-11" width="88" height="22" rx="5" fill="#ef4444" stroke="#ffffff" strokeWidth="1.5" className="animate-pulse" />
+                          <text x="0" y="4" textAnchor="middle" fill="#ffffff" fontSize="9" fontWeight="900" fontFamily="monospace">
+                            🛑 E-STOPPED
+                          </text>
+                        </g>
+                      )}
+
                       {/* Conveyor Line Hold / Buffer Full Warning Badge */}
-                      {hasLineHold && (
+                      {hasLineHold && !isConveyorStopped && (
                         <g transform={`translate(${(pathInfo.startX + pathInfo.endX) / 2}, ${(pathInfo.startY + pathInfo.endY) / 2})`}>
                           <rect x="-38" y="-10" width="76" height="20" rx="5" fill="#ef4444" stroke="#ffffff" strokeWidth="1" className="animate-pulse" />
                           <text x="0" y="3" textAnchor="middle" fill="#ffffff" fontSize="8" fontWeight="900" fontFamily="monospace">
@@ -1913,18 +2178,87 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                         </g>
                       )}
 
-                      {/* Active Connection Floating Flow Indicator Badge */}
-                      {isConnActive && !hasLineHold && (
+                      {/* Conveyor ID / Velocity Floating Tag on Selection or Hover */}
+                      {(isSelectedConveyor || isConnActive) && !hasLineHold && !isConveyorStopped && (
                         <g transform={`translate(${(pathInfo.startX + pathInfo.endX) / 2}, ${(pathInfo.startY + pathInfo.endY) / 2 - 14})`}>
-                          <rect x="-48" y="-9" width="96" height="18" rx="4" fill="#0f172a" stroke={isSourceSelected ? '#06b6d4' : '#f59e0b'} strokeWidth="1.2" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.8))" />
-                          <text x="0" y="3" textAnchor="middle" fill={isSourceSelected ? '#38bdf8' : '#fbbf24'} fontSize="8" fontWeight="bold">
-                            {isSourceSelected ? (isAr ? '▶ تدفق خارج' : '▶ Outfeed') : (isAr ? '◀ تغذية داخلة' : '◀ Infeed')}
+                          <rect x="-54" y="-9" width="108" height="18" rx="4" fill="#0f172a" stroke={isSelectedConveyor ? '#38bdf8' : isSourceSelected ? '#06b6d4' : '#f59e0b'} strokeWidth="1.2" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.8))" />
+                          <text x="0" y="3" textAnchor="middle" fill={isSelectedConveyor ? '#38bdf8' : isSourceSelected ? '#38bdf8' : '#fbbf24'} fontSize="8" fontWeight="bold">
+                            {isSelectedConveyor ? `${conn.id} • ${conn.velocityMs || 0.45}m/s` : isSourceSelected ? (isAr ? '▶ تدفق خارج' : '▶ Outfeed') : (isAr ? '◀ تغذية داخلة' : '◀ Infeed')}
                           </text>
                         </g>
                       )}
                     </g>
                   );
                 })}
+
+                {/* ========================================================== */}
+                {/* DIVERTER GATES: D-01 REJECT GATE & D-02 QC LAB SHUTTLE     */}
+                {/* ========================================================== */}
+                {/* DIVERTER D-01: IQC Material Split Gate */}
+                {(() => {
+                  const iqcStatus = stationStatuses['STATION-IQC'];
+                  const isIqcReject = Boolean(iqcStatus && (iqcStatus.status === 'alert' || iqcStatus.isAndonActive || iqcStatus.defectCount > 0));
+                  return (
+                    <g 
+                      transform="translate(152, 225)" 
+                      className="pointer-events-auto cursor-pointer group" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedStationId('STATION-QUARANTINE');
+                      }}
+                    >
+                      <rect x="-14" y="-12" width="28" height="24" rx="4" fill="#0f172a" stroke={isIqcReject ? "#ef4444" : "#10b981"} strokeWidth="1.5" filter="drop-shadow(0 2px 5px rgba(0,0,0,0.8))" />
+                      {/* Diverter Internal Flap Blade */}
+                      <line 
+                        x1="0" 
+                        y1="8" 
+                        x2={isIqcReject ? "-9" : "0"} 
+                        y2={isIqcReject ? "-8" : "-8"} 
+                        stroke={isIqcReject ? "#ef4444" : "#10b981"} 
+                        strokeWidth="3.5" 
+                        strokeLinecap="round" 
+                        className="transition-all duration-500"
+                      />
+                      <circle cx="0" cy="8" r="3" fill="#cbd5e1" stroke="#475569" strokeWidth="1" />
+                      <circle cx="9" cy="-7" r="2" fill={isIqcReject ? "#ef4444" : "#10b981"} className={isIqcReject ? "animate-ping" : ""} />
+                      <text x="18" y="2" fill={isIqcReject ? "#ef4444" : "#38bdf8"} fontSize="7" fontWeight="bold" fontFamily="monospace">
+                        {isIqcReject ? "DIVERT ▶ REJECT" : "PASS ▶ BUFFER"}
+                      </text>
+                    </g>
+                  );
+                })()}
+
+                {/* DIVERTER D-02: IPQC to Bay C Pneumatic Lab Shuttle */}
+                {(() => {
+                  const ipqcStatus = stationStatuses['STATION-IPQC'];
+                  const hasLabSample = Boolean(ipqcStatus && ipqcStatus.status !== 'pass');
+                  return (
+                    <g 
+                      transform="translate(735, 410)" 
+                      className="pointer-events-auto cursor-pointer group" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedStationId('STATION-CMM');
+                      }}
+                    >
+                      <rect x="-12" y="-12" width="24" height="24" rx="4" fill="#0f172a" stroke="#a855f7" strokeWidth="1.5" filter="drop-shadow(0 2px 5px rgba(0,0,0,0.8))" />
+                      <line 
+                        x1="0" 
+                        y1="-8" 
+                        x2={hasLabSample ? "0" : "8"} 
+                        y2={hasLabSample ? "8" : "0"} 
+                        stroke="#c084fc" 
+                        strokeWidth="3" 
+                        strokeLinecap="round" 
+                        className="transition-all duration-300"
+                      />
+                      <circle cx="0" cy="0" r="2.5" fill="#a855f7" className="animate-pulse" />
+                      <text x="-16" y="2" textAnchor="end" fill="#c084fc" fontSize="7" fontWeight="bold" fontFamily="monospace">
+                        QA LAB SHUTTLE
+                      </text>
+                    </g>
+                  );
+                })()}
 
                 {/* AUTONOMOUS AGV ROBOTS */}
                 {isAgvActive && (
@@ -2216,6 +2550,9 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                       </p>
                     </div>
 
+                    {/* LIVE ANIMATED MACHINE COCKPIT MECHANISM */}
+                    {renderMachineCockpit(eq.code, isAlert, isAndonActive)}
+
                     {/* LIVE IOT SENSOR OSCILLOSCOPE WAVEFORM */}
                     {showOscilloscope && (
                       <div className="h-2.5 w-full overflow-hidden flex items-center opacity-85 my-0.5 z-10">
@@ -2269,6 +2606,138 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                 );
               })}
             </div>
+
+            {/* ============================================================== */}
+            {/* FLOATING REAL-TIME CONVEYOR TELEMETRY HUD CARD                 */}
+            {/* ============================================================== */}
+            {selectedConveyor && (
+              <div 
+                className="absolute bottom-6 left-6 z-40 w-80 sm:w-96 rounded-2xl bg-[#090f1e]/95 backdrop-blur-xl border border-cyan-500/40 p-4 shadow-2xl shadow-cyan-950/80 animate-in fade-in slide-in-from-bottom-4 duration-200"
+                onClick={e => e.stopPropagation()}
+              >
+                {/* HUD Header */}
+                <div className="flex items-center justify-between pb-2.5 border-b border-cyan-500/20">
+                  <div className="flex items-center gap-2">
+                    <span className="p-1.5 rounded-lg bg-cyan-500/20 text-cyan-400">
+                      <Workflow className="w-4 h-4" />
+                    </span>
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] font-mono font-black text-cyan-400 px-1.5 py-0.2 rounded bg-cyan-950/80 border border-cyan-500/40">
+                          {selectedConveyor.id}
+                        </span>
+                        <span className="text-[9px] font-mono uppercase text-slate-400">
+                          {selectedConveyor.type}
+                        </span>
+                      </div>
+                      <h4 className="text-xs font-black text-white mt-0.5">
+                        {isAr ? selectedConveyor.nameAr : selectedConveyor.nameEn}
+                      </h4>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => setSelectedConveyorId(null)}
+                    className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Live Drive Telemetry Grid */}
+                <div className="grid grid-cols-2 gap-2 my-2.5 text-xs">
+                  {/* Linear Speed / Velocity */}
+                  <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800">
+                    <div className="flex items-center justify-between text-[10px] text-slate-400 mb-1">
+                      <span>{isAr ? 'السرعة الخطية (Velocity):' : 'Speed:'}</span>
+                      <span className={`w-2 h-2 rounded-full ${eStopConveyors[selectedConveyor.id] ? 'bg-red-500' : 'bg-emerald-400 animate-ping'}`} />
+                    </div>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-base font-black font-mono text-cyan-400">
+                        {eStopConveyors[selectedConveyor.id] ? '0.00' : selectedConveyor.velocityMs || 0.45}
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-mono">m/s</span>
+                    </div>
+                    <div className="w-full bg-slate-800 rounded-full h-1 mt-1.5 overflow-hidden">
+                      <div 
+                        className="bg-gradient-to-r from-cyan-500 to-emerald-400 h-1 rounded-full transition-all duration-300"
+                        style={{ width: eStopConveyors[selectedConveyor.id] ? '0%' : `${((selectedConveyor.velocityMs || 0.45) / 3.0) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Drive Motor Power */}
+                  <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800">
+                    <span className="text-[10px] text-slate-400 block mb-1">{isAr ? 'محرك الدفع (Inverter):' : 'Motor Rating:'}</span>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-base font-black font-mono text-amber-300">
+                        {selectedConveyor.motorKw || 0.75}
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-mono">kW (50Hz)</span>
+                    </div>
+                    <span className="text-[9px] font-mono text-slate-400 block mt-1 truncate">
+                      VFD AC Synchronized
+                    </span>
+                  </div>
+
+                  {/* Buffer WIP Capacity */}
+                  <div className="col-span-2 p-2.5 rounded-xl bg-slate-950/80 border border-slate-800">
+                    <div className="flex items-center justify-between text-[10px] mb-1">
+                      <span className="text-slate-400">{isAr ? 'حمولة الخط الناقل (WIP Queue):' : 'Conveyor Buffer Load:'}</span>
+                      <span className="font-mono font-bold text-emerald-400">
+                        {selectedConveyor.currentWip || 8} / {selectedConveyor.capacityUnits || 20} {isAr ? 'قطعة' : 'units'}
+                      </span>
+                    </div>
+                    <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+                      <div 
+                        className="bg-gradient-to-r from-emerald-500 via-cyan-500 to-amber-500 h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${((selectedConveyor.currentWip || 8) / (selectedConveyor.capacityUnits || 20)) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Sensor Telemetry */}
+                  <div className="col-span-2 p-2 rounded-xl bg-cyan-950/30 border border-cyan-500/20 text-[10px] flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                      <span className="text-slate-300 font-medium">{selectedConveyor.sensorType || 'Optical Sensor'}</span>
+                    </div>
+                    <span className="font-mono text-cyan-300 font-bold">{isAr ? 'إشارة شعاع نشطة ✓' : 'BEAM ACTIVE'}</span>
+                  </div>
+                </div>
+
+                {/* Stations Jump & Routing */}
+                <div className="flex items-center justify-between gap-2 pt-2 border-t border-white/10 text-xs">
+                  <button
+                    onClick={() => {
+                      setSelectedStationId(selectedConveyor.fromId);
+                    }}
+                    className="flex-1 py-1.5 px-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white text-[11px] font-bold truncate transition-colors text-center"
+                  >
+                    ◀ {equipmentMap[selectedConveyor.fromId]?.code || 'المصدر'}
+                  </button>
+
+                  <button
+                    onClick={() => toggleConveyorEStop(selectedConveyor.id)}
+                    className={`py-1.5 px-3 rounded-xl text-[11px] font-black transition-all ${
+                      eStopConveyors[selectedConveyor.id]
+                        ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                        : 'bg-red-600 hover:bg-red-500 text-white shadow-md shadow-red-600/30'
+                    }`}
+                  >
+                    {eStopConveyors[selectedConveyor.id] ? (isAr ? 'تشغيل' : 'Start') : (isAr ? 'إيقاف E-Stop' : 'E-Stop')}
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setSelectedStationId(selectedConveyor.toId);
+                    }}
+                    className="flex-1 py-1.5 px-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white text-[11px] font-bold truncate transition-colors text-center"
+                  >
+                    {equipmentMap[selectedConveyor.toId]?.code || 'الوجهة'} ▶
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         ) : viewMode === 'stations-grid' ? (
           /* ================================================================ */
