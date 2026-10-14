@@ -1,1204 +1,1318 @@
 // @ts-nocheck
-// QMS Enterprise 4.0 - Quality Control Tower & Interactive Traceability Stream
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+// QMS Enterprise 4.0 - Live Quality Blueprint Map & Control Tower
+// Interactive Single-Screen Traceability Map matching the exact 7-block factory architecture
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PageHeader, PageContainer, PageSection } from '../../components/PageHeader';
 import { toast } from 'sonner';
 import { 
   Network, ArrowRight, ArrowLeft, CheckCircle2, AlertTriangle, XCircle, Clock, 
   ShieldAlert, ShieldCheck, Search, RefreshCw, ExternalLink, Eye, 
   Building, Cpu, Wrench, PackageCheck, Users, Truck, Sparkles, Check, 
-  ChevronRight, X, Info, Zap, Layers, Activity, FileText, ArrowDown
+  ChevronRight, X, Info, Zap, Layers, Activity, FileText, Maximize2, Minimize2,
+  ZoomIn, ZoomOut, RotateCcw, HelpCircle
 } from 'lucide-react';
 import { seedComprehensiveQualityLifecycle } from '../../services/seedLifecycleDemo';
-import { loadQualityRelationships, relatedIdsForEntity } from '../../services/qualityRelationships';
 import { useTranslation } from '../../utils/translations';
 
 // ============================================================================
-// TYPES & DATA STRUCTURES
+// DATA TYPES
 // ============================================================================
+export type PresetJourney = 'all' | 'batch-901' | 'seal-lot-02' | 'valve-lot-03' | 'complaint-101';
 
-export type TowerNodeCategory = 
-  | 'raw-material'
-  | 'supplier-ncr'
-  | 'assembly'
-  | 'defect'
-  | 'control-plan'
-  | 'audit'
-  | 'internal-ncr'
-  | 'capa'
-  | 'oqc'
-  | 'customer-complaint';
-
-export interface TowerNode {
+export interface BlueprintNode {
   id: string;
-  category: TowerNodeCategory;
-  titleEn: string;
+  category: 'raw-material' | 'supplier-ncr' | 'assembly' | 'defect' | 'control-plan' | 'audit' | 'internal-ncr' | 'capa' | 'oqc' | 'customer' | 'complaint';
+  containerId: number; // 1 to 7 matching the 7 blocks
   titleAr: string;
+  titleEn: string;
+  subtitleAr?: string;
+  subtitleEn?: string;
   code: string;
   lotOrBatch?: string;
-  status: 'pass' | 'fail' | 'conditional' | 'investigation' | 'completed' | 'in-progress' | 'logged' | 'quarantine';
-  statusLabelEn: string;
+  status: 'pass' | 'fail' | 'conditional' | 'investigation' | 'completed' | 'in-progress' | 'quarantine';
   statusLabelAr: string;
+  statusLabelEn: string;
+  statusColor: string;
   isStopPoint?: boolean;
   stopReasonAr?: string;
   nextStepAr?: string;
   assignedTo?: string;
   location?: string;
-  timestamp?: string;
-  details: Record<string, string | number>;
-  linkedToIds: string[];
   moduleUrl: string;
   moduleLabelAr: string;
+  details: Record<string, string | number>;
+  // Position in 1400x860 canvas
+  x: number;
+  y: number;
+  w: number;
+  h: number;
 }
-
-export type PresetJourney = 'batch-901' | 'seal-lot-02' | 'valve-lot-03' | 'complaint-101';
 
 export function QualityControlTower() {
   const navigate = useNavigate();
   const { language } = useTranslation();
   const isAr = language === 'ar';
 
-  // Active Journey Preset
-  const [activePreset, setActivePreset] = useState<PresetJourney>('batch-901');
-  const [selectedNodeId, setSelectedNodeId] = useState<string>('DEF-2026-901B');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [activePreset, setActivePreset] = useState<PresetJourney>('all');
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>('DEF-901B');
+  const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
+  const [showLegend, setShowLegend] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Ensure data is seeded in localStorage on mount
+  // Seed data on initial load if needed
   useEffect(() => {
     if (typeof localStorage !== 'undefined' && !localStorage.getItem('qms_comprehensive_seeded_v1')) {
       try {
         seedComprehensiveQualityLifecycle();
         localStorage.setItem('qms_comprehensive_seeded_v1', 'true');
       } catch (e) {
-        console.warn('Seeding failed in tower', e);
+        console.warn('Seeding failed', e);
       }
     }
   }, []);
 
+  // Fullscreen toggle handler
+  const toggleFullscreen = () => {
+    if (!containerRef.current) return;
+    if (!document.fullscreenElement) {
+      containerRef.current.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => {});
+    } else {
+      document.exitFullscreen().then(() => setIsFullscreen(false)).catch(() => {});
+    }
+  };
+
   // ============================================================================
-  // ALL NODES IN THE QUALITY JOURNEY STREAM
+  // THE 15 EXACT NODES FROM THE USER'S BLUEPRINT SCHEMATIC
   // ============================================================================
-  const nodes: TowerNode[] = useMemo(() => [
+  const nodes: BlueprintNode[] = useMemo(() => [
     // ------------------------------------------------------------------------
-    // 1. INCOMING RAW MATERIALS (5 Materials)
+    // CONTAINER 1: 1. الخامات الواردة (IQC) - 5 Raw Materials (Horizontal Layout)
     // ------------------------------------------------------------------------
     {
-      id: 'INS-2026-RM-01',
+      id: 'RM-ORING-02',
+      containerId: 1,
       category: 'raw-material',
-      titleEn: 'Aluminum 7075-T6 Billets (Pump Body)',
-      titleAr: 'خامة 1: ألومنيوم 7075-T6 (جسم المضخة)',
-      code: 'RM-ALUM-7075',
-      lotOrBatch: 'LOT-2026-AL-01',
-      status: 'conditional',
-      statusLabelEn: 'Conditional Pass',
-      statusLabelAr: 'قبول مشروط بتصريح تشغيل',
-      isStopPoint: false,
-      stopReasonAr: 'ارتفاع طفيف في خشونة السطح Ra 3.8 µm. تم السماح بالمرور للتجميع بتصريح تشغيل داخلي.',
-      nextStepAr: 'تعديل بارامترات الخراطة الدقيقة في خط التجميع.',
-      assignedTo: 'م. مصطفى رفعت (IQC)',
-      location: 'مستودع الخامات الواردة - Bay A1',
-      timestamp: '2026-10-01',
-      details: {
-        'المورد': 'Precision Metals Co. (SUP-001)',
-        'الكمية المستلمة': '1,500 كجم',
-        'العينة المفحوصة': '32 عينة (MIL-STD-105E)',
-        'عدد الملاحظات': '3 قطع خشونة زائدة',
-        'شهادة التحليل CoC': 'معتمدة برقم COC-AL-881'
-      },
-      linkedToIds: ['BATCH-2026-901'],
-      moduleUrl: '/compliance/hub/inspection',
-      moduleLabelAr: 'فحص الشحنات (IQC)'
-    },
-    {
-      id: 'INS-2026-RM-02',
-      category: 'raw-material',
-      titleEn: 'High-Pressure NBR O-Rings 25x3mm',
-      titleAr: 'خامة 2: مانع تسرب كوتشوك NBR 25x3mm',
-      code: 'RM-SEAL-NBR',
+      titleAr: 'FAIL مرفوض - (LOT-OR-02) خامة 2: مانع تسرب',
+      titleEn: 'FAIL Rejected - (LOT-OR-02) RM 2: Rubber O-Ring Seal',
+      subtitleAr: 'تشوه القطر الداخلي وعدم مطابقة الصلادة 75 Shore-A',
+      subtitleEn: 'ID deformation & non-compliant hardness',
+      code: 'LOT-2026-OR-02',
       lotOrBatch: 'LOT-2026-OR-02',
       status: 'fail',
-      statusLabelEn: 'REJECTED (0% Accept)',
-      statusLabelAr: 'مرفوض بالكامل (FAIL)',
+      statusLabelAr: 'مرفوض ومحجوز (IQC)',
+      statusLabelEn: 'IQC Rejected & Quarantined',
+      statusColor: '#EF4444',
       isStopPoint: true,
-      stopReasonAr: 'انخفاض صلادة Shore A (62 مقابل 75 المطلوبة) وانكماش في القطر. خطر تسريب مؤكد عند ضغط 200+ بار!',
-      nextStepAr: 'حجر اللوت فوراً في منطقة الحجر الأصفر، وإصدار إشعار إرجاع للمورد RTV.',
-      assignedTo: 'م. مصطفى رفعت (IQC)',
-      location: 'منطقة الحجر الصحي - Quarantine Bay 4',
-      timestamp: '2026-10-02',
-      details: {
-        'المورد': 'Apex Polymer & Seals Ltd. (SUP-002)',
-        'الكمية المستلمة': '5,000 قطعة',
-        'العينة المفحوصة': '80 عينة',
-        'عدد العيوب': '28 عينة غير مطابقة (35%)',
-        'حالة اللوت': 'محجوز 100% - مُنع من دخول خط التجميع'
-      },
-      linkedToIds: ['NCR-SUP-2026-001'],
+      stopReasonAr: 'شحنة موقوفة عند بوابة الاستلام IQC. تم حظر الدفعة بالكامل برقم حجز QR-2026-88 وتصعيدها لتقرير عدم مطابقة مورد.',
+      nextStepAr: 'استكمال إرجاع الشحنة ومطالبة المورد بالتقرير الثماني 8D واستبدال اللوت.',
+      assignedTo: 'م. أحمد شكري (مهندس فحص الاستلام)',
+      location: 'رصيف الاستلام 01 - منطقة الحجز والعزل',
       moduleUrl: '/compliance/hub/inspection',
-      moduleLabelAr: 'فحص الشحنات (IQC)'
+      moduleLabelAr: 'فحص المواد الخام (IQC)',
+      details: {
+        'رقم الشحنة': 'LOT-2026-OR-02',
+        'المورد': 'شركة المطاط الحديثة',
+        'كمية العينة': '125 قطعة (مستوى II AQL 1.0)',
+        'العيوب المرصودة': '11 قطعة بقطر غير منتظم',
+        'قرار اللجنة': 'رفض تام وحجز فوري'
+      },
+      x: 50, y: 50, w: 235, h: 68
     },
     {
-      id: 'INS-2026-RM-03',
+      id: 'RM-VALV-03',
+      containerId: 1,
       category: 'raw-material',
-      titleEn: 'Stainless Steel 316 Valve Plungers',
-      titleAr: 'خامة 3: صمامات ستانلس 316 عالية الإجهاد',
-      code: 'RM-VALV-SS316',
+      titleAr: 'PASS مطابق - (LOT-VL-03) خامة 3: صمامات',
+      titleEn: 'PASS - (LOT-VL-03) RM 3: Safety Valves',
+      subtitleAr: 'اجتياز اختبار ضغط الفتح 250 بار بنجاح تام',
+      subtitleEn: 'Passed cracking pressure test 250 bar',
+      code: 'LOT-2026-VL-03',
       lotOrBatch: 'LOT-2026-VL-03',
       status: 'pass',
-      statusLabelEn: 'Conforming (PASS)',
-      statusLabelAr: 'مطابق للمواصفات 100% (PASS)',
+      statusLabelAr: 'مطابق 100% (معتمد)',
+      statusLabelEn: '100% Passed (Approved)',
+      statusColor: '#10B981',
       isStopPoint: false,
-      stopReasonAr: 'لا يوجد. تم اجتياز كافة اختبارات الأبعاد والموجات فوق الصوتية بنجاح.',
-      nextStepAr: 'تم الصرف الفوري لمحطة التجميع 2.',
-      assignedTo: 'تامر عادل (IQC)',
-      location: 'مستودع الخامات - Bay B2',
-      timestamp: '2026-10-02',
-      details: {
-        'المورد': 'Delta Precision Components (SUP-003)',
-        'الكمية المستلمة': '2,000 قطعة',
-        'العينة المفحوصة': '50 عينة',
-        'نسبة العيوب': '0% (مطابقة تامة)',
-        'الميكروميتر المستخدم': 'Mitutoyo CAL-GAUGE-042'
-      },
-      linkedToIds: ['BATCH-2026-901'],
+      stopReasonAr: 'لا يوجد توقف. الشحنة اجتازت الفحص وتم صرفها لخط التجميع.',
+      nextStepAr: 'صرف رصيد اللوت لأوامر تشغيل التجميع.',
+      assignedTo: 'فني الفحص طارق حسام',
+      location: 'مستودع الخامات المعتمدة - رف A-14',
       moduleUrl: '/compliance/hub/inspection',
-      moduleLabelAr: 'فحص الشحنات (IQC)'
+      moduleLabelAr: 'فحص الاستلام (IQC)',
+      details: {
+        'الكمية المستلمة': '1,200 صمام',
+        'صلادة السطح': 'HRC 42 (مطابق)',
+        'شهادة المنشأ': 'EN 10204 3.1 معتمدة'
+      },
+      x: 320, y: 50, w: 235, h: 68
     },
     {
-      id: 'INS-2026-RM-04',
+      id: 'RM-BOLT-04',
+      containerId: 1,
       category: 'raw-material',
-      titleEn: 'M8x45 Grade 10.9 Zinc Coated Bolts',
-      titleAr: 'خامة 4: مسامير ربط M8 إجهاد 10.9 مجلفنة',
-      code: 'RM-BOLT-M8GR10',
+      titleAr: 'فرز وتنظيف - (LOT-BL-04) خامة 4: مسامير',
+      titleEn: 'Sorting & Cleaning - (LOT-BL-04) RM 4: M8 Bolts',
+      subtitleAr: 'شوائب زيتية على سن القلاووظ تتطلب غسيل وتجفيف',
+      subtitleEn: 'Oil residues on threads requiring degreasing',
+      code: 'LOT-2026-BL-04',
       lotOrBatch: 'LOT-2026-BL-04',
       status: 'conditional',
-      statusLabelEn: 'Sorted & Cleaned',
-      statusLabelAr: 'تم الفرز والتنظيف (PASS)',
+      statusLabelAr: 'فرز وتطهير مشروط',
+      statusLabelEn: 'Conditional Sorting',
+      statusColor: '#F59E0B',
       isStopPoint: false,
-      stopReasonAr: 'رايش في بداية قلاووظ 12 مسماراً. تم فرز وتشذيب المسامير موضعياً وقبول اللوت.',
-      nextStepAr: 'إرسال ملاحظة جودة للمورد لمنع تكرار رايش القلاووظ.',
-      assignedTo: 'تامر عادل (IQC)',
-      location: 'مستودع المكونات - رف C3',
-      timestamp: '2026-10-03',
-      details: {
-        'المورد': 'Titan Fasteners Global (SUP-004)',
-        'الكمية المستلمة': '10,000 قطعة',
-        'العينة المفحوصة': '200 مسمار',
-        'إجراء الفرز': 'فرز 100% للمسامير المستخدمة بالتشغيلة',
-        'عزم الشد الاسمي': '25 Nm'
-      },
-      linkedToIds: ['BATCH-2026-901'],
+      stopReasonAr: 'تم فرز وتطهير الشحنة في محطة الغسيل بالموجات فوق الصوتية وصرفها للتشغيل.',
+      nextStepAr: 'فحص عينة عشوائية بعد الغسيل للتأكد من نظافة السن.',
+      assignedTo: 'م. حسام بدر (مراقب جودة)',
+      location: 'محطة التنظيف الكيميائي',
       moduleUrl: '/compliance/hub/inspection',
-      moduleLabelAr: 'فحص الشحنات (IQC)'
+      moduleLabelAr: 'فحص الاستلام (IQC)',
+      details: {
+        'كمية اللوت': '10,000 مسمار M8',
+        'إجراء الفرز': 'تنظيف 100% بالموجات الصوتية',
+        'الحالة الحالية': 'تم التطهير وصالح للاستخدام'
+      },
+      x: 590, y: 50, w: 235, h: 68
     },
     {
-      id: 'INS-2026-RM-05',
+      id: 'RM-ALUM-01',
+      containerId: 1,
       category: 'raw-material',
-      titleEn: 'ISO VG 46 Anti-Wear Hydraulic Oil',
-      titleAr: 'خامة 5: زيت هيدروليكي اختباري ISO 46',
-      code: 'RM-OIL-ISO46',
+      titleAr: 'قبول مشروط - (LOT-AL-01) خامة 1: ألومنيوم',
+      titleEn: 'Conditional Pass - (LOT-AL-01) RM 1: Aluminum 7075',
+      subtitleAr: 'ارتفاع طفيف بخشونة السطح Ra 3.8 مع تصريح تشغيل',
+      subtitleEn: 'Slight surface roughness Ra 3.8 with deviation concession',
+      code: 'LOT-2026-AL-01',
+      lotOrBatch: 'LOT-2026-AL-01',
+      status: 'conditional',
+      statusLabelAr: 'تصريح تشغيل مشروط',
+      statusLabelEn: 'Approved under Concession',
+      statusColor: '#F59E0B',
+      isStopPoint: false,
+      stopReasonAr: 'تم منح تصريح تشغيل استثنائي DEV-2026-04 مع تعديل سرعة الخراطة بالورشة.',
+      nextStepAr: 'التحقق من أبعاد أول قطعة بعد التشغيل الآلي (First Article Inspection).',
+      assignedTo: 'م. مصطفى رفعت',
+      location: 'خط الخراطة CNC',
+      moduleUrl: '/compliance/hub/inspection',
+      moduleLabelAr: 'فحص الاستلام (IQC)',
+      details: {
+        'رقم تصريح الانحراف': 'DEV-2026-04',
+        'الكمية المصرح بها': '500 سبيكة',
+        'تأثير الجودة': 'لا يؤثر على وظيفة المنتج النهائية'
+      },
+      x: 860, y: 50, w: 235, h: 68
+    },
+    {
+      id: 'RM-OIL-05',
+      containerId: 1,
+      category: 'raw-material',
+      titleAr: 'PASS مطابق - (LOT-OL-05) خامة 5: زيت هيدروليك',
+      titleEn: 'PASS - (LOT-OL-05) RM 5: Hydraulic Oil ISO-VG46',
+      subtitleAr: 'لزوجة ونقاء مطابق لمعايير ISO 4406 (16/14/11)',
+      subtitleEn: 'Viscosity and cleanliness compliant with ISO 4406',
+      code: 'LOT-2026-OL-05',
       lotOrBatch: 'LOT-2026-OL-05',
       status: 'pass',
-      statusLabelEn: 'Conforming (PASS)',
-      statusLabelAr: 'مطابق للمواصفة القياسية (PASS)',
+      statusLabelAr: 'مطابق 100% (معتمد)',
+      statusLabelEn: '100% Passed (Approved)',
+      statusColor: '#10B981',
       isStopPoint: false,
-      stopReasonAr: 'لا يوجد. اللزوجة والشوائب مطابقة لمعيار DIN 51524.',
-      nextStepAr: 'تغذية خزانات اختبار الضغط في خط التجميع.',
-      assignedTo: 'كيميائية سلمى (مختبر الزيوت)',
-      location: 'خزانات الاختبار - محطة الضغط الهيدروليكي',
-      timestamp: '2026-10-03',
-      details: {
-        'المورد': 'Gulf Lubricants & Fluids (SUP-005)',
-        'الكمية المستلمة': '8 براميل (1,600 لتر)',
-        'معامل اللزوجة VI': '102 (المعيار > 95)',
-        'مستوى النقاء': 'ISO 4406 Class 16/14/11',
-        'الاستخدام': 'اختبارات الضغط حتى 400 بار'
-      },
-      linkedToIds: ['BATCH-2026-901'],
+      stopReasonAr: 'لا يوجد توقف. الزيت جاهز لاختبارات الضغط في خط التجميع.',
+      nextStepAr: 'تغذية وحدة الاختبار الهيدروليكي بالزيت المعتمد.',
+      assignedTo: 'كيميائي المختبر سامح عادل',
+      location: 'مختبر فحص السوائل',
       moduleUrl: '/compliance/hub/inspection',
-      moduleLabelAr: 'فحص الشحنات (IQC)'
+      moduleLabelAr: 'فحص الاستلام (IQC)',
+      details: {
+        'معامل اللزوجة': '46.2 cSt @ 40°C',
+        'محتوى الماء': '< 50 ppm',
+        'رقم التقرير المعملي': 'LAB-HYD-9902'
+      },
+      x: 1125, y: 50, w: 225, h: 68
     },
 
     // ------------------------------------------------------------------------
-    // 2. SUPPLIER NCR (Rejected Seal)
+    // CONTAINER 2: 2. عدم مطابقة مورد (Supplier NCR) - Middle Left
     // ------------------------------------------------------------------------
     {
       id: 'NCR-SUP-2026-001',
+      containerId: 2,
       category: 'supplier-ncr',
-      titleEn: 'Supplier NCR: Rejected O-Ring Lot LOT-2026-OR-02',
-      titleAr: '2. عدم مطابقة مورد: حجز وإرجاع لوت مانع التسرب',
+      titleAr: 'Supplier NCR: NCR-SUP-2026-001',
+      titleEn: 'Supplier NCR: NCR-SUP-2026-001',
+      subtitleAr: 'حجز وإرجاع لوت مانع التسرب (شركة المطاط الحديثة)',
+      subtitleEn: 'Quarantine & Return of Seal Lot (Modern Rubber Co.)',
       code: 'NCR-SUP-2026-001',
       lotOrBatch: 'LOT-2026-OR-02',
       status: 'quarantine',
-      statusLabelEn: 'Quarantined & RTV Pending',
-      statusLabelAr: 'محجوز بالحجر - بانتظار الإرجاع RTV',
+      statusLabelAr: 'لوت محجوز للإرجاع',
+      statusLabelEn: 'Quarantine for Return',
+      statusColor: '#EF4444',
       isStopPoint: true,
-      stopReasonAr: 'تم عزل الشحنة كاملة لمنع تسربها لخطوط الإنتاج. المورد أُخطر رسمياً بطلب شحنة بديلة مطابقة.',
-      nextStepAr: 'اعتماد شحنة السيلات البديلة وإلزام المورد بتحليل 8D.',
-      assignedTo: 'م. طارق عامر (مدير جودة الموردين)',
-      location: 'الحجر الصحي الأصفر - مستودع الموردين',
-      timestamp: '2026-10-02',
+      stopReasonAr: 'تم إيقاف دخول الشحنة لخط الإنتاج نهائياً ووضع علامة الرفض الحمراء وخصم درجات تقييم المورد بنسبة 15%.',
+      nextStepAr: 'استلام رد 8D الأولي (D3 احتواء) من المورد خلال 24 ساعة.',
+      assignedTo: 'م. كمال عبد العزيز (مدير جودة الموردين)',
+      location: 'منطقة المرتجعات والحجز',
+      moduleUrl: '/supplier-quality',
+      moduleLabelAr: 'جودة الموردين (SQE)',
       details: {
-        'المورد المتسبب': 'Apex Polymer & Seals Ltd.',
-        'تكلفة الحجر': '3,500 ج.م على حساب المورد',
-        'الإجراء الاحترازي': 'تجميد تقييم المورد مؤقتاً',
-        'السجل المرتبط': 'IQC Run: INS-2026-RM-02',
-        'رقم تقرير عدم المطابقة': 'NCR-SUP-2026-001'
+        'المورد المعني': 'شركة المطاط الحديثة',
+        'كود المورد': 'SUP-EG-440',
+        'حالة الـ NCR': 'مفتوح بانتظار الشحنة البديلة',
+        'تاريخ الحظر': '2026-10-14'
       },
-      linkedToIds: ['INS-2026-RM-02'],
-      moduleUrl: '/quality/records/ncr',
-      moduleLabelAr: 'عدم المطابقة (NCR)'
+      x: 65, y: 500, w: 205, h: 65
     },
 
     // ------------------------------------------------------------------------
-    // 3. ASSEMBLY BATCH & SHOPFLOOR DEFECTS
+    // CONTAINER 3: 3. خط التجميع ومسجل العيوب (Assembly & Defects) - Middle Right
     // ------------------------------------------------------------------------
     {
       id: 'BATCH-2026-901',
+      containerId: 3,
       category: 'assembly',
-      titleEn: 'Hydraulic Pump Assembly Run (500 units)',
-      titleAr: '3. تشغيلة التجميع BATCH-2026-901 (500 مضخة)',
-      code: 'ASSY-PUMP-400',
+      titleAr: 'BATCH-2026-901 تشغيلة التجميع',
+      titleEn: 'BATCH-2026-901 Assembly Production Batch',
+      subtitleAr: 'تجميع 250 مضخة هيدروليكية - خط التجميع الرئيسي 02',
+      subtitleEn: 'Assembly of 250 Hydraulic Pumps - Main Line 02',
+      code: 'BATCH-2026-901',
       lotOrBatch: 'BATCH-2026-901',
-      status: 'investigation',
-      statusLabelEn: 'Under Assembly & Testing',
-      statusLabelAr: 'جاري التجميع والاختبار الميداني',
+      status: 'in-progress',
+      statusLabelAr: 'قيد التجميع والمراقبة',
+      statusLabelEn: 'In-Progress Assembly',
+      statusColor: '#00A3E0',
       isStopPoint: false,
-      stopReasonAr: 'رُصدت عيوب تفويت قلاووظ وتسريب أثناء التجميع، وتم التدخل المباشر لإعادة ضبط الشد.',
-      nextStepAr: 'إكمال الفحص النهائي 100% لعزم الربط والضغط الهيدروليكي.',
-      assignedTo: 'مشرف الخط إبراهيم توفيق',
-      location: 'خط التجميع 1 - محطة 2 و 4',
-      timestamp: '2026-10-06',
+      stopReasonAr: 'التشغيلة مستمرة لكن تم تجميد 12 وحدة منها بسبب عيب التسريب المرصود.',
+      nextStepAr: 'فحص محطة عزم الربط واختبار الضغط قبل الإفراج عن باقي الدفعة.',
+      assignedTo: 'م. محمود جاد (مشرف إنتاج الخط)',
+      location: 'خط التجميع الرئيسي Line-02',
+      moduleUrl: '/quality-shopfloor',
+      moduleLabelAr: 'شاشة صالة الإنتاج',
       details: {
-        'الكمية المخططة': '500 مضخة هيدروليكية 400 بار',
-        'الخامات المستخدمة': '4 خامات معتمدة + سيلات بديلة معتمدة',
-        'العيوب المرصودة': '17 وحدة متأثرة تم فرزها',
-        'الوحدات المقبولة': '483 مضخة جاهزة للفحص الصادر',
-        'معدل العيوب': '3.4% (الهدف أقل من 1.5%)'
+        'أمر التشغيل': 'WO-2026-PUMP-901',
+        'إجمالي الدفعة': '250 مضخة',
+        'الوحدات المكتملة': '180 مضخة',
+        'الوحدات تحت الحظر': '12 مضخة'
       },
-      linkedToIds: ['DEF-2026-901A', 'DEF-2026-901B', 'DEF-2026-901C', 'INS-2026-OQC-901'],
-      moduleUrl: '/shopfloor-entry',
-      moduleLabelAr: 'تسجيل الورشة والمحطات'
+      x: 575, y: 195, w: 230, h: 42
     },
     {
-      id: 'DEF-2026-901A',
+      id: 'DEF-901B',
+      containerId: 3,
       category: 'defect',
-      titleEn: 'Bolt Cross-Threading (Torque Mismatch)',
-      titleAr: 'عيب: تفويت وتلف قلاووظ المسامير (عزم زائد)',
-      code: 'DEF-2026-901A',
-      lotOrBatch: 'BATCH-2026-901',
-      status: 'logged',
-      statusLabelEn: 'Logged & Reworked',
-      statusLabelAr: 'مرصود في المسجل - أُصلح بالهيلي كويل',
-      isStopPoint: false,
-      stopReasonAr: 'عزم شد الماكينة تجاوز 31 Nm بدلاً من 25 Nm المحددة، مما تسبب في تلف سن القلاووظ.',
-      nextStepAr: 'استدعاء الصيانة لمعايرة مفك العزم وضبط نظام الفصل الآلي.',
-      assignedTo: 'فني التجميع محمود سعيد',
-      location: 'خط التجميع 1 - محطة ربط المسامير',
-      timestamp: '2026-10-06',
-      details: {
-        'الكمية المتأثرة': '8 مضخات',
-        'درجة الخطورة': 'Major (خلل تشغيلي)',
-        'الإجراء الفوري': 'تركيب سلك تعويض قلاووظ Heli-Coil',
-        'الارتباط بالـ NCR': 'مرتبط بـ NCR-2026-901 الداخلي'
-      },
-      linkedToIds: ['NCR-2026-901'],
-      moduleUrl: '/defect-log',
-      moduleLabelAr: 'مسجل العيوب (Daily Defects)'
-    },
-    {
-      id: 'DEF-2026-901B',
-      category: 'defect',
-      titleEn: 'Hydrostatic Seal Micro-Leakage',
-      titleAr: 'عيب: تسريب ضغط هيدروليكي في فحص 250 بار',
+      titleAr: 'DEF-901B: تسريب ضغط هيدروليكي',
+      titleEn: 'DEF-901B: Hydraulic Pressure Leak',
+      subtitleAr: 'تسريب زيت عند ضغط اختبار 250 بار في 8 مضخات',
+      subtitleEn: 'Oil leakage at 250 bar test on 8 pumps',
       code: 'DEF-2026-901B',
       lotOrBatch: 'BATCH-2026-901',
-      status: 'logged',
-      statusLabelEn: 'Critical Defect',
-      statusLabelAr: 'عيب حرج (Critical) - فك واستبدال',
-      isStopPoint: false,
-      stopReasonAr: 'رصد رشح زيت عند الضغط العالي بسبب عدم إحكام استقرار مانع التسرب في مجراه.',
-      nextStepAr: 'فك الوحدات واستبدال الحلقات وإعادة اختبار الضغط بنجاح.',
-      assignedTo: 'فني الاختبار علي جمال',
-      location: 'منصة الاختبار الهيدروليكي Rig #2',
-      timestamp: '2026-10-06',
-      details: {
-        'الكمية المتأثرة': '5 مضخات',
-        'درجة الخطورة': 'Critical (خطر أمان وتسريب)',
-        'ضغط الاختبار': '250 Bar لمدة 3 دقائق',
-        'الإجراء الفوري': 'تفكيك وإعادة تركيب بحلقات بديلة'
-      },
-      linkedToIds: ['NCR-2026-901'],
+      status: 'fail',
+      statusLabelAr: 'عيب حرج (نقطة توقف)',
+      statusLabelEn: 'Critical Defect (Stop Point)',
+      statusColor: '#EF4444',
+      isStopPoint: true,
+      stopReasonAr: '⚠️ نقطة توقف خط التجميع! رصد تسريب زيت هيدروليكي أثناء الاختبار النهائي على المحطة رقم 4. تم إيقاف تمرير الوحدات المعيبة وتصعيدها فوراً إلى NCR داخلي.',
+      nextStepAr: 'استكمال تحقيق السبب الجذري وفحص عزم ربط المسامير مع مهندس العمليات.',
+      assignedTo: 'م. ياسر القاضي (فاحص الجودة بالمحطة)',
+      location: 'محطة اختبار الضغط رقم 4',
       moduleUrl: '/defect-log',
-      moduleLabelAr: 'مسجل العيوب (Daily Defects)'
+      moduleLabelAr: 'مسجل العيوب الصناعي',
+      details: {
+        'شدة العيب': 'حرج (Critical Severity)',
+        'عدد القطع المعيبة': '8 مضخات',
+        'طريقة الاكتشاف': 'اختبار هيدروستاتيكي 100%',
+        'الإجراء الفوري': 'عزل وتجميد المضخات في صندوق الحظر'
+      },
+      x: 370, y: 265, w: 195, h: 54
     },
     {
-      id: 'DEF-2026-901C',
+      id: 'DEF-901C',
+      containerId: 3,
       category: 'defect',
-      titleEn: 'Plunger Stroke Clearance Out-of-Spec',
-      titleAr: 'عيب: تفاوت خلوص حركة الصمام (Clearance)',
+      titleAr: 'DEF-901C: تفاوت خلوص الصمام',
+      titleEn: 'DEF-901C: Valve Clearance Variance',
+      subtitleAr: 'تفاوت بسيط في الخلوص الميكانيكي (2 مضخة)',
+      subtitleEn: 'Minor clearance variance (2 pumps)',
       code: 'DEF-2026-901C',
       lotOrBatch: 'BATCH-2026-901',
-      status: 'logged',
-      statusLabelEn: 'Minor Variance',
-      statusLabelAr: 'تفاوت بسيط - تم الضبط بالشيمز',
+      status: 'conditional',
+      statusLabelAr: 'تم ضبط الخلوص',
+      statusLabelEn: 'Clearance Re-adjusted',
+      statusColor: '#F59E0B',
       isStopPoint: false,
-      stopReasonAr: 'خلوص الصمام تجاوز 0.05 مم في 4 قطع.',
-      nextStepAr: 'استبدال حزمة الشيمز لتحقيق الخلوص القياسي 0.025 مم.',
-      assignedTo: 'فني التجميع أحمد فتحي',
-      location: 'محطة تجميع الصمامات Station 3',
-      timestamp: '2026-10-07',
-      details: {
-        'الكمية المتأثرة': '4 مضخات',
-        'درجة الخطورة': 'Medium',
-        'الإجراء المتخذ': 'ضبط دقيق وإعادة القياس بالميكروميتر'
-      },
-      linkedToIds: ['BATCH-2026-901'],
+      stopReasonAr: 'تم إعادة وزن وضبط الخلوص بالمحطة واجتياز الفحص.',
+      nextStepAr: 'المراقبة المستمرة لمؤشر Cpk للعملية.',
+      assignedTo: 'فني التجميع عادل منصور',
+      location: 'محطة ضبط الصمامات 02',
       moduleUrl: '/defect-log',
-      moduleLabelAr: 'مسجل العيوب (Daily Defects)'
+      moduleLabelAr: 'مسجل العيوب',
+      details: {
+        'القطع المتأثرة': '2 مضخة',
+        'حالة المعالجة': 'تمت إعادة الضبط وإعادة الفحص'
+      },
+      x: 590, y: 265, w: 200, h: 54
+    },
+    {
+      id: 'DEF-901A',
+      containerId: 3,
+      category: 'defect',
+      titleAr: 'DEF-901A: تفويت قلاووظ (عزم زائد)',
+      titleEn: 'DEF-901A: Stripped Thread (Over-Torque)',
+      subtitleAr: 'تفويت في سن ربط الغطاء نتيجة تجاوز عزم المفك الهوائي',
+      subtitleEn: 'Stripped housing thread due to pneumatic torque overshoot',
+      code: 'DEF-2026-901A',
+      lotOrBatch: 'BATCH-2026-901',
+      status: 'fail',
+      statusLabelAr: 'انحراف عزم مفك',
+      statusLabelEn: 'Torque Tool Deviation',
+      statusColor: '#EF4444',
+      isStopPoint: false,
+      stopReasonAr: 'السبب المباشر لعيب التسريب! مفك العزم الهوائي عياره منتهي وأعطى عزم ربط غير متطابق تسبب في تآكل القلاووظ.',
+      nextStepAr: 'استبدال المفك فوراً بمفك ذكي رقمي مزود بـ Poka-Yoke.',
+      assignedTo: 'م. فادي سمير (مهندس الصيانة)',
+      location: 'محطة ربط الغطاء 03',
+      moduleUrl: '/defect-log',
+      moduleLabelAr: 'مسجل العيوب',
+      details: {
+        'العزم المقاس': '62 N.m (المطلوب 45 N.m)',
+        'نسبة الانحراف': '+37% فوق الحد المسموح',
+        'الإجراء المتخذ': 'سحب المفك الهوائي من الخدمة'
+      },
+      x: 815, y: 265, w: 195, h: 54
     },
 
     // ------------------------------------------------------------------------
-    // 4. CONTROL PLAN & AUDIT
+    // CONTAINER 4: 4. خطة المراقبة والتدقيق الداخلي (Control Plan & Audit) - Lower Middle Left
     // ------------------------------------------------------------------------
     {
       id: 'CP-PUMP-01',
+      containerId: 4,
       category: 'control-plan',
-      titleEn: 'Control Plan: Hydraulic Pump Assembly',
-      titleAr: '4. خطة المراقبة CP-PUMP-01 (عزم 25Nm وضغط 250Bar)',
+      titleAr: 'CP-PUMP-01 خطة المراقبة',
+      titleEn: 'CP-PUMP-01 Control Plan',
+      subtitleAr: 'معيار عزم الربط 45±3 N.m وضغط الاختبار 250 بار',
+      subtitleEn: 'Torque spec 45±3 N.m & test pressure 250 bar',
       code: 'CP-PUMP-01',
-      lotOrBatch: 'ASSY-PUMP-400',
+      lotOrBatch: 'Rev 04',
       status: 'pass',
-      statusLabelEn: 'Standard Active',
-      statusLabelAr: 'خطة مراقبة قياسية نشطة',
+      statusLabelAr: 'خطة سارية ومحدثة',
+      statusLabelEn: 'Active Control Plan',
+      statusColor: '#10B981',
       isStopPoint: false,
-      stopReasonAr: 'تحدد خطة المراقبة التفتيش الدوري على عزم الربط واختبار الضغط 250 بار 0 تسريب.',
-      nextStepAr: 'تحديث الخطة لتضمين نظام Poka-Yoke الذكي الجديد.',
-      assignedTo: 'م. وليد فوزي (مهندس الجودة)',
-      location: 'مكتب هندسة الجودة والعمليات',
-      timestamp: '2026-10-07',
+      stopReasonAr: 'الخطة معتمدة وسارية، لكن تم رصد عدم التزام بمعايرة المفك أثناء التدقيق.',
+      nextStepAr: 'تحديث خطة المراقبة لإضافة فحص المعايرة الشفتي اليومي.',
+      assignedTo: 'م. شريف عثمان (رئيس قسم توكيد الجودة)',
+      location: 'مكتب هندسة الجودة',
+      moduleUrl: '/control-plan',
+      moduleLabelAr: 'خطط المراقبة (Control Plans)',
       details: {
-        'الخاصية الحرجة CTQ': 'Torque: 25 ± 2 Nm | Proof Pressure: 250 Bar',
-        'تكرار الفحص': '5 عينات كل ساعة على كارت SPC',
-        'طريقة الفحص': 'مفتاح عزم رقمي معاير + منصة اختبار',
-        'خطة رد الفعل': 'إيقاف الخط فوراً وحجز إنتاج آخر ساعة'
+        'خاصية حرجة 1': 'عزم ربط مسامير الغطاء (45 N.m)',
+        'خاصية حرجة 2': 'ضغط التحمل الهيدروليكي (250 بار لمدة دقيقتين)',
+        'فترة المراجعة': 'سنوية أو عند حدوث CAPA'
       },
-      linkedToIds: ['AUD-2026-901'],
-      moduleUrl: '/control-plans',
-      moduleLabelAr: 'خطط المراقبة (Control Plans)'
+      x: 390, y: 600, w: 195, h: 48
     },
     {
       id: 'AUD-2026-901',
+      containerId: 4,
       category: 'audit',
-      titleEn: 'Process Audit: Assembly Line 1 Torquing',
-      titleAr: 'تدقيق العملية AUD-2026-901: انتهاء معايرة مفك العزم',
+      titleAr: 'AUD-2026-901 تدقيق العملية',
+      titleEn: 'AUD-2026-901 Process Layered Audit',
+      subtitleAr: 'رصد انتهاء صلاحية ملصق معايرة مفك العزم بالمحطة 03',
+      subtitleEn: 'Identified expired calibration tag on torque wrench',
       code: 'AUD-2026-901',
-      lotOrBatch: 'Line 1 Station 2',
-      status: 'completed',
-      statusLabelEn: 'Audit Finding Issued',
-      statusLabelAr: 'رُصدت حالة عدم مطابقة كبرى (NC)',
+      lotOrBatch: 'LPA-Shift-A',
+      status: 'fail',
+      statusLabelAr: 'عدم مطابقة تدقيق عملية',
+      statusLabelEn: 'Audit Finding Non-Conformance',
+      statusColor: '#EF4444',
       isStopPoint: false,
-      stopReasonAr: 'كشف التدقيق انتهاء كارت معايرة مفك العزم الهوائي منذ 14 يوماً وتفاوت القراءات بين 22 و 31 Nm.',
-      nextStepAr: 'تصعيد الملاحظة فوراً لإصدار NCR وكابا لمنع تكرار الخطأ.',
-      assignedTo: 'مدقق الجودة حازم شاكر',
-      location: 'خط التجميع 1',
-      timestamp: '2026-10-07',
+      stopReasonAr: 'كشف التدقيق التراتبي (LPA) أن مفك العزم المستخدم قد انتهت صلاحية معايرته منذ 5 أيام دون إشعار للنظام.',
+      nextStepAr: 'تحويل نتيجة التدقيق تلقائياً إلى سجل عدم مطابقة داخلي NCR-2026-901.',
+      assignedTo: 'م. إيهاب سلامة (مدقق جودة العمليات)',
+      location: 'خط التجميع 02',
+      moduleUrl: '/compliance/hub/audit',
+      moduleLabelAr: 'تدقيق العمليات (LPA)',
       details: {
         'نوع التدقيق': 'Layered Process Audit (LPA)',
-        'المعيار': 'IATF 16949 البند 8.5.1',
-        'عدد الملاحظات': '2 ملاحظات (منها 1 حالة عدم مطابقة كبرى)',
-        'الإجراء المتخذ': 'إيقاف الأداة الهوائية وتصعيد تقرير عدم مطابقة'
+        'البند غير المطابق': 'معايرة أدوات التجميع الحرجة',
+        'مستوى الخطورة': 'مرتفع (High Risk)'
       },
-      linkedToIds: ['NCR-2026-901'],
-      moduleUrl: '/compliance/hub/audit',
-      moduleLabelAr: 'التدقيق والمراجعات (Audits)'
+      x: 390, y: 672, w: 195, h: 52
     },
 
     // ------------------------------------------------------------------------
-    // 5. INTERNAL NCR & CAPA
+    // CONTAINER 5: 5. حلقة المعالجة والتحسين المغلقة (NCR & CAPA) - Bottom Center
     // ------------------------------------------------------------------------
     {
       id: 'NCR-2026-901',
+      containerId: 5,
       category: 'internal-ncr',
-      titleEn: 'Internal NCR: Uncontrolled Bolting Torque',
-      titleAr: '5. تقرير عدم مطابقة داخلي: انحراف عزم الربط والتسريب',
+      titleAr: 'NCR-2026-901: داخلي NCR',
+      titleEn: 'NCR-2026-901: Internal NCR',
+      subtitleAr: 'حظر تشغيل 12 مضخة وتجميد محطة الربط لحين المعايرة',
+      subtitleEn: 'Quarantine 12 pumps & freeze station pending calibration',
       code: 'NCR-2026-901',
       lotOrBatch: 'BATCH-2026-901',
       status: 'investigation',
-      statusLabelEn: 'Active Investigation',
-      statusLabelAr: 'قيد التحقيق والاحتواء 100%',
+      statusLabelAr: 'قيد التحقيق والمعالجة',
+      statusLabelEn: 'Under Investigation',
+      statusColor: '#8B5CF6',
       isStopPoint: false,
-      stopReasonAr: 'تأكيد انحراف عزم الربط في 8 مضخات وتسريب 5 مضخات أثناء تشغيلة الإنتاج.',
-      nextStepAr: 'فحص عزم 100% لكامل الـ 500 مضخة وتصعيد خطة كابا للمعدات.',
-      assignedTo: 'م. وليد فوزي (مهندس الجودة)',
-      location: 'قسم الجودة والتحكم',
-      timestamp: '2026-10-07',
-      details: {
-        'المصدر': 'تدقيق العملية AUD-901 وعيوب DEF-901A/B',
-        'إجراء الاحتواء': 'إعادة ربط وتأكيد عزم 500 مضخة بنسبة 100%',
-        'النتيجة': 'استبعاد 17 قطعة تالفة وإجازة 483 مضخة سليمة',
-        'الحالة': 'مربوط بإجراء تصحيحي CAPA-2026-901'
-      },
-      linkedToIds: ['CAPA-2026-901'],
+      stopReasonAr: 'سجل عدم المطابقة الداخلي فتح لمعالجة عيب التسريب وانتهاء معايرة أداة الربط.',
+      nextStepAr: 'اعتماد خطة المعالجة وتفعيل الإجراء التصحيحي CAPA-2026-901.',
+      assignedTo: 'م. وائل ناصر (مدير توكيد الجودة)',
+      location: 'لجنة مراجعة عدم المطابقة (MRB)',
       moduleUrl: '/quality/records/ncr',
-      moduleLabelAr: 'عدم المطابقة (NCR)'
+      moduleLabelAr: 'سجلات عدم المطابقة (NCR)',
+      details: {
+        'تاريخ الفتح': '2026-10-14',
+        'القرار': 'إعادة تشغيل (Rework) مع فك واستبدال الأغطية التالفة',
+        'تكلفة عدم الجودة': '4,800 ج.م'
+      },
+      x: 550, y: 748, w: 280, h: 42
     },
     {
       id: 'CAPA-2026-901',
+      containerId: 5,
       category: 'capa',
-      titleEn: 'CAPA: Smart Poka-Yoke Angle-Torque Nutrunner',
-      titleAr: 'إجراء تصحيحي CAPA-901: تركيب مفك ذكي متصل بـ PLC',
+      titleAr: 'CAPA-2026-901 إجراء تصحيحي',
+      titleEn: 'CAPA-2026-901 Corrective Action',
+      subtitleAr: 'متصل بـ Poka-Yoke تركيب مفك ذكي رقمي مع ربط PLC',
+      subtitleEn: 'Poka-Yoke implementation: Smart Digital Torque Tool with PLC interlock',
       code: 'CAPA-2026-901',
-      lotOrBatch: 'Line 1 Station 2',
-      status: 'in-progress',
-      statusLabelEn: 'Implementation Phase',
-      statusLabelAr: 'جاري التنفيذ والتركيب الفني',
+      lotOrBatch: '8D Root-Cause',
+      status: 'pass',
+      statusLabelAr: 'تم التطبيق (Poka-Yoke)',
+      statusLabelEn: 'Implemented (Poka-Yoke)',
+      statusColor: '#10B981',
       isStopPoint: false,
-      stopReasonAr: 'السبب الجذري (5-Whys): اعتماد الأداة القديمة على التقدير اليدوي دون نظام فصل كهربي آلي.',
-      nextStepAr: 'توريد وربط مفك العزم الذكي المزود بحساس زاوية وعزم مع إنترلوك كهربي مع ماكينة التجميع.',
-      assignedTo: 'م. وليد فوزي & فريق الصيانة الكهربية',
-      location: 'خط التجميع 1',
-      timestamp: '2026-10-08',
-      details: {
-        'السبب الجذري 5-Whys': 'غياب الحماية من الخطأ البشري (Poka-Yoke)',
-        'الحل المعتمد': 'Atlas Copco Smart Transducer Nutrunner',
-        'تاريخ الإنهاء المخطط': '2026-10-25',
-        'مرحلة التحقق': 'متابعة أول 3 تشغيلات بعد التركيب'
-      },
-      linkedToIds: ['INS-2026-OQC-901'],
+      stopReasonAr: 'التحسين الجذري المكتمل! تم تركيب مفك إلكتروني ذكي يمنع خروج القطعة ما لم يتحقق العزم الدقيق 45 N.m بالضبط (مستحيل الخطأ).',
+      nextStepAr: 'التحقق من الفعالية بعد تشغيل 500 وحدة قادمة.',
+      assignedTo: 'م. حازم القاضي (رئيس هندسة العمليات)',
+      location: 'محطة التجميع الذكية 03',
       moduleUrl: '/quality/records/capa',
-      moduleLabelAr: 'الإجراءات التصحيحية (CAPA)'
+      moduleLabelAr: 'الإجراءات التصحيحية (CAPA)',
+      details: {
+        'السبب الجذري': 'اعتماد العامل على الصوت بمفك هوائي غير مقيد',
+        'الحل الجذري المطبق': 'Poka-Yoke كهربائي ذكي مقفل بـ PLC',
+        'حالة الإغلاق': 'مطبق وموثق في خطة المراقبة'
+      },
+      x: 550, y: 800, w: 280, h: 48
     },
 
     // ------------------------------------------------------------------------
-    // 6. OUTGOING QUALITY CONTROL (OQC)
+    // CONTAINER 6: 6. الفحص الصادر (OQC) - Middle Right
     // ------------------------------------------------------------------------
     {
       id: 'INS-2026-OQC-901',
+      containerId: 6,
       category: 'oqc',
-      titleEn: 'Final Outgoing Inspection: 50 Samples Approved',
-      titleAr: '6. الفحص الصادر INS-OQC-901: اعتماد الشحن بنجاح (PASS)',
+      titleAr: 'INS-2026-OQC-901 فحص العينة الصادرة',
+      titleEn: 'INS-2026-OQC-901 Outgoing Sample Inspection',
+      subtitleAr: 'PASS عينة 50 مضخة - اعتماد الشحن والتسليم للعميل',
+      subtitleEn: 'PASS 50 pumps sample - Shipping clearance approved',
       code: 'INS-2026-OQC-901',
-      lotOrBatch: 'BATCH-2026-901 (480 مضخة جاهزة)',
+      lotOrBatch: 'BATCH-2026-901',
       status: 'pass',
-      statusLabelEn: 'Released & CoC Certified',
-      statusLabelAr: 'تم الإفراج التام مع شهادة المطابقة',
+      statusLabelAr: 'إفراج نهائي معتمد (PASS)',
+      statusLabelEn: 'OQC Clearance Passed',
+      statusColor: '#10B981',
       isStopPoint: false,
-      stopReasonAr: 'لا يوجد. العينة العشوائية (50 مضخة) اجتازت اختبار الضغط 280 بار لمدة 5 دقائق بنجاح تام.',
-      nextStepAr: 'تغليف وتوسيم الباركود وتسليم الشحنة لمستودع الشحن النهائي.',
-      assignedTo: 'كبير مفتشي الجودة شريف منصور',
-      location: 'منطقة الفحص النهائي والإفراج OQC',
-      timestamp: '2026-10-09',
-      details: {
-        'الكمية المعتمدة': '480 مضخة هيدروليكية',
-        'خطة المعاينة': 'MIL-STD-105E Level II (AQL 0.65)',
-        'اختبار الضغط النهائي': '280 Bar (0% هبوط ضغط)',
-        'شهادة الإفراج': 'Certificate of Conformity #COC-2026-442',
-        'فاتورة التسليم': 'INV-2026-442'
-      },
-      linkedToIds: ['CMP-2026-101'],
+      stopReasonAr: 'تم اجتياز الفحص الظاهري والوظيفي لـ 50 مضخة بعد عزل الوحدات المعيبة.',
+      nextStepAr: 'إصدار شهادة المطابقة النهائية CoC وتسليم العميل.',
+      assignedTo: 'م. مروان صلاح (مدير فحص الجودة النهائية OQC)',
+      location: 'رصيف الشحن والتصدير 04',
       moduleUrl: '/outgoing-quality',
-      moduleLabelAr: 'فحص الشحن النهائي (OQC)'
+      moduleLabelAr: 'جودة الفحص النهائي (OQC)',
+      details: {
+        'خطة المعاينة': 'AQL 0.65 عينة 50 مضخة',
+        'نتيجة الفحص': 'صفر عيوب في العينة المعتمدة',
+        'تاريخ الإفراج': '2026-10-14'
+      },
+      x: 725, y: 395, w: 260, h: 60
     },
 
     // ------------------------------------------------------------------------
-    // 7. CUSTOMER & FIELD COMPLAINT
+    // CONTAINER 7: 7. العميل والشكوى والتتبع العكسي - Bottom Right
     // ------------------------------------------------------------------------
     {
-      id: 'CMP-2026-101',
-      category: 'customer-complaint',
-      titleEn: 'Customer Complaint: Hydraulic Leakage at Max Pressure',
-      titleAr: '7. شكوى العميل CMP-101: تسريب زيت عند ضغط 280 بار',
-      code: 'CMP-2026-101',
-      lotOrBatch: 'Serials PUMP-901-042 & 043',
-      status: 'investigation',
-      statusLabelEn: 'Under Metallurgical Teardown',
-      statusLabelAr: 'قيد فحص التفكيك المعملي المسترجع',
-      isStopPoint: true,
-      stopReasonAr: 'العميل أبلغ عن رشح زيت من مجمع المضخة بعد 40 ساعة عمل في حفار ميداني.',
-      nextStepAr: 'تم إرسال مضختين بديلتين للعميل فوراً، وجاري فك المضختين المعيوبتين لفحص مانع التسرب وعزم الربط.',
-      assignedTo: 'م. عمرو خالد (خدمة ما بعد البيع والجودة)',
-      location: 'موقع العميل: شركة الأمل للمعدات الصناعية',
-      timestamp: '2026-10-12',
-      details: {
-        'العميل الشاكي': 'شركة الأمل للمعدات الصناعية',
-        'القطع المتأثرة': 'مضختان (Serial # PUMP-901-042 & 043)',
-        'الإجراء الفوري': 'صرف بديل مجاني فوري من رصيد الأمان',
-        'التتبع العكسي': 'يرجع للتشغيلة BATCH-2026-901 وعيب DEF-901B',
-        'حالة الشكوى': 'مفتوحة قيد التحليل الجذري 8D'
-      },
-      linkedToIds: ['INS-2026-OQC-901', 'NCR-2026-901'],
+      id: 'CUST-AL-AMAL',
+      containerId: 7,
+      category: 'customer',
+      titleAr: 'العميل: شركة الأمل للمعدات الصناعية',
+      titleEn: 'Customer: Al-Amal Industrial Equipment Co.',
+      subtitleAr: 'استلام دفعة المضخات بعقد توريد سنوي رقم CON-2026-99',
+      subtitleEn: 'Received pump batch under contract CON-2026-99',
+      code: 'CUST-EG-088',
+      lotOrBatch: 'BATCH-2026-901',
+      status: 'pass',
+      statusLabelAr: 'عميل معتمد',
+      statusLabelEn: 'Approved Customer',
+      statusColor: '#00A3E0',
+      isStopPoint: false,
+      stopReasonAr: 'تم تسليم الشحنة للعميل بنجاح.',
+      nextStepAr: 'المتابعة الميدانية للتشغيل لدى العميل.',
+      assignedTo: 'أحمد نبيل (إدارة خدمة العملاء)',
+      location: 'موقع العميل - المنطقة الصناعية بالعاشر',
       moduleUrl: '/quality/records/complaints',
-      moduleLabelAr: 'شكاوى العملاء (Complaints)'
+      moduleLabelAr: 'سجلات العملاء',
+      details: {
+        'الكمية المسلمة': '238 مضخة',
+        'تاريخ التسليم': '2026-10-14'
+      },
+      x: 725, y: 555, w: 260, h: 48
+    },
+    {
+      id: 'CMP-2026-101',
+      containerId: 7,
+      category: 'complaint',
+      titleAr: 'CMP-2026-101: شكوى عميل',
+      titleEn: 'CMP-2026-101: Customer Complaint',
+      subtitleAr: 'تسريب زيت عند ضغط تشغيل 280 بار في موقع العميل',
+      subtitleEn: 'Oil leakage at 280 bar during field operation',
+      code: 'CMP-2026-101',
+      lotOrBatch: 'BATCH-2026-901',
+      status: 'investigation',
+      statusLabelAr: 'تتبع عكسي شامل وتحقيق',
+      statusLabelEn: 'Reverse Traceability Active',
+      statusColor: '#8B5CF6',
+      isStopPoint: true,
+      stopReasonAr: '⚡ تتبع عكسي فوري! أبلغ العميل عن تسريب في وحدة واحدة تعمل تحت ضغط استثنائي 280 بار. تم تفعيل التتبع العكسي في الخريطة للرجوع إلى شحنة التجميع وعزم الربط والمواد الخام الأصلية.',
+      nextStepAr: 'إرسال وحدة بديلة فوراً واسترداد القطعة المعيبة للتحليل المعملي.',
+      assignedTo: 'م. إيناس فوزي (مهندسة جودة العملاء)',
+      location: 'مختبر تحليل مرتجعات العملاء',
+      moduleUrl: '/quality/records/complaints',
+      moduleLabelAr: 'شكاوى العملاء والمردودات',
+      details: {
+        'الرقم المرجعي للعميل': 'TICKET-AMAL-774',
+        'نوع الضرر': 'تسريب زيت هيدروليكي ميداني',
+        'الإجراء المتخذ': 'تفعيل مسار التتبع العكسي الكامل 8D'
+      },
+      x: 725, y: 625, w: 260, h: 60
     }
   ], []);
 
-  // Find currently selected node object
+  // Currently selected node object
   const activeNode = useMemo(() => {
     return nodes.find(n => n.id === selectedNodeId) || nodes[0];
   }, [nodes, selectedNodeId]);
 
-  // Handle Preset Selection and Set Selected Node
-  const handleSelectPreset = (preset: PresetJourney) => {
-    setActivePreset(preset);
-    if (preset === 'batch-901') {
-      setSelectedNodeId('BATCH-2026-901');
-      toast.info('تم تحميل مسار تشغيلة التجميع الكاملة (500 مضخة)');
-    } else if (preset === 'seal-lot-02') {
-      setSelectedNodeId('INS-2026-RM-02');
-      toast.error('تم تحديد لوت السيل المرفوض: توقف كامل عند فحص IQC');
-    } else if (preset === 'complaint-101') {
-      setSelectedNodeId('CMP-2026-101');
-      toast.warning('تم تفعيل التتبع العكسي من شكوى العميل إلى المورد');
-    } else if (preset === 'valve-lot-03') {
-      setSelectedNodeId('INS-2026-RM-03');
-      toast.success('تم تحديد لوت الصمامات: مسار مطابق بنسبة 100%');
-    }
-  };
-
-  // Determine Metro Subway-Line progress based on active selection
-  const metroStations = useMemo(() => {
-    if (activePreset === 'seal-lot-02' || selectedNodeId === 'INS-2026-RM-02' || selectedNodeId === 'NCR-SUP-2026-001') {
-      return [
-        { name: '1. استلام الخامة', status: 'done', label: 'تم الاستلام' },
-        { name: '2. فحص الاستلام IQC', status: 'failed', label: '🛑 نقطة التوقف (رفض)' },
-        { name: '3. حجر و Supplier NCR', status: 'current', label: 'حجر صحي وإرجاع' },
-        { name: '4. خط التجميع', status: 'blocked', label: 'مُنع من الدخول' },
-        { name: '5. فحص الخروج OQC', status: 'blocked', label: 'غير مشمول' },
-        { name: '6. تسليم العميل', status: 'blocked', label: 'غير مشمول' },
-      ];
-    }
-
-    if (activePreset === 'valve-lot-03' || selectedNodeId === 'INS-2026-RM-03') {
-      return [
-        { name: '1. استلام الخامة', status: 'done', label: 'مطابق 100%' },
-        { name: '2. فحص الاستلام IQC', status: 'done', label: 'تم الاعتماد PASS' },
-        { name: '3. سحب للتجميع', status: 'done', label: 'دمج بالكامل' },
-        { name: '4. فحص الخروج OQC', status: 'done', label: 'معتمد 280 بار' },
-        { name: '5. تسليم العميل', status: 'done', label: 'تسليم بنجاح ✅' },
-      ];
-    }
-
-    // Default: BATCH-2026-901 & Customer Complaint Trace
-    return [
-      { name: '1. الخامات الواردة', status: 'done', label: '5 خامات واردة' },
-      { name: '2. فحص IQC والحجر', status: 'done', label: 'استبعاد لوت السيل' },
-      { name: '3. خط التجميع 1', status: 'done', label: 'رصد 3 عيوب' },
-      { name: '4. التدقيق والكابا', status: 'done', label: 'مفك Poka-Yoke' },
-      { name: '5. فحص الخروج OQC', status: 'done', label: 'اعتماد 480 مضخة' },
-      { name: '6. تسليم العميل', status: 'investigation', label: '⚠️ نقطة التوقف: شكوى تسريب' },
-    ];
-  }, [activePreset, selectedNodeId]);
-
-  // Overall journey headline
-  const journeyHeadline = useMemo(() => {
-    if (activePreset === 'seal-lot-02' || selectedNodeId === 'INS-2026-RM-02') {
+  // Determine which nodes and connections are highlighted based on activePreset
+  const highlightInfo = useMemo(() => {
+    if (activePreset === 'all') {
       return {
-        badge: '🛑 نقطة توقف: اللوت محجوز بالحجر الصحي',
-        badgeColor: 'bg-rose-500/20 text-rose-300 border-rose-500/30',
-        progress: 25,
-        location: 'منطقة الحجر الصحي - Quarantine Bay 4',
-        responsible: 'م. مصطفى رفعت & م. طارق عامر (Supplier Quality)',
-        actionRequired: 'اعتماد إشعار إرجاع المورد RTV وتوريد دفعة بديلة',
+        activeNodeIds: nodes.map(n => n.id),
+        focusStopPointId: null
       };
     }
-    if (activePreset === 'complaint-101' || selectedNodeId === 'CMP-2026-101') {
+    if (activePreset === 'seal-lot-02') {
       return {
-        badge: '⚠️ تتبع عكسي: معلق عند تحقيق شكوى العميل',
-        badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
-        progress: 88,
-        location: 'موقع العميل + معمل الفحص المعدني بالمصنع',
-        responsible: 'م. عمرو خالد (خدمة ما بعد البيع) & م. وليد فوزي',
-        actionRequired: 'إكمال تقرير فك العينات المسترجعة وتأكيد عزم الربط',
+        activeNodeIds: ['RM-ORING-02', 'NCR-SUP-2026-001'],
+        focusStopPointId: 'RM-ORING-02'
+      };
+    }
+    if (activePreset === 'batch-901') {
+      return {
+        activeNodeIds: ['RM-ALUM-01', 'RM-BOLT-04', 'RM-OIL-05', 'BATCH-2026-901', 'DEF-901B', 'DEF-901A', 'AUD-2026-901', 'NCR-2026-901', 'CAPA-2026-901'],
+        focusStopPointId: 'DEF-901B'
+      };
+    }
+    if (activePreset === 'complaint-101') {
+      return {
+        activeNodeIds: ['CMP-2026-101', 'CUST-AL-AMAL', 'INS-2026-OQC-901', 'BATCH-2026-901', 'DEF-901B', 'NCR-2026-901', 'CAPA-2026-901'],
+        focusStopPointId: 'CMP-2026-101'
       };
     }
     if (activePreset === 'valve-lot-03') {
       return {
-        badge: '✅ مسار مكتمل بنسبة 100% بدون أي عوائق',
-        badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
-        progress: 100,
-        location: 'تم التسليم بنجاح في موقع العميل',
-        responsible: 'شريف منصور (إفراج الجودة النهائي)',
-        actionRequired: 'لا يوجد إجراء معلق - الدورة مغلقة',
+        activeNodeIds: ['RM-VALV-03', 'BATCH-2026-901', 'INS-2026-OQC-901', 'CUST-AL-AMAL'],
+        focusStopPointId: null
       };
     }
-    return {
-      badge: '🔄 تشغيلة نشطة: اكتمل التجميع ومتبقي إغلاق الكابا',
-      badgeColor: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
-      progress: 75,
-      location: 'خط التجميع 1 + محطة الفحص النهائي OQC',
-      responsible: 'م. وليد فوزي & إبراهيم توفيق',
-      actionRequired: 'تركيب وتشغيل مفك العزم الذكي ومتابعة الشكوى',
+    return { activeNodeIds: nodes.map(n => n.id), focusStopPointId: null };
+  }, [activePreset, nodes]);
+
+  // Preset Selection Action
+  const applyPreset = (preset: PresetJourney, defaultNodeId?: string) => {
+    setActivePreset(preset);
+    if (defaultNodeId) {
+      setSelectedNodeId(defaultNodeId);
+    }
+    const titles = {
+      'all': 'عرض خريطة المصنع التتبعية الكاملة',
+      'batch-901': 'تتبع تشغيلة التجميع BATCH-901 (توقف بالتجميع ومعالجة CAPA)',
+      'seal-lot-02': 'تتبع خامة مانع التسرب LOT-02 (توقف حظر الاستلام IQC ومطابقة مورد)',
+      'complaint-101': 'تتبع عكسي لشكوى العميل CMP-101 إلى جذر المشكلة والتجميع',
+      'valve-lot-03': 'تتبع مسار مطابق 100% لخامة الصمامات LOT-03 حتى التسليم'
     };
-  }, [activePreset, selectedNodeId]);
+    toast.info(titles[preset]);
+  };
 
   return (
-    <PageContainer>
-      {/* Page Header */}
-      <PageHeader
-        title="Quality Control Tower"
-        subtitle="برج المراقبة وتتبع دورة الجودة المغلقة: اكتشاف نقطة التوقف، التتبع العكسي، والانتقال الفوري لأي شاشة"
-        breadcrumbs={[{ label: 'الجودة الذكية' }, { label: 'برج المراقبة والتتبع' }]}
-        actions={{
-          refresh: () => {
-            seedComprehensiveQualityLifecycle();
-            toast.success('تم تحديث شجرة البيانات الحية بنجاح');
-          },
-          custom: [
-            {
-              label: 'إعادة تهيئة التجربة',
-              variant: 'secondary',
-              onClick: () => {
-                seedComprehensiveQualityLifecycle();
-                toast.success('تمت إعادة تهيئة رحلة الـ 5 خامات والـ 7 مراحل');
-              }
-            }
-          ]
-        }}
-      />
-
-      {/* ========================================================================= */}
-      {/* 1. UNIVERSAL SELECTOR & SEARCH BAR                                        */}
-      {/* ========================================================================= */}
-      <section className="glass-panel p-5 rounded-[2rem] border border-white/10 space-y-4 shadow-xl">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-black uppercase tracking-wider text-white/50">مسارات التجربة النموذجية:</span>
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                onClick={() => handleSelectPreset('batch-901')}
-                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  activePreset === 'batch-901'
-                    ? 'bg-[#0066CC] text-white shadow-lg shadow-[#0066CC]/30 ring-2 ring-[#00A3E0]/40'
-                    : 'bg-white/5 text-white/60 hover:bg-white/10'
-                }`}
-              >
-                <span>⚙️</span> تشغيلة المضخة BATCH-901 (الدورة الكاملة)
-              </button>
-
-              <button
-                onClick={() => handleSelectPreset('seal-lot-02')}
-                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  activePreset === 'seal-lot-02'
-                    ? 'bg-rose-600 text-white shadow-lg shadow-rose-600/30 ring-2 ring-rose-400/40'
-                    : 'bg-white/5 text-white/60 hover:bg-white/10'
-                }`}
-              >
-                <span>🛑</span> لوت موانع التسرب LOT-02 (حالة توقف)
-              </button>
-
-              <button
-                onClick={() => handleSelectPreset('complaint-101')}
-                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  activePreset === 'complaint-101'
-                    ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/30 ring-2 ring-amber-400/40'
-                    : 'bg-white/5 text-white/60 hover:bg-white/10'
-                }`}
-              >
-                <span>⚠️</span> شكوى العميل CMP-101 (تتبع عكسي)
-              </button>
-
-              <button
-                onClick={() => handleSelectPreset('valve-lot-03')}
-                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  activePreset === 'valve-lot-03'
-                    ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30 ring-2 ring-emerald-400/40'
-                    : 'bg-white/5 text-white/60 hover:bg-white/10'
-                }`}
-              >
-                <span>✅</span> لوت الصمامات LOT-03 (مطابق 100%)
-              </button>
-            </div>
+    <div 
+      ref={containerRef}
+      className={`relative w-full ${isFullscreen ? 'h-screen fixed inset-0 z-50 bg-[#070b14]' : 'h-[calc(100vh-80px)] min-h-[640px] max-h-[960px]'} bg-[#070b14] text-white flex flex-col font-sans overflow-hidden select-none`}
+      dir={isAr ? 'rtl' : 'ltr'}
+    >
+      {/* ==================================================================== */}
+      {/* TOP CONTROL BAR: TITLE, JOURNEY PRESETS, ZOOM, SCREEN CONTROLS */}
+      {/* ==================================================================== */}
+      <header className="flex-none px-4 py-2.5 bg-slate-900/90 border-b border-white/10 backdrop-blur-md flex flex-wrap items-center justify-between gap-3 z-30">
+        {/* Left / Start: Title & Live Beacon */}
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#0066CC] to-[#00A3E0] flex items-center justify-center shadow-lg shadow-[#0066CC]/30">
+            <Network className="w-5 h-5 text-white animate-pulse" />
           </div>
-
-          {/* Quick Search */}
-          <div className="relative min-w-[260px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
-            <input
-              type="text"
-              placeholder="ابحث بكود أو لوت أو سيريال..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 bg-black/40 border border-white/10 rounded-xl text-xs text-white placeholder-white/30 focus:border-[#00A3E0] focus:outline-none"
-            />
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-sm md:text-base font-black text-white tracking-wide">
+                {isAr ? 'خريطة الجودة التتبعية الحية (Single-Screen Blueprint)' : 'Live Quality Blueprint & Stop-Point Map'}
+              </h1>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 animate-pulse">
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
+                {isAr ? 'خريطة حية موحدة' : 'LIVE MAP'}
+              </span>
+            </div>
+            <p className="text-[11px] text-white/45 hidden sm:block">
+              {isAr ? 'عرض بصري متكامل للهيكل الصناعي الـ 7 كتل - تتبع نقاط التوقف ومسارات التدفق في شاشة واحدة' : 'Single-screen factory flow: inspect stop points and navigate anywhere with 1 click'}
+            </p>
           </div>
         </div>
 
-        {/* Live Headline Status Strip */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-3 border-t border-white/5">
-          <div className="flex items-center gap-3">
-            <span className={`px-3 py-1 rounded-full text-xs font-black border ${journeyHeadline.badgeColor}`}>
-              {journeyHeadline.badge}
-            </span>
-            <div className="text-xs text-white/70">
-              <span className="text-white/40">الموقع الحالي: </span>
-              <strong className="text-white">{journeyHeadline.location}</strong>
-            </div>
-          </div>
+        {/* Center: 5 Interactive Journey Presets */}
+        <div className="flex items-center gap-1.5 bg-white/5 p-1 rounded-2xl border border-white/10 overflow-x-auto max-w-full">
+          <button
+            onClick={() => applyPreset('all', 'DEF-901B')}
+            className={`px-2.5 py-1 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 whitespace-nowrap ${
+              activePreset === 'all' 
+                ? 'bg-[#00A3E0] text-slate-950 shadow-md shadow-[#00A3E0]/30' 
+                : 'text-white/70 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <Layers className="w-3.5 h-3.5" />
+            <span>{isAr ? 'الخريطة الكاملة' : 'Full Map'}</span>
+          </button>
 
-          <div className="flex items-center gap-4 text-xs">
-            <div>
-              <span className="text-white/40">المسؤول: </span>
-              <strong className="text-[#00A3E0]">{journeyHeadline.responsible}</strong>
-            </div>
-            <div className="w-24 bg-white/10 h-2 rounded-full overflow-hidden">
-              <div 
-                className={`h-full rounded-full transition-all duration-500 ${
-                  journeyHeadline.progress === 100 
-                    ? 'bg-emerald-500' 
-                    : (journeyHeadline.progress <= 30 ? 'bg-rose-500' : 'bg-[#00A3E0]')
-                }`}
-                style={{ width: `${journeyHeadline.progress}%` }}
+          <button
+            onClick={() => applyPreset('seal-lot-02', 'RM-ORING-02')}
+            className={`px-2.5 py-1 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 whitespace-nowrap ${
+              activePreset === 'seal-lot-02' 
+                ? 'bg-red-500 text-white shadow-md shadow-red-500/30 animate-pulse' 
+                : 'text-white/70 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <span className="w-2 h-2 rounded-full bg-red-400 animate-ping"></span>
+            <span>{isAr ? '1. حظر لوت مانع تسرب (IQC)' : '1. IQC Stop (Seal Lot)'}</span>
+          </button>
+
+          <button
+            onClick={() => applyPreset('batch-901', 'DEF-901B')}
+            className={`px-2.5 py-1 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 whitespace-nowrap ${
+              activePreset === 'batch-901' 
+                ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/30' 
+                : 'text-white/70 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <span className="w-2 h-2 rounded-full bg-amber-400"></span>
+            <span>{isAr ? '2. تشغيلة تجميع BATCH-901' : '2. Assembly Batch 901'}</span>
+          </button>
+
+          <button
+            onClick={() => applyPreset('complaint-101', 'CMP-2026-101')}
+            className={`px-2.5 py-1 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 whitespace-nowrap ${
+              activePreset === 'complaint-101' 
+                ? 'bg-purple-500 text-white shadow-md shadow-purple-500/30' 
+                : 'text-white/70 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <span className="w-2 h-2 rounded-full bg-purple-300"></span>
+            <span>{isAr ? '3. تتبع عكسي لشكوى عميل' : '3. Reverse Traceability'}</span>
+          </button>
+
+          <button
+            onClick={() => applyPreset('valve-lot-03', 'RM-VALV-03')}
+            className={`px-2.5 py-1 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 whitespace-nowrap ${
+              activePreset === 'valve-lot-03' 
+                ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/30' 
+                : 'text-white/70 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-950" />
+            <span>{isAr ? '4. مسار مطابق 100%' : '4. 100% Pass Flow'}</span>
+          </button>
+        </div>
+
+        {/* Right / End: Zoom & Screen Controls */}
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => setShowLegend(!showLegend)}
+            className={`p-2 rounded-xl text-xs font-bold transition-all border ${
+              showLegend ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40' : 'bg-white/5 text-white/70 border-white/10 hover:text-white'
+            }`}
+            title={isAr ? 'مفتاح الخريطة' : 'Map Legend'}
+          >
+            <HelpCircle className="w-4 h-4" />
+          </button>
+
+          <button
+            onClick={() => setZoomLevel(prev => Math.max(0.7, prev - 0.1))}
+            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 hover:text-white transition-all"
+            title={isAr ? 'تصغير' : 'Zoom Out'}
+          >
+            <ZoomOut className="w-4 h-4" />
+          </button>
+
+          <span className="text-[11px] font-mono px-1.5 text-white/50">{Math.round(zoomLevel * 100)}%</span>
+
+          <button
+            onClick={() => setZoomLevel(prev => Math.min(1.5, prev + 0.1))}
+            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 hover:text-white transition-all"
+            title={isAr ? 'تكبير' : 'Zoom In'}
+          >
+            <ZoomIn className="w-4 h-4" />
+          </button>
+
+          <button
+            onClick={() => setZoomLevel(1)}
+            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 hover:text-white transition-all"
+            title={isAr ? 'إعادة الضبط لملء الشاشة' : 'Reset to Fit'}
+          >
+            <RotateCcw className="w-4 h-4" />
+          </button>
+
+          <button
+            onClick={toggleFullscreen}
+            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-cyan-400 hover:text-cyan-300 transition-all"
+            title={isAr ? 'ملء كامل الشاشة (Presentation Mode)' : 'Toggle Fullscreen'}
+          >
+            {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+          </button>
+        </div>
+      </header>
+
+      {/* ==================================================================== */}
+      {/* MAIN VIEWPORT: THE BLUEPRINT CANVAS (EXACT TOPOLOGY ON SINGLE SCREEN) */}
+      {/* ==================================================================== */}
+      <div className="relative flex-1 w-full h-full overflow-hidden flex items-center justify-center p-2 bg-[#060a12] bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px]">
+        {/* Transformable Canvas Container with Zoom */}
+        <div 
+          className="relative w-full h-full max-w-[1400px] max-h-[860px] transition-transform duration-300 origin-center"
+          style={{ transform: `scale(${zoomLevel})` }}
+        >
+          {/* ------------------------------------------------------------------ */}
+          {/* SVG LAYER: CONNECTORS, BUS LINES, DASHED LOOPS, ARROWS & BADGES     */}
+          {/* ------------------------------------------------------------------ */}
+          <svg 
+            viewBox="0 0 1400 860" 
+            className="absolute inset-0 w-full h-full pointer-events-none z-10"
+            preserveAspectRatio="xMidYMid meet"
+          >
+            <defs>
+              {/* Standard Cyan Arrow */}
+              <marker id="arrow-cyan" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1 L 9 5 L 0 9 z" fill="#00A3E0" />
+              </marker>
+
+              {/* Red Warning Arrow */}
+              <marker id="arrow-red" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1 L 9 5 L 0 9 z" fill="#EF4444" />
+              </marker>
+
+              {/* Purple Reverse Arrow */}
+              <marker id="arrow-purple" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1 L 9 5 L 0 9 z" fill="#A855F7" />
+              </marker>
+
+              {/* Green Success Arrow */}
+              <marker id="arrow-green" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1 L 9 5 L 0 9 z" fill="#10B981" />
+              </marker>
+            </defs>
+
+            {/* 1. PATH: Raw Material 2 (FAIL) ➔ Supplier NCR (Downwards) */}
+            <g className={activePreset === 'seal-lot-02' ? 'stroke-red-500' : 'stroke-red-500/70'}>
+              <line 
+                x1="167.5" y1="118" 
+                x2="167.5" y2="500" 
+                strokeWidth="2.5" 
+                strokeDasharray={activePreset === 'seal-lot-02' ? '6,4' : 'none'}
+                markerEnd="url(#arrow-red)" 
               />
+              {/* Badge label on the path: تصعيد إلى */}
+              <rect x="135" y="300" width="65" height="20" rx="4" fill="#1E293B" stroke="#EF4444" strokeWidth="1" />
+              <text x="167.5" y="314" fill="#FCA5A5" fontSize="10" fontWeight="bold" textAnchor="middle">تصعيد إلى</text>
+            </g>
+
+            {/* 2. PATH: Supplier NCR ➔ Origin Root Cause Loop (Dashed Back Up) */}
+            <g className={activePreset === 'seal-lot-02' ? 'stroke-red-400' : 'stroke-white/30'}>
+              <path 
+                d="M 65 532 L 30 532 L 30 20 L 167.5 20 L 167.5 50" 
+                fill="none" 
+                strokeWidth="1.5" 
+                strokeDasharray="5,4" 
+                markerEnd="url(#arrow-red)" 
+              />
+              <rect x="35" y="420" width="65" height="18" rx="4" fill="#0F172A" stroke="#EF4444" strokeWidth="1" />
+              <text x="67.5" y="433" fill="#F87171" fontSize="9" fontWeight="bold" textAnchor="middle">أصل المشكلة</text>
+            </g>
+
+            {/* 3. PATH: Passing Raw Materials ➔ Assembly Batch BATCH-901 Bus Line */}
+            <g className={activePreset === 'batch-901' || activePreset === 'valve-lot-03' ? 'stroke-emerald-400' : 'stroke-white/40'}>
+              {/* Horizontal collector bar */}
+              <path d="M 437.5 118 L 437.5 145 L 1237.5 145 L 1237.5 118" fill="none" strokeWidth="2" />
+              <line x1="707.5" y1="118" x2="707.5" y2="145" strokeWidth="2" />
+              <line x1="977.5" y1="118" x2="977.5" y2="145" strokeWidth="2" />
+              {/* Central drop into BATCH-2026-901 */}
+              <line x1="690" y1="145" x2="690" y2="195" strokeWidth="2.5" markerEnd="url(#arrow-green)" />
+            </g>
+
+            {/* 4. PATH: Assembly Batch ➔ 3 Defects Branching */}
+            <g className={activePreset === 'batch-901' ? 'stroke-cyan-400' : 'stroke-white/40'}>
+              <path d="M 690 237 L 690 252 L 467.5 252 L 467.5 265" fill="none" strokeWidth="2" markerEnd="url(#arrow-red)" />
+              <path d="M 690 237 L 690 265" fill="none" strokeWidth="2" markerEnd="url(#arrow-cyan)" />
+              <path d="M 690 237 L 690 252 L 912.5 252 L 912.5 265" fill="none" strokeWidth="2" markerEnd="url(#arrow-red)" />
+            </g>
+
+            {/* 5. PATH: Defect 901B (Leak) ➔ Internal NCR-901 */}
+            <g className={activePreset === 'batch-901' ? 'stroke-red-500' : 'stroke-red-500/50'}>
+              <path d="M 467.5 319 L 467.5 770 L 550 770" fill="none" strokeWidth="2" markerEnd="url(#arrow-red)" />
+            </g>
+
+            {/* 6. PATH: Defect 901A (Over-torque) ➔ Control Plan / LPA Audit (Container 4) */}
+            <g className={activePreset === 'batch-901' ? 'stroke-amber-400' : 'stroke-white/30'}>
+              <path d="M 912.5 319 L 912.5 345 L 610 345 L 610 595 L 585 595" fill="none" strokeWidth="1.5" strokeDasharray="5,4" markerEnd="url(#arrow-cyan)" />
+            </g>
+
+            {/* 7. PATH: Control Plan CP-PUMP-01 ➔ Process Audit AUD-901 */}
+            <g stroke="#00A3E0" strokeWidth="2">
+              <line x1="487.5" y1="648" x2="487.5" y2="672" markerEnd="url(#arrow-cyan)" />
+            </g>
+
+            {/* 8. PATH: Process Audit AUD-901 ➔ Internal NCR-901 */}
+            <g stroke="#EF4444" strokeWidth="2">
+              <path d="M 487.5 724 L 487.5 770 L 550 770" fill="none" markerEnd="url(#arrow-red)" />
+            </g>
+
+            {/* 9. PATH: Internal NCR ➔ CAPA Corrective Action */}
+            <g stroke="#10B981" strokeWidth="2.5">
+              <line x1="690" y1="790" x2="690" y2="800" markerEnd="url(#arrow-green)" />
+            </g>
+
+            {/* 10. PATH: CAPA Loop ➔ Root Cause feedback to DEF-901A (Dashed) */}
+            <g className={activePreset === 'batch-901' ? 'stroke-cyan-300' : 'stroke-white/30'}>
+              <path 
+                d="M 550 824 L 330 824 L 330 292 L 370 292" 
+                fill="none" 
+                strokeWidth="1.5" 
+                strokeDasharray="5,4" 
+                markerEnd="url(#arrow-cyan)" 
+              />
+              <rect x="335" y="813" width="75" height="18" rx="4" fill="#0F172A" stroke="#00A3E0" strokeWidth="1" />
+              <text x="372.5" y="826" fill="#8BE3FF" fontSize="9" fontWeight="bold" textAnchor="middle">السبب الجذري</text>
+            </g>
+
+            {/* 11. PATH: Assembly Container 3 ➔ Outgoing Quality (OQC) */}
+            <g stroke="#00A3E0" strokeWidth="2">
+              <line x1="855" y1="335" x2="855" y2="395" markerEnd="url(#arrow-cyan)" />
+            </g>
+
+            {/* 12. PATH: OQC ➔ Customer Delivery */}
+            <g stroke="#10B981" strokeWidth="2">
+              <line x1="855" y1="455" x2="855" y2="555" markerEnd="url(#arrow-green)" />
+            </g>
+
+            {/* 13. PATH: Customer ➔ Customer Complaint CMP-101 */}
+            <g stroke="#EF4444" strokeWidth="2">
+              <line x1="855" y1="603" x2="855" y2="625" markerEnd="url(#arrow-red)" />
+            </g>
+
+            {/* 14. PATH: Customer Complaint ➔ Reverse Traceability UP into OQC & Assembly (Dashed) */}
+            <g className={activePreset === 'complaint-101' ? 'stroke-purple-400' : 'stroke-purple-500/50'}>
+              <path 
+                d="M 985 655 L 1025 655 L 1025 425 L 985 425" 
+                fill="none" 
+                strokeWidth="2" 
+                strokeDasharray="6,4" 
+                markerEnd="url(#arrow-purple)" 
+              />
+              <rect x="990" y="530" width="85" height="20" rx="4" fill="#1E1B4B" stroke="#A855F7" strokeWidth="1" />
+              <text x="1032.5" y="544" fill="#D8B4FE" fontSize="9" fontWeight="bold" textAnchor="middle">تتبع عكسي شامل</text>
+            </g>
+
+            {/* 15. PATH: Complaint ➔ Quality Investigation (NCR/CAPA) (Dashed) */}
+            <g className={activePreset === 'complaint-101' ? 'stroke-purple-400' : 'stroke-purple-500/50'}>
+              <path 
+                d="M 725 655 L 690 655 L 690 748" 
+                fill="none" 
+                strokeWidth="1.5" 
+                strokeDasharray="5,4" 
+                markerEnd="url(#arrow-purple)" 
+              />
+              <rect x="670" y="695" width="70" height="18" rx="4" fill="#1E1B4B" stroke="#A855F7" strokeWidth="1" />
+              <text x="705" y="708" fill="#D8B4FE" fontSize="9" fontWeight="bold" textAnchor="middle">تحقيق الجودة</text>
+            </g>
+          </svg>
+
+          {/* ------------------------------------------------------------------ */}
+          {/* THE 7 FACTORY CONTAINER FRAMES (BORDERED BOXES MATCHING DIAGRAM)   */}
+          {/* ------------------------------------------------------------------ */}
+
+          {/* CONTAINER 1: 1. الخامات الواردة (IQC) */}
+          <div 
+            className="absolute rounded-2xl border border-slate-700/80 bg-slate-900/40 backdrop-blur-sm p-2 transition-all hover:border-cyan-500/40"
+            style={{ left: 30, top: 15, width: 1340, height: 115 }}
+          >
+            <div className="flex items-center justify-between px-2 pb-1 text-[11px] font-black text-cyan-400 border-b border-white/5 uppercase tracking-wider">
+              <span className="flex items-center gap-1.5">
+                <Truck className="w-3.5 h-3.5 text-cyan-400" />
+                1. الخامات الواردة (IQC)
+              </span>
+              <span className="text-[10px] text-white/40">5 شحنات واردة ومطابقة المواصفات</span>
             </div>
-            <span className="font-mono font-bold text-white/80">{journeyHeadline.progress}%</span>
           </div>
-        </div>
-      </section>
 
-      {/* ========================================================================= */}
-      {/* 2. METRO SUBWAY-LINE JOURNEY TRACKER                                      */}
-      {/* Shows which stations passed, and where the record stopped or stalled      */}
-      {/* ========================================================================= */}
-      <section className="glass-panel p-6 rounded-[2rem] border border-white/10 shadow-xl overflow-x-auto">
-        <div className="min-w-[700px] flex items-center justify-between relative px-6 py-2">
-          {/* Track Line behind stations */}
-          <div className="absolute left-10 right-10 top-1/2 -translate-y-1/2 h-1 bg-white/10 z-0" />
+          {/* CONTAINER 2: 2. عدم مطابقة مورد */}
+          <div 
+            className="absolute rounded-2xl border border-red-500/40 bg-red-950/20 backdrop-blur-sm p-2 transition-all"
+            style={{ left: 50, top: 465, width: 235, height: 115 }}
+          >
+            <div className="flex items-center justify-between px-1 pb-1 text-[11px] font-black text-red-400 border-b border-red-500/20 uppercase tracking-wider">
+              <span className="flex items-center gap-1.5">
+                <ShieldAlert className="w-3.5 h-3.5 text-red-400" />
+                2. عدم مطابقة مورد
+              </span>
+            </div>
+          </div>
 
-          {metroStations.map((station, idx) => {
-            const isDone = station.status === 'done';
-            const isFailed = station.status === 'failed';
-            const isCurrent = station.status === 'current';
-            const isInvestigation = station.status === 'investigation';
-            const isBlocked = station.status === 'blocked';
+          {/* CONTAINER 3: 3. خط التجميع ومسجل العيوب */}
+          <div 
+            className="absolute rounded-2xl border border-slate-700/80 bg-slate-900/40 backdrop-blur-sm p-2 transition-all hover:border-cyan-500/40"
+            style={{ left: 350, top: 160, width: 680, height: 175 }}
+          >
+            <div className="flex items-center justify-between px-2 pb-1 text-[11px] font-black text-cyan-400 border-b border-white/5 uppercase tracking-wider">
+              <span className="flex items-center gap-1.5">
+                <Cpu className="w-3.5 h-3.5 text-cyan-400" />
+                3. خط التجميع ومسجل العيوب
+              </span>
+              <span className="text-[10px] text-white/40">خط التجميع 02 ورصد الانحرافات اللحظية</span>
+            </div>
+          </div>
+
+          {/* CONTAINER 4: 4. خطة المراقبة والتدقيق الداخلي */}
+          <div 
+            className="absolute rounded-2xl border border-slate-700/80 bg-slate-900/40 backdrop-blur-sm p-2 transition-all hover:border-amber-500/40"
+            style={{ left: 370, top: 565, width: 235, height: 175 }}
+          >
+            <div className="flex items-center justify-between px-1 pb-1 text-[11px] font-black text-amber-400 border-b border-white/5 uppercase tracking-wider">
+              <span className="flex items-center gap-1.5">
+                <Wrench className="w-3.5 h-3.5 text-amber-400" />
+                4. خطة المراقبة والتدقيق الداخلي
+              </span>
+            </div>
+          </div>
+
+          {/* CONTAINER 5: 5. حلقة المعالجة والتحسين المغلقة */}
+          <div 
+            className="absolute rounded-2xl border border-purple-500/40 bg-purple-950/20 backdrop-blur-sm p-2 transition-all"
+            style={{ left: 525, top: 715, width: 330, height: 140 }}
+          >
+            <div className="flex items-center justify-between px-1 pb-1 text-[11px] font-black text-purple-300 border-b border-purple-500/20 uppercase tracking-wider">
+              <span className="flex items-center gap-1.5">
+                <RefreshCw className="w-3.5 h-3.5 text-purple-400" />
+                5. حلقة المعالجة والتحسين المغلقة
+              </span>
+            </div>
+          </div>
+
+          {/* CONTAINER 6: 6. الفحص الصادر (OQC) */}
+          <div 
+            className="absolute rounded-2xl border border-slate-700/80 bg-slate-900/40 backdrop-blur-sm p-2 transition-all hover:border-emerald-500/40"
+            style={{ left: 710, top: 360, width: 290, height: 110 }}
+          >
+            <div className="flex items-center justify-between px-1 pb-1 text-[11px] font-black text-emerald-400 border-b border-white/5 uppercase tracking-wider">
+              <span className="flex items-center gap-1.5">
+                <PackageCheck className="w-3.5 h-3.5 text-emerald-400" />
+                6. الفحص الصادر (OQC)
+              </span>
+            </div>
+          </div>
+
+          {/* CONTAINER 7: 7. العميل والشكوى والتتبع العكسي */}
+          <div 
+            className="absolute rounded-2xl border border-slate-700/80 bg-slate-900/40 backdrop-blur-sm p-2 transition-all hover:border-purple-500/40"
+            style={{ left: 710, top: 520, width: 290, height: 180 }}
+          >
+            <div className="flex items-center justify-between px-1 pb-1 text-[11px] font-black text-purple-400 border-b border-white/5 uppercase tracking-wider">
+              <span className="flex items-center gap-1.5">
+                <Users className="w-3.5 h-3.5 text-purple-400" />
+                7. العميل والشكوى والتتبع العكسي
+              </span>
+            </div>
+          </div>
+
+          {/* ------------------------------------------------------------------ */}
+          {/* THE 15 INTERACTIVE CARD NODES OVERLAY                               */}
+          {/* ------------------------------------------------------------------ */}
+          {nodes.map((node) => {
+            const isSelected = selectedNodeId === node.id;
+            const isHovered = hoveredNodeId === node.id;
+            const isHighlighted = highlightInfo.activeNodeIds.includes(node.id);
+            const isFocusStop = highlightInfo.focusStopPointId === node.id || (node.isStopPoint && activePreset === 'all');
 
             return (
-              <div key={idx} className="relative z-10 flex flex-col items-center text-center group cursor-pointer">
-                {/* Station Node Badge */}
-                <div 
-                  className={`w-10 h-10 rounded-2xl flex items-center justify-center font-bold text-xs transition-all shadow-md ${
-                    isDone 
-                      ? 'bg-emerald-500 text-white shadow-emerald-500/25 ring-4 ring-emerald-500/20' 
-                      : (isFailed 
-                          ? 'bg-rose-600 text-white animate-pulse ring-4 ring-rose-600/30' 
-                          : (isCurrent 
-                              ? 'bg-[#0066CC] text-white ring-4 ring-[#00A3E0]/30 animate-pulse'
-                              : (isInvestigation
-                                  ? 'bg-amber-500 text-white ring-4 ring-amber-500/20 animate-pulse'
-                                  : 'bg-slate-800 text-white/30 border border-white/10'
-                                )
-                            )
-                        )
-                  }`}
-                >
-                  {isDone ? <Check className="w-5 h-5" /> : (isFailed ? <X className="w-5 h-5" /> : idx + 1)}
+              <div
+                key={node.id}
+                onClick={() => setSelectedNodeId(node.id)}
+                onMouseEnter={() => setHoveredNodeId(node.id)}
+                onMouseLeave={() => setHoveredNodeId(null)}
+                style={{
+                  left: node.x,
+                  top: node.y,
+                  width: node.w,
+                  height: node.h,
+                }}
+                className={`absolute z-20 rounded-xl cursor-pointer transition-all duration-200 select-none flex flex-col justify-center px-3 py-1.5 border ${
+                  isSelected 
+                    ? 'ring-2 ring-cyan-400 border-cyan-400 bg-cyan-950/80 shadow-lg shadow-cyan-500/30 scale-105 z-30'
+                    : isFocusStop
+                    ? 'border-red-500 bg-red-950/70 shadow-lg shadow-red-500/30 animate-pulse'
+                    : isHighlighted
+                    ? 'border-white/20 bg-slate-900/90 hover:border-cyan-400/80 hover:bg-slate-800'
+                    : 'border-white/5 bg-slate-950/60 opacity-40 hover:opacity-100'
+                }`}
+              >
+                {/* Stop Point Beacon Light */}
+                {node.isStopPoint && (
+                  <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-4 w-4 bg-red-600 border border-white text-[9px] font-black text-white items-center justify-center">
+                      !
+                    </span>
+                  </span>
+                )}
+
+                {/* Node Title & Status Badge */}
+                <div className="flex items-center justify-between gap-1">
+                  <h3 className="text-[11px] font-black text-white leading-tight truncate">
+                    {node.titleAr}
+                  </h3>
+                  <span 
+                    className="text-[9px] font-black px-1.5 py-0.5 rounded-full shrink-0"
+                    style={{
+                      backgroundColor: `${node.statusColor}22`,
+                      color: node.statusColor,
+                      border: `1px solid ${node.statusColor}55`
+                    }}
+                  >
+                    {node.status === 'pass' ? 'PASS' : node.status === 'fail' ? 'FAIL' : node.statusLabelAr.split(' ')[0]}
+                  </span>
                 </div>
 
-                {/* Station Titles */}
-                <span className="text-[11px] font-bold text-white mt-2 max-w-[90px] leading-tight">
-                  {station.name}
-                </span>
-                <span className={`text-[10px] font-mono mt-0.5 ${
-                  isFailed ? 'text-rose-400 font-bold' : (isInvestigation ? 'text-amber-400 font-bold' : (isDone ? 'text-emerald-400' : 'text-white/30'))
-                }`}>
-                  {station.label}
-                </span>
+                {/* Subtitle / Key Spec */}
+                {node.subtitleAr && (
+                  <p className="text-[9px] text-white/50 truncate mt-0.5">
+                    {node.subtitleAr}
+                  </p>
+                )}
+
+                {/* Hover Quick Action Cue */}
+                {(isHovered || isSelected) && (
+                  <div className="mt-0.5 flex items-center justify-between text-[8px] text-cyan-300 font-bold border-t border-white/10 pt-0.5">
+                    <span>انقر لمعاينة التفاصيل ↗</span>
+                    <span className="text-white/40">{node.code}</span>
+                  </div>
+                )}
               </div>
             );
           })}
         </div>
-      </section>
 
-      {/* ========================================================================= */}
-      {/* 3. DUAL-PANE COCKPIT: VISUAL MAP (65%) + INSPECTION COCKPIT (35%)         */}
-      {/* ========================================================================= */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* LEFT / CENTER: THE VISUAL STREAM DIAGRAM (65% width) */}
-        <div className="lg:col-span-8 space-y-6">
-          {/* SECTION 1: INCOMING RAW MATERIALS (5 Material Cards) */}
-          <div className="glass-panel p-6 rounded-[2.5rem] border border-white/10 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-white/5">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-blue-500/20 text-[#00A3E0] flex items-center justify-center font-bold text-xs">1</div>
-                <div>
-                  <h3 className="text-sm font-black text-white uppercase tracking-wider">الخامات الواردة وفحص الاستلام (IQC)</h3>
-                  <p className="text-[11px] text-white/40">5 خامات بأكواد ولوتات وفحوصات جودة منفصلة</p>
+        {/* ================================================================== */}
+        {/* SLIDE-OVER COCKPIT INSPECTOR (SIDE DRAWER WHEN A NODE IS CLICKED) */}
+        {/* ================================================================== */}
+        {selectedNodeId && activeNode && (
+          <aside 
+            className="absolute top-0 bottom-0 left-0 w-full sm:w-[420px] bg-slate-950/95 border-r border-white/15 backdrop-blur-xl shadow-2xl z-40 flex flex-col transition-all duration-300 animate-in slide-in-from-left"
+          >
+            {/* Header */}
+            <div className="flex-none p-4 border-b border-white/10 flex items-center justify-between bg-white/5">
+              <div className="flex items-center gap-2">
+                <div 
+                  className="w-7 h-7 rounded-lg flex items-center justify-center font-black text-xs text-white"
+                  style={{ backgroundColor: activeNode.statusColor }}
+                >
+                  {activeNode.containerId}
                 </div>
-              </div>
-              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-white/5 text-white/60">
-                MIL-STD-105E
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-              {nodes.filter(n => n.category === 'raw-material').map((rm) => {
-                const isSelected = selectedNodeId === rm.id;
-                const isFail = rm.status === 'fail';
-                const isCond = rm.status === 'conditional';
-
-                return (
-                  <div
-                    key={rm.id}
-                    onClick={() => setSelectedNodeId(rm.id)}
-                    className={`p-3.5 rounded-2xl border transition-all cursor-pointer relative group ${
-                      isSelected
-                        ? 'bg-gradient-to-b from-[#0066CC]/30 to-[#00A3E0]/10 border-[#00A3E0] ring-2 ring-[#00A3E0]/40 shadow-xl'
-                        : (isFail 
-                            ? 'bg-rose-500/10 border-rose-500/30 hover:border-rose-400' 
-                            : 'bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/[0.08]')
-                    }`}
-                  >
-                    {isFail && (
-                      <span className="absolute -top-2 -right-2 px-1.5 py-0.5 bg-rose-600 text-white text-[9px] font-black rounded-full shadow animate-bounce">
-                        🛑 STOP
-                      </span>
-                    )}
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="font-mono text-[10px] font-bold text-[#00A3E0]">{rm.code}</span>
-                      <div className={`w-2 h-2 rounded-full ${isFail ? 'bg-rose-500' : (isCond ? 'bg-amber-500' : 'bg-emerald-500')}`} />
-                    </div>
-                    <p className="text-[11px] font-bold text-white line-clamp-1">{rm.titleAr.replace(/^خامة \d+: /, '')}</p>
-                    <p className="font-mono text-[9px] text-white/40 mt-1">{rm.lotOrBatch}</p>
-
-                    <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between">
-                      <span className={`text-[9px] font-black uppercase ${isFail ? 'text-rose-400' : (isCond ? 'text-amber-400' : 'text-emerald-400')}`}>
-                        {isFail ? 'FAIL مرفوض' : (isCond ? 'مشروط' : 'PASS مطابق')}
-                      </span>
-                      <ChevronRight className="w-3 h-3 text-white/30 group-hover:text-white transition-colors" />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* CONNECTOR ARROWS & SUPPLIER NCR */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-            {/* Direct Flow Arrow */}
-            <div className="md:col-span-4 flex flex-col items-center justify-center p-3 rounded-2xl bg-white/[0.02] border border-dashed border-white/10 text-center">
-              <span className="text-[10px] text-white/40 mb-1">الخامات المقبولة (4 خامات)</span>
-              <ArrowDown className="w-5 h-5 text-emerald-400 animate-bounce" />
-              <span className="text-[9px] text-emerald-400 font-bold">صرف لخط التجميع 1</span>
-            </div>
-
-            {/* Red Escalation to Supplier NCR */}
-            <div className="md:col-span-8">
-              {nodes.filter(n => n.category === 'supplier-ncr').map((sncr) => {
-                const isSelected = selectedNodeId === sncr.id;
-                return (
-                  <div
-                    key={sncr.id}
-                    onClick={() => setSelectedNodeId(sncr.id)}
-                    className={`p-4 rounded-2xl border transition-all cursor-pointer relative group ${
-                      isSelected
-                        ? 'bg-rose-950/40 border-rose-500 ring-2 ring-rose-500/40 shadow-xl'
-                        : 'bg-rose-950/20 border-rose-500/20 hover:border-rose-500/40'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="flex items-center gap-2">
-                        <ShieldAlert className="w-4 h-4 text-rose-400" />
-                        <span className="text-xs font-black text-rose-300">2. عدم مطابقة مورد (Supplier NCR)</span>
-                      </div>
-                      <span className="font-mono text-[10px] text-rose-400 font-bold bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20">
-                        {sncr.code}
-                      </span>
-                    </div>
-                    <p className="text-xs text-white/80 font-medium">حجز وإرجاع لوت مانع التسرب LOT-2026-OR-02 (المورد: Apex Polymer)</p>
-                    <p className="text-[10px] text-rose-300/60 mt-1">🛑 نقطة توقف كاملة: حجر الشحنة في مستودع الحجر الأصفر ومنع دخولها للمصنع</p>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* SECTION 3: ASSEMBLY & DEFECTS */}
-          <div className="glass-panel p-6 rounded-[2.5rem] border border-white/10 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-white/5">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold text-xs">3</div>
                 <div>
-                  <h3 className="text-sm font-black text-white uppercase tracking-wider">خط التجميع 1 ومسجل العيوب (Assembly & Defect Log)</h3>
-                  <p className="text-[11px] text-white/40">تشغيلة التجميع BATCH-2026-901 لعدد 500 مضخة هيدروليكية</p>
+                  <h2 className="text-sm font-black text-white">فحص سجل الجودة التفاعلي</h2>
+                  <p className="text-[10px] text-white/45 font-mono">{activeNode.code}</p>
                 </div>
               </div>
               <button 
-                onClick={() => setSelectedNodeId('BATCH-2026-901')}
-                className="text-[10px] font-mono font-bold px-2.5 py-1 rounded-lg bg-[#0066CC]/20 text-[#00A3E0] border border-[#00A3E0]/30 hover:bg-[#0066CC]/30"
+                onClick={() => setSelectedNodeId(null)}
+                className="p-1.5 rounded-xl hover:bg-white/10 text-white/50 hover:text-white transition-all"
               >
-                BATCH-2026-901
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              {nodes.filter(n => n.category === 'defect').map((def) => {
-                const isSelected = selectedNodeId === def.id;
-                return (
-                  <div
-                    key={def.id}
-                    onClick={() => setSelectedNodeId(def.id)}
-                    className={`p-3.5 rounded-2xl border transition-all cursor-pointer group ${
-                      isSelected
-                        ? 'bg-[#0066CC]/30 border-[#00A3E0] ring-2 ring-[#00A3E0]/40 shadow-xl'
-                        : 'bg-white/5 border-white/10 hover:border-white/20'
-                    }`}
+            {/* Scrollable Details Body */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 text-xs">
+              {/* Title & Status */}
+              <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10">
+                <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">
+                  المحطة: {activeNode.containerId}. {activeNode.moduleLabelAr}
+                </span>
+                <h3 className="text-sm font-black text-white mt-1 leading-snug">
+                  {activeNode.titleAr}
+                </h3>
+                <p className="text-xs text-white/60 mt-0.5">
+                  {activeNode.subtitleAr}
+                </p>
+
+                <div className="mt-3 flex items-center gap-2">
+                  <span 
+                    className="px-2.5 py-1 rounded-xl text-xs font-black"
+                    style={{
+                      backgroundColor: `${activeNode.statusColor}22`,
+                      color: activeNode.statusColor,
+                      border: `1px solid ${activeNode.statusColor}55`
+                    }}
                   >
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="font-mono text-[10px] font-bold text-amber-400">{def.code}</span>
-                      <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20">
-                        {def.details['الكمية المتأثرة']}
-                      </span>
-                    </div>
-                    <p className="text-xs font-bold text-white line-clamp-1">{def.titleAr.replace(/^عيب: /, '')}</p>
-                    <p className="text-[10px] text-white/40 mt-1 line-clamp-1">{def.location}</p>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* SECTION 4 & 5: CONTROL PLAN, AUDIT, INTERNAL NCR & CAPA */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Box 4: Control Plan & Process Audit */}
-            <div className="glass-panel p-5 rounded-[2rem] border border-white/10 space-y-3">
-              <div className="flex items-center gap-2 pb-2 border-b border-white/5">
-                <div className="w-6 h-6 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold text-[10px]">4</div>
-                <h4 className="text-xs font-black text-white uppercase tracking-wider">خطة المراقبة والتدقيق الداخلي</h4>
-              </div>
-
-              {nodes.filter(n => n.category === 'control-plan' || n.category === 'audit').map((item) => {
-                const isSelected = selectedNodeId === item.id;
-                return (
-                  <div
-                    key={item.id}
-                    onClick={() => setSelectedNodeId(item.id)}
-                    className={`p-3 rounded-xl border transition-all cursor-pointer ${
-                      isSelected
-                        ? 'bg-purple-950/40 border-purple-400 ring-2 ring-purple-400/40 shadow-lg'
-                        : 'bg-white/5 border-white/10 hover:border-white/20'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-mono text-[10px] font-bold text-purple-300">{item.code}</span>
-                      <span className="text-[9px] text-white/50">{item.assignedTo}</span>
-                    </div>
-                    <p className="text-xs font-bold text-white line-clamp-1">{item.titleAr}</p>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Box 5: Closed-Loop NCR & CAPA */}
-            <div className="glass-panel p-5 rounded-[2rem] border border-white/10 space-y-3">
-              <div className="flex items-center gap-2 pb-2 border-b border-white/5">
-                <div className="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-[10px]">5</div>
-                <h4 className="text-xs font-black text-white uppercase tracking-wider">حلقة المعالجة والتحسين المغلقة (NCR & CAPA)</h4>
-              </div>
-
-              {nodes.filter(n => n.category === 'internal-ncr' || n.category === 'capa').map((item) => {
-                const isSelected = selectedNodeId === item.id;
-                return (
-                  <div
-                    key={item.id}
-                    onClick={() => setSelectedNodeId(item.id)}
-                    className={`p-3 rounded-xl border transition-all cursor-pointer ${
-                      isSelected
-                        ? 'bg-amber-950/40 border-amber-400 ring-2 ring-amber-400/40 shadow-lg'
-                        : 'bg-white/5 border-white/10 hover:border-white/20'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-mono text-[10px] font-bold text-amber-300">{item.code}</span>
-                      <span className="text-[9px] text-amber-400 font-bold">{item.statusLabelAr}</span>
-                    </div>
-                    <p className="text-xs font-bold text-white line-clamp-1">{item.titleAr}</p>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* SECTION 6 & 7: OQC & CUSTOMER COMPLAINT */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Box 6: Outgoing OQC */}
-            {nodes.filter(n => n.category === 'oqc').map((oqc) => {
-              const isSelected = selectedNodeId === oqc.id;
-              return (
-                <div
-                  key={oqc.id}
-                  onClick={() => setSelectedNodeId(oqc.id)}
-                  className={`glass-panel p-5 rounded-[2rem] border transition-all cursor-pointer ${
-                    isSelected
-                      ? 'bg-emerald-950/40 border-emerald-400 ring-2 ring-emerald-400/40 shadow-xl'
-                      : 'border-white/10 hover:border-white/20'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-2 pb-2 border-b border-white/5">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-[10px]">6</div>
-                      <h4 className="text-xs font-black text-white uppercase tracking-wider">الفحص الصادر (OQC)</h4>
-                    </div>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                      PASS معتمد
-                    </span>
-                  </div>
-                  <p className="text-xs font-bold text-white">{oqc.titleAr}</p>
-                  <p className="text-[10px] text-white/50 mt-1">اعتماد شحن 480 مضخة بعد 100% فرز وضغط 280 بار</p>
-                </div>
-              );
-            })}
-
-            {/* Box 7: Customer Complaint */}
-            {nodes.filter(n => n.category === 'customer-complaint').map((cmp) => {
-              const isSelected = selectedNodeId === cmp.id;
-              return (
-                <div
-                  key={cmp.id}
-                  onClick={() => setSelectedNodeId(cmp.id)}
-                  className={`glass-panel p-5 rounded-[2rem] border transition-all cursor-pointer relative group ${
-                    isSelected
-                      ? 'bg-rose-950/40 border-rose-500 ring-2 ring-rose-500/40 shadow-xl'
-                      : 'border-rose-500/20 bg-rose-500/5 hover:border-rose-500/40'
-                  }`}
-                >
-                  <span className="absolute -top-2 -right-2 px-1.5 py-0.5 bg-rose-600 text-white text-[9px] font-black rounded-full shadow animate-pulse">
-                    ⚠️ FIELD ISSUE
+                    {activeNode.statusLabelAr}
                   </span>
-                  <div className="flex items-center justify-between mb-2 pb-2 border-b border-white/5">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-lg bg-rose-500/20 text-rose-400 flex items-center justify-center font-bold text-[10px]">7</div>
-                      <h4 className="text-xs font-black text-rose-300 uppercase tracking-wider">العميل والشكوى والتتبع العكسي</h4>
-                    </div>
-                    <span className="font-mono text-[10px] font-bold text-rose-300">{cmp.code}</span>
-                  </div>
-                  <p className="text-xs font-bold text-white">{cmp.titleAr}</p>
-                  <p className="text-[10px] text-rose-300/60 mt-1">العميل: شركة الأمل للمعدات الصناعية (سيريال PUMP-901-042/043)</p>
+                  {activeNode.lotOrBatch && (
+                    <span className="px-2 py-1 rounded-xl text-[11px] font-mono bg-white/5 text-white/70 border border-white/10">
+                      {activeNode.lotOrBatch}
+                    </span>
+                  )}
                 </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* ===================================================================== */}
-        {/* RIGHT PANE: THE DEEP INSPECTION & ACTION COCKPIT (35% width)           */}
-        {/* Answers: Where did it stop? Why? Who is in charge? One-click jump.    */}
-        {/* ===================================================================== */}
-        <div className="lg:col-span-4">
-          <div className="sticky top-6 glass-panel p-6 rounded-[2.5rem] border border-white/10 space-y-6 shadow-2xl">
-            {/* Cockpit Header */}
-            <div className="flex items-start justify-between pb-4 border-b border-white/10">
-              <div>
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#00A3E0]">
-                  {activeNode.moduleLabelAr}
-                </span>
-                <h3 className="text-lg font-black text-white mt-0.5 leading-snug">{activeNode.code}</h3>
-                <p className="text-xs text-white/60 font-medium">{activeNode.titleAr}</p>
               </div>
 
-              <div className="w-10 h-10 rounded-2xl bg-white/5 flex items-center justify-center text-white/50">
-                <Compass className="w-5 h-5 text-[#00A3E0]" />
-              </div>
-            </div>
+              {/* STOP POINT DIAGNOSTICS CARD */}
+              <div className={`p-3.5 rounded-2xl border ${
+                activeNode.isStopPoint 
+                  ? 'bg-red-500/10 border-red-500/40' 
+                  : 'bg-emerald-500/10 border-emerald-500/40'
+              }`}>
+                <div className="flex items-center gap-2">
+                  {activeNode.isStopPoint ? (
+                    <ShieldAlert className="w-4 h-4 text-red-400 shrink-0" />
+                  ) : (
+                    <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                  )}
+                  <h4 className={`font-black text-xs ${activeNode.isStopPoint ? 'text-red-300' : 'text-emerald-300'}`}>
+                    {activeNode.isStopPoint ? 'نقطة توقف نشطة (Stop Point)' : 'مسار سالك ومطابق'}
+                  </h4>
+                </div>
+                <p className="mt-2 text-white/80 leading-relaxed text-[11px]">
+                  {activeNode.stopReasonAr}
+                </p>
 
-            {/* Stop Point & Lifecycle Diagnostic Card */}
-            <div className={`p-4 rounded-2xl border ${
-              activeNode.isStopPoint
-                ? 'bg-rose-500/10 border-rose-500/30'
-                : (activeNode.status === 'conditional' || activeNode.status === 'investigation'
-                    ? 'bg-amber-500/10 border-amber-500/30'
-                    : 'bg-emerald-500/10 border-emerald-500/30')
-            }`}>
-              <div className="flex items-center gap-2 mb-2">
-                {activeNode.isStopPoint ? (
-                  <XCircle className="w-4 h-4 text-rose-400" />
-                ) : (
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                {activeNode.nextStepAr && (
+                  <div className="mt-2.5 pt-2 border-t border-white/10 text-[11px]">
+                    <span className="font-black text-cyan-300">الخطوة التالية المطلوبة: </span>
+                    <span className="text-white/90">{activeNode.nextStepAr}</span>
+                  </div>
                 )}
-                <span className="text-xs font-black text-white">
-                  {activeNode.isStopPoint ? '🛑 نقطة توقف وحجز في دورة الجودة' : 'الحالة والتشخيص المرحلي'}
-                </span>
               </div>
-              <p className="text-xs leading-relaxed text-white/80">
-                {activeNode.stopReasonAr || 'السجل مطابق للمعايير واجتاز مرحلة التفتيش بنجاح.'}
-              </p>
 
-              {activeNode.nextStepAr && (
-                <div className="mt-3 pt-3 border-t border-white/10">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-white/40 block mb-0.5">الخطوة التالية المطلوبة:</span>
-                  <p className="text-xs font-medium text-[#00A3E0]">{activeNode.nextStepAr}</p>
+              {/* Location & Assigned Engineer */}
+              <div className="grid grid-cols-2 gap-2 text-[11px]">
+                <div className="p-2.5 rounded-xl bg-white/5 border border-white/10">
+                  <span className="text-white/40 block text-[10px]">المسؤول الحالي</span>
+                  <span className="font-bold text-white mt-0.5 block truncate">{activeNode.assignedTo || 'فريق الجودة'}</span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-white/5 border border-white/10">
+                  <span className="text-white/40 block text-[10px]">الموقع الصناعي</span>
+                  <span className="font-bold text-white mt-0.5 block truncate">{activeNode.location || 'خط الإنتاج'}</span>
+                </div>
+              </div>
+
+              {/* Technical Attributes Table */}
+              {activeNode.details && Object.keys(activeNode.details).length > 0 && (
+                <div className="p-3 rounded-2xl bg-white/5 border border-white/10">
+                  <h4 className="font-black text-white/60 text-[10px] uppercase tracking-wider mb-2">بيانات الفحص والتشغيلة</h4>
+                  <div className="space-y-1.5 text-[11px]">
+                    {Object.entries(activeNode.details).map(([k, v]) => (
+                      <div key={k} className="flex items-center justify-between py-1 border-b border-white/5">
+                        <span className="text-white/50">{k}</span>
+                        <span className="font-bold text-white font-mono">{String(v)}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
 
-            {/* Quick Metadata Table */}
-            <div className="space-y-2.5 text-xs">
-              <div className="flex items-center justify-between p-2 rounded-xl bg-white/5">
-                <span className="text-white/40">المسؤول الحالي:</span>
-                <span className="font-bold text-white">{activeNode.assignedTo || 'فريق الجودة'}</span>
-              </div>
-              <div className="flex items-center justify-between p-2 rounded-xl bg-white/5">
-                <span className="text-white/40">الموقع / المحطة:</span>
-                <span className="font-bold text-white line-clamp-1">{activeNode.location || 'خط الإنتاج'}</span>
-              </div>
-              <div className="flex items-center justify-between p-2 rounded-xl bg-white/5">
-                <span className="text-white/40">تاريخ التسجيل:</span>
-                <span className="font-mono text-white/70">{activeNode.timestamp || '2026-10-06'}</span>
-              </div>
-
-              {Object.entries(activeNode.details).map(([key, val]) => (
-                <div key={key} className="flex items-center justify-between p-2 rounded-xl bg-white/[0.03]">
-                  <span className="text-white/40">{key}:</span>
-                  <span className="font-medium text-white/90 text-right">{val}</span>
-                </div>
-              ))}
-            </div>
-
-            {/* Linked Quality Records */}
-            {activeNode.linkedToIds && activeNode.linkedToIds.length > 0 && (
-              <div className="space-y-2 pt-2 border-t border-white/10">
-                <span className="text-[10px] font-black uppercase tracking-wider text-white/40">السجلات المترابطة معه:</span>
-                <div className="flex flex-wrap gap-1.5">
-                  {activeNode.linkedToIds.map(linkId => (
-                    <button
-                      key={linkId}
-                      onClick={() => setSelectedNodeId(linkId)}
-                      className="px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-[#0066CC]/20 text-[#00A3E0] border border-[#00A3E0]/30 hover:bg-[#0066CC]/30 transition-all flex items-center gap-1"
-                    >
-                      <Layers className="w-3 h-3" />
-                      {linkId}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* One-Click Navigation & Deep Jump Action Buttons */}
-            <div className="pt-4 border-t border-white/10 space-y-2.5">
+            {/* Bottom Actions: ONE-CLICK JUMP TO SYSTEM TAB */}
+            <div className="flex-none p-4 border-t border-white/10 bg-slate-900/90 space-y-2">
               <button
-                onClick={() => navigate(activeNode.moduleUrl)}
-                className="w-full flex items-center justify-center gap-2 py-3.5 px-4 bg-gradient-to-r from-[#0066CC] to-[#00A3E0] hover:brightness-110 active:scale-95 text-white font-black text-xs rounded-2xl shadow-xl shadow-[#0066CC]/30 transition-all uppercase tracking-wider"
+                onClick={() => {
+                  toast.success(`جاري الانتقال إلى ${activeNode.moduleLabelAr}...`);
+                  navigate(activeNode.moduleUrl);
+                }}
+                className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-[#0066CC] to-[#00A3E0] hover:brightness-110 active:scale-95 text-white font-black text-xs rounded-xl shadow-lg shadow-[#0066CC]/30 transition-all uppercase tracking-wider"
               >
                 <ExternalLink className="w-4 h-4" />
-                الانتقال إلى شاشة {activeNode.moduleLabelAr} ↗
+                الانتقال المباشر لشاشة {activeNode.moduleLabelAr} ↗
               </button>
 
               <button
                 onClick={() => {
-                  toast.success(`تم استخراج تقرير تتبع السجل ${activeNode.code}`, {
-                    description: 'تقرير التتبع المغلق جاهز للطباعة والتدقيق الخارجي.'
+                  toast.success(`تم استخراج تقرير التتبع للسجل ${activeNode.code}`, {
+                    description: 'شهادة التتبع المغلقة جاهزة للتدقيق الخارجي.'
                   });
                 }}
-                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white font-bold text-xs rounded-2xl transition-all"
+                className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white font-bold text-xs rounded-xl transition-all"
               >
                 <FileText className="w-3.5 h-3.5" />
-                تصدير شهادة التتبع الشاملة (Traceability Certificate)
+                تصدير شهادة التتبع الشاملة (Traceability)
               </button>
             </div>
+          </aside>
+        )}
+
+        {/* ================================================================== */}
+        {/* MAP LEGEND OVERLAY (WHEN TOGGLED)                                  */}
+        {/* ================================================================== */}
+        {showLegend && (
+          <div className="absolute bottom-4 right-4 bg-slate-900/95 border border-white/15 rounded-2xl p-3.5 shadow-2xl z-30 max-w-xs text-xs space-y-2 backdrop-blur-md">
+            <div className="flex items-center justify-between pb-1 border-b border-white/10">
+              <h4 className="font-black text-white text-xs">مفتاح مسارات الخريطة</h4>
+              <button onClick={() => setShowLegend(false)} className="text-white/40 hover:text-white">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            <div className="space-y-1.5 text-[11px]">
+              <div className="flex items-center gap-2">
+                <span className="w-4 h-0.5 bg-[#00A3E0]"></span>
+                <span className="text-white/80">مسار تدفق المواد والتشغيل</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-4 h-0.5 bg-red-500"></span>
+                <span className="text-white/80">تصعيد عدم المطابقة ونقاط التوقف</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-4 h-0.5 border-t border-dashed border-purple-400"></span>
+                <span className="text-white/80">مسار التتبع العكسي والتحقيق الميداني</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-4 h-0.5 border-t border-dashed border-cyan-300"></span>
+                <span className="text-white/80">حلقة المعالجة الجذرية (CAPA Poka-Yoke)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-red-600 animate-ping"></span>
+                <span className="text-red-300 font-bold">نقطة توقف حرجة بالخط</span>
+              </div>
+            </div>
           </div>
-        </div>
+        )}
       </div>
-    </PageContainer>
+    </div>
   );
 }
 
