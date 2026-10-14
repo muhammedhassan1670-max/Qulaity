@@ -19,7 +19,7 @@ import {
   Sliders, Settings2, Save, Download, Upload, ArrowUp, ArrowDown, ArrowLeft,
   Sparkles, SlidersHorizontal, Flame, Play, Pause, Bell, BellRing, Move,
   Eye, Compass, Volume2, VolumeX, BarChart3, Zap, Moon, Sun, Shield,
-  Navigation, Bot
+  Navigation, Bot, Workflow, GitFork
 } from 'lucide-react';
 import { useTranslation } from '../../utils/translations';
 import { loadSafeLocalDefectRecords } from '../../services/safeDefectStorage';
@@ -402,6 +402,273 @@ export const DEFAULT_EQUIPMENT_PODS: ScadaEquipment[] = [
   }
 ];
 
+export interface ScadaConnection {
+  id: string;
+  fromId: string;
+  toId: string;
+  labelAr: string;
+  labelEn: string;
+  type: 'motor-roller' | 'gravity-roller' | 'belt' | 'chute' | 'pneumatic' | 'bridge' | 'dock-ramp';
+  fromAnchor?: 'top' | 'bottom' | 'left' | 'right';
+  toAnchor?: 'top' | 'bottom' | 'left' | 'right';
+}
+
+export const FACTORY_CONNECTIONS: ScadaConnection[] = [
+  // BAY A: Inbound Logistics
+  {
+    id: 'CONN-RCV-IQC',
+    fromId: 'DOCK-RECEIVING-01',
+    toId: 'STATION-IQC-INSPECT',
+    labelAr: 'سير رولمان استلام الفحص (Gravity Rollers)',
+    labelEn: 'Inbound Infeed Gravity Conveyor',
+    type: 'gravity-roller',
+    fromAnchor: 'bottom',
+    toAnchor: 'top',
+  },
+  {
+    id: 'CONN-IQC-BUF',
+    fromId: 'STATION-IQC-INSPECT',
+    toId: 'WAREHOUSE-RAW-STAGING',
+    labelAr: 'مسار الخامات المعتمدة (Approved Infeed)',
+    labelEn: 'Approved Material Transfer',
+    type: 'motor-roller',
+    fromAnchor: 'bottom',
+    toAnchor: 'top',
+  },
+  {
+    id: 'CONN-IQC-QRN',
+    fromId: 'STATION-IQC-INSPECT',
+    toId: 'QUARANTINE-CAGE',
+    labelAr: 'مسار العزل والرفض (Quarantine Diverter Chute)',
+    labelEn: 'Reject Diverter Slide Chute',
+    type: 'chute',
+    fromAnchor: 'bottom',
+    toAnchor: 'top',
+  },
+  // CROSSING AISLE: Bay A to Bay B
+  {
+    id: 'CONN-BUF-CNC',
+    fromId: 'WAREHOUSE-RAW-STAGING',
+    toId: 'STATION-CNC-MILLING',
+    labelAr: 'جسر تغذية خط التشغيل الميكانيكي (Infeed Transfer Bridge)',
+    labelEn: 'CNC Infeed Transfer Bridge',
+    type: 'bridge',
+    fromAnchor: 'right',
+    toAnchor: 'left',
+  },
+  // BAY B: Assembly Line 01 Inter-Station Motorized Conveyors
+  {
+    id: 'CONN-CNC-ASM',
+    fromId: 'STATION-CNC-MILLING',
+    toId: 'STATION-SUB-ASSEMBLY',
+    labelAr: 'سير نقل المكونات المخرطة (Machined Parts Conveyor)',
+    labelEn: 'Machined Components Motorized Line',
+    type: 'motor-roller',
+    fromAnchor: 'right',
+    toAnchor: 'left',
+  },
+  {
+    id: 'CONN-ASM-TRQ',
+    fromId: 'STATION-SUB-ASSEMBLY',
+    toId: 'STATION-TORQUE-BENCH',
+    labelAr: 'سير محطة الربط والعزم الذكي (Torque Station Feed)',
+    labelEn: 'Smart Torque Indexing Conveyor',
+    type: 'motor-roller',
+    fromAnchor: 'right',
+    toAnchor: 'left',
+  },
+  {
+    id: 'CONN-TRQ-PRS',
+    fromId: 'STATION-TORQUE-BENCH',
+    toId: 'STATION-PRESSURE-TEST',
+    labelAr: 'منحنى دوران السير الهيدروليكي 90° (Turn-Table Loop)',
+    labelEn: '90° Powered Curve & Test Feed',
+    type: 'motor-roller',
+    fromAnchor: 'right',
+    toAnchor: 'right',
+  },
+  {
+    id: 'CONN-PRS-IPQC',
+    fromId: 'STATION-PRESSURE-TEST',
+    toId: 'STATION-IPQC-GATE',
+    labelAr: 'سير الفحص المرحلي IPQC (Quality Clearance Link)',
+    labelEn: 'IPQC Clearance Transfer Bed',
+    type: 'belt',
+    fromAnchor: 'right',
+    toAnchor: 'left',
+  },
+  // BAY B to BAY C: Quality Lab Sampling
+  {
+    id: 'CONN-IPQC-CMM',
+    fromId: 'STATION-IPQC-GATE',
+    toId: 'LAB-METROLOGY-CMM',
+    labelAr: 'أنبوب عينات الجودة الهوائي (Pneumatic Sampling Tube)',
+    labelEn: 'Pneumatic Quality Sample Tube',
+    type: 'pneumatic',
+    fromAnchor: 'bottom',
+    toAnchor: 'top',
+  },
+  {
+    id: 'CONN-IPQC-MRB',
+    fromId: 'STATION-IPQC-GATE',
+    toId: 'ROOM-MRB-CAPA',
+    labelAr: 'مسار العينات غير المطابقة إلى MRB (NCR Escalation Link)',
+    labelEn: 'MRB Review Escalation Link',
+    type: 'pneumatic',
+    fromAnchor: 'bottom',
+    toAnchor: 'top',
+  },
+  // BAY B to BAY D: Cross-Plant Elevated Bridge
+  {
+    id: 'CONN-IPQC-OQC',
+    fromId: 'STATION-IPQC-GATE',
+    toId: 'BENCH-OQC-RELEASE',
+    labelAr: 'جسر نقل علوي إلى عنبر الإفراج النهائي (Overhead Bridge Conveyor)',
+    labelEn: 'Overhead Plant Crossing Bridge',
+    type: 'bridge',
+    fromAnchor: 'right',
+    toAnchor: 'left',
+  },
+  // BAY D & BAY E: Final Packaging & Shipping
+  {
+    id: 'CONN-OQC-PCK',
+    fromId: 'BENCH-OQC-RELEASE',
+    toId: 'STATION-PACKAGING',
+    labelAr: 'سير نقل للملاكمة والتغليف (Boxing Infeed)',
+    labelEn: 'Palletizing & Packaging Infeed',
+    type: 'gravity-roller',
+    fromAnchor: 'bottom',
+    toAnchor: 'top',
+  },
+  {
+    id: 'CONN-PCK-SHP',
+    fromId: 'STATION-PACKAGING',
+    toId: 'DOCK-SHIPPING-03',
+    labelAr: 'سير خروج الباليتات الجاهزة (Finished Goods Outfeed)',
+    labelEn: 'Outbound Pallet Roller Bed',
+    type: 'motor-roller',
+    fromAnchor: 'bottom',
+    toAnchor: 'top',
+  },
+  {
+    id: 'CONN-SHP-DSP',
+    fromId: 'DOCK-SHIPPING-03',
+    toId: 'TRUCK-CUSTOMER-DELIVERY',
+    labelAr: 'منحدر التحميل الهيدروليكي للشاحنة (Hydraulic Dock Leveler Ramp)',
+    labelEn: 'Hydraulic Truck Dock Leveler',
+    type: 'dock-ramp',
+    fromAnchor: 'bottom',
+    toAnchor: 'top',
+  },
+];
+
+function calculateConnectionPath(
+  conn: ScadaConnection,
+  equipmentMap: Record<string, ScadaEquipment>
+): { pathD: string; startX: number; startY: number; endX: number; endY: number } | null {
+  const fromEq = equipmentMap[conn.fromId];
+  const toEq = equipmentMap[conn.toId];
+  if (!fromEq || !toEq) return null;
+
+  let sx = fromEq.x + fromEq.w / 2;
+  let sy = fromEq.y + fromEq.h / 2;
+  let ex = toEq.x + toEq.w / 2;
+  let ey = toEq.y + toEq.h / 2;
+
+  // Specific anchor offsets
+  if (conn.id === 'CONN-IQC-BUF') {
+    sx = fromEq.x + fromEq.w * 0.75;
+    sy = fromEq.y + fromEq.h;
+    ex = toEq.x + toEq.w / 2;
+    ey = toEq.y;
+    return { pathD: `M ${sx} ${sy} L ${ex} ${ey}`, startX: sx, startY: sy, endX: ex, endY: ey };
+  } else if (conn.id === 'CONN-IQC-QRN') {
+    sx = fromEq.x + fromEq.w * 0.25;
+    sy = fromEq.y + fromEq.h;
+    ex = toEq.x + toEq.w / 2;
+    ey = toEq.y;
+    return { pathD: `M ${sx} ${sy} L ${ex} ${ey}`, startX: sx, startY: sy, endX: ex, endY: ey };
+  } else if (conn.id === 'CONN-BUF-CNC') {
+    sx = fromEq.x + fromEq.w;
+    sy = fromEq.y + fromEq.h / 2;
+    ex = toEq.x;
+    ey = toEq.y + toEq.h / 2;
+    const midX = Math.round((sx + ex) / 2);
+    return {
+      pathD: `M ${sx} ${sy} L ${midX} ${sy} L ${midX} ${ey} L ${ex} ${ey}`,
+      startX: sx, startY: sy, endX: ex, endY: ey
+    };
+  } else if (conn.id === 'CONN-TRQ-PRS') {
+    sx = fromEq.x + fromEq.w;
+    sy = fromEq.y + fromEq.h / 2;
+    ex = toEq.x + toEq.w;
+    ey = toEq.y + toEq.h / 2;
+    const loopX = Math.max(sx, ex) + 26;
+    return {
+      pathD: `M ${sx} ${sy} L ${loopX} ${sy} Q ${loopX + 12} ${(sy + ey) / 2} ${loopX} ${ey} L ${ex} ${ey}`,
+      startX: sx, startY: sy, endX: ex, endY: ey
+    };
+  } else if (conn.id === 'CONN-IPQC-OQC') {
+    sx = fromEq.x + fromEq.w;
+    sy = fromEq.y + fromEq.h / 2;
+    ex = toEq.x;
+    ey = toEq.y + toEq.h / 2;
+    const midX = Math.round((sx + ex) / 2);
+    return {
+      pathD: `M ${sx} ${sy} L ${midX} ${sy} L ${midX} ${ey} L ${ex} ${ey}`,
+      startX: sx, startY: sy, endX: ex, endY: ey
+    };
+  } else if (conn.id === 'CONN-IPQC-CMM' || conn.id === 'CONN-IPQC-MRB') {
+    sx = fromEq.x + (conn.id === 'CONN-IPQC-CMM' ? fromEq.w * 0.35 : fromEq.w * 0.75);
+    sy = fromEq.y + fromEq.h;
+    ex = toEq.x + toEq.w / 2;
+    ey = toEq.y;
+    const midY = Math.round((sy + ey) / 2);
+    return {
+      pathD: `M ${sx} ${sy} L ${sx} ${midY} L ${ex} ${midY} L ${ex} ${ey}`,
+      startX: sx, startY: sy, endX: ex, endY: ey
+    };
+  } else {
+    if (conn.fromAnchor === 'bottom') {
+      sx = fromEq.x + fromEq.w / 2;
+      sy = fromEq.y + fromEq.h;
+    } else if (conn.fromAnchor === 'top') {
+      sx = fromEq.x + fromEq.w / 2;
+      sy = fromEq.y;
+    } else if (conn.fromAnchor === 'left') {
+      sx = fromEq.x;
+      sy = fromEq.y + fromEq.h / 2;
+    } else if (conn.fromAnchor === 'right') {
+      sx = fromEq.x + fromEq.w;
+      sy = fromEq.y + fromEq.h / 2;
+    }
+
+    if (conn.toAnchor === 'top') {
+      ex = toEq.x + toEq.w / 2;
+      ey = toEq.y;
+    } else if (conn.toAnchor === 'bottom') {
+      ex = toEq.x + toEq.w / 2;
+      ey = toEq.y + toEq.h;
+    } else if (conn.toAnchor === 'left') {
+      ex = toEq.x;
+      ey = toEq.y + toEq.h / 2;
+    } else if (conn.toAnchor === 'right') {
+      ex = toEq.x + toEq.w;
+      ey = toEq.y + toEq.h / 2;
+    }
+
+    if (Math.abs(sx - ex) < 8 || Math.abs(sy - ey) < 8) {
+      return { pathD: `M ${sx} ${sy} L ${ex} ${ey}`, startX: sx, startY: sy, endX: ex, endY: ey };
+    }
+
+    const midX = (sx + ex) / 2;
+    return {
+      pathD: `M ${sx} ${sy} L ${midX} ${sy} L ${midX} ${ey} L ${ex} ${ey}`,
+      startX: sx, startY: sy, endX: ex, endY: ey
+    };
+  }
+}
+
 function loadSavedEquipment(): ScadaEquipment[] {
   try {
     const raw = localStorage.getItem(SCADA_STORAGE_KEY);
@@ -487,6 +754,16 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
   const [isAgvActive, setIsAgvActive] = useState(true);
   const [showOscilloscope, setShowOscilloscope] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  
+  // Inter-Station Material Flow & Connection Mode ('hybrid' | 'conveyor' | 'laser')
+  const [connectionStyle, setConnectionStyle] = useState<'hybrid' | 'conveyor' | 'laser'>('hybrid');
+
+  // Fast equipment coordinate lookup map for dynamic conveyor routing
+  const equipmentMap = useMemo(() => {
+    const map: Record<string, ScadaEquipment> = {};
+    equipmentList.forEach(eq => { map[eq.id] = eq; });
+    return map;
+  }, [equipmentList]);
 
   // Customization & Interactive Drag and Drop State
   const [isCustomizing, setIsCustomizing] = useState(searchParams.get('mode') === 'customize');
@@ -891,6 +1168,71 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
     }
   };
 
+  // Machine SVG Blueprint Watermark Selector for high-fidelity industrial cards
+  const renderMachineWatermark = (code: string) => {
+    if (code.startsWith('CNC')) {
+      return (
+        <svg viewBox="0 0 80 80" className="absolute -right-3 -bottom-3 w-24 h-24 opacity-10 pointer-events-none text-cyan-400 stroke-current fill-none">
+          <circle cx="40" cy="40" r="28" strokeWidth="2" strokeDasharray="4,4" />
+          <circle cx="40" cy="40" r="14" strokeWidth="2" />
+          <path d="M 40 10 L 40 70 M 10 40 L 70 40" strokeWidth="1.5" />
+          <rect x="36" y="2" width="8" height="12" fill="currentColor" />
+        </svg>
+      );
+    }
+    if (code.startsWith('ASM')) {
+      return (
+        <svg viewBox="0 0 80 80" className="absolute -right-3 -bottom-3 w-24 h-24 opacity-10 pointer-events-none text-cyan-400 stroke-current fill-none">
+          <rect x="25" y="55" width="30" height="15" rx="3" strokeWidth="2" />
+          <path d="M 40 55 L 40 35 L 55 20" strokeWidth="3" strokeLinecap="round" />
+          <circle cx="55" cy="20" r="4" fill="currentColor" />
+          <path d="M 55 16 L 65 12 M 55 24 L 65 28" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      );
+    }
+    if (code.startsWith('TRQ')) {
+      return (
+        <svg viewBox="0 0 80 80" className="absolute -right-3 -bottom-3 w-24 h-24 opacity-10 pointer-events-none text-amber-400 stroke-current fill-none">
+          <circle cx="40" cy="40" r="25" strokeWidth="2" />
+          <path d="M 40 40 L 55 30" strokeWidth="3" strokeLinecap="round" />
+          <circle cx="40" cy="40" r="4" fill="currentColor" />
+          <path d="M 22 40 A 18 18 0 0 1 58 40" strokeWidth="1.5" strokeDasharray="3,3" />
+        </svg>
+      );
+    }
+    if (code.startsWith('PRS')) {
+      return (
+        <svg viewBox="0 0 80 80" className="absolute -right-3 -bottom-3 w-24 h-24 opacity-10 pointer-events-none text-red-400 stroke-current fill-none">
+          <rect x="20" y="20" width="40" height="40" rx="6" strokeWidth="2" />
+          <circle cx="40" cy="40" r="14" strokeWidth="1.5" />
+          <path d="M 40 40 L 48 34" strokeWidth="2" />
+          <path d="M 20 40 L 10 40 M 60 40 L 70 40" strokeWidth="2" />
+        </svg>
+      );
+    }
+    if (code.startsWith('IPQC') || code.startsWith('OQC') || code.startsWith('IQC')) {
+      return (
+        <svg viewBox="0 0 80 80" className="absolute -right-3 -bottom-3 w-24 h-24 opacity-10 pointer-events-none text-emerald-400 stroke-current fill-none">
+          <circle cx="40" cy="40" r="24" strokeWidth="2" />
+          <circle cx="40" cy="40" r="16" strokeWidth="1" strokeDasharray="4,2" />
+          <path d="M 40 12 L 40 20 M 40 60 L 40 68 M 12 40 L 20 40 M 60 40 L 68 40" strokeWidth="2" />
+          <circle cx="40" cy="40" r="3" fill="currentColor" />
+        </svg>
+      );
+    }
+    if (code.startsWith('CMM')) {
+      return (
+        <svg viewBox="0 0 80 80" className="absolute -right-3 -bottom-3 w-24 h-24 opacity-10 pointer-events-none text-purple-400 stroke-current fill-none">
+          <rect x="15" y="55" width="50" height="15" rx="2" strokeWidth="2" />
+          <path d="M 25 55 L 25 20 L 55 20 L 55 55" strokeWidth="2.5" />
+          <path d="M 40 20 L 40 38" strokeWidth="2" />
+          <circle cx="40" cy="41" r="3" fill="#ec4899" />
+        </svg>
+      );
+    }
+    return null;
+  };
+
   const handleAddNewTemplate = (preferredZone: StationZone = 'assembly') => {
     setIsAddingNew(true);
     setEditingStation({
@@ -1089,8 +1431,40 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
             }`}
             title={isAr ? 'تشغيل/إيقاف محاكاة حركة الباليتات والسيور' : 'Toggle Conveyor Material Flow'}
           >
-            {isMaterialFlowActive ? <Play className="w-3.5 h-3.5 text-emerald-400" /> : <Pause className="w-3.5 h-3.5" />}
+            {isMaterialFlowActive ? <Play className="w-3.5 h-3.5 text-emerald-400" /> : <Pause className="w-3.5 h-3.5 text-slate-500" />}
           </button>
+
+          {/* Connection Flow Mode Toggle (Conveyor / Cyber / Hybrid) */}
+          <div className="flex items-center gap-0.5 bg-slate-900 border border-slate-800 p-0.5 rounded-xl">
+            <button
+              onClick={() => setConnectionStyle('hybrid')}
+              className={`px-2 py-1 rounded-lg text-[10px] font-black transition-all ${
+                connectionStyle === 'hybrid' ? 'bg-cyan-500 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-slate-200'
+              }`}
+              title={isAr ? 'نمط الوصلات المزدوج (سيور ميكانيكية + نبضات ليزر)' : 'Hybrid Mode (Conveyors + Cyber Lines)'}
+            >
+              <Workflow className="w-3 h-3 inline mr-1" />
+              <span className="hidden md:inline">{isAr ? 'مزدوج' : 'Hybrid'}</span>
+            </button>
+            <button
+              onClick={() => setConnectionStyle('conveyor')}
+              className={`px-2 py-1 rounded-lg text-[10px] font-black transition-all ${
+                connectionStyle === 'conveyor' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-slate-200'
+              }`}
+              title={isAr ? 'نمط السيور وخطوط النقل الميكانيكية الواقعية' : 'Mechanical Conveyors Mode'}
+            >
+              <span>{isAr ? 'سيور' : 'Conveyors'}</span>
+            </button>
+            <button
+              onClick={() => setConnectionStyle('laser')}
+              className={`px-2 py-1 rounded-lg text-[10px] font-black transition-all ${
+                connectionStyle === 'laser' ? 'bg-purple-500 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
+              }`}
+              title={isAr ? 'نمط مسارات التدفق الرقمية والبيانات' : 'Cyber Data Conduit Mode'}
+            >
+              <span>{isAr ? 'ليزر' : 'Cyber'}</span>
+            </button>
+          </div>
 
           {/* Sound Chime Toggle */}
           <button
@@ -1257,7 +1631,7 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                       : 'bg-[#080d19] border-slate-800 shadow-2xl'
               }`}
             >
-              {/* SVG ARCHITECTURAL INDUSTRIAL BACKGROUND */}
+              {/* SVG ARCHITECTURAL INDUSTRIAL BACKGROUND & CONVEYOR NETWORK */}
               <svg 
                 viewBox="0 0 1200 640" 
                 className="absolute inset-0 w-full h-full pointer-events-none"
@@ -1281,6 +1655,12 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                     <rect x="8" width="8" height="16" fill="#180000" fillOpacity="0.4" />
                   </pattern>
 
+                  {/* High-visibility yellow/black industrial hazard hatch */}
+                  <pattern id="scada-hazard-stripes" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                    <rect width="8" height="16" fill="#f59e0b" fillOpacity="0.3" />
+                    <rect x="8" width="8" height="16" fill="#000000" fillOpacity="0.5" />
+                  </pattern>
+
                   {/* Conveyor belt roller texture */}
                   <pattern id="scada-rollers" width="16" height="26" patternUnits="userSpaceOnUse">
                     <rect width="16" height="26" fill={ambientTheme === 'cleanroom' ? '#334155' : '#0f172a'} />
@@ -1291,100 +1671,348 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                   <marker id="scada-arrow-cyan" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
                     <path d="M 0 1 L 10 5 L 0 9 z" fill="#06B6D4" />
                   </marker>
+                  <marker id="scada-arrow-amber" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 1 L 10 5 L 0 9 z" fill="#f59e0b" />
+                  </marker>
+                  <marker id="scada-arrow-emerald" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 1 L 10 5 L 0 9 z" fill="#10b981" />
+                  </marker>
                 </defs>
 
                 {/* Grid Floor */}
                 <rect width="1200" height="640" fill="url(#scada-grid)" />
 
-                {/* Outer Plant Wall */}
-                <rect x="15" y="15" width="1170" height="610" fill="none" stroke={ambientTheme === 'cleanroom' ? '#94a3b8' : '#1e293b'} strokeWidth="3" rx="16" />
+                {/* Outer Plant Wall with Metallic Industrial Bevel */}
+                <rect x="12" y="12" width="1176" height="616" fill="none" stroke={ambientTheme === 'cleanroom' ? '#94a3b8' : '#1e293b'} strokeWidth="4" rx="18" />
+                <rect x="16" y="16" width="1168" height="608" fill="none" stroke={ambientTheme === 'cleanroom' ? '#cbd5e1' : '#0f172a'} strokeWidth="1.5" rx="16" />
 
-                {/* STRUCTURAL BAY BOUNDARIES */}
+                {/* STRUCTURAL BAY FLOORS WITH DISTINCT EPOXY FINISHES */}
+                {/* Bay A: Receiving & Raw Buffer Floor */}
+                <rect x="20" y="20" width="265" height="600" fill={ambientTheme === 'cleanroom' ? '#f1f5f9' : '#070d1a'} rx="12" opacity="0.6" />
+                
+                {/* Bay B: Machining & Assembly Floor */}
+                <rect x="315" y="20" width="545" height="415" fill={ambientTheme === 'cleanroom' ? '#ffffff' : '#091122'} rx="12" opacity="0.7" />
+                
+                {/* Hub C: Metrology Cleanroom & MRB Floor */}
+                <rect x="315" y="445" width="545" height="175" fill={ambientTheme === 'cleanroom' ? '#f8fafc' : '#0d1326'} rx="12" opacity="0.8" />
+                <rect x="315" y="445" width="545" height="175" fill="none" stroke="#a855f7" strokeWidth="1" strokeDasharray="6,6" opacity="0.3" rx="12" />
+
+                {/* Bay D: Final OQC & Packaging Floor */}
+                <rect x="885" y="20" width="295" height="280" fill={ambientTheme === 'cleanroom' ? '#f1f5f9' : '#081322'} rx="12" opacity="0.6" />
+
+                {/* Bay E: Shipping Logistics Yard */}
+                <rect x="885" y="305" width="295" height="315" fill={ambientTheme === 'cleanroom' ? '#f8fafc' : '#060a14'} rx="12" opacity="0.7" />
+
+                {/* STRUCTURAL BAY BOUNDARIES (DASHLINES) */}
                 <line x1="290" y1="15" x2="290" y2="625" stroke={ambientTheme === 'cleanroom' ? '#cbd5e1' : '#1e293b'} strokeWidth="2" strokeDasharray="10,6" />
                 <line x1="290" y1="440" x2="875" y2="440" stroke={ambientTheme === 'cleanroom' ? '#cbd5e1' : '#1e293b'} strokeWidth="2" strokeDasharray="10,6" />
                 <line x1="875" y1="15" x2="875" y2="625" stroke={ambientTheme === 'cleanroom' ? '#cbd5e1' : '#1e293b'} strokeWidth="2" strokeDasharray="10,6" />
+                <line x1="875" y1="300" x2="1185" y2="300" stroke={ambientTheme === 'cleanroom' ? '#cbd5e1' : '#1e293b'} strokeWidth="1.5" strokeDasharray="8,5" />
 
                 {/* SAFETY PEDESTRIAN AISLES */}
-                <rect x="295" y="15" width="25" height="610" fill="url(#scada-safety-walkway)" stroke="#F59E0B" strokeWidth="0.8" opacity="0.7" />
-                <rect x="865" y="15" width="22" height="610" fill="url(#scada-safety-walkway)" stroke="#F59E0B" strokeWidth="0.8" opacity="0.7" />
+                <rect x="293" y="15" width="22" height="610" fill="url(#scada-safety-walkway)" stroke="#F59E0B" strokeWidth="0.8" opacity="0.65" />
+                <rect x="863" y="15" width="20" height="610" fill="url(#scada-safety-walkway)" stroke="#F59E0B" strokeWidth="0.8" opacity="0.65" />
+
+                {/* PEDESTRIAN ZEBRA CROSSWALKS ACROSS AISLES */}
+                <g fill="#ffffff" opacity={ambientTheme === 'cleanroom' ? '0.6' : '0.25'}>
+                  {/* West Aisle Crosswalk at y=230 */}
+                  <rect x="293" y="226" width="22" height="4" />
+                  <rect x="293" y="234" width="22" height="4" />
+                  <rect x="293" y="242" width="22" height="4" />
+                  {/* East Aisle Crosswalk at y=230 */}
+                  <rect x="863" y="226" width="20" height="4" />
+                  <rect x="863" y="234" width="20" height="4" />
+                  <rect x="863" y="242" width="20" height="4" />
+                  {/* East Aisle Crosswalk at y=360 */}
+                  <rect x="863" y="356" width="20" height="4" />
+                  <rect x="863" y="364" width="20" height="4" />
+                  <rect x="863" y="372" width="20" height="4" />
+                </g>
+
+                {/* STENCILED FACTORY FLOOR LETTERING */}
+                <g fill={ambientTheme === 'cleanroom' ? '#94a3b8' : '#334155'} fontSize="9" fontWeight="900" letterSpacing="1.5" opacity="0.6">
+                  <text x="35" y="48">ZONE A • INBOUND LOGISTICS & IQC</text>
+                  <text x="330" y="48">ZONE B • AUTOMATED CNC & ASSEMBLY LINE 01</text>
+                  <text x="330" y="462" fill={ambientTheme === 'cleanroom' ? '#a855f7' : '#9333ea'} opacity="0.8">HUB C • CLEANROOM METROLOGY & QA MRB</text>
+                  <text x="900" y="48">ZONE D • FINAL OQC & PALLETIZING</text>
+                  <text x="900" y="312">ZONE E • FREIGHT DOCKS & DISPATCH</text>
+                </g>
+
+                {/* STRUCTURAL H-BEAM STEEL COLUMNS WITH HAZARD BASES */}
+                {[
+                  { cx: 290, cy: 110 },
+                  { cx: 290, cy: 440 },
+                  { cx: 290, cy: 560 },
+                  { cx: 875, cy: 180 },
+                  { cx: 875, cy: 440 },
+                  { cx: 875, cy: 560 }
+                ].map((col, idx) => (
+                  <g key={`col-${idx}`}>
+                    {/* Yellow/Black hazard boundary circle */}
+                    <circle cx={col.cx} cy={col.cy} r="10" fill="url(#scada-hazard-stripes)" stroke="#f59e0b" strokeWidth="1" />
+                    {/* Concrete pedestal */}
+                    <circle cx={col.cx} cy={col.cy} r="6" fill="#334155" stroke="#475569" strokeWidth="1" />
+                    {/* Steel H-Beam profile */}
+                    <rect x={col.cx - 3.5} y={col.cy - 3.5} width="7" height="7" fill="#0f172a" />
+                    <path d={`M ${col.cx - 3} ${col.cy - 3} L ${col.cx + 3} ${col.cy - 3} M ${col.cx} ${col.cy - 3} L ${col.cx} ${col.cy + 3} M ${col.cx - 3} ${col.cy + 3} L ${col.cx + 3} ${col.cy + 3}`} stroke="#94a3b8" strokeWidth="1.5" />
+                  </g>
+                ))}
+
+                {/* OVERHEAD GANTRY CRANE SPANNING BAY B */}
+                <g opacity="0.75">
+                  {/* Runway rails */}
+                  <line x1="318" y1="62" x2="860" y2="62" stroke="#475569" strokeWidth="3" />
+                  <line x1="318" y1="62" x2="860" y2="62" stroke="#f59e0b" strokeWidth="1" strokeDasharray="8,6" />
+                  {/* Crane Bridge Girder (Yellow steel truss) */}
+                  <rect x="540" y="52" width="70" height="20" rx="3" fill="#f59e0b" stroke="#78350f" strokeWidth="1" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.6))" />
+                  <text x="575" y="66" textAnchor="middle" fill="#000000" fontSize="8" fontWeight="900" fontFamily="sans-serif">
+                    CRANE 5T
+                  </text>
+                </g>
 
                 {/* RED QUARANTINE HAZARD FLOOR */}
-                <rect x="30" y="295" width="122" height="115" fill="url(#scada-quarantine-hatch)" stroke="#EF4444" strokeWidth="1.5" rx="10" />
+                <rect x="35" y="300" width="112" height="105" fill="url(#scada-quarantine-hatch)" stroke="#EF4444" strokeWidth="1.5" rx="10" />
 
-                {/* LIVE PRODUCTION CONVEYOR STREAM (LINE 01) */}
-                <rect x="325" y="130" width="525" height="24" fill="url(#scada-rollers)" stroke="#475569" strokeWidth="2" rx="4" />
-                <path d="M 335 142 L 840 142" stroke="#06B6D4" strokeWidth="2.5" strokeDasharray="10,6" className="animate-[pulse_2s_infinite]" />
+                {/* INDUSTRIAL ROLL-UP DOCK DOORS */}
+                {/* Gate 01: Inbound Receiving Door */}
+                <g>
+                  <rect x="14" y="80" width="8" height="75" fill="#f59e0b" rx="2" />
+                  <line x1="14" y1="95" x2="22" y2="95" stroke="#78350f" strokeWidth="1.5" />
+                  <line x1="14" y1="110" x2="22" y2="110" stroke="#78350f" strokeWidth="1.5" />
+                  <line x1="14" y1="125" x2="22" y2="125" stroke="#78350f" strokeWidth="1.5" />
+                  <line x1="14" y1="140" x2="22" y2="140" stroke="#78350f" strokeWidth="1.5" />
+                  <text x="26" y="74" fill="#f59e0b" fontSize="10" fontWeight="900">Gate 01 [IN]</text>
+                </g>
 
-                {/* Transfer Line from Receiving to Line 01 */}
-                <path d="M 270 230 L 325 230 L 325 142" fill="none" stroke="#06B6D4" strokeWidth="2.5" strokeDasharray="6,4" markerEnd="url(#scada-arrow-cyan)" />
+                {/* Gate 03: Outbound Logistics Door */}
+                <g>
+                  <rect x="1178" y="325" width="8" height="80" fill="#10b981" rx="2" />
+                  <line x1="1178" y1="340" x2="1186" y2="340" stroke="#064e3b" strokeWidth="1.5" />
+                  <line x1="1178" y1="355" x2="1186" y2="355" stroke="#064e3b" strokeWidth="1.5" />
+                  <line x1="1178" y1="370" x2="1186" y2="370" stroke="#064e3b" strokeWidth="1.5" />
+                  <line x1="1178" y1="385" x2="1186" y2="385" stroke="#064e3b" strokeWidth="1.5" />
+                  <text x="1174" y="318" fill="#10b981" fontSize="10" fontWeight="900" textAnchor="end">Gate 03 [OUT]</text>
+                </g>
 
-                {/* Transfer Line from Assembly to Final OQC */}
-                <path d="M 835 365 L 875 365 L 875 120 L 895 120" fill="none" stroke="#06B6D4" strokeWidth="2.5" strokeDasharray="6,4" markerEnd="url(#scada-arrow-cyan)" />
+                {/* ========================================================== */}
+                {/* INTER-STATION INDUSTRIAL CONVEYORS & TRANSFER NETWORK      */}
+                {/* ========================================================== */}
+                {FACTORY_CONNECTIONS.map(conn => {
+                  const pathInfo = calculateConnectionPath(conn, equipmentMap);
+                  if (!pathInfo) return null;
 
-                {/* DOCK GATES */}
-                <rect x="18" y="85" width="6" height="65" fill="#f59e0b" rx="2" />
-                <text x="28" y="70" fill="#f59e0b" fontSize="10" fontWeight="bold">Gate 01</text>
+                  const isSourceSelected = selectedStationId === conn.fromId;
+                  const isTargetSelected = selectedStationId === conn.toId;
+                  const isConnActive = isSourceSelected || isTargetSelected;
+                  const targetStationStatus = stationStatuses[conn.toId];
+                  const hasLineHold = Boolean(targetStationStatus?.isAndonActive || targetStationStatus?.status === 'alert');
 
-                <rect x="1176" y="335" width="6" height="65" fill="#10b981" rx="2" />
-                <text x="1170" y="325" fill="#10b981" fontSize="10" fontWeight="bold" textAnchor="end">Gate 03</text>
+                  return (
+                    <g key={conn.id} className="transition-all duration-300">
+                      {/* Conveyor Bed Drop Shadow */}
+                      <path 
+                        d={pathInfo.pathD} 
+                        fill="none" 
+                        stroke="rgba(0,0,0,0.65)" 
+                        strokeWidth={conn.type === 'pneumatic' ? 12 : 24} 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round" 
+                      />
 
-                {/* AUTONOMOUS AGV ROBOTS (Option 3 Upgrade) */}
+                      {/* Conveyor Outer Metallic Steel Guide Rails */}
+                      {conn.type !== 'pneumatic' && (
+                        <path 
+                          d={pathInfo.pathD} 
+                          fill="none" 
+                          stroke={ambientTheme === 'cleanroom' ? '#475569' : '#1e293b'} 
+                          strokeWidth={20} 
+                          strokeLinecap="round" 
+                          strokeLinejoin="round" 
+                        />
+                      )}
+
+                      {/* Conveyor Inner Bed / Rollers / Pneumatic Tube */}
+                      {conn.type === 'pneumatic' ? (
+                        <>
+                          <path 
+                            d={pathInfo.pathD} 
+                            fill="none" 
+                            stroke="#06b6d4" 
+                            strokeWidth={8} 
+                            strokeOpacity={0.4} 
+                            strokeLinecap="round" 
+                          />
+                          <path 
+                            d={pathInfo.pathD} 
+                            fill="none" 
+                            stroke="#38bdf8" 
+                            strokeWidth={3} 
+                            strokeDasharray="6,8" 
+                            className="animate-[dash_1s_linear_infinite]" 
+                          />
+                        </>
+                      ) : conn.type === 'chute' ? (
+                        <path 
+                          d={pathInfo.pathD} 
+                          fill="none" 
+                          stroke="#ef4444" 
+                          strokeWidth={14} 
+                          strokeDasharray="8,6" 
+                          strokeOpacity={0.85} 
+                        />
+                      ) : conn.type === 'dock-ramp' ? (
+                        <path 
+                          d={pathInfo.pathD} 
+                          fill="none" 
+                          stroke="#f59e0b" 
+                          strokeWidth={16} 
+                          strokeDasharray="4,4" 
+                          strokeOpacity={0.8} 
+                        />
+                      ) : (
+                        <>
+                          <path 
+                            d={pathInfo.pathD} 
+                            fill="none" 
+                            stroke={ambientTheme === 'cleanroom' ? '#94a3b8' : '#0f172a'} 
+                            strokeWidth={14} 
+                            strokeLinecap="round" 
+                          />
+                          <path 
+                            d={pathInfo.pathD} 
+                            fill="none" 
+                            stroke={ambientTheme === 'cleanroom' ? '#64748b' : '#334155'} 
+                            strokeWidth={12} 
+                            strokeDasharray="4,6" 
+                            className={isMaterialFlowActive ? "animate-[dash_2s_linear_infinite]" : ""} 
+                          />
+                        </>
+                      )}
+
+                      {/* Cyber Data Conduit / Glowing Pulse Line (Hybrid or Laser mode) */}
+                      {(connectionStyle === 'laser' || connectionStyle === 'hybrid' || isConnActive) && (
+                        <path 
+                          d={pathInfo.pathD} 
+                          fill="none" 
+                          stroke={hasLineHold ? '#ef4444' : isSourceSelected ? '#06b6d4' : isTargetSelected ? '#f59e0b' : '#38bdf8'} 
+                          strokeWidth={isConnActive ? 4 : 2} 
+                          strokeDasharray={hasLineHold ? "6,4" : "10,8"} 
+                          strokeOpacity={isConnActive ? 1 : 0.65}
+                          className={hasLineHold ? "animate-pulse" : isMaterialFlowActive ? "animate-[pulse_1.5s_infinite]" : ""}
+                          markerEnd={hasLineHold ? undefined : "url(#scada-arrow-cyan)"}
+                        />
+                      )}
+
+                      {/* Conveyor Line Hold / Buffer Full Warning Badge */}
+                      {hasLineHold && (
+                        <g transform={`translate(${(pathInfo.startX + pathInfo.endX) / 2}, ${(pathInfo.startY + pathInfo.endY) / 2})`}>
+                          <rect x="-38" y="-10" width="76" height="20" rx="5" fill="#ef4444" stroke="#ffffff" strokeWidth="1" className="animate-pulse" />
+                          <text x="0" y="3" textAnchor="middle" fill="#ffffff" fontSize="8" fontWeight="900" fontFamily="monospace">
+                            LINE STOP
+                          </text>
+                        </g>
+                      )}
+
+                      {/* Active Connection Floating Flow Indicator Badge */}
+                      {isConnActive && !hasLineHold && (
+                        <g transform={`translate(${(pathInfo.startX + pathInfo.endX) / 2}, ${(pathInfo.startY + pathInfo.endY) / 2 - 14})`}>
+                          <rect x="-48" y="-9" width="96" height="18" rx="4" fill="#0f172a" stroke={isSourceSelected ? '#06b6d4' : '#f59e0b'} strokeWidth="1.2" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.8))" />
+                          <text x="0" y="3" textAnchor="middle" fill={isSourceSelected ? '#38bdf8' : '#fbbf24'} fontSize="8" fontWeight="bold">
+                            {isSourceSelected ? (isAr ? '▶ تدفق خارج' : '▶ Outfeed') : (isAr ? '◀ تغذية داخلة' : '◀ Infeed')}
+                          </text>
+                        </g>
+                      )}
+                    </g>
+                  );
+                })}
+
+                {/* AUTONOMOUS AGV ROBOTS */}
                 {isAgvActive && (
                   <g>
-                    {/* AGV 01: Raw Inbound Materials */}
+                    {/* AGV 01: Raw Inbound Materials Aisle Transport */}
                     <g>
-                      <rect width="28" height="16" rx="4" fill="#0f172a" stroke="#f59e0b" strokeWidth="1.5" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.6))">
-                        <animateMotion path="M 120 120 L 305 120 L 305 380 L 120 380 Z" dur="18s" repeatCount="indefinite" />
+                      <rect width="30" height="18" rx="4" fill="#0f172a" stroke="#f59e0b" strokeWidth="1.5" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.7))">
+                        <animateMotion path="M 120 120 L 305 120 L 305 390 L 120 390 Z" dur="18s" repeatCount="indefinite" />
                       </rect>
-                      <circle cx="14" cy="8" r="3" fill="#f59e0b" className="animate-ping">
-                        <animateMotion path="M 120 120 L 305 120 L 305 380 L 120 380 Z" dur="18s" repeatCount="indefinite" />
+                      {/* Forward scanning lidar light cone */}
+                      <polygon points="30,9 45,2 45,16" fill="#f59e0b" opacity="0.35">
+                        <animateMotion path="M 120 120 L 305 120 L 305 390 L 120 390 Z" dur="18s" repeatCount="indefinite" />
+                      </polygon>
+                      <circle cx="15" cy="9" r="3.5" fill="#f59e0b" className="animate-ping">
+                        <animateMotion path="M 120 120 L 305 120 L 305 390 L 120 390 Z" dur="18s" repeatCount="indefinite" />
                       </circle>
                     </g>
 
                     {/* AGV 02: Central Quality Transfer to Metrology Lab */}
                     <g>
-                      <rect width="28" height="16" rx="4" fill="#0f172a" stroke="#06b6d4" strokeWidth="1.5" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.6))">
+                      <rect width="30" height="18" rx="4" fill="#0f172a" stroke="#06b6d4" strokeWidth="1.5" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.7))">
                         <animateMotion path="M 875 220 L 875 520 L 450 520 L 450 220 Z" dur="22s" repeatCount="indefinite" />
                       </rect>
-                      <circle cx="14" cy="8" r="3" fill="#06b6d4" className="animate-ping">
+                      <polygon points="30,9 45,2 45,16" fill="#06b6d4" opacity="0.35">
+                        <animateMotion path="M 875 220 L 875 520 L 450 520 L 450 220 Z" dur="22s" repeatCount="indefinite" />
+                      </polygon>
+                      <circle cx="15" cy="9" r="3.5" fill="#06b6d4" className="animate-ping">
                         <animateMotion path="M 875 220 L 875 520 L 450 520 L 450 220 Z" dur="22s" repeatCount="indefinite" />
                       </circle>
                     </g>
                   </g>
                 )}
 
-                {/* LIVE GLIDING PALLETS / MATERIAL STREAM ANIMATION */}
+                {/* LIVE GLIDING WIP WORKPIECES / MATERIAL STREAM ANIMATION */}
                 {isMaterialFlowActive && (
                   <g>
-                    {/* Pallet 1 */}
+                    {/* Workpiece 1: Raw Inbound Castings Crate from Gate 01 into IQC and Buffer */}
                     <g>
-                      <rect width="18" height="14" rx="3" fill="#f59e0b" stroke="#78350f" strokeWidth="1">
-                        <animateMotion path="M 270 230 L 325 230 L 325 142 L 840 142" dur="10s" repeatCount="indefinite" />
+                      <rect width="18" height="14" rx="2" fill="#d97706" stroke="#78350f" strokeWidth="1" filter="drop-shadow(0 2px 3px rgba(0,0,0,0.6))">
+                        <animateMotion path="M 152 165 L 152 280 L 214 280 L 214 300" dur="8s" repeatCount="indefinite" />
                       </rect>
-                      <circle cx="9" cy="7" r="2.5" fill="#ffffff" opacity="0.8">
-                        <animateMotion path="M 270 230 L 325 230 L 325 142 L 840 142" dur="10s" repeatCount="indefinite" />
+                      <circle cx="9" cy="7" r="2.5" fill="#fef3c7">
+                        <animateMotion path="M 152 165 L 152 280 L 214 280 L 214 300" dur="8s" repeatCount="indefinite" />
                       </circle>
                     </g>
 
-                    {/* Pallet 2 */}
+                    {/* Workpiece 2: Aluminum Machined Billet Tote moving through Machining Line */}
                     <g>
-                      <rect width="18" height="14" rx="3" fill="#06b6d4" stroke="#164e63" strokeWidth="1">
-                        <animateMotion path="M 335 142 L 840 142 L 840 365 L 875 365 L 875 120 L 895 120" dur="12s" begin="3.5s" repeatCount="indefinite" />
+                      <rect width="16" height="12" rx="2" fill="#0ea5e9" stroke="#0369a1" strokeWidth="1" filter="drop-shadow(0 2px 3px rgba(0,0,0,0.6))">
+                        <animateMotion path="M 330 235 L 485 235 L 505 235 L 660 235 L 680 235 L 835 235 L 865 235 L 865 365 L 615 365" dur="14s" repeatCount="indefinite" />
+                      </rect>
+                      <rect x="4" y="3" width="8" height="6" rx="1" fill="#e0f2fe">
+                        <animateMotion path="M 330 235 L 485 235 L 505 235 L 660 235 L 680 235 L 835 235 L 865 235 L 865 365 L 615 365" dur="14s" repeatCount="indefinite" />
                       </rect>
                     </g>
 
-                    {/* Pallet 3 */}
+                    {/* Workpiece 3: Pneumatic Quality Sample Capsule shooting to Metrology Lab */}
                     <g>
-                      <rect width="18" height="14" rx="3" fill="#10b981" stroke="#064e3b" strokeWidth="1">
-                        <animateMotion path="M 895 120 L 895 365 L 1170 365" dur="8s" begin="6s" repeatCount="indefinite" />
+                      <rect width="12" height="6" rx="3" fill="#a855f7" stroke="#ffffff" strokeWidth="1" filter="drop-shadow(0 0 8px #c084fc)">
+                        <animateMotion path="M 735 420 L 735 445 L 452 445 L 452 470" dur="3.5s" repeatCount="indefinite" />
+                      </rect>
+                    </g>
+
+                    {/* Workpiece 4: Tested Valve Assemblies Transfer to Bay D Final OQC */}
+                    <g>
+                      <rect width="18" height="14" rx="3" fill="#06b6d4" stroke="#164e63" strokeWidth="1" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.6))">
+                        <animateMotion path="M 635 365 L 835 365 L 865 365 L 865 120 L 895 120" dur="10s" repeatCount="indefinite" />
+                      </rect>
+                      <circle cx="9" cy="7" r="2.5" fill="#ffffff" opacity="0.9">
+                        <animateMotion path="M 635 365 L 835 365 L 865 365 L 865 120 L 895 120" dur="10s" repeatCount="indefinite" />
+                      </circle>
+                    </g>
+
+                    {/* Workpiece 5: Finished Goods Carton Pallet loaded into Gate 03 Truck */}
+                    <g>
+                      <rect width="20" height="16" rx="3" fill="#10b981" stroke="#064e3b" strokeWidth="1" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.6))">
+                        <animateMotion path="M 1025 170 L 1025 190 L 1025 290 L 1025 315 L 1025 415 L 1025 440" dur="11s" repeatCount="indefinite" />
+                      </rect>
+                      <rect x="4" y="3" width="12" height="10" rx="1" fill="#fef08a" stroke="#ca8a04" strokeWidth="0.8">
+                        <animateMotion path="M 1025 170 L 1025 190 L 1025 290 L 1025 315 L 1025 415 L 1025 440" dur="11s" repeatCount="indefinite" />
                       </rect>
                     </g>
                   </g>
                 )}
               </svg>
 
-              {/* INDUSTRIAL BAY OVERLAY BADGES */}
-              <div className="absolute top-4 left-9 pointer-events-none z-10 flex items-center gap-1.5 bg-[#0b1324]/90 border border-slate-700/80 px-2.5 py-1 rounded-xl shadow-md">
+              {/* INDUSTRIAL BAY OVERLAY BADGES (ALL 5 BAYS) */}
+              <div className="absolute top-4 left-8 pointer-events-none z-10 flex items-center gap-1.5 bg-[#0b1324]/90 border border-slate-700/80 px-2.5 py-1 rounded-xl shadow-md">
                 <Truck className="w-3.5 h-3.5 text-amber-400" />
                 <span className="text-[10px] font-black text-amber-400 uppercase tracking-wider">Bay A: الاستلام والخامات</span>
               </div>
@@ -1404,7 +2032,17 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                 <span className="text-[10px] font-black text-purple-400 uppercase tracking-wider">Hub C: مختبر الجودة و MRB</span>
               </div>
 
-              {/* SCADA EQUIPMENT PODS WITH 3D EXTRUSION & LASER BEACONS */}
+              <div className="absolute top-4 left-[895px] pointer-events-none z-10 flex items-center gap-1.5 bg-[#0b1324]/90 border border-slate-700/80 px-2.5 py-1 rounded-xl shadow-md">
+                <PackageCheck className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="text-[10px] font-black text-emerald-400 uppercase tracking-wider">Bay D: الفحص النهائي والتغليف</span>
+              </div>
+
+              <div className="absolute top-[288px] left-[895px] pointer-events-none z-10 flex items-center gap-1.5 bg-[#0b1324]/90 border border-slate-700/80 px-2.5 py-1 rounded-xl shadow-md">
+                <Truck className="w-3.5 h-3.5 text-sky-400" />
+                <span className="text-[10px] font-black text-sky-400 uppercase tracking-wider">Bay E: رصيف الشحن واللوجستيات</span>
+              </div>
+
+              {/* SCADA EQUIPMENT PODS WITH 3D EXTRUSION, DOCKING PORTS & LASER BEACONS */}
               {filteredEquipment.map(eq => {
                 const st = stationStatuses[eq.id];
                 const isSelected = selectedStationId === eq.id;
@@ -1412,6 +2050,12 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                 const isAndonActive = Boolean(st?.isAndonActive);
                 const isAlert = st?.status === 'alert';
                 const isWarning = st?.status === 'warning';
+
+                // Check for physical infeed and outfeed connections
+                const infeedConns = FACTORY_CONNECTIONS.filter(c => c.toId === eq.id);
+                const outfeedConns = FACTORY_CONNECTIONS.filter(c => c.fromId === eq.id);
+                const hasInfeed = infeedConns.length > 0;
+                const hasOutfeed = outfeedConns.length > 0;
 
                 return (
                   <div
@@ -1437,7 +2081,7 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                     }}
                     className={`
                       absolute rounded-2xl transition-all duration-200 p-2.5 flex flex-col justify-between
-                      backdrop-blur-md select-none group
+                      backdrop-blur-md select-none group relative overflow-hidden
                       ${isDragging ? 'z-50 ring-4 ring-amber-400 shadow-2xl opacity-95' : ''}
                       ${ambientTheme === 'cleanroom'
                         ? isSelected 
@@ -1455,7 +2099,34 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                       }
                     `}
                   >
-                    {/* HOLOGRAPHIC VERTICAL LASER BEACON (Option 5 Upgrade) */}
+                    {/* MACHINE BLUEPRINT WATERMARK IN BACKGROUND */}
+                    {renderMachineWatermark(eq.code)}
+
+                    {/* CORNER RIVETS FOR HEAVY INDUSTRIAL CASING FEEL */}
+                    <div className="absolute top-1 left-1 w-1 h-1 rounded-full bg-slate-500/40 pointer-events-none" />
+                    <div className="absolute top-1 right-1 w-1 h-1 rounded-full bg-slate-500/40 pointer-events-none" />
+                    <div className="absolute bottom-1 left-1 w-1 h-1 rounded-full bg-slate-500/40 pointer-events-none" />
+                    <div className="absolute bottom-1 right-1 w-1 h-1 rounded-full bg-slate-500/40 pointer-events-none" />
+
+                    {/* PHYSICAL CONVEYOR DOCKING PORTS */}
+                    {hasInfeed && (
+                      <div 
+                        className="absolute -left-1.5 top-1/2 -translate-y-1/2 w-2 h-5 rounded-l bg-cyan-500/90 shadow-[0_0_8px_#06b6d4] flex items-center justify-center text-[7px] font-mono text-slate-950 font-black pointer-events-none" 
+                        title="Conveyor Infeed Port"
+                      >
+                        ▶
+                      </div>
+                    )}
+                    {hasOutfeed && (
+                      <div 
+                        className="absolute -right-1.5 top-1/2 -translate-y-1/2 w-2 h-5 rounded-r bg-emerald-500/90 shadow-[0_0_8px_#10b981] flex items-center justify-center text-[7px] font-mono text-slate-950 font-black pointer-events-none" 
+                        title="Conveyor Outfeed Port"
+                      >
+                        ▶
+                      </div>
+                    )}
+
+                    {/* HOLOGRAPHIC VERTICAL LASER BEACON */}
                     {(isAlert || isAndonActive) && is3D && (
                       <div 
                         className="absolute left-1/2 bottom-full -translate-x-1/2 pointer-events-none flex flex-col items-center z-50"
@@ -1489,7 +2160,7 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                     )}
 
                     {/* Top Row: SCADA Machine Header & ALWAYS-VISIBLE EDIT PENCIL */}
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between z-10">
                       <div className="flex items-center gap-1.5">
                         <span className={`p-1 rounded-lg ${isAndonActive ? 'bg-pink-500 text-white' : isAlert ? 'bg-red-500/20 text-red-400' : isWarning ? 'bg-amber-500/20 text-amber-400' : ambientTheme === 'cleanroom' ? 'bg-sky-100 text-sky-700' : 'bg-slate-800 text-slate-300'}`}>
                           {renderIcon(eq.iconType, 'w-3.5 h-3.5')}
@@ -1526,8 +2197,8 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                           </button>
                         </div>
                       ) : (
-                        /* Andon Triple LED Tower */
-                        <div className="flex items-center gap-1 bg-black/60 px-1.5 py-0.5 rounded-full border border-white/10">
+                        /* Andon Triple LED Patlite Signal Tower */
+                        <div className="flex items-center gap-1 bg-black/70 px-1.5 py-0.5 rounded-full border border-white/10 shadow-inner">
                           <span className={`w-2 h-2 rounded-full transition-all ${isAndonActive ? 'bg-pink-500 shadow-[0_0_10px_#ec4899] animate-ping' : isAlert ? 'bg-red-500 shadow-[0_0_8px_#ef4444] animate-ping' : 'bg-red-950/60'}`} />
                           <span className={`w-2 h-2 rounded-full transition-all ${isWarning ? 'bg-amber-400 shadow-[0_0_8px_#f59e0b]' : 'bg-amber-950/60'}`} />
                           <span className={`w-2 h-2 rounded-full transition-all ${st?.status === 'pass' ? 'bg-emerald-400 shadow-[0_0_8px_#10b981]' : 'bg-emerald-950/60'}`} />
@@ -1536,7 +2207,7 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                     </div>
 
                     {/* Machine Title & Location */}
-                    <div className="my-0.5">
+                    <div className="my-0.5 z-10">
                       <h4 className={`text-xs font-black leading-tight truncate ${ambientTheme === 'cleanroom' ? 'text-slate-900' : 'text-white'}`}>
                         {isAr ? eq.titleAr : eq.titleEn}
                       </h4>
@@ -1545,9 +2216,9 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                       </p>
                     </div>
 
-                    {/* LIVE IOT SENSOR OSCILLOSCOPE WAVEFORM (Option 4 Upgrade) */}
+                    {/* LIVE IOT SENSOR OSCILLOSCOPE WAVEFORM */}
                     {showOscilloscope && (
-                      <div className="h-2.5 w-full overflow-hidden flex items-center opacity-80 my-0.5">
+                      <div className="h-2.5 w-full overflow-hidden flex items-center opacity-85 my-0.5 z-10">
                         <svg viewBox="0 0 100 12" className="w-full h-full">
                           <path 
                             d={isAndonActive || isAlert 
@@ -1562,13 +2233,18 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                       </div>
                     )}
 
-                    {/* Bottom Telemetry Strip: Mini OEE Gauge & Real Status */}
-                    <div className="flex items-center justify-between pt-1 border-t border-white/5 text-[9px] font-bold">
+                    {/* Bottom Telemetry Strip: Mini OEE Gauge, Vibration & Real Status */}
+                    <div className="flex items-center justify-between pt-1 border-t border-white/5 text-[9px] font-bold z-10">
                       <div className="flex items-center gap-1">
-                        <span className="text-slate-400 font-mono truncate max-w-[65px]">{eq.line}</span>
+                        <span className="text-slate-400 font-mono truncate max-w-[55px]">{eq.line}</span>
                         {eq.oeeEstimate && (
                           <span className="text-cyan-400 font-mono bg-cyan-950/60 px-1 rounded border border-cyan-500/30">
-                            {eq.oeeEstimate}% OEE
+                            {eq.oeeEstimate}%
+                          </span>
+                        )}
+                        {eq.temperatureC && (
+                          <span className="text-slate-400 font-mono hidden sm:inline">
+                            {eq.temperatureC}°C
                           </span>
                         )}
                       </div>
@@ -1576,7 +2252,7 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                       {isAndonActive ? (
                         <span className="text-pink-400 font-black flex items-center gap-0.5 animate-pulse">
                           <AlertTriangle className="w-2.5 h-2.5" />
-                          <span>أندون طوارئ</span>
+                          <span>أندون</span>
                         </span>
                       ) : st && (st.openNcrCount > 0 || st.defectCount > 0) ? (
                         <span className="text-amber-300 font-black">
