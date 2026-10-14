@@ -66,6 +66,7 @@ const QualityLibraryPage = lazy(() => import('../pages/quality/QualityLibrary'))
 const QualitySlidesPage = lazy(() => import('../pages/quality/QualitySlides'));
 const QualityDashboardPage = lazy(() => import('../pages/quality/QualityDashboard'));
 const OfflineSyncManagerPage = lazy(() => import('../pages/quality/OfflineSyncManager'));
+const QualityControlTowerPage = lazy(() => import('../pages/quality/QualityControlTower'));
 
 // Admin Pages
 const UsersPage = lazy(() => import('../pages/admin/Users'));
@@ -198,6 +199,9 @@ const routes: RouteObject[] = [
       { path: 'quality-slides', element: <LazyWrapper><QualitySlidesPage /></LazyWrapper> },
       { path: 'quality-dashboard', element: <ProtectedRoute requiredPermissions={['analytics.dashboard', 'spc.view', 'ncr.create', 'admin.access']}><LazyWrapper><QualityDashboardPage /></LazyWrapper></ProtectedRoute> },
       { path: 'quality-sync-manager', element: <LazyWrapper><OfflineSyncManagerPage /></LazyWrapper> },
+      { path: 'quality-control-tower', element: <ProtectedRoute requiredPermissions={['stream.view', '*', 'admin.access']}><LazyWrapper><QualityControlTowerPage /></LazyWrapper></ProtectedRoute> },
+      { path: 'quality-stream-map', element: <Navigate to="/quality-control-tower" replace /> },
+      { path: 'traceability-tower', element: <Navigate to="/quality-control-tower" replace /> },
 
       // Compatibility aliases for older deep links used inside existing pages
       { path: 'quality/ncr', element: <Navigate to="/quality/records/ncr" replace /> },

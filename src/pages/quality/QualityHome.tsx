@@ -13,6 +13,7 @@ import {
   FileText,
   FileJson,
   LayoutTemplate,
+  Network,
   Plus,
   Search,
   ShieldCheck,
@@ -311,6 +312,7 @@ export default function QualityHome() {
 
   const roleCards = cardsForRole(role);
   const quickActions: WorkspaceCard[] = [
+    { title: 'Control Tower', description: 'Traceability & Stop-Point Map', href: '/quality-control-tower', icon: Network },
     { title: 'New Defect', description: 'Open recorder', href: '/defect-log', icon: AlertTriangle },
     { title: 'Start Inspection', description: 'Shopfloor entry', href: '/quality-shopfloor', icon: Smartphone },
     { title: 'Create Audit', description: 'Layered audit', href: '/quality-audits', icon: ShieldCheck },

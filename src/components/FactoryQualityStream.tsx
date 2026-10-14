@@ -9,7 +9,8 @@ import {
   ChevronRight, 
   ChevronLeft, 
   Activity, 
-  Workflow
+  Workflow,
+  Network
 } from 'lucide-react';
 import { useTranslation } from '../utils/translations';
 import { unifiedNcrApi, unifiedDefectLogApi, unifiedCapaApi, unifiedEightDApi, unifiedComplaintsApi } from '../api/unified-api';
@@ -233,7 +234,14 @@ export function FactoryQualityStream() {
         </div>
 
         {/* Quick Links */}
-        <div className="flex items-center gap-2 text-xs">
+        <div className="flex items-center gap-2 text-xs flex-wrap">
+          <Link 
+            to="/quality-control-tower" 
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-cyan-500/40 bg-gradient-to-r from-cyan-500/15 to-blue-500/15 hover:from-cyan-500/25 hover:to-blue-500/25 transition-all font-black text-cyan-400 shadow-sm"
+          >
+            <Network className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
+            <span>{isAr ? 'برج المراقبة والتتبع (Control Tower)' : 'Quality Control Tower'}</span>
+          </Link>
           {hasPermission(user, 'spc.view') && (
             <Link 
               to="/spc" 

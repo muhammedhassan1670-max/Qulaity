@@ -29,6 +29,7 @@ import {
   Target,
   Smartphone,
   Info,
+  Network,
   X
 } from 'lucide-react';
 import { useConfigStore } from '../stores/configStore';
@@ -89,6 +90,18 @@ export function Sidebar({ isOpen, onClose, onSectionChange }: SidebarProps) {
         icon: LayoutDashboard,
         badge: 'STREAM',
         badgeColor: 'bg-blue-500',
+        permission: 'stream.view'
+      },
+      {
+        id: 'quality-control-tower',
+        labelKey: 'quality-control-tower',
+        labelEn: 'Control Tower & Traceability',
+        labelAr: 'برج مراقبة وتتبع الجودة (Tower)',
+        hintEn: 'Visual stop-point flow & record cockpit',
+        hintAr: 'خريطة نقاط التوقف والتتبع التفاعلية',
+        icon: Network,
+        badge: 'TOWER',
+        badgeColor: 'bg-cyan-500',
         permission: 'stream.view'
       },
 
@@ -290,6 +303,7 @@ export function Sidebar({ isOpen, onClose, onSectionChange }: SidebarProps) {
     'executive': '/executive',
     'admin': '/admin',
     'quality-home': '/quality-home',
+    'quality-control-tower': '/quality-control-tower',
     'quality-intelligence': '/quality-intelligence',
     'quality-command-center': '/quality-command-center',
     'quality-command-center-actions': '/quality-command-center',
