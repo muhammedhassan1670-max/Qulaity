@@ -5,8 +5,28 @@
 
 const DEMO_PATTERNS = [
   '2026-901',
+  'DEF-2026-0001',
+  'NCR-2026-1001',
+  'NCR-2026-089',
+  'NCR-2026-104',
+  'NCR-2026-112',
+  'CAPA-2026-2001',
+  'CAPA-2026-001',
+  'CAPA-2026-002',
+  'CAPA-2026-003',
+  '8D-2026-3001',
+  '8D-2026-001',
+  '8D-2026-002',
+  'INSP-2026-4001',
+  'COMP-2026-5001',
+  'CP-2026-6001',
   'LOT-2026-',
   'SUP-2026-',
+  'SUP-001',
+  'SUP-002',
+  'SUP-003',
+  'SUP-004',
+  'SUP-005',
   'INS-2026-RM',
   'INS-2026-OQC',
   'NCR-SUP-2026',
@@ -17,7 +37,16 @@ const DEMO_PATTERNS = [
   'DEV-2026-04',
   'CP-PUMP-01',
   'AUD-2026-901',
-  'ASSY-PUMP-400'
+  'ASSY-PUMP-400',
+  'RM-ALUM-7075',
+  'RM-SEAL-NBR',
+  'RM-VALV-SS316',
+  'RM-BOLT-M8GR10',
+  'RM-OIL-ISO46',
+  'SG-1',
+  'Obs-1',
+  'Lot-1',
+  'Unit-1'
 ];
 
 function isDemoRecord(item: any): boolean {
@@ -50,13 +79,19 @@ export function purgeAllDemoSimulationData(): { totalRemoved: number; details: R
 
   const keys = [
     'qms_local_defect-logs',
+    'qms_local_ncr',
     'qms_local_ncrs',
+    'qms_local_capa',
     'qms_local_capas',
+    'qms_local_eight-d',
+    'qms_local_8ds',
     'qms_local_eight_d',
     'qms_local_complaints',
     'qms_local_inspections',
+    'qms_local_control-plans',
     'qms_quality_relationships_v1',
-    'qms_suppliers_list'
+    'qms_suppliers_list',
+    'qms_spc_charts_v2'
   ];
 
   const details: Record<string, number> = {};
@@ -68,7 +103,8 @@ export function purgeAllDemoSimulationData(): { totalRemoved: number; details: R
     totalRemoved += count;
   }
 
-  // Remove the seeded flag permanently
+  // Remove the seeded flags permanently
+  localStorage.removeItem('qms_local_seeded');
   localStorage.removeItem('qms_comprehensive_seeded_v1');
 
   return { totalRemoved, details };

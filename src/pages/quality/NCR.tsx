@@ -59,76 +59,8 @@ export interface NCRItem {
   [key: string]: unknown;
 }
 
-export const DEFAULT_NCRS: NCRItem[] = [
-  {
-    id: 'NCR-2026-089',
-    ncrNumber: 'NCR-2026-089',
-    title: 'تسريب وضعف بنطة اللحام النقطي في شاسيه المنتج - خط 02',
-    description: 'رصد تكرار عيوب تسريب وضعف بنطة اللحام في شاسيه المنتج، مما تسبب في حجز 45 قطعة أثناء الفحص الداخلي لخط التجميع.',
-    defectType: 'Welding / Structural Defect',
-    severity: 'critical',
-    status: 'in-progress',
-    priority: 'critical',
-    createdDate: '2026-03-20',
-    dueDate: '2026-04-15',
-    assignedTo: 'Eng. Sara Ibrahim',
-    department: 'Welding & Body Assembly',
-    productionLine: 'Line 02 - Assembly',
-    affectedQuantity: 45,
-    lotNumber: 'LOT-WD2-089',
-    containmentAction: 'حجز وعزل 45 شاسيه في منطقة الحجر فوراً، وإيقاف خط التجميع لحين معايرة ضغط المكبس وفحص رؤوس اللحام.',
-    disposition: 'rework',
-    dispositionNotes: 'إعادة لحام موضعي للقطع المعيبة بعد صنفرة الأسطح واختبار اختراق الصبغة (Dye Penetrant).',
-    rootCauseNotes: 'تآكل في رؤوس أقطاب اللحام النحاسية وانخفاض ضغط الهواء المضغوط إلى 4.2 بار بدلاً من 6.0 بار.',
-    source: 'Line Inspection Alert',
-  },
-  {
-    id: 'NCR-2026-104',
-    ncrNumber: 'NCR-2026-104',
-    title: 'تذبذب درجات حرارة أفران الدهان الكهروستاتيكي وتجاوز الحدود القياسية',
-    description: 'رصد تذبذب في قراءات حساسات الحرارة للفرن الرئيسي يتجاوز ±12 درجة مئوية عن الحدود القياسية 180°C مما قد يؤثر على تماسك الدهان.',
-    defectType: 'Surface Coating / Paint Cure',
-    severity: 'major',
-    status: 'under-review',
-    priority: 'high',
-    createdDate: '2026-03-25',
-    dueDate: '2026-04-20',
-    assignedTo: 'Eng. Tamer Al-Banna',
-    department: 'Painting & Surface Treatment',
-    productionLine: 'Line 03 - Paint Shop',
-    affectedQuantity: 120,
-    lotNumber: 'LOT-PT3-104',
-    containmentAction: 'حجز دفعة الإنتاج وتحديد عينات عشوائية لفحص التصاق الدهان (Cross-Hatch Adhesion Test).',
-    disposition: 'use-as-is',
-    dispositionNotes: 'اجتياز 110 قطعة لاختبار الالتصاق بدرجة 4B وقبولها بشرط المراقبة، وتجريد 10 قطع لإعادة الدهان.',
-    rootCauseNotes: 'تراكم الغبار على مجسات الثيرموكبل (Thermocouple) والحاجة لإعادة ضبط المعايرة السنوية لمتحكم PID.',
-    source: 'SPC-Alert-Line3',
-  },
-  {
-    id: 'NCR-2026-112',
-    ncrNumber: 'NCR-2026-112',
-    title: 'عدم مطابقة أبعاد وسماكة خامات الصاج الواردة من المورد',
-    description: 'استلام شحنة ألواح صاج كود RM-ST-200 بسماكة 1.8mm بدلاً من 2.0mm المتعاقد عليها مما يؤثر على قوة التحمل الميكانيكي.',
-    defectType: 'Raw Material Non-Conformance',
-    severity: 'major',
-    status: 'disposition',
-    priority: 'medium',
-    createdDate: '2026-04-01',
-    dueDate: '2026-04-30',
-    assignedTo: 'Hassan Sherif',
-    department: 'Incoming Quality (IQC)',
-    productionLine: 'Central Receiving Dock',
-    affectedQuantity: 200,
-    lotNumber: 'LOT-RM-112',
-    containmentAction: 'إيقاف صرف باليتات الصاج من مستودع المواد الخام ووضع ملصق أحمر مرفوض على كامل الشحنة.',
-    disposition: 'return-to-vendor',
-    dispositionNotes: 'إرجاع 20 طن صاج للمورد وتحرير تقرير عدم مطابقة مورد مع طلب شحنة بديلة مطابقة.',
-    rootCauseNotes: 'خطأ في كود الصرف من مستودع المورد وإرسال طلبية عميل آخر دون مراجعة ملصق المواصفة الفنية.',
-    source: 'IQC-Supplier-ElNasr',
-  }
-];
-
-export const mockNCRs: NCRItem[] = DEFAULT_NCRS;
+export const DEFAULT_NCRS: NCRItem[] = [];
+export const mockNCRs: NCRItem[] = [];
 
 function generateNCRNumber(): string {
   const now = new Date();

@@ -74,76 +74,8 @@ export interface CAPAItem {
   [key: string]: unknown;
 }
 
-export const DEFAULT_CAPAS: CAPAItem[] = [
-  {
-    id: 'CAPA-2026-001',
-    capaNumber: 'CAPA-2026-001',
-    title: 'علاج عيوب تسريب اللحام النقطي في خط التجميع 02',
-    description: 'تكرار عيوب تسريب وضعف بنطة اللحام في شاسيه المنتج، مما تسبب في حجز 45 قطعة أثناء الفحص الداخلي.',
-    problemStatement: 'تكرار عيوب تسريب وضعف بنطة اللحام في شاسيه المنتج بالخط 02، مما تسبب في حجز 45 قطعة أثناء الفحص الداخلي ورفع نسبة الهالك إلى 3.2%.',
-    type: 'corrective',
-    status: 'action',
-    priority: 'critical',
-    source: 'NCR-2026-089',
-    sourceNCRId: 'NCR-2026-089',
-    createdDate: '2026-03-20',
-    targetDate: '2026-04-15',
-    owner: 'Eng. Sara Ibrahim',
-    department: 'Welding & Body Assembly',
-    plant: 'Main Plant - Assembly 01',
-    effectiveness: 'pending',
-    rootCause: 'تآكل في رؤوس أقطاب اللحام النحاسية وانخفاض ضغط الهواء المضغوط إلى 4.2 بار بدلاً من 6.0 بار.',
-    fiveWhy: '1. لماذا تسرب اللحام؟ لعدم اكتمال انصهار المعدن.\n2. لماذا لم ينصهر المعدن؟ لانخفاض شدة التيار والضغط.\n3. لماذا انخفض الضغط؟ لوجود تسريب في وصلة الهواء المضغوط رقم 4.\n4. لماذا حدث التسريب؟ لعدم استبدال الخرطوم خلال الصيانة الدورية.\n5. السبب الجذري: غياب خطة الفحص اليومي لضغط الهواء قبل بداية الوردية.',
-    correctiveAction: 'استبدال رؤوس اللحام التالفة وإصلاح منظم ضغط الهواء وضبط المعايرة عند 6.2 بار فوراً.',
-    preventiveAction: 'إدراج فحص ضغط الهواء ومظهر رؤوس اللحام ضمن قائمة التحقق اليومية لبداية التشغيل (Line Clearance Checksheet).',
-  },
-  {
-    id: 'CAPA-2026-002',
-    capaNumber: 'CAPA-2026-002',
-    title: 'إجراء وقائي لتقلب درجات حرارة أفران الدهان الكهروستاتيكي',
-    description: 'رصد تذبذب في قراءات حساسات الحرارة للفرن الرئيسي قد يؤدي إلى عدم تجانس طبقة الدهان وتقشرها مستقبلاً.',
-    problemStatement: 'رصد تذبذب في قراءات حساسات الحرارة للفرن الرئيسي يتجاوز ±12 درجة مئوية عن الحدود القياسية 180°C.',
-    type: 'preventive',
-    status: 'verification',
-    priority: 'high',
-    source: 'SPC-Alert-Line3',
-    sourceNCRId: 'NCR-2026-104',
-    createdDate: '2026-03-25',
-    targetDate: '2026-04-20',
-    owner: 'Eng. Tamer Al-Banna',
-    department: 'Painting & Surface Treatment',
-    plant: 'Main Plant - Assembly 01',
-    effectiveness: 'effective',
-    rootCause: 'تراكم الغبار على مجسات الثيرموكبل (Thermocouple) والحاجة لإعادة ضبط المعايرة السنوية لمتحكم PID.',
-    fiveWhy: '1. لماذا تذبذبت الحرارة؟ لتأخر استجابة المشعل الغازي.\n2. لماذا تأخرت الاستجابة؟ لأن قراءة الحساس غير مستقرة.\n3. لماذا القراءة غير مستقرة؟ لتراكم كربوني على رأس المجس.\n4. السبب الجذري: بيئة الفرن تتطلب تنظيفاً شهرياً للحساسات بدلاً من الربع سنوي.',
-    correctiveAction: 'تنظيف ومعايرة كافة حساسات الحرارة واستبدال الحساس المعطوب رقم TC-03.',
-    preventiveAction: 'تعديل جدول الصيانة الوقائية ليصبح تنظيف الحساسات شهرياً، وتفعيل إنذار التذبذب الحراري التلقائي.',
-  },
-  {
-    id: 'CAPA-2026-003',
-    capaNumber: 'CAPA-2026-003',
-    title: 'معالجة عدم مطابقة أبعاد خامات الصاج الواردة من المورد',
-    description: 'استلام شحنة ألواح صاج بسماكة 1.8mm بدلاً من 2.0mm المتعاقد عليها مما يؤثر على قوة التحمل الميكانيكي.',
-    problemStatement: 'ورود شحنة صاج كود RM-ST-200 بسمك 1.8mm بدلاً من 2.0mm مما يتسبب في فشل اختبارات الشد.',
-    type: 'corrective',
-    status: 'analysis',
-    priority: 'medium',
-    source: 'IQC-Supplier-ElNasr',
-    sourceNCRId: 'NCR-2026-112',
-    createdDate: '2026-04-01',
-    targetDate: '2026-04-30',
-    owner: 'Hassan Sherif',
-    department: 'Incoming Quality (IQC)',
-    plant: 'Central Logistics Dock',
-    effectiveness: 'pending',
-    rootCause: 'خطأ في كود الصرف من مستودع المورد وإرسال طلبية عميل آخر دون مراجعة ملصق المواصفة الفنية.',
-    fiveWhy: '1. لماذا وردت خامة خاطئة؟ لاختلاط البالتات لدى المورد.\n2. لماذا لم تكتشف لدى المورد؟ لعدم مطابقة شهادة COA مع البالتة الفعلية.\n3. السبب الجذري: ضعف الرقابة على شحنات المورد قبل الإرسال.',
-    correctiveAction: 'حجز وعزل الشحنة بالكامل وتحرير تقرير عدم مطابقة مورد وإرجاع 20 طن صاج.',
-    preventiveAction: 'إلزام المورد بإرفاق باركود الفحص النهائي مع كل بالته وتكثيف فحص العينات AQL عند الاستلام بنسبة 100% لمدة شهرين.',
-  }
-];
-
-export const mockCAPAs: CAPAItem[] = DEFAULT_CAPAS;
+export const DEFAULT_CAPAS: CAPAItem[] = [];
+export const mockCAPAs: CAPAItem[] = [];
 
 function generateCAPANumber(): string {
   const now = new Date();
@@ -169,7 +101,7 @@ export function CAPAPage() {
     } catch {
       // fallback
     }
-    return DEFAULT_CAPAS;
+    return [];
   });
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);

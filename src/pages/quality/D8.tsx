@@ -84,114 +84,9 @@ export interface D8Report {
   [key: string]: unknown;
 }
 
-export const DEFAULT_8DS: D8Report[] = [
-  {
-    id: '8D-2026-1042',
-    eightDNumber: '8D-2026-1042',
-    problemTitle: 'تسريب زيت هيدروليكي وتوقف مكبس التشكيل رقم 04',
-    symptomDescription: 'توقف مفاجئ لخط الهياكل بسبب تسريب حاد عند صمام الهيدروليك الرئيسي للمكبس 04.',
-    emergencyResponse: 'فصل الطاقة فوراً، نشر بودرة امتصاص الزيوت، وعزل خط الإنتاج لمنع الانزلاق.',
-    dateDetected: '2026-03-18',
-    teamLeader: 'Eng. Ahmed Khaled',
-    teamMembers: ['Khaled Omar', 'Mostafa Salem', 'Hany Adel'],
-    department: 'Stamping & Press',
-    champion: 'Dr. Hesham QMS',
-    productName: 'Chassis Main Crossmember',
-    productionLine: 'Line 01 - Heavy Press',
-    lotNumber: 'LOT-PR4-092',
-    problemDescription: 'انخفاض مفاجئ في ضغط خط الهيدروليك للمكبس الرئيسي وظهور تسريب حاد عند صمام التوزيع مما أدى لتوقف خط إنتاج الهياكل لمدة 3 ساعات وحجز 120 قطعة للفحص.',
-    customerImpact: 'تأخر تسليم دفعة الهياكل لخط التجميع لمدة 4 ساعات دون تأثير على العميل النهائي.',
-    immediateAction: 'إيقاف المكبس فوراً، احتواء الزيت المتسرب بفرش مواد ماصة، فحص 120 قطعة منتجة قبل التوقف وحجزها للفحص، وتفعيل خط المكبس البديل #02.',
-    containmentResponsible: 'Khaled Omar (Maintenance Lead)',
-    containmentDate: '2026-03-18',
-    quantityContained: 120,
-    analysisMethod: '5why',
-    whyAnalysis: '1. لماذا تسرب الزيت؟ لتلف مانع التسرب المطاطي (O-Ring).\n2. لماذا تلف المانع؟ لارتفاع درجة حرارة الزيت فوق 70°C.\n3. لماذا ارتفعت الحرارة؟ لانسداد مجاري التبريد في المبادل الحراري.\n4. لماذا انسدت المجاري؟ لتراكم الرواسب الدقيقة لعدم تنظيف الفلتر.\n5. السبب الجذري: غياب بند تنظيف مبادل التبريد ضمن جدول الصيانة الدورية.',
-    rootCauseDescription: 'تلف وتآكل مانع التسرب (O-ring) نتيجة ارتفاع حرارة الزيت عن 65°C بسبب انسداد جزئي في مبادل التبريد الحراري وغياب جدول فحص دوري لنظافة المبادل.',
-    correctiveActionDesc: 'استبدال مانع التسرب بنوعية مقاومة للحرارة العالية (Viton FKM)، وتنظيف مبادل التبريد وتغيير زيت الهيدروليك بالكامل.',
-    correctiveResponsible: 'Mostafa Salem (Fluid Power Eng)',
-    targetDateCorrective: '2026-03-22',
-    implementationDate: '2026-03-21',
-    validationResults: 'تشغيل المكبس لمدة 48 ساعة متواصلة ومراقبة الحرارة والضغط بمعدل قراءة كل 15 دقيقة مع ثبات تام لدرجة الحرارة عند 48°C وضغط 210 بار.',
-    effectivenessCheck: 'effective',
-    preventiveActionPlan: 'تركيب حساس حرارة رقمي متصل بنظام الإنذار المبكر IoT، وإدراج تنظيف مبادل التبريد شهرياً ضمن خطة الصيانة الوقائية PM.',
-    lessonsLearned: 'أهمية المراقبة المستمرة لدرجة حرارة زيوت الضغط العالي وربطها بإنذار رقمي مبكر بدلاً من الفحص البصري فقط.',
-    status: 'd7',
-    closureDate: '2026-04-05',
-    sourceNCRId: 'NCR-2026-089',
-  },
-  {
-    id: '8D-2026-1088',
-    eightDNumber: '8D-2026-1088',
-    problemTitle: 'خلل في تطابق ألوان الأجزاء البلاستيكية المحقونة (Color Deviation)',
-    symptomDescription: 'ظهور اختلاف لوني في أجزاء لوحة التحكم الأمامية مقارنة بالعينة المرجعية.',
-    emergencyResponse: 'إيقاف ماكينة الحقن رقم 06 فوراً وعزل آخر شحنة محقونة.',
-    dateDetected: '2026-03-24',
-    teamLeader: 'Mona Zakaria (Quality Lead)',
-    teamMembers: ['Amr Nabil', 'Fatma Tarek'],
-    department: 'Plastics & Trim',
-    champion: 'Eng. Tamer Al-Banna',
-    productName: 'Dashboard Bezel Trim',
-    productionLine: 'Line 03 - Plastic Injection',
-    lotNumber: 'LOT-PL6-440',
-    problemDescription: 'شكوى من محطة الفحص النهائي بوجود اختلاف في درجة لون لوحة التحكم الأمامية (Delta E > 2.5) مقارنة بالعينة المعتمدة Master Sample.',
-    customerImpact: 'احتمالية ظهور تفاوت لوني واضح في مقصورة القيادة في حال وصول القطع لخط التركيبات.',
-    immediateAction: 'فرز وعزل 350 قطعة في منطقة الحجز Quarantine، وإلزام خط التجميع باستخدام دفعة الصبغة المعتمدة رقم Lot-B4.',
-    containmentResponsible: 'Amr Nabil (Quality Inspector)',
-    containmentDate: '2026-03-24',
-    quantityContained: 350,
-    analysisMethod: 'fishbone',
-    fishboneAnalysis: 'المعدة: خلل بحساس الوزن في وحدة الجرعات.\nالخامة: تباين طفيف في كثافة خرزات الصبغة.\nالطريقة: غياب الفحص الطيفي الدوري كل وردية.\nالعنصر البشري: إدخال نسبة الخلط يدوياً دون تأكيد باركود.',
-    rootCauseDescription: 'اختلاط نسبة المستر باتش (Color Masterbatch) بنسبة 1.8% بدلاً من 2.5% بسبب خلل في وحدة الخلط الوزني الأوتوماتيكي بالمحقن وعدم مطابقة الباركود.',
-    correctiveActionDesc: 'إعادة ضبط ومعايرة خلاط الجرعات الوزني، واستبدال حساس الوزن المعطوب وتفعيل قفل الشاشة بكلمة مرور للمهندس المشرف.',
-    correctiveResponsible: 'Fatma Tarek (Process Specialist)',
-    targetDateCorrective: '2026-03-28',
-    implementationDate: '2026-03-27',
-    validationResults: 'حقن دفعة تجريبية 50 قطعة وفحصها بجهاز قياس الطيف اللوني Spectrophotometer وكانت النتائج Delta E = 0.38 (ضمن المسموح به < 0.8).',
-    effectivenessCheck: 'effective',
-    preventiveActionPlan: 'تطبيق نظام Poka-Yoke يوقف ماكينة الحقن تلقائياً في حال انحراف نسبة التغذية الوزنية للصبغة بأكثر من ±0.1% مع إلزام الفحص الطيفي لبداية كل وردية.',
-    lessonsLearned: 'توحيد مواصفة التوريد لكثافة الصبغة وإلزام قراءة الباركود قبل تحميل المادة في القادوس.',
-    status: 'd8',
-    closureDate: '2026-04-02',
-    sourceNCRId: 'NCR-2026-104',
-  },
-  {
-    id: '8D-2026-1105',
-    eightDNumber: '8D-2026-1105',
-    problemTitle: 'انخفاض عزم ربط مسامير تثبيت قواعد المحرك (Low Torque Mounts)',
-    symptomDescription: 'قراءات عزم ربط أقل من المواصفة الهندسية المحددة في 8 سيارات أثناء التدقيق العشوائي.',
-    emergencyResponse: 'حجز السيارات الـ 8 وإعادة ربط المسامير يدوياً بمفتاح عزم معاير.',
-    dateDetected: '2026-04-02',
-    teamLeader: 'Eng. Youssef Mahdy',
-    teamMembers: ['Sameh Fathy', 'Ibrahim Adel'],
-    department: 'Final Assembly 02',
-    champion: 'Quality Director',
-    productName: 'Powertrain Mount Bracket',
-    productionLine: 'Line 02 - Assembly',
-    lotNumber: 'LOT-ASM2-811',
-    problemDescription: 'رصد عزم ربط 38 Nm بدلاً من العزم القياسي 55 ± 3 Nm في 8 وحدات تم فحصها بمحطة مراقبة الجودة عشوائياً في نهاية الخط.',
-    customerImpact: 'خطورة اهتزاز المحرك أو فك التثبيت أثناء السير في حال وصول العيب للعميل.',
-    immediateAction: 'إعادة ربط وفحص 100% من الوحدات المنتجة خلال الوردية الأولى (64 وحدة) وتوثيق عزم الربط في سجل التتبع وفحص جميع مفكات الخط.',
-    containmentResponsible: 'Sameh Fathy (Assembly Supervisor)',
-    containmentDate: '2026-04-02',
-    quantityContained: 64,
-    analysisMethod: '5why',
-    whyAnalysis: '1. لماذا انخفض عزم الربط؟ لتوقف مفك العزم قبل الوصول لـ 55 Nm.\n2. لماذا توقف مبكراً؟ لانخفاض جهد البطارية اللاسلكية بشكل مفاجئ.\n3. لماذا انخفض الجهد أثناء العمل؟ لعدم تغيير البطارية بعد 4 ساعات تشغيل.\n4. لماذا لم ينتبه المشغل؟ لأن شاشة المفك لا تحتوي على إنذار صوتي للبطارية الضعيفة.\n5. السبب الجذري: عدم ربط مفكات العزم بوحدة تحكم ذكية مركزية تعتمد الربط اللاسلكي وتمنع تجاوز المحطة دون إشارة OK.',
-    rootCauseDescription: 'انخفاض شحن بطارية مفك العزم الإلكتروني اللاسلكي وفقدان المعايرة لنظام إيقاف العزم التلقائي مع غياب ربط شبكي مع خط التجميع.',
-    correctiveActionDesc: 'سحب المفك المعطوب واستبداله بمفك عزم رقمي ذكي مزود بمغذي طاقة ثابت عبر كابل وإعادة معايرة لكافة أدوات الخط 02.',
-    correctiveResponsible: 'Ibrahim Adel (Tooling Eng)',
-    targetDateCorrective: '2026-04-08',
-    implementationDate: '2026-04-06',
-    validationResults: 'فحص وتوثيق عزم 150 وحدة منتجة متتالية بمفتاح عزم رقمي مستقل ولم تسجل أي حالة انحراف (المتوسط 54.8 Nm).',
-    effectivenessCheck: 'pending',
-    preventiveActionPlan: 'ربط جميع مفاتيح عزم الربط في محطات الأمان الحرجة (Torque-Secured Stations) بنظام PLC يمنع تمرير الحامل (Skid) دون إشارة OK الرقمية.',
-    lessonsLearned: 'الأدوات اللاسلكية الحرجة تتطلب مراقبة شحن رقمية أو استبدالها بأدوات سلكية بمغذيات تيار ثابتة.',
-    status: 'd4',
-    sourceNCRId: 'NCR-2026-112',
-  }
-];
+export const DEFAULT_8DS: D8Report[] = [];
 
-export const mock8Ds: D8Report[] = DEFAULT_8DS;
+export const mock8Ds: D8Report[] = [];
 
 function generate8DNumber(): string {
   const now = new Date();
@@ -239,7 +134,7 @@ export function D8Page() {
     } catch {
       // ignore
     }
-    return DEFAULT_8DS;
+    return [];
   });
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);

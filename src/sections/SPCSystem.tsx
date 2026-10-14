@@ -1,7 +1,7 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { 
   Activity, BarChart3, LineChart as LineChartIcon, AlertCircle, 
-  Settings2, Download
+  Settings2, Plus, Trash2
 } from 'lucide-react';
 import {
   ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, 
@@ -18,7 +18,7 @@ import {
 type SpcTab = 'control' | 'capability';
 type ChartType = 'xbar-r' | 'i-mr' | 'p' | 'u';
 
-interface DemoDataRow {
+export interface SpcMeasurementRow {
   label: string;
   values?: number[]; // For X-bar
   value?: number; // For I-MR
@@ -28,20 +28,23 @@ interface DemoDataRow {
   units?: number; // For U
 }
 
-// Generate random normal data using Box-Muller transform
-function randomNormal(mean: number, stdDev: number) {
-  const u1 = 1 - Math.random();
-  const u2 = 1 - Math.random();
-  const z0 = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
-  return z0 * stdDev + mean;
-}
-
 export default function SPCSystem() {
   const { language } = useTranslation();
   
   const [activeTab, setActiveTab] = useState<SpcTab>('control');
   const [chartType, setChartType] = useState<ChartType>('xbar-r');
-  const [data, setData] = useState<DemoDataRow[]>([]);
+  const [data, setData] = useState<SpcMeasurementRow[]>(() => {
+    try {
+      const saved = localStorage.getItem('qms_spc_real_measurements');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch {}
+    return [];
+  });
+  const [inputValuesText, setInputValuesText] = useState('');
+  const [inputLabel, setInputLabel] = useState('');
   const subgroupSize = 5;
   
   // Capability specs
@@ -49,38 +52,61 @@ export default function SPCSystem() {
   const [lsl, setLsl] = useState<number>(45);
   const [target, setTarget] = useState<number>(50);
 
-  // Load demo data on type change
-  useEffect(() => {
-    loadDemoData();
-  }, [chartType]);
-
-  const loadDemoData = () => {
-    const newData: DemoDataRow[] = [];
-    if (chartType === 'xbar-r') {
-      // 25 subgroups of size 5
-      for (let i = 1; i <= 25; i++) {
-        // Create an out of control point artificially at index 15
-        const meanShift = i === 15 ? 4 : 0; 
-        const values = Array.from({length: subgroupSize}, () => randomNormal(50 + meanShift, 2));
-        newData.push({ label: `SG-${i}`, values });
-      }
-    } else if (chartType === 'i-mr') {
-      for (let i = 1; i <= 30; i++) {
-        newData.push({ label: `Obs-${i}`, value: randomNormal(100, 5) });
-      }
-    } else if (chartType === 'p') {
-      for (let i = 1; i <= 20; i++) {
-        const size = Math.floor(Math.random() * 50) + 100;
-        const p = i === 10 ? 0.15 : 0.05; // Spike at 10
-        newData.push({ label: `Lot-${i}`, defective: Math.round(size * p), sampleSize: size });
-      }
-    } else if (chartType === 'u') {
-      for (let i = 1; i <= 25; i++) {
-        newData.push({ label: `Unit-${i}`, defects: Math.floor(Math.random() * 8), units: 1 });
-      }
+  const handleAddMeasurement = () => {
+    if (!inputValuesText.trim()) {
+      toast.error(language === 'ar' ? 'يرجى إدخال قيم القياس' : 'Please enter measurement values');
+      return;
     }
-    setData(newData);
-    toast.success(language === 'ar' ? 'تم تحميل البيانات التجريبية' : 'Demo data loaded');
+
+    const label = inputLabel.trim() || `Sample-${data.length + 1}`;
+    let newRow: SpcMeasurementRow;
+
+    if (chartType === 'xbar-r') {
+      const numbers = inputValuesText
+        .split(/[\s,]+/)
+        .map(v => parseFloat(v))
+        .filter(v => !isNaN(v));
+
+      if (numbers.length === 0) {
+        toast.error(language === 'ar' ? 'أرقام غير صالحة' : 'Invalid numbers');
+        return;
+      }
+      newRow = { label, values: numbers };
+    } else if (chartType === 'i-mr') {
+      const val = parseFloat(inputValuesText.trim());
+      if (isNaN(val)) {
+        toast.error(language === 'ar' ? 'قيمة غير صالحة' : 'Invalid value');
+        return;
+      }
+      newRow = { label, value: val };
+    } else if (chartType === 'p') {
+      const parts = inputValuesText.split(/[\s,/]+/).map(v => parseFloat(v)).filter(v => !isNaN(v));
+      const defective = parts[0] || 0;
+      const sampleSize = parts[1] || 100;
+      newRow = { label, defective, sampleSize };
+    } else {
+      const parts = inputValuesText.split(/[\s,/]+/).map(v => parseFloat(v)).filter(v => !isNaN(v));
+      const defects = parts[0] || 0;
+      const units = parts[1] || 1;
+      newRow = { label, defects, units };
+    }
+
+    const updated = [...data, newRow];
+    setData(updated);
+    try {
+      localStorage.setItem('qms_spc_real_measurements', JSON.stringify(updated));
+    } catch {}
+    setInputValuesText('');
+    setInputLabel('');
+    toast.success(language === 'ar' ? 'تمت إضافة قراءة العينة بنجاح' : 'Measurement added successfully');
+  };
+
+  const handleClearData = () => {
+    setData([]);
+    try {
+      localStorage.removeItem('qms_spc_real_measurements');
+    } catch {}
+    toast.info(language === 'ar' ? 'تم مسح سجل القياسات' : 'Measurements cleared');
   };
 
   // Run Calculations
@@ -277,13 +303,50 @@ export default function SPCSystem() {
                   </select>
                 </div>
 
-                <button 
-                  onClick={loadDemoData}
-                  className="w-full py-2.5 bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 text-slate-700 dark:text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-colors"
-                >
-                  <Download className="w-4 h-4" />
-                  {language === 'ar' ? 'تحميل بيانات تجريبية' : 'Load Demo Data'}
-                </button>
+                <div className="pt-2 border-t border-slate-200 dark:border-white/10 space-y-2.5">
+                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
+                    {language === 'ar' ? 'إدخال قياس عينة حقيقية:' : 'Add Real Measurement:'}
+                  </span>
+                  <input
+                    type="text"
+                    value={inputLabel}
+                    onChange={e => setInputLabel(e.target.value)}
+                    placeholder={language === 'ar' ? 'اسم/رقم العينة (مثال: عينة 1)' : 'Sample label (e.g. Lot-01)'}
+                    className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs outline-none focus:border-[var(--industrial-primary)]"
+                  />
+                  <input
+                    type="text"
+                    value={inputValuesText}
+                    onChange={e => setInputValuesText(e.target.value)}
+                    placeholder={
+                      chartType === 'xbar-r'
+                        ? (language === 'ar' ? 'القيم مفصولة بفاصلة: 50.2, 49.8, 50.1' : 'Values e.g. 50.2, 49.8, 50.1')
+                        : chartType === 'i-mr'
+                        ? (language === 'ar' ? 'القيمة المقاسة: 100.5' : 'Value e.g. 100.5')
+                        : chartType === 'p'
+                        ? (language === 'ar' ? 'المعيب / حجم العينة: 5 / 100' : 'Defective / Size: 5 / 100')
+                        : (language === 'ar' ? 'العيوب / عدد الوحدات: 3 / 1' : 'Defects / Units: 3 / 1')
+                    }
+                    className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs outline-none focus:border-[var(--industrial-primary)]"
+                  />
+                  <button
+                    onClick={handleAddMeasurement}
+                    className="w-full py-2 bg-[var(--industrial-primary)] hover:opacity-90 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-md"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>{language === 'ar' ? 'تسجيل القراءة' : 'Record Reading'}</span>
+                  </button>
+
+                  {data.length > 0 && (
+                    <button
+                      onClick={handleClearData}
+                      className="w-full py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>{language === 'ar' ? 'مسح كافة القراءات' : 'Clear All Readings'}</span>
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -332,9 +395,10 @@ export default function SPCSystem() {
                 )}
               </>
             ) : (
-              <div className="h-[400px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 border-dashed rounded-2xl flex flex-col items-center justify-center text-slate-400">
+              <div className="h-[400px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 border-dashed rounded-2xl flex flex-col items-center justify-center text-slate-400 p-6 text-center">
                 <LineChartIcon className="w-16 h-16 mb-4 opacity-50" />
-                <p>{language === 'ar' ? 'قم بتحميل البيانات لرؤية الشارت' : 'Load data to view charts'}</p>
+                <p className="font-bold text-slate-300 mb-1">{language === 'ar' ? 'لا توجد قراءات مسجلة' : 'No measurements recorded'}</p>
+                <p className="text-xs text-slate-500 max-w-sm">{language === 'ar' ? 'قم بإدخال قراءات العينات الحقيقية من صالة الإنتاج لعرض كارتات التحكم الإحصائي ومؤشرات القدرة' : 'Enter genuine sample readings from the shopfloor to display SPC control charts and capability indices'}</p>
               </div>
             )}
           </div>

@@ -4,8 +4,10 @@ import { Toaster } from 'sonner'
 import './index.css'
 import { router } from './router'
 import { cleanupDemoData } from './utils/demoDataCleanup'
+import { purgeAllDemoSimulationData } from './services/cleanDemoData'
 
 cleanupDemoData()
+purgeAllDemoSimulationData()
 
 if (import.meta.env.DEV && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
