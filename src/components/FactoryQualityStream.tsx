@@ -12,7 +12,8 @@ import {
   Workflow,
   Factory,
   LayoutGrid,
-  Maximize2
+  Maximize2,
+  Settings2
 } from 'lucide-react';
 import { useTranslation } from '../utils/translations';
 import { unifiedNcrApi, unifiedDefectLogApi, unifiedCapaApi, unifiedEightDApi, unifiedComplaintsApi } from '../api/unified-api';
@@ -270,6 +271,14 @@ export function FactoryQualityStream() {
             </button>
           </div>
 
+          <Link 
+            to="/quality-control-tower?mode=customize" 
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-amber-500/50 bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 transition-all font-black text-amber-400 shadow-sm"
+            title="تخصيص وتعديل محطات وماكينات المصنع (Customize Stations)"
+          >
+            <Settings2 className="w-3.5 h-3.5 text-amber-400" />
+            <span>{isAr ? '⚙️ تخصيص المحطات (Customize)' : '⚙️ Customize'}</span>
+          </Link>
           <Link 
             to="/quality-control-tower" 
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 transition-all font-black text-amber-500 dark:text-amber-400 shadow-sm"

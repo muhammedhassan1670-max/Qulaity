@@ -2,14 +2,15 @@
 // QMS Enterprise 4.0 - Professional Industrial SCADA / MES Plant Floor Layout & Quality Control Tower
 // Fully dynamic, user-customizable 2D factory floorplan driven 100% by REAL records (Zero fake data)
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { 
   Factory, CheckCircle2, AlertTriangle, XCircle, Search, RefreshCw, 
   ExternalLink, Cpu, Wrench, PackageCheck, Truck, X, Layers, Activity, 
   Maximize2, Minimize2, ZoomIn, ZoomOut, RotateCcw, Box, Gauge, Radio, 
   ArrowRight, Trash2, ShieldAlert, ShieldCheck, ChevronRight, Edit3, Plus,
-  Sliders, Settings2, Save, Download, Upload, ArrowUp, ArrowDown, ArrowLeft
+  Sliders, Settings2, Save, Download, Upload, ArrowUp, ArrowDown, ArrowLeft,
+  Sparkles, SlidersHorizontal
 } from 'lucide-react';
 import { useTranslation } from '../../utils/translations';
 import { loadSafeLocalDefectRecords } from '../../services/safeDefectStorage';
@@ -17,7 +18,7 @@ import { unifiedNcrApi, unifiedCapaApi, unifiedEightDApi, unifiedComplaintsApi }
 import { purgeAllDemoSimulationData } from '../../services/cleanDemoData';
 
 export type StationZone = 'receiving' | 'assembly' | 'lab' | 'oqc' | 'shipping';
-export type ViewMode = 'scada-floorplan' | 'stations-grid';
+export type ViewMode = 'scada-floorplan' | 'stations-grid' | 'customize-table';
 export type FilterStatus = 'all' | 'alerts-only' | 'normal-only';
 
 export interface ScadaEquipment {
@@ -327,17 +328,24 @@ function loadSavedEquipment(): ScadaEquipment[] {
 
 export function QualityControlTower({ embedded = false, className = '' }: QualityControlTowerProps = {}) {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { language } = useTranslation();
   const isAr = language === 'ar';
 
   // Dynamic Equipment Pods State (Fully Editable & Persistent)
   const [equipmentList, setEquipmentList] = useState<ScadaEquipment[]>(loadSavedEquipment);
-  const [isCustomizing, setIsCustomizing] = useState(false);
+  
+  // Initialize view mode from URL params if requested
+  const initialMode: ViewMode = (searchParams.get('mode') === 'customize' || searchParams.get('tab') === 'customize')
+    ? 'customize-table'
+    : 'scada-floorplan';
+
+  const [viewMode, setViewMode] = useState<ViewMode>(initialMode);
+  const [isCustomizing, setIsCustomizing] = useState(searchParams.get('mode') === 'customize');
   const [editingStation, setEditingStation] = useState<ScadaEquipment | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
-  const [viewMode, setViewMode] = useState<ViewMode>('scada-floorplan');
   const [filterZone, setFilterZone] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -465,7 +473,9 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
         }
         return eq;
       });
-      localStorage.setItem(SCADA_STORAGE_KEY, JSON.stringify(next));
+      try {
+        localStorage.setItem(SCADA_STORAGE_KEY, JSON.stringify(next));
+      } catch (e) {}
       return next;
     });
   };
@@ -640,10 +650,33 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
     }
   };
 
+  const handleAddNewTemplate = (preferredZone: StationZone = 'assembly') => {
+    setIsAddingNew(true);
+    setEditingStation({
+      id: `STATION-CUSTOM-${Date.now().toString().slice(-4)}`,
+      code: `EQ-0${equipmentList.length + 1}`,
+      zone: preferredZone,
+      zoneNameAr: preferredZone === 'receiving' ? 'عنبر الاستلام A' : preferredZone === 'lab' ? 'مركز الجودة C' : preferredZone === 'oqc' ? 'عنبر الإفراج D' : preferredZone === 'shipping' ? 'عنبر الشحن E' : 'خط التجميع 01',
+      zoneNameEn: preferredZone === 'receiving' ? 'Receiving Bay A' : preferredZone === 'lab' ? 'Quality Hub C' : preferredZone === 'oqc' ? 'OQC Bay D' : preferredZone === 'shipping' ? 'Shipping Bay E' : 'Assembly Line 01',
+      titleAr: `محطة جديدة ${equipmentList.length + 1}`,
+      titleEn: `New Workstation ${equipmentList.length + 1}`,
+      line: 'Line 1',
+      locationAr: 'صالة الإنتاج الرئيسية',
+      locationEn: 'Main Shopfloor',
+      iconType: 'machine',
+      moduleUrl: '/quality-shopfloor',
+      moduleLabelAr: 'تسجيل صالة الإنتاج',
+      x: preferredZone === 'receiving' ? 35 : preferredZone === 'lab' ? 450 : preferredZone === 'oqc' || preferredZone === 'shipping' ? 895 : 480,
+      y: preferredZone === 'lab' ? 470 : preferredZone === 'shipping' ? 350 : 200,
+      w: 160,
+      h: 105
+    });
+  };
+
   return (
     <div 
       ref={containerRef}
-      className={`relative w-full ${isFullscreen ? 'h-screen fixed inset-0 z-50 bg-[#070b14]' : embedded ? 'h-[780px] min-h-[640px] rounded-3xl border border-amber-500/40 shadow-2xl' : 'h-[calc(100vh-80px)] min-h-[680px] max-h-[960px]'} bg-[#060a13] text-white flex flex-col font-sans overflow-hidden select-none ${className}`}
+      className={`relative w-full ${isFullscreen ? 'h-screen fixed inset-0 z-50 bg-[#070b14]' : embedded ? 'h-[800px] min-h-[660px] rounded-3xl border-2 border-amber-500/50 shadow-2xl' : 'h-[calc(100vh-80px)] min-h-[700px] max-h-[960px]'} bg-[#060a13] text-white flex flex-col font-sans overflow-hidden select-none ${className}`}
       dir={isAr ? 'rtl' : 'ltr'}
     >
       <input 
@@ -655,18 +688,18 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
       />
 
       {/* ==================================================================== */}
-      {/* 1. SCADA INDUSTRIAL TOP HEADER & METRIC HUD                          */}
+      {/* 1. SCADA INDUSTRIAL TOP HEADER & PROMINENT CUSTOMIZATION ACTIONS     */}
       {/* ==================================================================== */}
-      <header className="flex-none px-4 py-2.5 bg-[#0a101d] border-b border-white/10 backdrop-blur-md flex flex-wrap items-center justify-between gap-3 z-30 shadow-md">
+      <header className="flex-none px-4 py-2.5 bg-[#0a101d] border-b border-white/10 backdrop-blur-md flex flex-wrap items-center justify-between gap-2.5 z-30 shadow-md">
         {/* Plant Title & Status */}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/25 shrink-0">
-            <Factory className="w-5 h-5 text-slate-950" />
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/30 shrink-0">
+            <Factory className="w-5 h-5 text-slate-950 font-black" />
           </div>
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-sm md:text-base font-black text-white tracking-wide">
-                {isAr ? 'لوحة تحكم صالة المصنع الصناعية (SCADA / MES Floorplan)' : 'SCADA / MES Plant Floor Operating Map'}
+                {isAr ? 'لوحة تحكم صالة المصنع (SCADA / MES Floorplan)' : 'SCADA / MES Plant Floor Operating Map'}
               </h1>
               <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
@@ -674,137 +707,109 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
               </span>
             </div>
             <p className="text-[11px] text-slate-400 hidden sm:block">
-              {isAr ? 'محطات قابلة للتعديل والتخصيص بالكامل: مسار الإنتاج، الماكينات، والأبراج التحذيرية' : 'Fully customizable equipment pods: edit names, codes, lines, and layout to match your plant'}
+              {isAr ? 'محطات قابلة للتخصيص والتعديل بالكامل: عدّل الأسماء، الأكواد، المواقع، والإجراءات' : 'Fully customizable stations: edit names, codes, lines, physical descriptions, and layout'}
             </p>
           </div>
         </div>
 
-        {/* Real KPI HUD */}
-        <div className="flex items-center gap-2 overflow-x-auto max-w-full py-1">
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-900 border border-slate-700/80 text-xs">
-            <span className="text-slate-400 text-[11px]">{isAr ? 'إجمالي المحطات:' : 'Total Units:'}</span>
-            <span className="font-black text-white text-sm">{summaryMetrics.totalStations}</span>
-          </div>
-
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-xs text-emerald-400">
-            <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-            <span className="font-bold text-[11px]">{isAr ? 'تشغيل طبيعي:' : 'Normal:'}</span>
-            <span className="font-black text-sm">{summaryMetrics.normalCount}</span>
-          </div>
-
-          {summaryMetrics.alertCount > 0 ? (
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-red-950/50 border border-red-500/40 text-xs text-red-400 animate-pulse">
-              <span className="w-2 h-2 rounded-full bg-red-400"></span>
-              <span className="font-bold text-[11px]">{isAr ? 'تنبيهات جودة:' : 'Alerts:'}</span>
-              <span className="font-black text-sm">{summaryMetrics.alertCount}</span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-400">
-              <span className="text-[11px]">{isAr ? 'لا توجد تنبيهات' : 'Zero Alerts'}</span>
-            </div>
-          )}
-
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-900 border border-slate-700/80 text-xs">
-            <span className="text-slate-400 text-[11px]">NCR:</span>
-            <span className="font-black text-amber-400 text-sm">{summaryMetrics.openNcrs}</span>
-          </div>
-        </div>
-
-        {/* View Controls & Action Buttons */}
-        <div className="flex items-center gap-1.5">
-          {/* Mode Switch: Edit & Customize Stations */}
+        {/* PROMINENT CUSTOMIZE ACTION BUTTONS (ALWAYS VISIBLE & UNMISSABLE) */}
+        <div className="flex items-center gap-2">
+          {/* Main Glowing Customize Button */}
           <button
-            onClick={() => setIsCustomizing(prev => !prev)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all shadow-sm ${
-              isCustomizing 
-                ? 'bg-amber-400 text-slate-950 ring-2 ring-amber-300' 
-                : 'bg-slate-900 hover:bg-slate-800 text-amber-400 border border-amber-500/30'
+            onClick={() => {
+              if (viewMode === 'customize-table') {
+                setViewMode('scada-floorplan');
+              } else {
+                setIsCustomizing(prev => !prev);
+              }
+            }}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-black flex items-center gap-2 transition-all shadow-md active:scale-95 ${
+              isCustomizing || viewMode === 'customize-table'
+                ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 ring-2 ring-amber-300 shadow-amber-500/40 scale-105'
+                : 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 shadow-amber-500/25 ring-1 ring-amber-400'
             }`}
-            title={isAr ? 'تفعيل وضع تعديل وتخصيص المحطات ومواقعها' : 'Toggle customize & edit mode'}
+            title={isAr ? 'تخصيص وتعديل أسماء ومواقع المحطات بالكامل' : 'Customize Stations Layout & Specs'}
           >
-            <Edit3 className="w-3.5 h-3.5" />
-            <span>{isCustomizing ? (isAr ? 'إنهاء التعديل' : 'Done Editing') : (isAr ? 'تخصيص المحطات' : 'Customize Layout')}</span>
+            <Settings2 className={`w-4 h-4 ${isCustomizing ? 'animate-spin' : ''}`} />
+            <span>
+              {isCustomizing 
+                ? (isAr ? '✓ إنهاء التخصيص' : '✓ Done Editing') 
+                : (isAr ? '⚙️ تخصيص وتعديل المحطات (Customize)' : '⚙️ Customize Stations')}
+            </span>
           </button>
 
           {/* Add New Station Button */}
           <button
-            onClick={() => {
-              setIsAddingNew(true);
-              setEditingStation({
-                id: `STATION-CUSTOM-${Date.now().toString().slice(-4)}`,
-                code: `EQ-0${equipmentList.length + 1}`,
-                zone: 'assembly',
-                zoneNameAr: 'خط التجميع 01',
-                zoneNameEn: 'Assembly Line 01',
-                titleAr: `محطة جديدة ${equipmentList.length + 1}`,
-                titleEn: `New Workstation ${equipmentList.length + 1}`,
-                line: 'Line 1',
-                locationAr: 'صالة الإنتاج الرئيسية',
-                locationEn: 'Main Shopfloor',
-                iconType: 'machine',
-                moduleUrl: '/quality-shopfloor',
-                moduleLabelAr: 'تسجيل صالة الإنتاج',
-                x: 480,
-                y: 220,
-                w: 160,
-                h: 105
-              });
-            }}
-            className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs flex items-center gap-1 shadow-md shadow-emerald-600/20 transition-all active:scale-95"
+            onClick={() => handleAddNewTemplate('assembly')}
+            className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs flex items-center gap-1 shadow-md shadow-emerald-600/25 transition-all active:scale-95"
             title={isAr ? 'إضافة محطة أو ماكينة جديدة إلى المصنع' : 'Add new station'}
           >
             <Plus className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">{isAr ? 'إضافة محطة' : 'Add Station'}</span>
+            <span className="hidden sm:inline">{isAr ? '+ إضافة محطة' : '+ Add Station'}</span>
           </button>
 
-          {/* Switch View Mode */}
-          <div className="flex items-center gap-1 bg-slate-900 p-1 rounded-xl border border-slate-800">
+          {/* Switch View Mode: 3 Tabs (SCADA Floorplan | Equipment Grid | Customize Manager Table) */}
+          <div className="flex items-center gap-0.5 bg-slate-900 p-1 rounded-xl border border-slate-800">
             <button
               onClick={() => setViewMode('scada-floorplan')}
-              className={`px-3 py-1 rounded-lg text-xs font-black transition-all ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-black transition-all ${
                 viewMode === 'scada-floorplan' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-white'
               }`}
+              title={isAr ? 'مسقط أفقي صناعي لصالة المصنع' : 'SCADA Floorplan View'}
             >
-              {isAr ? 'خريطة SCADA' : 'SCADA Map'}
+              {isAr ? '🏭 خريطة SCADA' : 'SCADA Map'}
             </button>
             <button
               onClick={() => setViewMode('stations-grid')}
-              className={`px-3 py-1 rounded-lg text-xs font-black transition-all ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-black transition-all ${
                 viewMode === 'stations-grid' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-white'
               }`}
+              title={isAr ? 'عرض بطاقات المعدات' : 'Equipment Grid Matrix'}
             >
-              {isAr ? 'قائمة المعدات' : 'Equipment Grid'}
+              {isAr ? '📋 مصفوفة المعدات' : 'Equipment Grid'}
+            </button>
+            <button
+              onClick={() => setViewMode('customize-table')}
+              className={`px-2.5 py-1 rounded-lg text-xs font-black transition-all ${
+                viewMode === 'customize-table' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'text-amber-400 hover:text-white hover:bg-white/5'
+              }`}
+              title={isAr ? 'جدول تخصيص وتعديل جميع المحطات والماكينات' : 'Customize Stations Table'}
+            >
+              {isAr ? '⚙️ جدول التخصيص' : '⚙️ Customize Table'}
             </button>
           </div>
 
           {/* Zoom Controls */}
-          <button
-            onClick={() => setZoomLevel(prev => Math.max(0.7, prev - 0.1))}
-            className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-all"
-            title={isAr ? 'تصغير' : 'Zoom Out'}
-          >
-            <ZoomOut className="w-4 h-4" />
-          </button>
+          {viewMode === 'scada-floorplan' && (
+            <div className="hidden lg:flex items-center gap-1">
+              <button
+                onClick={() => setZoomLevel(prev => Math.max(0.7, prev - 0.1))}
+                className="p-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-all"
+                title={isAr ? 'تصغير' : 'Zoom Out'}
+              >
+                <ZoomOut className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => setZoomLevel(prev => Math.min(1.4, prev + 0.1))}
+                className="p-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-all"
+                title={isAr ? 'تكبير' : 'Zoom In'}
+              >
+                <ZoomIn className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => setZoomLevel(1)}
+                className="p-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-all"
+                title={isAr ? 'إعادة ضبط' : 'Reset View'}
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
 
-          <button
-            onClick={() => setZoomLevel(prev => Math.min(1.4, prev + 0.1))}
-            className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-all"
-            title={isAr ? 'تكبير' : 'Zoom In'}
-          >
-            <ZoomIn className="w-4 h-4" />
-          </button>
-
-          <button
-            onClick={() => setZoomLevel(1)}
-            className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-all"
-            title={isAr ? 'إعادة ضبط' : 'Reset View'}
-          >
-            <RotateCcw className="w-4 h-4" />
-          </button>
-
+          {/* Fullscreen & Page Open */}
           <button
             onClick={toggleFullscreen}
-            className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-amber-400 hover:text-amber-300 transition-all"
+            className="p-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-amber-400 hover:text-amber-300 transition-all"
             title={isAr ? 'ملء كامل الشاشة' : 'Toggle Fullscreen'}
           >
             {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
@@ -813,22 +818,22 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
           {embedded && (
             <button
               onClick={() => navigate('/quality-control-tower')}
-              className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center gap-1.5 shadow-md shadow-amber-500/20 transition-all hover:scale-105 active:scale-95 shrink-0"
-              title={isAr ? 'فتح في صفحة كاملة مخصصة' : 'Open in Dedicated Page'}
+              className="px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-amber-500/40 text-amber-400 font-bold text-xs flex items-center gap-1 shadow-sm shrink-0"
+              title={isAr ? 'فتح في صفحة كاملة مستقلة' : 'Open in Dedicated Page'}
             >
               <ExternalLink className="w-3.5 h-3.5" />
-              <span>{isAr ? 'شاشة كاملة' : 'Full Page'}</span>
+              <span className="hidden sm:inline">{isAr ? 'صفحة كاملة' : 'Full Page'}</span>
             </button>
           )}
         </div>
       </header>
 
       {/* ==================================================================== */}
-      {/* 2. INDUSTRIAL FILTER & ZONE SELECTION + CUSTOMIZATION SUB-BAR        */}
+      {/* 2. INDUSTRIAL FILTER & ZONE SELECTION SUB-BAR                        */}
       {/* ==================================================================== */}
       <div className="flex-none px-4 py-2 bg-[#080d19] border-b border-white/5 flex flex-wrap items-center justify-between gap-2 z-20">
         <div className="flex items-center gap-1.5 overflow-x-auto max-w-full">
-          <span className="text-[11px] font-bold text-slate-400 mr-1">{isAr ? 'المناطق الصناعية:' : 'Bays & Zones:'}</span>
+          <span className="text-[11px] font-bold text-slate-400 mr-1">{isAr ? 'العنابر الصناعية:' : 'Bays & Zones:'}</span>
           {[
             { id: 'all', labelAr: 'كامل الصالة', labelEn: 'All Bays' },
             { id: 'receiving', labelAr: 'A: رصيف الاستلام والخامات', labelEn: 'Bay A: Receiving' },
@@ -852,7 +857,7 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Customization Actions Menu (Export / Import / Reset) */}
+          {/* Customization Actions: Export / Import / Reset to Defaults */}
           <div className="flex items-center gap-1">
             <button
               onClick={handleExportConfig}
@@ -860,7 +865,7 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
               title={isAr ? 'تصدير مخطط المحطات كملف JSON' : 'Export Stations Layout JSON'}
             >
               <Download className="w-3.5 h-3.5" />
-              <span className="hidden lg:inline text-[10px]">{isAr ? 'تصدير' : 'Export'}</span>
+              <span className="hidden xl:inline text-[10px]">{isAr ? 'تصدير' : 'Export'}</span>
             </button>
 
             <button
@@ -869,26 +874,25 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
               title={isAr ? 'استيراد مخطط المحطات من ملف JSON' : 'Import Stations Layout JSON'}
             >
               <Upload className="w-3.5 h-3.5" />
-              <span className="hidden lg:inline text-[10px]">{isAr ? 'استيراد' : 'Import'}</span>
+              <span className="hidden xl:inline text-[10px]">{isAr ? 'استيراد' : 'Import'}</span>
             </button>
 
             <button
               onClick={handleResetToDefaults}
               className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-amber-400 text-xs flex items-center gap-1"
-              title={isAr ? 'استعادة التوزيع الافتراضي للمصنع' : 'Restore Default Layout'}
+              title={isAr ? 'استعادة التوزيع والأسماء الافتراضية للمصنع' : 'Restore Default Layout'}
             >
               <RotateCcw className="w-3.5 h-3.5" />
-              <span className="hidden lg:inline text-[10px]">{isAr ? 'استعادة الافتراضي' : 'Reset'}</span>
+              <span className="hidden xl:inline text-[10px]">{isAr ? 'الافتراضي' : 'Reset'}</span>
             </button>
 
-            {/* Purge Demo Data */}
             <button
               onClick={handleManualPurge}
               className="p-1.5 rounded-lg bg-slate-900 hover:bg-red-500/20 border border-slate-800 hover:border-red-500/40 text-slate-400 hover:text-red-300 transition-all text-xs flex items-center gap-1"
               title={isAr ? 'تنظيف أي بيانات وهمية/تجريبية' : 'Purge any mock/demo data'}
             >
               <Trash2 className="w-3.5 h-3.5" />
-              <span className="hidden lg:inline text-[10px]">{isAr ? 'تنظيف التجريبي' : 'Clean Demo'}</span>
+              <span className="hidden xl:inline text-[10px]">{isAr ? 'تنظيف التجريبي' : 'Clean Demo'}</span>
             </button>
           </div>
 
@@ -905,7 +909,7 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
               className={`px-2.5 py-0.5 rounded-lg font-bold flex items-center gap-1 ${filterStatus === 'alerts-only' ? 'bg-red-950/60 text-red-400 border border-red-500/40' : 'text-slate-400'}`}
             >
               <span className="w-1.5 h-1.5 rounded-full bg-red-400"></span>
-              <span>{isAr ? 'التنبيهات' : 'Alerts'}</span>
+              <span>{isAr ? 'تنبيهات' : 'Alerts'}</span>
             </button>
             <button
               onClick={() => setFilterStatus('normal-only')}
@@ -932,24 +936,26 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
 
       {/* Customizable Banner Notification when in Edit Mode */}
       {isCustomizing && (
-        <div className="bg-amber-500/15 border-b border-amber-500/30 px-4 py-1.5 flex items-center justify-between text-xs text-amber-300">
+        <div className="bg-amber-500/20 border-b border-amber-500/40 px-4 py-2 flex items-center justify-between text-xs text-amber-300 animate-fadeIn">
           <div className="flex items-center gap-2">
             <Edit3 className="w-4 h-4 text-amber-400 animate-bounce" />
             <span className="font-bold">
-              {isAr ? 'وضع تخصيص المحطات نشط: يمكنك الآن النقر على زر التعديل (القلم) لتغيير أسماء ووصف الماكينات، أو استخدام الأسهم لنقلها!' : 'Customize Mode Active: Click the pencil to rename or edit any station, or use arrows to reposition them!'}
+              {isAr 
+                ? 'وضع التخصيص نشط: انقر على رمز القلم [✏️] على أي ماكينة لتعديل اسمها ووصفها، أو استخدم الأسهم لتحريكها، أو انقر (+ إضافة محطة) لإضافة ماكينات جديدة!' 
+                : 'Customize Mode Active: Click the pencil [✏️] on any station to edit name & specs, use arrows to move it, or click (+ Add Station)!'}
             </span>
           </div>
           <button
             onClick={() => setIsCustomizing(false)}
-            className="px-2.5 py-0.5 rounded-md bg-amber-500 text-slate-950 font-black text-[11px] hover:bg-amber-400"
+            className="px-3 py-1 rounded-lg bg-amber-500 text-slate-950 font-black text-xs hover:bg-amber-400 shadow-sm"
           >
-            {isAr ? 'تم وحفظ' : 'Done & Save'}
+            {isAr ? '✓ حفظ وإنهاء' : '✓ Done & Save'}
           </button>
         </div>
       )}
 
       {/* ==================================================================== */}
-      {/* 3. MAIN WORKSPACE: SCADA FLOORPLAN OR STATIONS GRID                  */}
+      {/* 3. MAIN WORKSPACE: SCADA FLOORPLAN / MATRIX / CUSTOMIZE TABLE        */}
       {/* ==================================================================== */}
       <div className="flex-1 relative flex overflow-hidden">
         {viewMode === 'scada-floorplan' ? (
@@ -962,6 +968,37 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
               }}
               className="relative w-[1200px] h-[640px] shrink-0 bg-[#080d19] rounded-3xl border border-slate-800 shadow-2xl overflow-hidden"
             >
+              {/* FLOATING ACTION TOOLBAR DIRECTLY ON CANVAS */}
+              <div className="absolute top-3.5 right-4 z-20 flex items-center gap-2 bg-[#0a1122]/95 backdrop-blur-md p-1.5 rounded-2xl border border-amber-500/40 shadow-xl">
+                <button
+                  onClick={() => setIsCustomizing(prev => !prev)}
+                  className={`px-3 py-1 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all shadow-sm ${
+                    isCustomizing ? 'bg-amber-400 text-slate-950 shadow-md ring-1 ring-amber-300' : 'bg-slate-800 hover:bg-slate-700 text-amber-300'
+                  }`}
+                  title={isAr ? 'تفعيل وضع تحريك وتعديل المحطات' : 'Toggle Interactive Editing'}
+                >
+                  <Edit3 className="w-3.5 h-3.5" />
+                  <span>{isCustomizing ? (isAr ? 'إنهاء التعديل' : 'Exit Edit') : (isAr ? '⚙️ تخصيص تفاعلي' : '⚙️ Interactive Edit')}</span>
+                </button>
+
+                <button
+                  onClick={() => setViewMode('customize-table')}
+                  className="px-3 py-1 rounded-xl bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-slate-950 text-xs font-black flex items-center gap-1.5 transition-all border border-amber-500/40"
+                  title={isAr ? 'فتح جدول إدارة وتخصيص جميع المحطات' : 'Open Stations Customize Table'}
+                >
+                  <SlidersHorizontal className="w-3.5 h-3.5" />
+                  <span>{isAr ? 'جدول الماكينات' : 'Stations Table'}</span>
+                </button>
+
+                <button
+                  onClick={() => handleAddNewTemplate('assembly')}
+                  className="px-3 py-1 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black flex items-center gap-1 shadow-md shadow-emerald-600/25"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>{isAr ? '+ إضافة محطة' : '+ Add Station'}</span>
+                </button>
+              </div>
+
               {/* SVG ARCHITECTURAL INDUSTRIAL BACKGROUND */}
               <svg 
                 viewBox="0 0 1200 640" 
@@ -1005,13 +1042,8 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                 <rect x="15" y="15" width="1170" height="610" fill="none" stroke="#1e293b" strokeWidth="3" rx="16" />
 
                 {/* STRUCTURAL BAY BOUNDARIES */}
-                {/* Bay A: Receiving Divider */}
                 <line x1="290" y1="15" x2="290" y2="625" stroke="#1e293b" strokeWidth="2" strokeDasharray="10,6" />
-
-                {/* Bay B: Assembly Line Floor Boundary */}
                 <line x1="290" y1="440" x2="875" y2="440" stroke="#1e293b" strokeWidth="2" strokeDasharray="10,6" />
-
-                {/* Bay D & E Divider */}
                 <line x1="875" y1="15" x2="875" y2="625" stroke="#1e293b" strokeWidth="2" strokeDasharray="10,6" />
 
                 {/* SAFETY PEDESTRIAN AISLES */}
@@ -1056,11 +1088,6 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                 <span className="text-[10px] font-black text-purple-400 uppercase tracking-wider">Hub C: مختبر الجودة و MRB</span>
               </div>
 
-              <div className="absolute top-4 right-8 pointer-events-none z-10 flex items-center gap-1.5 bg-[#0b1324]/90 border border-slate-700/80 px-2.5 py-1 rounded-xl shadow-md">
-                <PackageCheck className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="text-[10px] font-black text-emerald-400 uppercase tracking-wider">Bay D & E: الفحص والشحن</span>
-              </div>
-
               {/* SCADA EQUIPMENT PODS */}
               {filteredEquipment.map(eq => {
                 const st = stationStatuses[eq.id];
@@ -1091,7 +1118,7 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                       }
                     `}
                   >
-                    {/* Top Row: SCADA Machine Header & Andon LED Light */}
+                    {/* Top Row: SCADA Machine Header & ALWAYS-VISIBLE EDIT PENCIL */}
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1.5">
                         <span className={`p-1 rounded-lg ${isAlert ? 'bg-red-500/20 text-red-400' : isWarning ? 'bg-amber-500/20 text-amber-400' : 'bg-slate-800 text-slate-300'}`}>
@@ -1100,18 +1127,23 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                         <span className="text-[10px] font-mono font-black text-slate-300 bg-black/40 px-1.5 py-0.5 rounded-md border border-white/5">
                           {eq.code}
                         </span>
+
+                        {/* ALWAYS VISIBLE EDIT PENCIL BUTTON */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingStation(eq);
+                          }}
+                          className="p-1 rounded-md bg-amber-500/20 hover:bg-amber-400 text-amber-300 hover:text-slate-950 border border-amber-500/30 transition-colors shadow-sm"
+                          title={isAr ? 'تعديل اسم ووصف هذه المحطة' : 'Edit station details'}
+                        >
+                          <Edit3 className="w-3 h-3" />
+                        </button>
                       </div>
 
-                      {/* Right actions: If in Customizing mode, show quick edit & nudge controls */}
+                      {/* Right actions: If in Customizing mode, show quick delete & nudge */}
                       {isCustomizing ? (
                         <div className="flex items-center gap-1 z-30" onClick={e => e.stopPropagation()}>
-                          <button
-                            onClick={() => setEditingStation(eq)}
-                            className="p-1 rounded bg-amber-500 hover:bg-amber-400 text-slate-950 transition-colors shadow"
-                            title={isAr ? 'تعديل بيانات المحطة والوصف' : 'Edit station details'}
-                          >
-                            <Edit3 className="w-3 h-3" />
-                          </button>
                           <button
                             onClick={() => setDeleteConfirmId(eq.id)}
                             className="p-1 rounded bg-red-600 hover:bg-red-500 text-white transition-colors shadow"
@@ -1193,7 +1225,7 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
               })}
             </div>
           </div>
-        ) : (
+        ) : viewMode === 'stations-grid' ? (
           /* ================================================================ */
           /* STATIONS GRID MATRIX VIEW                                        */
           /* ================================================================ */
@@ -1236,8 +1268,8 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                               e.stopPropagation();
                               setEditingStation(eq);
                             }}
-                            className="p-1 rounded-lg bg-slate-800 hover:bg-amber-500 hover:text-slate-950 text-slate-300 transition-colors"
-                            title={isAr ? 'تعديل المحطة' : 'Edit station'}
+                            className="p-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500 hover:text-slate-950 text-amber-300 transition-colors"
+                            title={isAr ? 'تعديل بيانات المحطة' : 'Edit station'}
                           >
                             <Edit3 className="w-3.5 h-3.5" />
                           </button>
@@ -1278,12 +1310,128 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
               })}
             </div>
           </div>
+        ) : (
+          /* ================================================================ */
+          /* 3RD VIEW MODE: DEDICATED FULL CUSTOMIZE & MANAGEMENT TABLE       */
+          /* ================================================================ */
+          <div className="flex-1 w-full h-full overflow-y-auto p-4 md:p-6 bg-[#050811] space-y-4">
+            <div className="p-4 rounded-2xl bg-[#090f1e] border border-amber-500/30 flex flex-wrap items-center justify-between gap-3 shadow-xl">
+              <div>
+                <h2 className="text-sm md:text-base font-black text-white flex items-center gap-2">
+                  <Settings2 className="w-4 h-4 text-amber-400" />
+                  <span>{isAr ? 'لوحة إدارة وتخصيص محطات وماكينات المصنع (Customize Stations)' : 'Factory Workstations & Pods Customizer'}</span>
+                </h2>
+                <p className="text-xs text-slate-400">
+                  {isAr 
+                    ? 'يمكنك من هنا إعادة تسمية أي ماكينة، تغيير كودها، تعديل خط الإنتاج، أو إضافة وحذف المحطات' 
+                    : 'Manage, rename, configure codes, production lines, and physical descriptions for all plant units'}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleAddNewTemplate('assembly')}
+                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs flex items-center gap-1.5 shadow-md shadow-emerald-600/30 transition-all hover:scale-105"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>{isAr ? '+ إضافة محطة جديدة' : '+ Add New Station'}</span>
+                </button>
+                <button
+                  onClick={handleResetToDefaults}
+                  className="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 font-bold text-xs flex items-center gap-1"
+                >
+                  <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
+                  <span>{isAr ? 'استعادة الافتراضي' : 'Reset to Default'}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Stations Customization Table */}
+            <div className="rounded-2xl border border-white/10 bg-[#090f1d] overflow-hidden shadow-2xl">
+              <table className="w-full text-left text-xs border-collapse" dir={isAr ? 'rtl' : 'ltr'}>
+                <thead>
+                  <tr className="bg-[#0e172c] border-b border-white/10 text-slate-400 font-black">
+                    <th className="p-3.5">{isAr ? 'الكود' : 'Code'}</th>
+                    <th className="p-3.5">{isAr ? 'اسم المحطة (بالعربية)' : 'Title (Arabic)'}</th>
+                    <th className="p-3.5">{isAr ? 'اسم المحطة (بالإنجليزية)' : 'Title (English)'}</th>
+                    <th className="p-3.5">{isAr ? 'العنبر / الجناح' : 'Zone / Bay'}</th>
+                    <th className="p-3.5">{isAr ? 'خط الإنتاج' : 'Line'}</th>
+                    <th className="p-3.5">{isAr ? 'الموقع الفعلي / الوصف' : 'Description'}</th>
+                    <th className="p-3.5">{isAr ? 'حالة الجودة الحية' : 'Live Status'}</th>
+                    <th className="p-3.5 text-center">{isAr ? 'الإجراءات' : 'Actions'}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {filteredEquipment.map(eq => {
+                    const st = stationStatuses[eq.id];
+                    return (
+                      <tr key={eq.id} className="hover:bg-white/[0.03] transition-colors">
+                        <td className="p-3.5 font-mono font-black text-amber-400">
+                          {eq.code}
+                        </td>
+                        <td className="p-3.5 font-bold text-white">
+                          <div className="flex items-center gap-2">
+                            <span className="p-1 rounded bg-slate-800 text-slate-300">
+                              {renderIcon(eq.iconType, 'w-3.5 h-3.5')}
+                            </span>
+                            <span>{eq.titleAr}</span>
+                          </div>
+                        </td>
+                        <td className="p-3.5 text-slate-300">
+                          {eq.titleEn}
+                        </td>
+                        <td className="p-3.5 text-slate-400">
+                          {isAr ? eq.zoneNameAr : eq.zoneNameEn}
+                        </td>
+                        <td className="p-3.5 font-mono text-slate-300">
+                          {eq.line}
+                        </td>
+                        <td className="p-3.5 text-slate-400 truncate max-w-xs">
+                          {isAr ? eq.locationAr : eq.locationEn}
+                        </td>
+                        <td className="p-3.5">
+                          <span 
+                            className="px-2 py-0.5 rounded-full text-[10px] font-black border"
+                            style={{
+                              color: st?.statusColor,
+                              borderColor: `${st?.statusColor}40`,
+                              backgroundColor: `${st?.statusColor}15`
+                            }}
+                          >
+                            {isAr ? st?.statusLabelAr : st?.statusLabelEn}
+                          </span>
+                        </td>
+                        <td className="p-3.5 text-center">
+                          <div className="flex items-center justify-center gap-1.5">
+                            <button
+                              onClick={() => setEditingStation(eq)}
+                              className="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center gap-1 shadow-sm transition-all hover:scale-105"
+                            >
+                              <Edit3 className="w-3 h-3" />
+                              <span>{isAr ? 'تعديل' : 'Edit'}</span>
+                            </button>
+                            <button
+                              onClick={() => setDeleteConfirmId(eq.id)}
+                              className="p-1 rounded-lg bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white transition-colors"
+                              title={isAr ? 'حذف' : 'Delete'}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
         )}
 
         {/* ==================================================================== */}
         {/* 4. SLIDE-OVER SCADA COCKPIT DRAWER (INSPECTION & ACTIONS)            */}
         {/* ==================================================================== */}
-        {selectedEquipment && (
+        {selectedEquipment && viewMode !== 'customize-table' && (
           <aside className="w-80 md:w-96 flex-none bg-[#090f1d] border-r md:border-r-0 md:border-l border-white/10 flex flex-col z-20 shadow-2xl overflow-y-auto">
             {/* Drawer Header */}
             <div className="p-4 bg-[#0d162b] border-b border-white/10 flex items-center justify-between">
@@ -1318,6 +1466,15 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
 
             {/* Drawer Body */}
             <div className="p-4 space-y-5 flex-1">
+              {/* BIG PROMINENT EDIT BUTTON AT TOP OF DRAWER */}
+              <button
+                onClick={() => setEditingStation(selectedEquipment)}
+                className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-amber-500/25 transition-all hover:scale-[1.02]"
+              >
+                <Edit3 className="w-4 h-4" />
+                <span>{isAr ? '✏️ تعديل اسم ومواصفات هذه المحطة (Edit)' : '✏️ Edit This Station Details'}</span>
+              </button>
+
               {/* Telemetry Status Box */}
               <div className="p-3.5 rounded-2xl bg-slate-900 border border-slate-700/80 space-y-2.5">
                 <div className="flex items-center justify-between">
@@ -1592,7 +1749,7 @@ function StationEditModal({ station, isNew, isAr, onSave, onDelete, onClose }: S
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 overflow-y-auto">
-      <div className="bg-[#0b1324] border border-amber-500/40 rounded-3xl max-w-2xl w-full p-6 shadow-2xl space-y-5 text-white my-8" dir={isAr ? 'rtl' : 'ltr'}>
+      <div className="bg-[#0b1324] border-2 border-amber-500/50 rounded-3xl max-w-2xl w-full p-6 shadow-2xl space-y-5 text-white my-8" dir={isAr ? 'rtl' : 'ltr'}>
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-white/10">
           <div className="flex items-center gap-2.5">
