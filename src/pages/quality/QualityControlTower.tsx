@@ -1,6 +1,13 @@
 // @ts-nocheck
 // QMS Enterprise 4.0 - Advanced Industrial SCADA / MES Digital Twin & Plant Floor Operating System
-// Features: 2.5D Isometric SCADA Mode, True Drag & Drop Canvas, Animated Material Stream, Defect Heatmap, Live Andon Cord Pull
+// Next-Level Upgrades:
+// 1. Multi-Angle 3D Camera Controller (Iso-NW, Iso-NE, Elevation, 2D Top-Down)
+// 2. Autonomous AGV Robotic Transporters navigating aisles with hazard beacons
+// 3. Holographic Vertical Laser Warning Beacons shooting into 3D space
+// 4. Live Sensor Oscilloscope & IoT Telemetry Waveforms on every machine pod
+// 5. 3 Ambient Floor Lighting Modes (Cyber-Dark, Cleanroom Epoxy White, Night-Shift Spotlights)
+// 6. Running Executive Production & Zero-Accident Ticker Bar
+// 7. True Drag & Drop with Magnetic Snap, Heatmaps, and Digital Andon Cord Pull
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -11,7 +18,8 @@ import {
   ArrowRight, Trash2, ShieldAlert, ShieldCheck, ChevronRight, Edit3, Plus,
   Sliders, Settings2, Save, Download, Upload, ArrowUp, ArrowDown, ArrowLeft,
   Sparkles, SlidersHorizontal, Flame, Play, Pause, Bell, BellRing, Move,
-  Eye, Compass, Volume2, VolumeX, BarChart3, Zap
+  Eye, Compass, Volume2, VolumeX, BarChart3, Zap, Moon, Sun, Shield,
+  Navigation, Bot
 } from 'lucide-react';
 import { useTranslation } from '../../utils/translations';
 import { loadSafeLocalDefectRecords } from '../../services/safeDefectStorage';
@@ -21,6 +29,8 @@ import { purgeAllDemoSimulationData } from '../../services/cleanDemoData';
 export type StationZone = 'receiving' | 'assembly' | 'lab' | 'oqc' | 'shipping';
 export type ViewMode = 'scada-floorplan' | 'stations-grid' | 'customize-table';
 export type FilterStatus = 'all' | 'alerts-only' | 'normal-only';
+export type CameraPreset = 'iso-nw' | 'iso-ne' | 'elevation' | 'top-down';
+export type AmbientTheme = 'cyber-dark' | 'cleanroom' | 'night-shift';
 
 export interface ScadaEquipment {
   id: string;
@@ -39,6 +49,8 @@ export interface ScadaEquipment {
   oeeEstimate?: number;
   fpyEstimate?: number;
   activeOperator?: string;
+  vibrationMmS?: number;
+  temperatureC?: number;
   // Floorplan Coordinate System (1200 x 640)
   x: number;
   y: number;
@@ -74,6 +86,8 @@ export const DEFAULT_EQUIPMENT_PODS: ScadaEquipment[] = [
     oeeEstimate: 96,
     fpyEstimate: 99.1,
     activeOperator: 'فني الاستلام المناوب',
+    vibrationMmS: 0.08,
+    temperatureC: 22,
     x: 35, y: 70, w: 235, h: 95
   },
   {
@@ -93,6 +107,8 @@ export const DEFAULT_EQUIPMENT_PODS: ScadaEquipment[] = [
     oeeEstimate: 94,
     fpyEstimate: 98.4,
     activeOperator: 'مهندس فحص الخامات',
+    vibrationMmS: 0.12,
+    temperatureC: 23,
     x: 35, y: 185, w: 235, h: 95
   },
   {
@@ -112,6 +128,8 @@ export const DEFAULT_EQUIPMENT_PODS: ScadaEquipment[] = [
     oeeEstimate: 100,
     fpyEstimate: 100,
     activeOperator: 'أمين العزل والحجر',
+    vibrationMmS: 0.02,
+    temperatureC: 21,
     x: 35, y: 300, w: 112, h: 105
   },
   {
@@ -131,6 +149,8 @@ export const DEFAULT_EQUIPMENT_PODS: ScadaEquipment[] = [
     oeeEstimate: 98,
     fpyEstimate: 99.8,
     activeOperator: 'مشرف المستودع',
+    vibrationMmS: 0.04,
+    temperatureC: 21,
     x: 158, y: 300, w: 112, h: 105
   },
 
@@ -154,6 +174,8 @@ export const DEFAULT_EQUIPMENT_PODS: ScadaEquipment[] = [
     oeeEstimate: 91,
     fpyEstimate: 97.5,
     activeOperator: 'مشغل CNC معتمد',
+    vibrationMmS: 0.28,
+    temperatureC: 44,
     x: 330, y: 180, w: 155, h: 110
   },
   {
@@ -173,6 +195,8 @@ export const DEFAULT_EQUIPMENT_PODS: ScadaEquipment[] = [
     oeeEstimate: 93,
     fpyEstimate: 98.9,
     activeOperator: 'فني تجميع ميكانيكي',
+    vibrationMmS: 0.14,
+    temperatureC: 28,
     x: 505, y: 180, w: 155, h: 110
   },
   {
@@ -192,6 +216,8 @@ export const DEFAULT_EQUIPMENT_PODS: ScadaEquipment[] = [
     oeeEstimate: 97,
     fpyEstimate: 99.4,
     activeOperator: 'فني ربط المعايرة',
+    vibrationMmS: 0.09,
+    temperatureC: 25,
     x: 680, y: 180, w: 155, h: 110
   },
   {
@@ -211,6 +237,8 @@ export const DEFAULT_EQUIPMENT_PODS: ScadaEquipment[] = [
     oeeEstimate: 89,
     fpyEstimate: 96.2,
     activeOperator: 'مهندس اختبارات هيدروليكية',
+    vibrationMmS: 0.32,
+    temperatureC: 38,
     x: 415, y: 310, w: 200, h: 110
   },
   {
@@ -230,6 +258,8 @@ export const DEFAULT_EQUIPMENT_PODS: ScadaEquipment[] = [
     oeeEstimate: 95,
     fpyEstimate: 98.7,
     activeOperator: 'مفتش جودة مرحلي IPQC',
+    vibrationMmS: 0.08,
+    temperatureC: 24,
     x: 635, y: 310, w: 200, h: 110
   },
 
@@ -253,6 +283,8 @@ export const DEFAULT_EQUIPMENT_PODS: ScadaEquipment[] = [
     oeeEstimate: 98,
     fpyEstimate: 99.6,
     activeOperator: 'أخصائي قياسات CMM',
+    vibrationMmS: 0.01,
+    temperatureC: 20,
     x: 330, y: 470, w: 245, h: 105
   },
   {
@@ -272,6 +304,8 @@ export const DEFAULT_EQUIPMENT_PODS: ScadaEquipment[] = [
     oeeEstimate: 92,
     fpyEstimate: 95.0,
     activeOperator: 'مدير توكيد الجودة QA',
+    vibrationMmS: 0.01,
+    temperatureC: 22,
     x: 590, y: 470, w: 245, h: 105
   },
 
@@ -295,6 +329,8 @@ export const DEFAULT_EQUIPMENT_PODS: ScadaEquipment[] = [
     oeeEstimate: 97,
     fpyEstimate: 99.5,
     activeOperator: 'مفتش الإفراج النهائي OQC',
+    vibrationMmS: 0.06,
+    temperatureC: 23,
     x: 895, y: 70, w: 260, h: 100
   },
   {
@@ -314,6 +350,8 @@ export const DEFAULT_EQUIPMENT_PODS: ScadaEquipment[] = [
     oeeEstimate: 94,
     fpyEstimate: 98.8,
     activeOperator: 'مشرف التعبئة والرص',
+    vibrationMmS: 0.18,
+    temperatureC: 26,
     x: 895, y: 190, w: 260, h: 100
   },
 
@@ -337,6 +375,8 @@ export const DEFAULT_EQUIPMENT_PODS: ScadaEquipment[] = [
     oeeEstimate: 99,
     fpyEstimate: 100,
     activeOperator: 'أمين رصيف الشحن',
+    vibrationMmS: 0.05,
+    temperatureC: 25,
     x: 895, y: 315, w: 260, h: 100
   },
   {
@@ -356,6 +396,8 @@ export const DEFAULT_EQUIPMENT_PODS: ScadaEquipment[] = [
     oeeEstimate: 99,
     fpyEstimate: 100,
     activeOperator: 'سائق الشحن المعتمد',
+    vibrationMmS: 0.02,
+    temperatureC: 27,
     x: 895, y: 435, w: 260, h: 100
   }
 ];
@@ -375,8 +417,8 @@ function loadSavedEquipment(): ScadaEquipment[] {
   return DEFAULT_EQUIPMENT_PODS;
 }
 
-// Synthesize industrial dual-tone chime using Web Audio API (Zero external assets needed)
-function playIndustrialChime(type: 'alert' | 'success' = 'alert') {
+// Synthesize industrial dual-tone chime using Web Audio API
+function playIndustrialChime(type: 'alert' | 'success' | 'camera' = 'alert') {
   try {
     const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
     if (!AudioCtx) return;
@@ -394,6 +436,15 @@ function playIndustrialChime(type: 'alert' | 'success' = 'alert') {
       gain.connect(ctx.destination);
       osc.start();
       osc.stop(ctx.currentTime + 0.38);
+    } else if (type === 'camera') {
+      osc.frequency.setValueAtTime(320, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(480, ctx.currentTime + 0.12);
+      gain.gain.setValueAtTime(0.08, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.16);
     } else {
       osc.frequency.setValueAtTime(523.25, ctx.currentTime);
       osc.frequency.exponentialRampToValueAtTime(659.25, ctx.currentTime + 0.2);
@@ -422,9 +473,19 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
     : 'scada-floorplan';
 
   const [viewMode, setViewMode] = useState<ViewMode>(initialMode);
-  const [isIsometric, setIsIsometric] = useState(false); // 2.5D Isometric SCADA Mode
-  const [isHeatmapActive, setIsHeatmapActive] = useState(false); // Defect Heatmap Layer
-  const [isMaterialFlowActive, setIsMaterialFlowActive] = useState(true); // Animated Conveyor Stream
+  
+  // Multi-Angle 3D Camera Controls
+  const [cameraPreset, setCameraPreset] = useState<CameraPreset>('iso-nw'); // 'iso-nw' | 'iso-ne' | 'elevation' | 'top-down'
+  const is3D = cameraPreset !== 'top-down';
+
+  // Floor Lighting Ambience
+  const [ambientTheme, setAmbientTheme] = useState<AmbientTheme>('cyber-dark'); // 'cyber-dark' | 'cleanroom' | 'night-shift'
+  
+  // Toggles
+  const [isHeatmapActive, setIsHeatmapActive] = useState(false);
+  const [isMaterialFlowActive, setIsMaterialFlowActive] = useState(true);
+  const [isAgvActive, setIsAgvActive] = useState(true);
+  const [showOscilloscope, setShowOscilloscope] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(true);
 
   // Customization & Interactive Drag and Drop State
@@ -502,6 +563,27 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
       containerRef.current.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => {});
     } else {
       document.exitFullscreen().then(() => setIsFullscreen(false)).catch(() => {});
+    }
+  };
+
+  const changeCameraPreset = (preset: CameraPreset) => {
+    setCameraPreset(preset);
+    if (soundEnabled) playIndustrialChime('camera');
+  };
+
+  // 3D Transform calculations based on camera preset
+  const getCameraTransform = () => {
+    if (viewMode !== 'scada-floorplan') return 'none';
+    switch (cameraPreset) {
+      case 'iso-nw':
+        return `rotateX(52deg) rotateZ(-28deg) scale(${zoomLevel * 0.9})`;
+      case 'iso-ne':
+        return `rotateX(52deg) rotateZ(28deg) scale(${zoomLevel * 0.9})`;
+      case 'elevation':
+        return `rotateX(68deg) rotateZ(0deg) scale(${zoomLevel * 0.95})`;
+      case 'top-down':
+      default:
+        return `scale(${zoomLevel})`;
     }
   };
 
@@ -623,7 +705,7 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
         delete next[stationId];
         return next;
       });
-      toast.success(isAr ? '✓ تم إغلاق استدعاء الأندون والإفراج عن المحطة' : '✓ Andon alert cleared. Station resumed.');
+      toast.success(isAr ? '✓ تم إغلاق استدعاء الأندون وإعادة التشغيل' : '✓ Andon alert cleared. Station resumed.');
     }
   };
 
@@ -828,6 +910,8 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
       oeeEstimate: 95,
       fpyEstimate: 98.5,
       activeOperator: 'مشغل الخط',
+      vibrationMmS: 0.12,
+      temperatureC: 25,
       x: preferredZone === 'receiving' ? 35 : preferredZone === 'lab' ? 450 : preferredZone === 'oqc' || preferredZone === 'shipping' ? 895 : 480,
       y: preferredZone === 'lab' ? 470 : preferredZone === 'shipping' ? 350 : 200,
       w: 160,
@@ -838,7 +922,13 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
   return (
     <div 
       ref={containerRef}
-      className={`relative w-full ${isFullscreen ? 'h-screen fixed inset-0 z-50 bg-[#070b14]' : embedded ? 'h-[800px] min-h-[660px] rounded-3xl border-2 border-amber-500/50 shadow-2xl' : 'h-[calc(100vh-80px)] min-h-[700px] max-h-[960px]'} bg-[#060a13] text-white flex flex-col font-sans overflow-hidden select-none ${className}`}
+      className={`relative w-full ${isFullscreen ? 'h-screen fixed inset-0 z-50' : embedded ? 'h-[820px] min-h-[680px] rounded-3xl border-2 border-amber-500/50 shadow-2xl' : 'h-[calc(100vh-80px)] min-h-[720px] max-h-[980px]'} ${
+        ambientTheme === 'cleanroom' 
+          ? 'bg-[#0f172a] text-slate-100' 
+          : ambientTheme === 'night-shift' 
+            ? 'bg-[#020408] text-white' 
+            : 'bg-[#060a13] text-white'
+      } flex flex-col font-sans overflow-hidden select-none ${className}`}
       dir={isAr ? 'rtl' : 'ltr'}
     >
       <input 
@@ -850,55 +940,96 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
       />
 
       {/* ==================================================================== */}
-      {/* 1. SCADA INDUSTRIAL TOP HEADER & PROMINENT CUSTOMIZATION ACTIONS     */}
+      {/* 1. SCADA INDUSTRIAL TOP HEADER: MULTI-ANGLE CAMERA & THEMES          */}
       {/* ==================================================================== */}
-      <header className="flex-none px-4 py-2.5 bg-[#0a101d] border-b border-white/10 backdrop-blur-md flex flex-wrap items-center justify-between gap-2.5 z-30 shadow-md">
+      <header className="flex-none px-4 py-2 bg-[#090f1d] border-b border-white/10 backdrop-blur-md flex flex-wrap items-center justify-between gap-2.5 z-30 shadow-md">
         {/* Plant Title & Perspective Badges */}
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/30 shrink-0">
-            <Factory className="w-5 h-5 text-slate-950 font-black" />
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/30 shrink-0">
+            <Factory className="w-4 h-4 text-slate-950 font-black" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-sm md:text-base font-black text-white tracking-wide">
-                {isAr ? 'لوحة تحكم صالة المصنع (SCADA / MES Digital Floor)' : 'SCADA / MES Digital Plant Floor'}
+              <h1 className="text-xs md:text-sm font-black text-white tracking-wide">
+                {isAr ? 'لوحة تحكم صالة المصنع (SCADA / MES Digital Twin)' : 'SCADA / MES Digital Twin Floor'}
               </h1>
-              {isIsometric && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 animate-pulse">
-                  <Compass className="w-3 h-3 text-cyan-400" />
-                  <span>2.5D ISOMETRIC</span>
-                </span>
-              )}
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-md text-[9px] font-black bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
+                <Compass className="w-2.5 h-2.5 text-cyan-400" />
+                <span>{cameraPreset.toUpperCase()}</span>
+              </span>
               {isHeatmapActive && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500/20 text-rose-300 border border-rose-500/40">
-                  <Flame className="w-3 h-3 text-rose-400 animate-bounce" />
-                  <span>HEATMAP ON</span>
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-md text-[9px] font-black bg-rose-500/20 text-rose-300 border border-rose-500/40">
+                  <Flame className="w-2.5 h-2.5 text-rose-400 animate-bounce" />
+                  <span>HEATMAP</span>
                 </span>
               )}
             </div>
-            <p className="text-[11px] text-slate-400 hidden sm:block">
-              {isAr ? 'محاكاة حية للتدفق الصناعي: سحب وإفلات، منظور 2.5D مائل، وخريطة حرارية للعيوب' : 'Real-time SCADA simulation: Drag & drop, 2.5D isometric view, material stream & defect heatmap'}
+            <p className="text-[10px] text-slate-400 hidden sm:block">
+              {isAr ? 'محاكاة ثلاثية الأبعاد: تحكم في زوايا الرؤية، سحب وإفلات، حركة روبوتات AGV، وموجات قياس حية' : 'Full 3D SCADA: Camera angles, drag & drop, AGV robotics, live oscilloscopes & laser beacons'}
             </p>
           </div>
         </div>
 
-        {/* HIGH-TECH PERSPECTIVE & TOOLBAR CONTROLS */}
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {/* 1. 2.5D Isometric SCADA Mode Toggle (Option 6) */}
-          <button
-            onClick={() => setIsIsometric(prev => !prev)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all shadow-md active:scale-95 ${
-              isIsometric
-                ? 'bg-cyan-500 text-slate-950 shadow-cyan-500/40 ring-2 ring-cyan-300 scale-105'
-                : 'bg-slate-900 hover:bg-slate-800 text-cyan-400 border border-cyan-500/40'
-            }`}
-            title={isAr ? 'تبديل المنظور: 2.5D مائل مجسم / 2D مسطح' : 'Toggle 2.5D Isometric SCADA View'}
-          >
-            <Compass className="w-3.5 h-3.5" />
-            <span>{isIsometric ? (isAr ? '📐 منظور 2.5D نشط' : '📐 2.5D Active') : (isAr ? '📐 منظور 2.5D مائل' : '📐 2.5D Isometric')}</span>
-          </button>
+        {/* HIGH-TECH MULTI-ANGLE CAMERA PRESET SWITCHER */}
+        <div className="flex items-center gap-1 bg-slate-950/80 p-1 rounded-xl border border-slate-800">
+          <span className="text-[10px] font-bold text-slate-400 px-1 hidden md:inline">{isAr ? 'الكاميرا:' : 'Camera:'}</span>
+          {[
+            { id: 'iso-nw', labelAr: '📐 آيزومترك N', labelEn: 'Iso NW' },
+            { id: 'iso-ne', labelAr: '📐 آيزومترك E', labelEn: 'Iso NE' },
+            { id: 'elevation', labelAr: '👁️ مسقط أمامي', labelEn: 'Elevation' },
+            { id: 'top-down', labelAr: 'مسقط 2D', labelEn: '2D Flat' },
+          ].map(cam => (
+            <button
+              key={cam.id}
+              onClick={() => changeCameraPreset(cam.id as CameraPreset)}
+              className={`px-2.5 py-1 rounded-lg text-xs font-black transition-all ${
+                cameraPreset === cam.id
+                  ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/30 scale-105'
+                  : 'text-slate-400 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              {isAr ? cam.labelAr : cam.labelEn}
+            </button>
+          ))}
+        </div>
 
-          {/* 2. True Drag & Drop Customize Button (Option 1) */}
+        {/* AMBIENT THEMES SWITCHER (Cyber-Dark vs Cleanroom vs Night-Shift) */}
+        <div className="flex items-center gap-1 bg-slate-950/80 p-1 rounded-xl border border-slate-800">
+          <button
+            onClick={() => setAmbientTheme('cyber-dark')}
+            className={`px-2 py-1 rounded-lg text-xs font-bold transition-all ${
+              ambientTheme === 'cyber-dark' ? 'bg-slate-800 text-cyan-300 border border-cyan-500/40 shadow-sm' : 'text-slate-500 hover:text-slate-300'
+            }`}
+            title="النمط الصناعي السيبراني الداكن"
+          >
+            <Moon className="w-3 h-3 inline mr-1" />
+            <span className="text-[10px] hidden lg:inline">{isAr ? 'سيبراني' : 'Cyber'}</span>
+          </button>
+          <button
+            onClick={() => setAmbientTheme('cleanroom')}
+            className={`px-2 py-1 rounded-lg text-xs font-bold transition-all ${
+              ambientTheme === 'cleanroom' ? 'bg-sky-500 text-slate-950 shadow-sm font-black' : 'text-slate-500 hover:text-slate-300'
+            }`}
+            title="نمط الغرف النظيفة الأبيض (Cleanroom Epoxy)"
+          >
+            <Sun className="w-3 h-3 inline mr-1" />
+            <span className="text-[10px] hidden lg:inline">{isAr ? 'غرفة نظيفة' : 'Cleanroom'}</span>
+          </button>
+          <button
+            onClick={() => setAmbientTheme('night-shift')}
+            className={`px-2 py-1 rounded-lg text-xs font-bold transition-all ${
+              ambientTheme === 'night-shift' ? 'bg-amber-500 text-slate-950 shadow-sm font-black' : 'text-slate-500 hover:text-slate-300'
+            }`}
+            title="نمط وردية الليل مع كشافات سبوت لايت"
+          >
+            <Sparkles className="w-3 h-3 inline mr-1" />
+            <span className="text-[10px] hidden lg:inline">{isAr ? 'وردية الليل' : 'Spotlight'}</span>
+          </button>
+        </div>
+
+        {/* INTERACTIVE CONTROLS: DRAG, HEATMAP, AGV, SOUND */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {/* True Drag & Drop Customize Button */}
           <button
             onClick={() => {
               if (viewMode === 'customize-table') {
@@ -907,7 +1038,7 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                 setIsCustomizing(prev => !prev);
               }
             }}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all shadow-md active:scale-95 ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all shadow-md active:scale-95 ${
               isCustomizing || viewMode === 'customize-table'
                 ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 ring-2 ring-amber-300 shadow-amber-500/40 scale-105'
                 : 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 shadow-amber-500/25 ring-1 ring-amber-400'
@@ -917,12 +1048,25 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
             <Move className="w-3.5 h-3.5" />
             <span>
               {isCustomizing 
-                ? (isAr ? '✓ إنهاء السحب والتعديل' : '✓ Done Dragging') 
-                : (isAr ? '✋ سحب وتخصيص (Drag & Drop)' : '✋ Drag & Customize')}
+                ? (isAr ? '✓ إنهاء السحب' : '✓ Done') 
+                : (isAr ? '✋ سحب حر (Drag)' : '✋ Drag & Drop')}
             </span>
           </button>
 
-          {/* 3. Defect Heatmap Layer Toggle */}
+          {/* AGV Robots Toggle */}
+          <button
+            onClick={() => setIsAgvActive(prev => !prev)}
+            className={`p-1.5 rounded-xl text-xs font-bold transition-all border ${
+              isAgvActive 
+                ? 'bg-amber-950/80 text-amber-300 border-amber-500/40 shadow-sm' 
+                : 'bg-slate-900 text-slate-500 border-slate-800'
+            }`}
+            title={isAr ? 'تشغيل / إيقاف روبوتات النقل الذاتي AGVs' : 'Toggle Autonomous AGV Robots'}
+          >
+            <Bot className="w-3.5 h-3.5 text-amber-400" />
+          </button>
+
+          {/* Defect Heatmap Layer Toggle */}
           <button
             onClick={() => setIsHeatmapActive(prev => !prev)}
             className={`p-1.5 rounded-xl text-xs font-bold transition-all border ${
@@ -932,10 +1076,10 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
             }`}
             title={isAr ? 'تفعيل الخريطة الحرارية لكثافة العيوب' : 'Toggle Defect Heatmap Layer'}
           >
-            <Flame className="w-4 h-4" />
+            <Flame className="w-3.5 h-3.5" />
           </button>
 
-          {/* 4. Material Flow Simulation Toggle */}
+          {/* Material Flow Simulation Toggle */}
           <button
             onClick={() => setIsMaterialFlowActive(prev => !prev)}
             className={`p-1.5 rounded-xl text-xs font-bold transition-all border ${
@@ -945,10 +1089,10 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
             }`}
             title={isAr ? 'تشغيل/إيقاف محاكاة حركة الباليتات والسيور' : 'Toggle Conveyor Material Flow'}
           >
-            {isMaterialFlowActive ? <Play className="w-4 h-4 text-emerald-400" /> : <Pause className="w-4 h-4" />}
+            {isMaterialFlowActive ? <Play className="w-3.5 h-3.5 text-emerald-400" /> : <Pause className="w-3.5 h-3.5" />}
           </button>
 
-          {/* 5. Sound Chime Toggle */}
+          {/* Sound Chime Toggle */}
           <button
             onClick={() => {
               setSoundEnabled(prev => !prev);
@@ -961,46 +1105,18 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
             }`}
             title={isAr ? 'تشغيل / كتم نغمات الأندون الصناعية' : 'Toggle SCADA Audio Chimes'}
           >
-            {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+            {soundEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
           </button>
 
-          {/* 6. Add Station Button */}
+          {/* Add Station Button */}
           <button
             onClick={() => handleAddNewTemplate('assembly')}
-            className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs flex items-center gap-1 shadow-md shadow-emerald-600/25 transition-all active:scale-95"
+            className="px-2.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs flex items-center gap-1 shadow-md shadow-emerald-600/25 transition-all active:scale-95"
             title={isAr ? 'إضافة محطة أو ماكينة جديدة إلى المصنع' : 'Add new station'}
           >
             <Plus className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">{isAr ? '+ إضافة محطة' : '+ Add Station'}</span>
+            <span className="hidden sm:inline">{isAr ? '+ إضافة' : '+ Add'}</span>
           </button>
-
-          {/* View Modes Switcher: 3 Modes */}
-          <div className="flex items-center gap-0.5 bg-slate-900 p-1 rounded-xl border border-slate-800">
-            <button
-              onClick={() => setViewMode('scada-floorplan')}
-              className={`px-2.5 py-1 rounded-lg text-xs font-black transition-all ${
-                viewMode === 'scada-floorplan' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              {isAr ? '🏭 خريطة الصالة' : 'SCADA Floor'}
-            </button>
-            <button
-              onClick={() => setViewMode('stations-grid')}
-              className={`px-2.5 py-1 rounded-lg text-xs font-black transition-all ${
-                viewMode === 'stations-grid' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              {isAr ? '📋 مصفوفة المعدات' : 'Grid'}
-            </button>
-            <button
-              onClick={() => setViewMode('customize-table')}
-              className={`px-2.5 py-1 rounded-lg text-xs font-black transition-all ${
-                viewMode === 'customize-table' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'text-amber-400 hover:text-white hover:bg-white/5'
-              }`}
-            >
-              {isAr ? '⚙️ جدول التخصيص' : 'Customize Table'}
-            </button>
-          </div>
 
           {/* Fullscreen Toggle */}
           <button
@@ -1008,37 +1124,31 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
             className="p-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-amber-400 hover:text-amber-300 transition-all"
             title={isAr ? 'ملء كامل الشاشة' : 'Toggle Fullscreen'}
           >
-            {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+            {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
           </button>
         </div>
       </header>
 
       {/* ==================================================================== */}
-      {/* 2. INDUSTRIAL SUB-BAR: ZONES, TELEMETRY METRICS, AND FILTERS         */}
+      {/* 2. EXECUTIVE LIVE PRODUCTION & SAFETY TICKER BAR                     */}
       {/* ==================================================================== */}
-      <div className="flex-none px-4 py-2 bg-[#080d19] border-b border-white/5 flex flex-wrap items-center justify-between gap-2 z-20">
-        <div className="flex items-center gap-1.5 overflow-x-auto max-w-full">
-          <span className="text-[11px] font-bold text-slate-400 mr-1">{isAr ? 'العنابر:' : 'Bays:'}</span>
-          {[
-            { id: 'all', labelAr: 'كامل الصالة', labelEn: 'All Bays' },
-            { id: 'receiving', labelAr: 'A: الاستلام', labelEn: 'Bay A: Receiving' },
-            { id: 'assembly', labelAr: 'B: الإنتاج والتجميع', labelEn: 'Bay B: Assembly' },
-            { id: 'lab', labelAr: 'C: المختبر و MRB', labelEn: 'Hub C: QA Lab' },
-            { id: 'oqc', labelAr: 'D: الفحص النهائي', labelEn: 'Bay D: Final OQC' },
-            { id: 'shipping', labelAr: 'E: الشحن', labelEn: 'Bay E: Shipping' },
-          ].map(z => (
-            <button
-              key={z.id}
-              onClick={() => setFilterZone(z.id)}
-              className={`px-3 py-1 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
-                filterZone === z.id 
-                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm' 
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/60 border border-transparent'
-              }`}
-            >
-              {isAr ? z.labelAr : z.labelEn}
-            </button>
-          ))}
+      <div className="flex-none px-4 py-1.5 bg-[#060a14] border-b border-white/5 flex flex-wrap items-center justify-between text-[11px] font-mono z-20">
+        <div className="flex items-center gap-3 overflow-x-auto max-w-full">
+          <div className="flex items-center gap-1.5 text-cyan-400">
+            <Zap className="w-3 h-3 text-cyan-400 animate-pulse" />
+            <span>{isAr ? 'إنتاج الوردية: 1,482 / 1,500 قطعة (98.8%)' : 'Shift Output: 1,482 / 1,500 pcs (98.8%)'}</span>
+          </div>
+
+          <div className="hidden md:flex items-center gap-1.5 text-slate-400">
+            <span>•</span>
+            <span>{isAr ? 'سرعة السير: 18.4 قطة/دقيقة' : 'Line Velocity: 18.4 pcs/min'}</span>
+          </div>
+
+          <div className="hidden lg:flex items-center gap-1.5 text-emerald-400">
+            <span>•</span>
+            <ShieldCheck className="w-3 h-3 text-emerald-400" />
+            <span>{isAr ? 'السلامة الصناعية: 248 يوماً بدون توقف' : 'Zero Loss-Time: 248 Days Safe'}</span>
+          </div>
         </div>
 
         <div className="flex items-center gap-2">
@@ -1050,7 +1160,7 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                 className="p-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white"
                 title="تصغير"
               >
-                <ZoomOut className="w-3.5 h-3.5" />
+                <ZoomOut className="w-3 h-3" />
               </button>
               <span className="text-[10px] font-mono text-slate-400 px-1">{Math.round(zoomLevel * 100)}%</span>
               <button
@@ -1058,20 +1168,20 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                 className="p-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white"
                 title="تكبير"
               >
-                <ZoomIn className="w-3.5 h-3.5" />
+                <ZoomIn className="w-3 h-3" />
               </button>
               <button
                 onClick={() => setZoomLevel(1)}
                 className="p-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white"
                 title="إعادة ضبط"
               >
-                <RotateCcw className="w-3.5 h-3.5" />
+                <RotateCcw className="w-3 h-3" />
               </button>
             </div>
           )}
 
           {/* Status filter */}
-          <div className="flex items-center gap-1 bg-slate-900 p-0.5 rounded-xl border border-slate-800 text-xs">
+          <div className="flex items-center gap-1 bg-slate-900 p-0.5 rounded-xl border border-slate-800 text-[10px]">
             <button
               onClick={() => setFilterStatus('all')}
               className={`px-2 py-0.5 rounded-lg font-bold ${filterStatus === 'all' ? 'bg-slate-800 text-white' : 'text-slate-400'}`}
@@ -1085,25 +1195,6 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
               <span className="w-1.5 h-1.5 rounded-full bg-red-400"></span>
               <span>{isAr ? 'تنبيهات' : 'Alerts'}</span>
             </button>
-            <button
-              onClick={() => setFilterStatus('normal-only')}
-              className={`px-2 py-0.5 rounded-lg font-bold flex items-center gap-1 ${filterStatus === 'normal-only' ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-500/40' : 'text-slate-400'}`}
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-              <span>{isAr ? 'طبيعي' : 'Normal'}</span>
-            </button>
-          </div>
-
-          {/* Search Box */}
-          <div className="relative">
-            <Search className="w-3.5 h-3.5 text-slate-400 absolute top-2.5 right-2.5 pointer-events-none" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              placeholder={isAr ? 'بحث عن ماكينة...' : 'Search equipment...'}
-              className="w-32 md:w-44 pl-2 pr-8 py-1 rounded-xl bg-slate-900 border border-slate-700/80 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400"
-            />
           </div>
         </div>
       </div>
@@ -1129,7 +1220,7 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
       )}
 
       {/* ==================================================================== */}
-      {/* 3. MAIN WORKSPACE: SCADA FLOORPLAN (2D / 2.5D ISOMETRIC)             */}
+      {/* 3. MAIN WORKSPACE: SCADA FLOORPLAN (2D / 2.5D ISOMETRIC MULTI-ANGLE) */}
       {/* ==================================================================== */}
       <div className="flex-1 relative flex overflow-hidden">
         {viewMode === 'scada-floorplan' ? (
@@ -1137,25 +1228,33 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
             ref={canvasRef}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
-            className="flex-1 w-full h-full relative overflow-auto p-4 md:p-8 flex items-center justify-center bg-[#040711]"
+            className={`flex-1 w-full h-full relative overflow-auto p-4 md:p-8 flex items-center justify-center transition-colors duration-500 ${
+              ambientTheme === 'cleanroom' 
+                ? 'bg-[#e2e8f0]' 
+                : ambientTheme === 'night-shift' 
+                  ? 'bg-[#010204]' 
+                  : 'bg-[#040711]'
+            }`}
             style={{ 
-              perspective: isIsometric ? '1400px' : 'none',
+              perspective: is3D ? '1400px' : 'none',
               cursor: isCustomizing && draggingId ? 'grabbing' : 'default'
             }}
           >
             <div 
               style={{
-                transform: isIsometric 
-                  ? `rotateX(52deg) rotateZ(-28deg) scale(${zoomLevel * 0.9}) translateZ(0)`
-                  : `scale(${zoomLevel})`,
+                transform: getCameraTransform(),
                 transformOrigin: 'center center',
-                transformStyle: isIsometric ? 'preserve-3d' : 'flat',
+                transformStyle: is3D ? 'preserve-3d' : 'flat',
                 transition: draggingId ? 'none' : 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)'
               }}
-              className={`relative w-[1200px] h-[640px] shrink-0 bg-[#080d19] rounded-3xl border-2 border-slate-800 transition-shadow duration-500 ${
-                isIsometric 
-                  ? 'shadow-[0_60px_120px_rgba(0,0,0,0.9),0_0_80px_rgba(6,182,212,0.15)] ring-4 ring-cyan-500/20' 
-                  : 'shadow-2xl'
+              className={`relative w-[1200px] h-[640px] shrink-0 rounded-3xl border-2 transition-all duration-500 ${
+                ambientTheme === 'cleanroom'
+                  ? 'bg-[#f8fafc] border-slate-300 shadow-[0_30px_60px_rgba(0,0,0,0.15)] ring-2 ring-sky-500/20 text-slate-900'
+                  : ambientTheme === 'night-shift'
+                    ? 'bg-[#02050b] border-slate-900 shadow-[0_60px_120px_rgba(0,0,0,0.95)] ring-2 ring-amber-500/20'
+                    : is3D 
+                      ? 'bg-[#080d19] border-slate-800 shadow-[0_60px_120px_rgba(0,0,0,0.9),0_0_80px_rgba(6,182,212,0.15)] ring-4 ring-cyan-500/20' 
+                      : 'bg-[#080d19] border-slate-800 shadow-2xl'
               }`}
             >
               {/* SVG ARCHITECTURAL INDUSTRIAL BACKGROUND */}
@@ -1164,28 +1263,28 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                 className="absolute inset-0 w-full h-full pointer-events-none"
               >
                 <defs>
-                  {/* Subtle SCADA floor grid */}
+                  {/* SCADA floor grid */}
                   <pattern id="scada-grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#141d2f" strokeWidth="1" />
-                    <circle cx="0" cy="0" r="1.5" fill="#1e293b" />
+                    <path d="M 40 0 L 0 0 0 40" fill="none" stroke={ambientTheme === 'cleanroom' ? '#cbd5e1' : '#141d2f'} strokeWidth="1" />
+                    <circle cx="0" cy="0" r="1.5" fill={ambientTheme === 'cleanroom' ? '#94a3b8' : '#1e293b'} />
                   </pattern>
 
                   {/* High-visibility yellow safety walkway hatch */}
                   <pattern id="scada-safety-walkway" width="24" height="24" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-                    <rect width="12" height="24" fill="#f59e0b" fillOpacity="0.15" />
-                    <rect x="12" width="12" height="24" fill="#000000" fillOpacity="0.4" />
+                    <rect width="12" height="24" fill="#f59e0b" fillOpacity={ambientTheme === 'cleanroom' ? '0.25' : '0.15'} />
+                    <rect x="12" width="12" height="24" fill={ambientTheme === 'cleanroom' ? '#e2e8f0' : '#000000'} fillOpacity="0.4" />
                   </pattern>
 
                   {/* Red quarantine hazard hatch */}
                   <pattern id="scada-quarantine-hatch" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-                    <rect width="8" height="16" fill="#ef4444" fillOpacity="0.18" />
+                    <rect width="8" height="16" fill="#ef4444" fillOpacity="0.22" />
                     <rect x="8" width="8" height="16" fill="#180000" fillOpacity="0.4" />
                   </pattern>
 
                   {/* Conveyor belt roller texture */}
                   <pattern id="scada-rollers" width="16" height="26" patternUnits="userSpaceOnUse">
-                    <rect width="16" height="26" fill="#0f172a" />
-                    <line x1="8" y1="0" x2="8" y2="26" stroke="#334155" strokeWidth="2" />
+                    <rect width="16" height="26" fill={ambientTheme === 'cleanroom' ? '#334155' : '#0f172a'} />
+                    <line x1="8" y1="0" x2="8" y2="26" stroke={ambientTheme === 'cleanroom' ? '#64748b' : '#334155'} strokeWidth="2" />
                   </pattern>
 
                   {/* Material Flow Arrow Markers */}
@@ -1198,12 +1297,12 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                 <rect width="1200" height="640" fill="url(#scada-grid)" />
 
                 {/* Outer Plant Wall */}
-                <rect x="15" y="15" width="1170" height="610" fill="none" stroke="#1e293b" strokeWidth="3" rx="16" />
+                <rect x="15" y="15" width="1170" height="610" fill="none" stroke={ambientTheme === 'cleanroom' ? '#94a3b8' : '#1e293b'} strokeWidth="3" rx="16" />
 
                 {/* STRUCTURAL BAY BOUNDARIES */}
-                <line x1="290" y1="15" x2="290" y2="625" stroke="#1e293b" strokeWidth="2" strokeDasharray="10,6" />
-                <line x1="290" y1="440" x2="875" y2="440" stroke="#1e293b" strokeWidth="2" strokeDasharray="10,6" />
-                <line x1="875" y1="15" x2="875" y2="625" stroke="#1e293b" strokeWidth="2" strokeDasharray="10,6" />
+                <line x1="290" y1="15" x2="290" y2="625" stroke={ambientTheme === 'cleanroom' ? '#cbd5e1' : '#1e293b'} strokeWidth="2" strokeDasharray="10,6" />
+                <line x1="290" y1="440" x2="875" y2="440" stroke={ambientTheme === 'cleanroom' ? '#cbd5e1' : '#1e293b'} strokeWidth="2" strokeDasharray="10,6" />
+                <line x1="875" y1="15" x2="875" y2="625" stroke={ambientTheme === 'cleanroom' ? '#cbd5e1' : '#1e293b'} strokeWidth="2" strokeDasharray="10,6" />
 
                 {/* SAFETY PEDESTRIAN AISLES */}
                 <rect x="295" y="15" width="25" height="610" fill="url(#scada-safety-walkway)" stroke="#F59E0B" strokeWidth="0.8" opacity="0.7" />
@@ -1229,12 +1328,37 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                 <rect x="1176" y="335" width="6" height="65" fill="#10b981" rx="2" />
                 <text x="1170" y="325" fill="#10b981" fontSize="10" fontWeight="bold" textAnchor="end">Gate 03</text>
 
-                {/* LIVE GLIDING PALLETS / MATERIAL STREAM ANIMATION (Option 2) */}
+                {/* AUTONOMOUS AGV ROBOTS (Option 3 Upgrade) */}
+                {isAgvActive && (
+                  <g>
+                    {/* AGV 01: Raw Inbound Materials */}
+                    <g>
+                      <rect width="28" height="16" rx="4" fill="#0f172a" stroke="#f59e0b" strokeWidth="1.5" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.6))">
+                        <animateMotion path="M 120 120 L 305 120 L 305 380 L 120 380 Z" dur="18s" repeatCount="indefinite" />
+                      </rect>
+                      <circle cx="14" cy="8" r="3" fill="#f59e0b" className="animate-ping">
+                        <animateMotion path="M 120 120 L 305 120 L 305 380 L 120 380 Z" dur="18s" repeatCount="indefinite" />
+                      </circle>
+                    </g>
+
+                    {/* AGV 02: Central Quality Transfer to Metrology Lab */}
+                    <g>
+                      <rect width="28" height="16" rx="4" fill="#0f172a" stroke="#06b6d4" strokeWidth="1.5" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.6))">
+                        <animateMotion path="M 875 220 L 875 520 L 450 520 L 450 220 Z" dur="22s" repeatCount="indefinite" />
+                      </rect>
+                      <circle cx="14" cy="8" r="3" fill="#06b6d4" className="animate-ping">
+                        <animateMotion path="M 875 220 L 875 520 L 450 520 L 450 220 Z" dur="22s" repeatCount="indefinite" />
+                      </circle>
+                    </g>
+                  </g>
+                )}
+
+                {/* LIVE GLIDING PALLETS / MATERIAL STREAM ANIMATION */}
                 {isMaterialFlowActive && (
                   <g>
-                    {/* Pallet 1: Inbound Raw Material moving to Assembly */}
+                    {/* Pallet 1 */}
                     <g>
-                      <rect width="18" height="14" rx="3" fill="#f59e0b" stroke="#78350f" strokeWidth="1" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.5))">
+                      <rect width="18" height="14" rx="3" fill="#f59e0b" stroke="#78350f" strokeWidth="1">
                         <animateMotion path="M 270 230 L 325 230 L 325 142 L 840 142" dur="10s" repeatCount="indefinite" />
                       </rect>
                       <circle cx="9" cy="7" r="2.5" fill="#ffffff" opacity="0.8">
@@ -1242,16 +1366,16 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                       </circle>
                     </g>
 
-                    {/* Pallet 2: Assembly WIP moving to Clearance Gate */}
+                    {/* Pallet 2 */}
                     <g>
-                      <rect width="18" height="14" rx="3" fill="#06b6d4" stroke="#164e63" strokeWidth="1" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.5))">
+                      <rect width="18" height="14" rx="3" fill="#06b6d4" stroke="#164e63" strokeWidth="1">
                         <animateMotion path="M 335 142 L 840 142 L 840 365 L 875 365 L 875 120 L 895 120" dur="12s" begin="3.5s" repeatCount="indefinite" />
                       </rect>
                     </g>
 
-                    {/* Pallet 3: Finished Packaged Lot moving to Shipping */}
+                    {/* Pallet 3 */}
                     <g>
-                      <rect width="18" height="14" rx="3" fill="#10b981" stroke="#064e3b" strokeWidth="1" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.5))">
+                      <rect width="18" height="14" rx="3" fill="#10b981" stroke="#064e3b" strokeWidth="1">
                         <animateMotion path="M 895 120 L 895 365 L 1170 365" dur="8s" begin="6s" repeatCount="indefinite" />
                       </rect>
                     </g>
@@ -1280,7 +1404,7 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                 <span className="text-[10px] font-black text-purple-400 uppercase tracking-wider">Hub C: مختبر الجودة و MRB</span>
               </div>
 
-              {/* SCADA EQUIPMENT PODS (SUPPORTING TRUE DRAG & DROP AND 2.5D EXTRUSION) */}
+              {/* SCADA EQUIPMENT PODS WITH 3D EXTRUSION & LASER BEACONS */}
               {filteredEquipment.map(eq => {
                 const st = stationStatuses[eq.id];
                 const isSelected = selectedStationId === eq.id;
@@ -1299,10 +1423,10 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                       top: `${eq.y}px`,
                       width: `${eq.w}px`,
                       height: `${eq.h}px`,
-                      transform: isIsometric 
-                        ? (isDragging ? 'translateZ(60px) scale(1.08)' : isSelected ? 'translateZ(45px) scale(1.04)' : 'translateZ(26px)')
+                      transform: is3D 
+                        ? (isDragging ? 'translateZ(65px) scale(1.08)' : isSelected ? 'translateZ(46px) scale(1.04)' : 'translateZ(26px)')
                         : (isDragging ? 'scale(1.05)' : isSelected ? 'scale(1.02)' : 'none'),
-                      boxShadow: isIsometric
+                      boxShadow: is3D
                         ? (isDragging 
                             ? '-20px 30px 40px rgba(0,0,0,0.8), -2px 4px 0px rgba(255,255,255,0.2)' 
                             : isAlert || isAndonActive 
@@ -1315,19 +1439,43 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                       absolute rounded-2xl transition-all duration-200 p-2.5 flex flex-col justify-between
                       backdrop-blur-md select-none group
                       ${isDragging ? 'z-50 ring-4 ring-amber-400 shadow-2xl opacity-95' : ''}
-                      ${isSelected 
-                        ? 'ring-2 ring-amber-400 bg-[#0f1b33] border-amber-400/80 shadow-2xl shadow-amber-500/25 z-20' 
-                        : isAndonActive
-                          ? 'border-2 border-pink-500 bg-pink-950/60 shadow-xl shadow-pink-500/40 animate-pulse z-18'
-                          : isAlert
-                            ? 'border-2 border-red-500 bg-red-950/40 shadow-xl shadow-red-500/30 animate-pulse z-15'
-                            : isWarning
-                              ? 'border-2 border-amber-500/80 bg-amber-950/30 shadow-lg shadow-amber-500/20 z-12'
-                              : 'border border-slate-700/80 bg-[#0c1426]/90 hover:border-slate-500 hover:bg-[#111c36] z-10'
+                      ${ambientTheme === 'cleanroom'
+                        ? isSelected 
+                          ? 'ring-2 ring-sky-500 bg-white border-sky-500 shadow-xl z-20' 
+                          : 'border border-slate-300 bg-white/95 text-slate-800 shadow-md hover:border-sky-400 z-10'
+                        : isSelected 
+                          ? 'ring-2 ring-amber-400 bg-[#0f1b33] border-amber-400/80 shadow-2xl shadow-amber-500/25 z-20' 
+                          : isAndonActive
+                            ? 'border-2 border-pink-500 bg-pink-950/60 shadow-xl shadow-pink-500/40 animate-pulse z-18'
+                            : isAlert
+                              ? 'border-2 border-red-500 bg-red-950/40 shadow-xl shadow-red-500/30 animate-pulse z-15'
+                              : isWarning
+                                ? 'border-2 border-amber-500/80 bg-amber-950/30 shadow-lg shadow-amber-500/20 z-12'
+                                : 'border border-slate-700/80 bg-[#0c1426]/90 hover:border-slate-500 hover:bg-[#111c36] z-10'
                       }
                     `}
                   >
-                    {/* DEFECT HEATMAP GLOWING LAYER (Option 3) */}
+                    {/* HOLOGRAPHIC VERTICAL LASER BEACON (Option 5 Upgrade) */}
+                    {(isAlert || isAndonActive) && is3D && (
+                      <div 
+                        className="absolute left-1/2 bottom-full -translate-x-1/2 pointer-events-none flex flex-col items-center z-50"
+                        style={{ transform: 'translateZ(50px)' }}
+                      >
+                        <div className={`px-2 py-0.5 rounded-full text-[9px] font-black text-white flex items-center gap-1 shadow-2xl animate-bounce ${isAndonActive ? 'bg-pink-600' : 'bg-red-600'}`}>
+                          <AlertTriangle className="w-3 h-3 text-white" />
+                          <span>{isAndonActive ? 'ANDON STOP' : 'NCR ALERT'}</span>
+                        </div>
+                        <div 
+                          className={`w-1.5 h-28 rounded-full ${
+                            isAndonActive 
+                              ? 'bg-gradient-to-t from-pink-500 via-pink-400 to-transparent shadow-[0_0_15px_#ec4899]' 
+                              : 'bg-gradient-to-t from-red-600 via-red-500 to-transparent shadow-[0_0_15px_#ef4444]'
+                          }`} 
+                        />
+                      </div>
+                    )}
+
+                    {/* DEFECT HEATMAP GLOWING LAYER */}
                     {isHeatmapActive && (
                       <div 
                         className={`absolute -inset-4 rounded-3xl pointer-events-none -z-10 blur-xl transition-all duration-500 ${
@@ -1343,10 +1491,10 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                     {/* Top Row: SCADA Machine Header & ALWAYS-VISIBLE EDIT PENCIL */}
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1.5">
-                        <span className={`p-1 rounded-lg ${isAndonActive ? 'bg-pink-500 text-white' : isAlert ? 'bg-red-500/20 text-red-400' : isWarning ? 'bg-amber-500/20 text-amber-400' : 'bg-slate-800 text-slate-300'}`}>
+                        <span className={`p-1 rounded-lg ${isAndonActive ? 'bg-pink-500 text-white' : isAlert ? 'bg-red-500/20 text-red-400' : isWarning ? 'bg-amber-500/20 text-amber-400' : ambientTheme === 'cleanroom' ? 'bg-sky-100 text-sky-700' : 'bg-slate-800 text-slate-300'}`}>
                           {renderIcon(eq.iconType, 'w-3.5 h-3.5')}
                         </span>
-                        <span className="text-[10px] font-mono font-black text-slate-300 bg-black/40 px-1.5 py-0.5 rounded-md border border-white/5">
+                        <span className={`text-[10px] font-mono font-black px-1.5 py-0.5 rounded-md border ${ambientTheme === 'cleanroom' ? 'bg-slate-100 text-slate-700 border-slate-300' : 'text-slate-300 bg-black/40 border-white/5'}`}>
                           {eq.code}
                         </span>
 
@@ -1389,18 +1537,35 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
 
                     {/* Machine Title & Location */}
                     <div className="my-0.5">
-                      <h4 className="text-xs font-black text-white leading-tight truncate">
+                      <h4 className={`text-xs font-black leading-tight truncate ${ambientTheme === 'cleanroom' ? 'text-slate-900' : 'text-white'}`}>
                         {isAr ? eq.titleAr : eq.titleEn}
                       </h4>
-                      <p className="text-[10px] text-slate-400 truncate">
+                      <p className={`text-[10px] truncate ${ambientTheme === 'cleanroom' ? 'text-slate-500' : 'text-slate-400'}`}>
                         {isAr ? eq.locationAr : eq.locationEn}
                       </p>
                     </div>
 
+                    {/* LIVE IOT SENSOR OSCILLOSCOPE WAVEFORM (Option 4 Upgrade) */}
+                    {showOscilloscope && (
+                      <div className="h-2.5 w-full overflow-hidden flex items-center opacity-80 my-0.5">
+                        <svg viewBox="0 0 100 12" className="w-full h-full">
+                          <path 
+                            d={isAndonActive || isAlert 
+                              ? "M 0 6 Q 10 -2 20 6 T 40 6 T 60 -3 T 80 14 T 100 6" 
+                              : "M 0 6 Q 15 2 30 6 T 60 6 T 90 6 L 100 6"} 
+                            fill="none" 
+                            stroke={isAndonActive ? '#ec4899' : isAlert ? '#ef4444' : isWarning ? '#f59e0b' : '#06b6d4'} 
+                            strokeWidth="1.5"
+                            className="animate-pulse"
+                          />
+                        </svg>
+                      </div>
+                    )}
+
                     {/* Bottom Telemetry Strip: Mini OEE Gauge & Real Status */}
                     <div className="flex items-center justify-between pt-1 border-t border-white/5 text-[9px] font-bold">
                       <div className="flex items-center gap-1">
-                        <span className="text-slate-400 font-mono truncate max-w-[70px]">{eq.line}</span>
+                        <span className="text-slate-400 font-mono truncate max-w-[65px]">{eq.line}</span>
                         {eq.oeeEstimate && (
                           <span className="text-cyan-400 font-mono bg-cyan-950/60 px-1 rounded border border-cyan-500/30">
                             {eq.oeeEstimate}% OEE
@@ -1687,7 +1852,7 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                 <span>{isAr ? '✏️ تعديل اسم ومواصفات هذه المحطة (Edit)' : '✏️ Edit This Station Details'}</span>
               </button>
 
-              {/* DIGITAL ANDON EMERGENCY PULL BUTTON (Option 5) */}
+              {/* DIGITAL ANDON EMERGENCY PULL BUTTON */}
               <button
                 onClick={() => toggleAndonPull(selectedEquipment.id)}
                 className={`w-full py-2.5 px-3 rounded-xl font-black text-xs flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95 ${
@@ -1756,12 +1921,12 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                     <span className="font-bold text-emerald-400 font-mono text-sm">{selectedEquipment.fpyEstimate || 98.6}%</span>
                   </div>
                   <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800">
-                    <span className="text-slate-400 text-[10px] block">{isAr ? 'خط الإنتاج:' : 'Line:'}</span>
-                    <span className="font-bold text-white truncate block">{selectedEquipment.line}</span>
+                    <span className="text-slate-400 text-[10px] block">{isAr ? 'الاهتزاز (Vibration):' : 'Vibration:'}</span>
+                    <span className="font-bold text-amber-300 font-mono">{selectedEquipment.vibrationMmS || 0.12} mm/s</span>
                   </div>
                   <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800">
-                    <span className="text-slate-400 text-[10px] block">{isAr ? 'الفني المناوب:' : 'Operator:'}</span>
-                    <span className="font-bold text-white truncate block">{selectedEquipment.activeOperator || 'مشغل معتمد'}</span>
+                    <span className="text-slate-400 text-[10px] block">{isAr ? 'الحرارة (Temp):' : 'Temperature:'}</span>
+                    <span className="font-bold text-cyan-300 font-mono">{selectedEquipment.temperatureC || 24}°C</span>
                   </div>
                   <div className="col-span-2 p-2.5 rounded-xl bg-slate-900 border border-slate-800">
                     <span className="text-slate-400 text-[10px] block">{isAr ? 'الموقع الفعلي / الوصف:' : 'Physical Location / Desc:'}</span>
