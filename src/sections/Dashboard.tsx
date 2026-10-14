@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAppStore } from '@/stores/appStore';
 import {
-  Activity, RefreshCw, Layers, Target, ShieldAlert, AlertTriangle, CheckCircle, Calculator
+  Activity, RefreshCw, Layers, Target, ShieldAlert, AlertTriangle, CheckCircle, Calculator, Factory
 } from 'lucide-react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
@@ -110,7 +110,16 @@ export function Dashboard() {
             </p>
           </div>
         </div>
-        <div className="flex gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          <Link
+            to="/plant-map"
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs md:text-sm shadow-lg shadow-amber-500/25 transition-all hover:scale-105 active:scale-95"
+            title="فتح خريطة صالة المصنع 2D"
+          >
+            <Factory className="w-4 h-4 text-slate-950 animate-pulse" />
+            <span>خريطة صالة المصنع 2D</span>
+            <span className="px-1.5 py-0.5 rounded-full text-[9px] font-black bg-black/20 text-slate-950 uppercase tracking-wider">LAYOUT</span>
+          </Link>
           <Button variant="outline" className="border-white/10 text-white" disabled={isLoading} onClick={fetchDashboardData}>
             {isLoading ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />} 
             Sync Now

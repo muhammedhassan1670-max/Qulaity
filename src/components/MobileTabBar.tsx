@@ -1,4 +1,4 @@
-import { Home, PlusCircle, LayoutDashboard, Menu } from 'lucide-react';
+import { Home, PlusCircle, LayoutDashboard, Menu, Factory } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { useTranslation } from '../utils/translations';
 
@@ -12,11 +12,18 @@ export function MobileTabBar({ onMenuToggle }: MobileTabBarProps) {
 
   const navItems = [
     {
-      to: '/quality',
+      to: '/',
       icon: Home,
-      labelEn: 'Stream',
-      labelAr: 'المسار',
+      labelEn: 'Home',
+      labelAr: 'الرئيسية',
       exact: true
+    },
+    {
+      to: '/plant-map',
+      icon: Factory,
+      labelEn: 'Plant Map',
+      labelAr: 'خريطة المصنع',
+      highlightColor: 'text-amber-400'
     },
     {
       to: '/quality-shopfloor',

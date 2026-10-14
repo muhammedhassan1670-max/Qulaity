@@ -47,7 +47,12 @@ export interface PlantEntity {
   iconType: string;
 }
 
-export function QualityControlTower() {
+export interface QualityControlTowerProps {
+  embedded?: boolean;
+  className?: string;
+}
+
+export function QualityControlTower({ embedded = false, className = '' }: QualityControlTowerProps = {}) {
   const navigate = useNavigate();
   const { language } = useTranslation();
   const isAr = language === 'ar';
@@ -501,7 +506,7 @@ export function QualityControlTower() {
   return (
     <div 
       ref={containerRef}
-      className={`relative w-full ${isFullscreen ? 'h-screen fixed inset-0 z-50 bg-[#070b14]' : 'h-[calc(100vh-80px)] min-h-[640px] max-h-[960px]'} bg-[#070b14] text-white flex flex-col font-sans overflow-hidden select-none`}
+      className={`relative w-full ${isFullscreen ? 'h-screen fixed inset-0 z-50 bg-[#070b14]' : embedded ? 'h-[760px] min-h-[600px] rounded-3xl border border-amber-500/30 shadow-2xl' : 'h-[calc(100vh-80px)] min-h-[640px] max-h-[960px]'} bg-[#070b14] text-white flex flex-col font-sans overflow-hidden select-none ${className}`}
       dir={isAr ? 'rtl' : 'ltr'}
     >
       {/* ==================================================================== */}
@@ -637,6 +642,17 @@ export function QualityControlTower() {
           >
             {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
           </button>
+
+          {embedded && (
+            <button
+              onClick={() => navigate('/quality-control-tower')}
+              className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center gap-1.5 shadow-md shadow-amber-500/20 transition-all hover:scale-105 active:scale-95"
+              title={isAr ? 'فتح في صفحة كاملة مخصصة' : 'Open in Dedicated Page'}
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+              <span>{isAr ? 'صفحة مخصصة' : 'Full Page'}</span>
+            </button>
+          )}
         </div>
       </header>
 

@@ -168,12 +168,12 @@ export function Header({ onMenuToggle, user }: HeaderProps) {
 
           {/* Plant Floor Map Button (Always visible) */}
           <button
-            className="inline-flex items-center gap-1.5 md:gap-2 px-3 md:px-4 h-10 rounded-xl border border-amber-500/40 bg-amber-500/15 hover:bg-amber-500/25 text-amber-500 dark:text-amber-400 transition-all duration-300 text-xs md:text-sm font-black shadow-sm hover:scale-105 active:scale-95"
+            className="inline-flex items-center gap-1.5 md:gap-2 px-3 md:px-4 h-10 rounded-xl border border-amber-500/60 bg-gradient-to-r from-amber-500/25 to-orange-500/25 hover:from-amber-500/35 hover:to-orange-500/35 text-amber-600 dark:text-amber-300 transition-all duration-300 text-xs md:text-sm font-black shadow-lg shadow-amber-500/15 hover:scale-105 active:scale-95 shrink-0 whitespace-nowrap"
             onClick={() => navigate('/quality-control-tower')}
             title="خريطة صالة المصنع (Floor Layout)"
           >
-            <Factory className="w-4 h-4 text-amber-500 dark:text-amber-400 animate-pulse" />
-            <span className="font-black">{language === 'ar' ? 'خريطة المصنع' : 'Plant Map'}</span>
+            <Factory className="w-4 h-4 text-amber-500 dark:text-amber-300 animate-pulse shrink-0" />
+            <span className="font-black">{language === 'ar' ? 'خريطة المصنع 2D' : 'Plant Map 2D'}</span>
           </button>
 
           {/* Admin - Desktop only */}

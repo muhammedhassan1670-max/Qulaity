@@ -10,12 +10,15 @@ import {
   ChevronLeft, 
   Activity, 
   Workflow,
-  Network
+  Factory,
+  LayoutGrid,
+  Maximize2
 } from 'lucide-react';
 import { useTranslation } from '../utils/translations';
 import { unifiedNcrApi, unifiedDefectLogApi, unifiedCapaApi, unifiedEightDApi, unifiedComplaintsApi } from '../api/unified-api';
 import { useAppStore } from '../stores/appStore';
 import { hasPermission } from '../services/userService';
+import { QualityControlTower } from '../pages/quality/QualityControlTower';
 
 interface StageCard {
   id: string;
@@ -38,6 +41,8 @@ export function FactoryQualityStream() {
   const { language } = useTranslation();
   const isAr = language === 'ar';
   const { user } = useAppStore();
+
+  const [viewMode, setViewMode] = useState<'floor-layout' | 'cards'>('floor-layout');
 
   const [counts, setCounts] = useState({
     defectsToday: 0,
@@ -233,14 +238,45 @@ export function FactoryQualityStream() {
           </div>
         </div>
 
-        {/* Quick Links */}
+        {/* View Mode Switcher & Quick Links */}
         <div className="flex items-center gap-2 text-xs flex-wrap">
+          {/* Main Switcher: 2D Plant Floor Layout vs Cards */}
+          <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-2xl shadow-sm">
+            <button
+              onClick={() => setViewMode('floor-layout')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all ${
+                viewMode === 'floor-layout'
+                  ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/30 scale-105'
+                  : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-white/5'
+              }`}
+            >
+              <Factory className="w-3.5 h-3.5" />
+              <span>{isAr ? 'خريطة صالة المصنع 2D' : '2D Plant Layout'}</span>
+              <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-black ${viewMode === 'floor-layout' ? 'bg-black/20 text-slate-950' : 'bg-amber-500/20 text-amber-400'}`}>
+                {isAr ? 'حي' : 'LIVE'}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setViewMode('cards')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all ${
+                viewMode === 'cards'
+                  ? 'bg-[var(--industrial-primary)] text-white shadow-md scale-105'
+                  : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-white/5'
+              }`}
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+              <span>{isAr ? 'بطاقات المراحل' : 'Stage Cards'}</span>
+            </button>
+          </div>
+
           <Link 
             to="/quality-control-tower" 
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-cyan-500/40 bg-gradient-to-r from-cyan-500/15 to-blue-500/15 hover:from-cyan-500/25 hover:to-blue-500/25 transition-all font-black text-cyan-400 shadow-sm"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 transition-all font-black text-amber-500 dark:text-amber-400 shadow-sm"
+            title="فتح الخريطة في صفحة مستقلة كاملة"
           >
-            <Network className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
-            <span>{isAr ? 'برج المراقبة والتتبع (Control Tower)' : 'Quality Control Tower'}</span>
+            <Maximize2 className="w-3.5 h-3.5" />
+            <span>{isAr ? 'شاشة كاملة' : 'Fullscreen'}</span>
           </Link>
           {hasPermission(user, 'spc.view') && (
             <Link 
@@ -251,20 +287,17 @@ export function FactoryQualityStream() {
               <span>{isAr ? 'مختبر SPC' : 'SPC Lab'}</span>
             </Link>
           )}
-          {hasPermission(user, ['command_center.view', 'capa.manage', 'admin.access']) && (
-            <Link 
-              to="/quality-command-center" 
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 hover:border-[var(--industrial-primary)]/50 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors font-bold text-slate-700 dark:text-slate-300"
-            >
-              <Activity className="w-3.5 h-3.5 text-amber-500" />
-              <span>{isAr ? 'مركز القيادة' : 'Command Center'}</span>
-            </Link>
-          )}
         </div>
       </div>
 
-      {/* Grid of Sequential Stations */}
-      <div className={`grid grid-cols-1 md:grid-cols-${Math.min(visibleStages.length, 5)} gap-3.5 relative`}>
+      {/* Main Display: 2D Plant Floor Layout (Default) OR Sequential Station Cards */}
+      {viewMode === 'floor-layout' ? (
+        <div className="w-full">
+          <QualityControlTower embedded={true} />
+        </div>
+      ) : (
+        /* Grid of Sequential Stations */
+        <div className={`grid grid-cols-1 md:grid-cols-${Math.min(visibleStages.length, 5)} gap-3.5 relative`}>
         {visibleStages.map((stage, idx) => {
           const Icon = stage.icon;
           const isLast = idx === stages.length - 1;
@@ -331,7 +364,8 @@ export function FactoryQualityStream() {
             </div>
           );
         })}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
