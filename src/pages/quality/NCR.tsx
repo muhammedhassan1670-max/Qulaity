@@ -6,7 +6,7 @@ import { FilterPanel } from '../../components/FilterPanel';
 import { BulkActionBar } from '../../components/BulkActionBar';
 import { StatusBadge, PriorityBadge } from '../../components/StatusBadge';
 import { toast } from 'sonner';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams, Link } from 'react-router-dom';
 import { 
   Plus, 
   Search, 
@@ -25,7 +25,8 @@ import {
   LayoutGrid, 
   Table as TableIcon, 
   ClipboardList,
-  Layers
+  Layers,
+  MapPin
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -506,6 +507,16 @@ export function NCRPage() {
                   <span className="hidden sm:inline">{isAr ? 'تصفية' : 'Filters'}</span>
                 </button>
 
+                {/* SCADA Floorplan Deep Link */}
+                <Link
+                  to="/quality-tower"
+                  className="h-11 px-3.5 rounded-2xl border border-cyan-500/30 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 flex items-center gap-2 text-xs font-bold transition-all shadow-sm"
+                  title={isAr ? 'عرض برج المراقبة وخريطة المصنع الرقمية' : 'View SCADA Factory Floorplan'}
+                >
+                  <MapPin className="w-4 h-4 text-cyan-400" />
+                  <span className="hidden md:inline">{isAr ? 'خريطة المصنع' : 'Plant Floorplan'}</span>
+                </Link>
+
                 <Button 
                   onClick={() => handleOpenCreate()}
                   className="h-11 px-5 bg-gradient-to-r from-[#0066CC] to-[#00A3E0] text-white rounded-2xl hover:opacity-90 font-bold shadow-lg shadow-[#0066CC]/20 flex items-center gap-2"
@@ -927,6 +938,18 @@ export function NCRPage() {
                 >
                   <ClipboardList className="w-3.5 h-3.5 mr-1 rtl:ml-1 rtl:mr-0" />
                   {isAr ? 'تصعيد إلى 8D' : 'Escalate to 8D'}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setViewingNcr(null);
+                    navigate(viewingNcr.productionLine ? `/quality-tower?station=${encodeURIComponent(viewingNcr.productionLine)}` : '/quality-tower');
+                  }}
+                  className="bg-cyan-500/10 text-cyan-300 border-cyan-500/30 hover:bg-cyan-500/20 rounded-xl h-10 text-xs font-bold"
+                  title={isAr ? 'عرض موقع المحطة على خريطة المصنع SCADA' : 'View on SCADA plant floorplan'}
+                >
+                  <MapPin className="w-3.5 h-3.5 mr-1 rtl:ml-1 rtl:mr-0 text-cyan-400" />
+                  {isAr ? 'خريطة المصنع' : 'Plant Map'}
                 </Button>
               </div>
 

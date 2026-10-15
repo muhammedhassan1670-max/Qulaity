@@ -19,6 +19,7 @@ import {
   ShieldCheck,
   Smartphone,
   Sparkles,
+  MapPin,
   X,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -622,9 +623,19 @@ export default function ShopfloorDefectEntry() {
                 <p className="text-xs text-white/45 truncate">{activeTemplate ? `Designer template v${activeTemplate.version}` : 'Fallback to current configStore form'}</p>
               </div>
             </div>
-            <Link to="/defect-log" className="w-full sm:w-auto rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-center text-xs font-black uppercase tracking-widest text-white/70 hover:bg-white/10">
-              Full Recorder
-            </Link>
+            <div className="flex flex-wrap items-center gap-2">
+              <Link
+                to={form.productionLine || form.station ? `/quality-tower?station=${encodeURIComponent(form.station || form.productionLine)}` : '/quality-tower'}
+                className="w-full sm:w-auto rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-3 py-2 text-center text-xs font-bold text-cyan-300 hover:bg-cyan-500/20 flex items-center justify-center gap-1.5 transition-all"
+                title="عرض وتحديد المحطة على خريطة المصنع الرقمية SCADA"
+              >
+                <MapPin className="h-3.5 w-3.5 text-cyan-400" />
+                <span>خريطة المصنع (SCADA Floorplan)</span>
+              </Link>
+              <Link to="/defect-log" className="w-full sm:w-auto rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-center text-xs font-black uppercase tracking-widest text-white/70 hover:bg-white/10">
+                Full Recorder
+              </Link>
+            </div>
           </div>
         </div>
 

@@ -19,12 +19,15 @@ import {
   Sliders, Settings2, Save, Download, Upload, ArrowUp, ArrowDown, ArrowLeft,
   Sparkles, SlidersHorizontal, Flame, Play, Pause, Bell, BellRing, Move,
   Eye, Compass, Volume2, VolumeX, BarChart3, Zap, Moon, Sun, Shield,
-  Navigation, Bot, Workflow, GitFork
+  Navigation, Bot, Workflow, GitFork, FileText, ClipboardList, Target,
+  Link2, Unlink, AlignJustify, LayoutGrid, CheckSquare, Scale, HelpCircle,
+  CornerDownRight, ArrowUpRight, MapPin, Share2
 } from 'lucide-react';
 import { useTranslation } from '../../utils/translations';
 import { loadSafeLocalDefectRecords } from '../../services/safeDefectStorage';
 import { unifiedNcrApi, unifiedCapaApi, unifiedEightDApi, unifiedComplaintsApi } from '../../api/unified-api';
 import { purgeAllDemoSimulationData } from '../../services/cleanDemoData';
+import { relationshipsForEntity, relatedIdsForEntity } from '../../services/qualityRelationships';
 
 export type StationZone = 'receiving' | 'assembly' | 'lab' | 'oqc' | 'shipping';
 export type ViewMode = 'scada-floorplan' | 'stations-grid' | 'customize-table';
@@ -51,6 +54,9 @@ export interface ScadaEquipment {
   activeOperator?: string;
   vibrationMmS?: number;
   temperatureC?: number;
+  criticalParameterAr?: string;
+  criticalParameterEn?: string;
+  targetSpec?: string;
   // Floorplan Coordinate System (1200 x 640)
   x: number;
   y: number;
@@ -64,6 +70,7 @@ export interface QualityControlTowerProps {
 }
 
 const SCADA_STORAGE_KEY = 'qms_scada_equipment_config_v2';
+const SCADA_CONNECTIONS_KEY = 'qms_scada_connections_v2';
 
 export const DEFAULT_EQUIPMENT_PODS: ScadaEquipment[] = [
   // ------------------------------------------------------------------------
@@ -863,11 +870,25 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
   const canvasRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Dynamic Connection Network State (localStorage persistence)
+  const [connectionsList, setConnectionsList] = useState<ScadaConnection[]>(() => {
+    try {
+      const saved = localStorage.getItem(SCADA_CONNECTIONS_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return FACTORY_CONNECTIONS;
+  });
+  const [showConnectionManager, setShowConnectionManager] = useState(false);
+  const [drawerTab, setDrawerTab] = useState<'overview' | 'defects-ncr' | 'capa-8d' | 'closed-loop'>('overview');
+
   // Selected Conveyor lookup for real-time telemetry HUD
   const selectedConveyor = useMemo(() => {
     if (!selectedConveyorId) return null;
-    return FACTORY_CONNECTIONS.find(c => c.id === selectedConveyorId) || null;
-  }, [selectedConveyorId]);
+    return connectionsList.find(c => c.id === selectedConveyorId) || null;
+  }, [selectedConveyorId, connectionsList]);
 
   const toggleConveyorEStop = (connId: string) => {
     const isStopped = Boolean(eStopConveyors[connId]);
@@ -886,15 +907,22 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
     }
   };
 
-  // Real System Records State
+  // Real System Records State Across Entire Platform Ecosystem
   const [realDefects, setRealDefects] = useState<any[]>([]);
   const [realNcrs, setRealNcrs] = useState<any[]>([]);
   const [realCapas, setRealCapas] = useState<any[]>([]);
   const [realEightDs, setRealEightDs] = useState<any[]>([]);
   const [realComplaints, setRealComplaints] = useState<any[]>([]);
+  const [realInspections, setRealInspections] = useState<any[]>([]);
+  const [realSuppliers, setRealSuppliers] = useState<any[]>([]);
+  const [realControlPlans, setRealControlPlans] = useState<any[]>([]);
+  const [realAudits, setRealAudits] = useState<any[]>([]);
+  const [realCalibrations, setRealCalibrations] = useState<any[]>([]);
+  const [realSpc, setRealSpc] = useState<any[]>([]);
+  const [realRelationships, setRealRelationships] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load genuine data and clean out any mock data
+  // Load genuine data across entire quality ecosystem
   const loadRealData = async () => {
     try {
       setIsLoading(true);
@@ -913,11 +941,198 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
       setRealCapas(capaRes.data || []);
       setRealEightDs(eightDRes.data || []);
       setRealComplaints(compRes.data || []);
+
+      // Load additional quality ecosystem entities from localStorage
+      try {
+        const insp = localStorage.getItem('qms_local_inspections');
+        if (insp) setRealInspections(JSON.parse(insp));
+        const sup = localStorage.getItem('qms_local_suppliers');
+        if (sup) setRealSuppliers(JSON.parse(sup));
+        const cp = localStorage.getItem('qms_local_control-plans');
+        if (cp) setRealControlPlans(JSON.parse(cp));
+        const aud = localStorage.getItem('qms_local_audits');
+        if (aud) setRealAudits(JSON.parse(aud));
+        const cal = localStorage.getItem('qms_local_calibrations');
+        if (cal) setRealCalibrations(JSON.parse(cal));
+        const spc = localStorage.getItem('qms_spc_real_measurements');
+        if (spc) setRealSpc(JSON.parse(spc));
+        const rel = localStorage.getItem('qms_quality_relationships_v1');
+        if (rel) setRealRelationships(JSON.parse(rel));
+      } catch (e) {
+        console.warn('Could not parse local ecosystem records', e);
+      }
     } catch (err) {
       console.error('Failed to load real quality records', err);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // URL Deep-Linking: auto-focus station if specified in query parameter
+  const stationParam = searchParams.get('station');
+  useEffect(() => {
+    if (stationParam && equipmentList.length > 0) {
+      const q = stationParam.toLowerCase().trim();
+      const found = equipmentList.find(e => 
+        e.id.toLowerCase() === q ||
+        e.code.toLowerCase() === q ||
+        e.titleEn.toLowerCase().includes(q) ||
+        e.titleAr.includes(q) ||
+        e.line.toLowerCase().includes(q)
+      );
+      if (found) {
+        setSelectedStationId(found.id);
+        toast.info(isAr ? `🎯 تم تحديد المحطة: ${found.titleAr}` : `🎯 Focused station: ${found.titleEn}`);
+      }
+    }
+  }, [stationParam, equipmentList, isAr]);
+
+  // Dynamic Flow Auto-Alignment (Organize stations into optimal industrial bays)
+  const handleAutoAlignLayout = () => {
+    const byZone: Record<StationZone, ScadaEquipment[]> = {
+      receiving: [],
+      assembly: [],
+      lab: [],
+      oqc: [],
+      shipping: []
+    };
+    
+    equipmentList.forEach(eq => {
+      const z = eq.zone || 'assembly';
+      if (byZone[z]) byZone[z].push(eq);
+      else byZone.assembly.push(eq);
+    });
+
+    const updated: ScadaEquipment[] = [];
+
+    // Bay A: Receiving (Left column)
+    byZone.receiving.forEach((eq, idx) => {
+      updated.push({
+        ...eq,
+        x: 35,
+        y: 60 + idx * 115,
+        w: 235,
+        h: 95
+      });
+    });
+
+    // Bay B: Assembly & Machining (2 Center columns)
+    byZone.assembly.forEach((eq, idx) => {
+      const col = idx % 2;
+      const row = Math.floor(idx / 2);
+      updated.push({
+        ...eq,
+        x: 330 + col * 245,
+        y: 60 + row * 115,
+        w: 220,
+        h: 95
+      });
+    });
+
+    // Hub C: Quality Lab & Metrology (Bottom Center)
+    byZone.lab.forEach((eq, idx) => {
+      updated.push({
+        ...eq,
+        x: 330 + idx * 245,
+        y: 490,
+        w: 220,
+        h: 95
+      });
+    });
+
+    // Bay D: OQC (Upper Right)
+    byZone.oqc.forEach((eq, idx) => {
+      updated.push({
+        ...eq,
+        x: 885,
+        y: 60 + idx * 125,
+        w: 245,
+        h: 105
+      });
+    });
+
+    // Bay E: Shipping (Lower Right)
+    byZone.shipping.forEach((eq, idx) => {
+      updated.push({
+        ...eq,
+        x: 885,
+        y: 340 + idx * 125,
+        w: 245,
+        h: 105
+      });
+    });
+
+    setEquipmentList(updated);
+    try {
+      localStorage.setItem(SCADA_STORAGE_KEY, JSON.stringify(updated));
+    } catch {}
+    if (soundEnabled) playIndustrialChime('success');
+    toast.success(isAr ? '✨ تم تنظيم وتنسيق محطات المصنع انسيابياً وبدقة صناعية متطابقة!' : '✨ Factory stations auto-aligned with optimal industrial flow!');
+  };
+
+  // Conveyor Connection Management Handlers
+  const handleSaveConnection = (conn: ScadaConnection) => {
+    setConnectionsList(prev => {
+      const exists = prev.some(c => c.id === conn.id);
+      const next = exists ? prev.map(c => c.id === conn.id ? conn : c) : [...prev, conn];
+      try {
+        localStorage.setItem(SCADA_CONNECTIONS_KEY, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+    toast.success(isAr ? '✓ تم حفظ مسار النقل بنجاح' : '✓ Conveyor connection saved');
+  };
+
+  const handleDeleteConnection = (connId: string) => {
+    setConnectionsList(prev => {
+      const next = prev.filter(c => c.id !== connId);
+      try {
+        localStorage.setItem(SCADA_CONNECTIONS_KEY, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+    if (selectedConveyorId === connId) setSelectedConveyorId(null);
+    toast.success(isAr ? 'تم حذف مسار النقل' : 'Conveyor connection deleted');
+  };
+
+  const handleResetConnections = () => {
+    setConnectionsList(FACTORY_CONNECTIONS);
+    try {
+      localStorage.removeItem(SCADA_CONNECTIONS_KEY);
+    } catch {}
+    toast.success(isAr ? 'تمت استعادة شبكة المسارات الافتراضية' : 'Default connections restored');
+  };
+
+  const handleAutoConnectStations = () => {
+    // Sequentially connect stations by process order
+    const autoConns: ScadaConnection[] = [];
+    const ordered = [...equipmentList].sort((a, b) => a.x - b.x || a.y - b.y);
+
+    for (let i = 0; i < ordered.length - 1; i++) {
+      const from = ordered[i];
+      const to = ordered[i + 1];
+      autoConns.push({
+        id: `AUTO-CONN-${from.code}-${to.code}`,
+        fromId: from.id,
+        toId: to.id,
+        labelAr: `مسار آلي من ${from.code} إلى ${to.code}`,
+        labelEn: `Auto Flow: ${from.code} ➔ ${to.code}`,
+        type: 'motor-roller',
+        fromAnchor: 'right',
+        toAnchor: 'left',
+        velocityMs: 0.5,
+        motorKw: 0.75,
+        capacityUnits: 20,
+        currentWip: 5,
+        sensorType: 'Optical Retroreflective'
+      });
+    }
+
+    setConnectionsList(autoConns);
+    try {
+      localStorage.setItem(SCADA_CONNECTIONS_KEY, JSON.stringify(autoConns));
+    } catch {}
+    toast.success(isAr ? `✓ تم ربط ${autoConns.length} مسار ناقل تسلسلياً بين جميع المحطات!` : `✓ Auto-connected ${autoConns.length} sequential conveyors!`);
   };
 
   useEffect(() => {
@@ -1117,7 +1332,7 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  // Compute live station status from genuine records (Zero fake data)
+  // Compute live station status and multi-module ecosystem linking from genuine records
   const stationStatuses = useMemo(() => {
     const map: Record<string, {
       status: 'pass' | 'warning' | 'alert' | 'andon';
@@ -1126,38 +1341,192 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
       statusColor: string;
       defectCount: number;
       openNcrCount: number;
+      capaCount: number;
+      eightDCount: number;
+      inspectionCount: number;
+      spcCount: number;
+      controlPlanCount: number;
+      auditCount: number;
+      calibrationCount: number;
+      complaintCount: number;
       matchedDefects: any[];
       matchedNcrs: any[];
+      matchedCapas: any[];
+      matchedEightDs: any[];
+      matchedInspections: any[];
+      matchedControlPlans: any[];
+      matchedAudits: any[];
+      matchedCalibrations: any[];
+      matchedComplaints: any[];
+      matchedSpc: any[];
+      closedLoopChain: any[];
       isAndonActive: boolean;
     }> = {};
 
     equipmentList.forEach(eq => {
       const isAndonActive = Boolean(andonHolds[eq.id]?.active);
+      const eqLineLower = (eq.line || '').toLowerCase();
+      const eqCodeLower = (eq.code || '').toLowerCase();
+      const eqTitleAr = eq.titleAr || '';
+      const eqTitleEnLower = (eq.titleEn || '').toLowerCase();
 
-      // Find real defects matching this station or line
+      // 1. Find real defects matching this station or line
       const matchedDefects = realDefects.filter(d => {
-        const lineMatch = d.productionLine && (
-          eq.line.toLowerCase().includes(d.productionLine.toLowerCase()) ||
-          d.productionLine.toLowerCase().includes(eq.line.toLowerCase())
-        );
+        const prodLine = (d.productionLine || '').toLowerCase();
+        const lineMatch = prodLine && (eqLineLower.includes(prodLine) || prodLine.includes(eqLineLower));
         const stationMatch = d.station && (
-          eq.titleAr.includes(d.station) ||
-          eq.titleEn.toLowerCase().includes(d.station.toLowerCase()) ||
-          eq.code.toLowerCase().includes(d.station.toLowerCase())
+          eqTitleAr.includes(d.station) ||
+          eqTitleEnLower.includes(d.station.toLowerCase()) ||
+          eqCodeLower.includes(d.station.toLowerCase())
         );
         return lineMatch || stationMatch;
       });
 
-      // Find real NCRs matching this station or line
+      // 2. Find real NCRs matching this station or line
       const matchedNcrs = realNcrs.filter(n => {
-        const lineMatch = n.productionLine && (
-          eq.line.toLowerCase().includes(n.productionLine.toLowerCase()) ||
-          n.productionLine.toLowerCase().includes(eq.line.toLowerCase())
-        );
-        const titleMatch = (n.title || '').toLowerCase().includes(eq.code.toLowerCase()) ||
-          (n.description || '').toLowerCase().includes(eq.code.toLowerCase());
-        return lineMatch || titleMatch;
+        const prodLine = (n.productionLine || '').toLowerCase();
+        const lineMatch = prodLine && (eqLineLower.includes(prodLine) || prodLine.includes(eqLineLower));
+        const codeMatch = (n.title || '').toLowerCase().includes(eqCodeLower) ||
+          (n.description || '').toLowerCase().includes(eqCodeLower);
+        const zoneMatch = eq.zone === 'receiving' && (n.source === 'Supplier' || n.source === 'IQC' || (n.title || '').includes('خامات'));
+        return lineMatch || codeMatch || zoneMatch;
       });
+
+      // 3. Find real CAPAs matching this station, line, or linked NCRs
+      const matchedCapas = realCapas.filter(c => {
+        const ncrMatch = matchedNcrs.some(n => 
+          (n.id && n.id === c.sourceNCRId) || 
+          (n.ncrNumber && n.ncrNumber === c.sourceNCRId) ||
+          (c.relatedNcrId && c.relatedNcrId === n.id)
+        );
+        const prodLine = (c.productionLine || '').toLowerCase();
+        const lineMatch = prodLine && (eqLineLower.includes(prodLine) || prodLine.includes(eqLineLower));
+        return ncrMatch || lineMatch;
+      });
+
+      // 4. Find real 8D Reports matching this station, line, or linked NCRs
+      const matchedEightDs = realEightDs.filter(d => {
+        const ncrMatch = matchedNcrs.some(n => 
+          (n.id && n.id === d.sourceNCRId) || 
+          (n.ncrNumber && n.ncrNumber === d.sourceNCRId)
+        );
+        const prodLine = (d.productionLine || '').toLowerCase();
+        const lineMatch = prodLine && (eqLineLower.includes(prodLine) || prodLine.includes(eqLineLower));
+        return ncrMatch || lineMatch;
+      });
+
+      // 5. Find real IQC Inspections matching receiving bay or line
+      const matchedInspections = realInspections.filter(insp => {
+        if (eq.zone === 'receiving') return true;
+        const inspLine = (insp.line || insp.productionLine || '').toLowerCase();
+        return inspLine && (eqLineLower.includes(inspLine) || inspLine.includes(eqLineLower));
+      });
+
+      // 6. Find real Control Plans matching line or operation
+      const matchedControlPlans = realControlPlans.filter(cp => {
+        const cpLine = (cp.line || cp.productionLine || '').toLowerCase();
+        return cpLine && (eqLineLower.includes(cpLine) || cpLine.includes(eqLineLower));
+      });
+
+      // 7. Find real Audits (LPA / Process)
+      const matchedAudits = realAudits.filter(a => {
+        const area = (a.area || a.department || '').toLowerCase();
+        return area && (eqLineLower.includes(area) || area.includes(eqLineLower));
+      });
+
+      // 8. Find real Calibrations for instruments on this machine/station
+      const matchedCalibrations = realCalibrations.filter(cal => {
+        const loc = (cal.location || cal.department || '').toLowerCase();
+        return loc && (eqTitleEnLower.includes(loc) || eqLineLower.includes(loc));
+      });
+
+      // 9. Find real Customer Complaints matching final stages or line
+      const matchedComplaints = realComplaints.filter(comp => {
+        if (eq.zone === 'shipping' || eq.zone === 'oqc') return true;
+        const compLine = (comp.line || comp.productionLine || '').toLowerCase();
+        return compLine && (eqLineLower.includes(compLine) || compLine.includes(eqLineLower));
+      });
+
+      // 10. Find real SPC measurements
+      const matchedSpc = realSpc.filter(m => {
+        return m.stationId === eq.id || m.line === eq.line;
+      });
+
+      // Full 8-Stage Interactive Closed-Loop Traceability Chain
+      const closedLoopChain = [
+        {
+          step: 'iqc',
+          titleAr: 'تفتيش الخامات IQC',
+          titleEn: 'IQC Receiving Inspection',
+          count: matchedInspections.length,
+          status: matchedInspections.some(i => i.status === 'Rejected' || i.status === 'Failed') ? 'alert' : matchedInspections.length > 0 ? 'pass' : 'neutral',
+          route: '/compliance/hub/inspection',
+          sampleId: matchedInspections[0]?.id || matchedInspections[0]?.inspectionNumber
+        },
+        {
+          step: 'defect',
+          titleAr: 'تسجيل العيوب الميدانية',
+          titleEn: 'Shopfloor Defect Logging',
+          count: matchedDefects.length,
+          status: matchedDefects.length > 0 ? 'warning' : 'pass',
+          route: '/quality-shopfloor',
+          sampleId: matchedDefects[0]?.id || matchedDefects[0]?.defectId
+        },
+        {
+          step: 'ncr',
+          titleAr: 'تقارير عدم المطابقة NCR',
+          titleEn: 'Non-Conformance Report',
+          count: matchedNcrs.length,
+          status: matchedNcrs.some(n => n.status !== 'Closed') ? 'alert' : matchedNcrs.length > 0 ? 'pass' : 'neutral',
+          route: '/quality/records/ncr',
+          sampleId: matchedNcrs[0]?.id || matchedNcrs[0]?.ncrNumber
+        },
+        {
+          step: '8d',
+          titleAr: 'التحقيق الجذري 8D',
+          titleEn: '8D Root Cause Analysis',
+          count: matchedEightDs.length,
+          status: matchedEightDs.some(d => d.status !== 'd8' && d.status !== 'closed') ? 'warning' : matchedEightDs.length > 0 ? 'pass' : 'neutral',
+          route: '/quality/records/eight-d',
+          sampleId: matchedEightDs[0]?.id || matchedEightDs[0]?.eightDNumber
+        },
+        {
+          step: 'capa',
+          titleAr: 'الإجراءات التصحيحية CAPA',
+          titleEn: 'Corrective Action CAPA',
+          count: matchedCapas.length,
+          status: matchedCapas.some(c => c.status !== 'Closed') ? 'warning' : matchedCapas.length > 0 ? 'pass' : 'neutral',
+          route: '/quality/records/capa',
+          sampleId: matchedCapas[0]?.id || matchedCapas[0]?.capaNumber
+        },
+        {
+          step: 'control-plan',
+          titleAr: 'خطة التحكم والرقابة Control Plan',
+          titleEn: 'Control Plan Gate',
+          count: matchedControlPlans.length,
+          status: matchedControlPlans.length > 0 ? 'pass' : 'neutral',
+          route: '/compliance/hub/control-plan',
+          sampleId: matchedControlPlans[0]?.id || matchedControlPlans[0]?.planNumber
+        },
+        {
+          step: 'spc',
+          titleAr: 'التحكم الإحصائي SPC',
+          titleEn: 'Statistical Process Control',
+          count: matchedSpc.length,
+          status: matchedSpc.length > 0 ? 'pass' : 'neutral',
+          route: '/spc',
+          sampleId: matchedSpc.length > 0 ? `${matchedSpc.length} pts` : undefined
+        },
+        {
+          step: 'complaints',
+          titleAr: 'صوت العميل والشكاوى',
+          titleEn: 'Customer Feedback & Complaints',
+          count: matchedComplaints.length,
+          status: matchedComplaints.some(c => c.status !== 'Closed') ? 'alert' : matchedComplaints.length > 0 ? 'pass' : 'neutral',
+          route: '/quality/records/complaints',
+          sampleId: matchedComplaints[0]?.id || matchedComplaints[0]?.complaintNumber
+        }
+      ];
 
       const openNcrCount = matchedNcrs.filter(n => n.status !== 'Closed' && n.status !== 'Resolved').length;
       const defectCount = matchedDefects.length;
@@ -1192,14 +1561,35 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
         statusColor,
         defectCount,
         openNcrCount,
+        capaCount: matchedCapas.length,
+        eightDCount: matchedEightDs.length,
+        inspectionCount: matchedInspections.length,
+        spcCount: matchedSpc.length,
+        controlPlanCount: matchedControlPlans.length,
+        auditCount: matchedAudits.length,
+        calibrationCount: matchedCalibrations.length,
+        complaintCount: matchedComplaints.length,
         matchedDefects,
         matchedNcrs,
+        matchedCapas,
+        matchedEightDs,
+        matchedInspections,
+        matchedControlPlans,
+        matchedAudits,
+        matchedCalibrations,
+        matchedComplaints,
+        matchedSpc,
+        closedLoopChain,
         isAndonActive
       };
     });
 
     return map;
-  }, [equipmentList, realDefects, realNcrs, andonHolds]);
+  }, [
+    equipmentList, realDefects, realNcrs, realCapas, realEightDs,
+    realInspections, realControlPlans, realAudits, realCalibrations,
+    realComplaints, realSpc, andonHolds
+  ]);
 
   // Overall Factory Real KPIs
   const summaryMetrics = useMemo(() => {
@@ -1664,6 +2054,26 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
             {soundEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
           </button>
 
+          {/* Dynamic Flow Auto-Alignment Button */}
+          <button
+            onClick={handleAutoAlignLayout}
+            className="px-2.5 py-1.5 rounded-xl bg-cyan-950/80 hover:bg-cyan-900/80 text-cyan-300 border border-cyan-500/40 text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm active:scale-95"
+            title={isAr ? 'تنظيم وتنسيق انسيابي لمحطات المصنع في أجنحة متناسقة' : 'Auto-Align Stations in Industrial Bays'}
+          >
+            <AlignJustify className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="hidden sm:inline">{isAr ? '📐 تنسيق انسيابي' : 'Auto-Align'}</span>
+          </button>
+
+          {/* Manage Conveyor Network Button */}
+          <button
+            onClick={() => setShowConnectionManager(true)}
+            className="px-2.5 py-1.5 rounded-xl bg-purple-950/80 hover:bg-purple-900/80 text-purple-300 border border-purple-500/40 text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm active:scale-95"
+            title={isAr ? 'إدارة شبكة مسارات الناقلات والسيور' : 'Manage Conveyor Network'}
+          >
+            <Link2 className="w-3.5 h-3.5 text-purple-400" />
+            <span className="hidden sm:inline">{isAr ? '🔗 المسارات' : 'Conveyors'}</span>
+          </button>
+
           {/* Add Station Button */}
           <button
             onClick={() => handleAddNewTemplate('assembly')}
@@ -1751,7 +2161,66 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
               <span className="w-1.5 h-1.5 rounded-full bg-red-400"></span>
               <span>{isAr ? 'تنبيهات' : 'Alerts'}</span>
             </button>
+            <button
+              onClick={() => setFilterStatus('normal-only')}
+              className={`px-2 py-0.5 rounded-lg font-bold flex items-center gap-1 ${filterStatus === 'normal-only' ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-500/40' : 'text-slate-400'}`}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+              <span>{isAr ? 'طبيعي' : 'Normal'}</span>
+            </button>
           </div>
+        </div>
+      </div>
+
+      {/* DYNAMIC INDUSTRIAL BAY / ZONE FAST NAVIGATION BAR */}
+      <div className="flex-none px-4 py-1 bg-[#0a1020] border-b border-white/5 flex items-center justify-between gap-2 overflow-x-auto text-[11px] z-20">
+        <div className="flex items-center gap-1.5 shrink-0">
+          <span className="text-slate-500 font-bold text-[10px] uppercase tracking-wider hidden sm:inline">
+            {isAr ? 'عنابر المصنع:' : 'Plant Bays:'}
+          </span>
+          {[
+            { id: 'all', labelAr: '🏭 جميع العنابر', labelEn: '🏭 All Bays', count: equipmentList.length },
+            { id: 'receiving', labelAr: '📥 Bay A: الاستلام', labelEn: '📥 Bay A: Receiving', count: equipmentList.filter(e => e.zone === 'receiving').length },
+            { id: 'assembly', labelAr: '⚙️ Bay B: التجميع والتشغيل', labelEn: '⚙️ Bay B: Assembly', count: equipmentList.filter(e => e.zone === 'assembly').length },
+            { id: 'lab', labelAr: '🔬 Hub C: مختبر الجودة', labelEn: '🔬 Hub C: QA Lab', count: equipmentList.filter(e => e.zone === 'lab').length },
+            { id: 'oqc', labelAr: '✅ Bay D: الفحص النهائي', labelEn: '✅ Bay D: Final OQC', count: equipmentList.filter(e => e.zone === 'oqc').length },
+            { id: 'shipping', labelAr: '🚚 Bay E: الشحن والتسليم', labelEn: '🚚 Bay E: Shipping', count: equipmentList.filter(e => e.zone === 'shipping').length },
+          ].map(bay => (
+            <button
+              key={bay.id}
+              onClick={() => setFilterZone(bay.id)}
+              className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 border ${
+                filterZone === bay.id
+                  ? 'bg-amber-500/20 text-amber-300 border-amber-500 shadow-sm'
+                  : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800'
+              }`}
+            >
+              <span>{isAr ? bay.labelAr : bay.labelEn}</span>
+              <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-mono ${filterZone === bay.id ? 'bg-amber-400 text-slate-950 font-black' : 'bg-slate-800 text-slate-400'}`}>
+                {bay.count}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {/* Search input in subheader */}
+        <div className="relative shrink-0 max-w-xs">
+          <Search className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            placeholder={isAr ? 'بحث عن محطة، كود، أو خط...' : 'Search station, code, line...'}
+            className="w-48 sm:w-60 pr-8 pl-3 py-1 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 transition-all font-mono"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          )}
         </div>
       </div>
 
@@ -2006,7 +2475,7 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                 {/* ========================================================== */}
                 {/* INTER-STATION INDUSTRIAL CONVEYORS & TRANSFER NETWORK      */}
                 {/* ========================================================== */}
-                {FACTORY_CONNECTIONS.map(conn => {
+                {connectionsList.map(conn => {
                   const pathInfo = calculateConnectionPath(conn, equipmentMap);
                   if (!pathInfo) return null;
 
@@ -2386,8 +2855,8 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                 const isWarning = st?.status === 'warning';
 
                 // Check for physical infeed and outfeed connections
-                const infeedConns = FACTORY_CONNECTIONS.filter(c => c.toId === eq.id);
-                const outfeedConns = FACTORY_CONNECTIONS.filter(c => c.fromId === eq.id);
+                const infeedConns = connectionsList.filter(c => c.toId === eq.id);
+                const outfeedConns = connectionsList.filter(c => c.fromId === eq.id);
                 const hasInfeed = infeedConns.length > 0;
                 const hasOutfeed = outfeedConns.length > 0;
 
@@ -2548,6 +3017,40 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                       <p className={`text-[10px] truncate ${ambientTheme === 'cleanroom' ? 'text-slate-500' : 'text-slate-400'}`}>
                         {isAr ? eq.locationAr : eq.locationEn}
                       </p>
+                    </div>
+
+                    {/* DYNAMIC PLATFORM LINKAGE MINI PILLS */}
+                    <div className="flex items-center gap-1 my-0.5 overflow-hidden flex-wrap z-10">
+                      {st?.openNcrCount > 0 && (
+                        <span className="px-1.5 py-0.2 rounded text-[8px] font-black bg-red-500/20 text-red-300 border border-red-500/40">
+                          NCR: {st.openNcrCount}
+                        </span>
+                      )}
+                      {st?.defectCount > 0 && (
+                        <span className="px-1.5 py-0.2 rounded text-[8px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                          DEF: {st.defectCount}
+                        </span>
+                      )}
+                      {st?.eightDCount > 0 && (
+                        <span className="px-1.5 py-0.2 rounded text-[8px] font-black bg-purple-500/20 text-purple-300 border border-purple-500/40">
+                          8D: {st.eightDCount}
+                        </span>
+                      )}
+                      {st?.capaCount > 0 && (
+                        <span className="px-1.5 py-0.2 rounded text-[8px] font-black bg-blue-500/20 text-blue-300 border border-blue-500/40">
+                          CAPA: {st.capaCount}
+                        </span>
+                      )}
+                      {st?.inspectionCount > 0 && (
+                        <span className="px-1.5 py-0.2 rounded text-[8px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                          IQC: {st.inspectionCount}
+                        </span>
+                      )}
+                      {st?.spcCount > 0 && (
+                        <span className="px-1.5 py-0.2 rounded text-[8px] font-black bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
+                          SPC: {st.spcCount}
+                        </span>
+                      )}
                     </div>
 
                     {/* LIVE ANIMATED MACHINE COCKPIT MECHANISM */}
@@ -2986,167 +3489,446 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
               </div>
             </div>
 
-            {/* Drawer Body */}
-            <div className="p-4 space-y-4 flex-1">
-              {/* BIG PROMINENT EDIT BUTTON AT TOP OF DRAWER */}
+            {/* Drawer Navigation Tabs Bar */}
+            <div className="flex items-center gap-1 p-2 bg-[#080d1a] border-b border-white/10 text-xs shrink-0">
               <button
-                onClick={() => setEditingStation(selectedEquipment)}
-                className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-amber-500/25 transition-all hover:scale-[1.02]"
-              >
-                <Edit3 className="w-4 h-4" />
-                <span>{isAr ? '✏️ تعديل اسم ومواصفات هذه المحطة (Edit)' : '✏️ Edit This Station Details'}</span>
-              </button>
-
-              {/* DIGITAL ANDON EMERGENCY PULL BUTTON */}
-              <button
-                onClick={() => toggleAndonPull(selectedEquipment.id)}
-                className={`w-full py-2.5 px-3 rounded-xl font-black text-xs flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95 ${
-                  selectedStatus?.isAndonActive
-                    ? 'bg-pink-600 hover:bg-pink-500 text-white animate-pulse shadow-pink-600/40'
-                    : 'bg-red-950/60 hover:bg-red-900/60 text-red-300 border border-red-500/50 shadow-red-950/30'
+                onClick={() => setDrawerTab('overview')}
+                className={`flex-1 py-1.5 px-2 rounded-xl font-bold flex items-center justify-center gap-1.5 transition-all ${
+                  drawerTab === 'overview'
+                    ? 'bg-amber-500 text-slate-950 shadow-md font-black'
+                    : 'text-slate-400 hover:text-white hover:bg-white/5'
                 }`}
               >
-                <BellRing className={`w-4 h-4 ${selectedStatus?.isAndonActive ? 'animate-bounce text-white' : 'text-red-400'}`} />
-                <span>
-                  {selectedStatus?.isAndonActive
-                    ? (isAr ? '🚨 إلغاء استدعاء الأندون وإعادة التشغيل' : '🚨 Release Andon Hold')
-                    : (isAr ? '🚨 سحب حبل الأندون الصناعي (Pull Andon)' : '🚨 Pull Andon Cord (Emergency)')}
-                </span>
+                <Cpu className="w-3.5 h-3.5" />
+                <span>{isAr ? 'المحطة' : 'Station'}</span>
               </button>
-
-              {/* Telemetry Status Box */}
-              <div className="p-3.5 rounded-2xl bg-slate-900 border border-slate-700/80 space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-400">{isAr ? 'حالة الجودة الحية:' : 'Live Quality Status:'}</span>
-                  <span 
-                    className="px-2.5 py-0.5 rounded-full text-xs font-black border"
-                    style={{
-                      color: selectedStatus?.statusColor,
-                      borderColor: `${selectedStatus?.statusColor}40`,
-                      backgroundColor: `${selectedStatus?.statusColor}15`
-                    }}
-                  >
-                    {isAr ? selectedStatus?.statusLabelAr : selectedStatus?.statusLabelEn}
-                  </span>
-                </div>
-
-                <div className="text-xs text-slate-300">
-                  {selectedStatus?.isAndonActive ? (
-                    <div className="flex items-center gap-2 p-2 rounded-xl bg-pink-950/50 border border-pink-500/40 text-pink-300 text-[11px] font-bold">
-                      <AlertTriangle className="w-4 h-4 shrink-0" />
-                      <span>{isAr ? 'تم تفعيل حبل الأندون على هذه الماكينة! استدعاء فوري لفريق الجودة والصيانة.' : 'Andon Emergency Active! Urgent quality support requested.'}</span>
-                    </div>
-                  ) : selectedStatus && selectedStatus.status === 'pass' ? (
-                    <div className="flex items-center gap-2 p-2 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-emerald-400 text-[11px] font-medium">
-                      <CheckCircle2 className="w-4 h-4 shrink-0" />
-                      <span>{isAr ? 'المحطة تعمل بكفاءة طبيعية، ولا توجد أي مشكلات جودة مسجلة.' : 'Operating normally with zero quality alerts.'}</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2 p-2 rounded-xl bg-amber-950/40 border border-amber-500/30 text-amber-400 text-[11px] font-medium">
-                      <AlertTriangle className="w-4 h-4 shrink-0" />
-                      <span>{isAr ? 'يوجد بلاغات جودة نشطة على هذا الخط تتطلب التدقيق.' : 'Active quality alerts detected on this station.'}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Machine Technical Metadata & OEE Telemetry */}
-              <div className="space-y-2">
-                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">
-                  {isAr ? 'مؤشرات الكفاءة والمسار (Telemetry & Specs)' : 'Telemetry & Specifications'}
-                </span>
-
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800">
-                    <span className="text-slate-400 text-[10px] block">{isAr ? 'الكفاءة OEE:' : 'OEE Rate:'}</span>
-                    <span className="font-bold text-cyan-400 font-mono text-sm">{selectedEquipment.oeeEstimate || 95}%</span>
-                  </div>
-                  <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800">
-                    <span className="text-slate-400 text-[10px] block">{isAr ? 'الجودة من المرة الأولى:' : 'First Pass Yield:'}</span>
-                    <span className="font-bold text-emerald-400 font-mono text-sm">{selectedEquipment.fpyEstimate || 98.6}%</span>
-                  </div>
-                  <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800">
-                    <span className="text-slate-400 text-[10px] block">{isAr ? 'الاهتزاز (Vibration):' : 'Vibration:'}</span>
-                    <span className="font-bold text-amber-300 font-mono">{selectedEquipment.vibrationMmS || 0.12} mm/s</span>
-                  </div>
-                  <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800">
-                    <span className="text-slate-400 text-[10px] block">{isAr ? 'الحرارة (Temp):' : 'Temperature:'}</span>
-                    <span className="font-bold text-cyan-300 font-mono">{selectedEquipment.temperatureC || 24}°C</span>
-                  </div>
-                  <div className="col-span-2 p-2.5 rounded-xl bg-slate-900 border border-slate-800">
-                    <span className="text-slate-400 text-[10px] block">{isAr ? 'الموقع الفعلي / الوصف:' : 'Physical Location / Desc:'}</span>
-                    <span className="font-bold text-white">{isAr ? selectedEquipment.locationAr : selectedEquipment.locationEn}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Genuine Records List */}
-              <div className="space-y-2">
-                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">
-                  {isAr ? 'السجلات الحقيقية المسجلة على هذه المحطة' : 'Real System Records Logged'}
-                </span>
-
-                {selectedStatus && selectedStatus.matchedDefects.length > 0 ? (
-                  <div className="space-y-1.5 max-h-40 overflow-y-auto">
-                    {selectedStatus.matchedDefects.map((d, i) => (
-                      <div key={i} className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs flex justify-between items-center">
-                        <div>
-                          <span className="font-bold text-amber-300 block">{d.defectType || d.type || 'عيب مصنعي'}</span>
-                          <span className="text-[10px] text-slate-400">{d.date || d.createdAt || 'اليوم'} - {d.partNameAtTime || d.partNumber || 'قطعة عامة'}</span>
-                        </div>
-                        <span className="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 text-[10px] font-black">
-                          الكمية: {d.quantity || 1}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-center text-xs text-slate-400">
-                    {isAr ? 'لا توجد أي عيوب أو بلاغات عدم مطابقة مسجلة على هذه المحطة' : 'Zero defects or NCRs recorded for this unit'}
-                  </div>
+              <button
+                onClick={() => setDrawerTab('defects-ncr')}
+                className={`flex-1 py-1.5 px-2 rounded-xl font-bold flex items-center justify-center gap-1.5 transition-all relative ${
+                  drawerTab === 'defects-ncr'
+                    ? 'bg-red-500 text-white shadow-md font-black'
+                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                <ShieldAlert className="w-3.5 h-3.5" />
+                <span>{isAr ? 'العيوب & NCR' : 'Defects/NCR'}</span>
+                {selectedStatus && (selectedStatus.defectCount > 0 || selectedStatus.openNcrCount > 0) && (
+                  <span className="w-2 h-2 rounded-full bg-red-400 animate-ping absolute top-1 right-1" />
                 )}
-              </div>
+              </button>
+              <button
+                onClick={() => setDrawerTab('capa-8d')}
+                className={`flex-1 py-1.5 px-2 rounded-xl font-bold flex items-center justify-center gap-1.5 transition-all ${
+                  drawerTab === 'capa-8d'
+                    ? 'bg-purple-600 text-white shadow-md font-black'
+                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>{isAr ? '8D & CAPA' : '8D/CAPA'}</span>
+              </button>
+              <button
+                onClick={() => setDrawerTab('closed-loop')}
+                className={`flex-1 py-1.5 px-2 rounded-xl font-bold flex items-center justify-center gap-1.5 transition-all ${
+                  drawerTab === 'closed-loop'
+                    ? 'bg-cyan-500 text-slate-950 shadow-md font-black'
+                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                <Workflow className="w-3.5 h-3.5" />
+                <span>{isAr ? 'المسار' : 'Journey'}</span>
+              </button>
+            </div>
 
-              {/* Direct Deep Navigation Actions */}
-              <div className="space-y-2 pt-2 border-t border-white/10">
-                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">
-                  {isAr ? 'إجراءات الجودة السريعة' : 'Quick Actions'}
-                </span>
-
-                <div className="space-y-1.5">
+            {/* Drawer Body */}
+            <div className="p-4 space-y-4 flex-1 overflow-y-auto">
+              {/* TAB 1: OVERVIEW & SCADA TELEMETRY */}
+              {drawerTab === 'overview' && (
+                <div className="space-y-4">
+                  {/* BIG PROMINENT EDIT BUTTON AT TOP OF DRAWER */}
                   <button
-                    onClick={() => navigate(selectedEquipment.moduleUrl)}
-                    className="w-full py-2.5 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center justify-center gap-2 shadow-md transition-all hover:scale-[1.02] active:scale-95"
+                    onClick={() => setEditingStation(selectedEquipment)}
+                    className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-amber-500/25 transition-all hover:scale-[1.02]"
                   >
-                    <span>{isAr ? `الانتقال إلى ${selectedEquipment.moduleLabelAr}` : `Open ${selectedEquipment.moduleLabelAr}`}</span>
-                    <ExternalLink className="w-3.5 h-3.5" />
+                    <Edit3 className="w-4 h-4" />
+                    <span>{isAr ? '✏️ تعديل اسم ومواصفات هذه المحطة (Edit)' : '✏️ Edit This Station Details'}</span>
                   </button>
 
+                  {/* DIGITAL ANDON EMERGENCY PULL BUTTON */}
                   <button
-                    onClick={() => navigate('/quality-shopfloor')}
-                    className="w-full py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-white font-bold text-xs flex items-center justify-between transition-colors"
+                    onClick={() => toggleAndonPull(selectedEquipment.id)}
+                    className={`w-full py-2.5 px-3 rounded-xl font-black text-xs flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95 ${
+                      selectedStatus?.isAndonActive
+                        ? 'bg-pink-600 hover:bg-pink-500 text-white animate-pulse shadow-pink-600/40'
+                        : 'bg-red-950/60 hover:bg-red-900/60 text-red-300 border border-red-500/50 shadow-red-950/30'
+                    }`}
                   >
-                    <span>{isAr ? '📝 تسجيل عيب سريع على هذه المحطة' : 'Fast Shopfloor Entry'}</span>
-                    <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+                    <BellRing className={`w-4 h-4 ${selectedStatus?.isAndonActive ? 'animate-bounce text-white' : 'text-red-400'}`} />
+                    <span>
+                      {selectedStatus?.isAndonActive
+                        ? (isAr ? '🚨 إلغاء استدعاء الأندون وإعادة التشغيل' : '🚨 Release Andon Hold')
+                        : (isAr ? '🚨 سحب حبل الأندون الصناعي (Pull Andon)' : '🚨 Pull Andon Cord (Emergency)')}
+                    </span>
                   </button>
 
-                  <button
-                    onClick={() => navigate('/quality/records/ncr')}
-                    className="w-full py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-white font-bold text-xs flex items-center justify-between transition-colors"
-                  >
-                    <span>{isAr ? '⚠️ إصدار تقرير عدم مطابقة NCR' : 'Create NCR Report'}</span>
-                    <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-                  </button>
+                  {/* Telemetry Status Box */}
+                  <div className="p-3.5 rounded-2xl bg-slate-900 border border-slate-700/80 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-400">{isAr ? 'حالة الجودة الحية:' : 'Live Quality Status:'}</span>
+                      <span 
+                        className="px-2.5 py-0.5 rounded-full text-xs font-black border"
+                        style={{
+                          color: selectedStatus?.statusColor,
+                          borderColor: `${selectedStatus?.statusColor}40`,
+                          backgroundColor: `${selectedStatus?.statusColor}15`
+                        }}
+                      >
+                        {isAr ? selectedStatus?.statusLabelAr : selectedStatus?.statusLabelEn}
+                      </span>
+                    </div>
 
-                  <button
-                    onClick={() => navigate('/spc')}
-                    className="w-full py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-white font-bold text-xs flex items-center justify-between transition-colors"
-                  >
-                    <span>{isAr ? '📊 كارتات التحكم الإحصائي SPC' : 'Open SPC Control Charts'}</span>
-                    <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-                  </button>
+                    <div className="text-xs text-slate-300">
+                      {selectedStatus?.isAndonActive ? (
+                        <div className="flex items-center gap-2 p-2 rounded-xl bg-pink-950/50 border border-pink-500/40 text-pink-300 text-[11px] font-bold">
+                          <AlertTriangle className="w-4 h-4 shrink-0" />
+                          <span>{isAr ? 'تم تفعيل حبل الأندون على هذه الماكينة! استدعاء فوري لفريق الجودة والصيانة.' : 'Andon Emergency Active! Urgent quality support requested.'}</span>
+                        </div>
+                      ) : selectedStatus && selectedStatus.status === 'pass' ? (
+                        <div className="flex items-center gap-2 p-2 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-emerald-400 text-[11px] font-medium">
+                          <CheckCircle2 className="w-4 h-4 shrink-0" />
+                          <span>{isAr ? 'المحطة تعمل بكفاءة طبيعية، ولا توجد أي مشكلات جودة مسجلة.' : 'Operating normally with zero quality alerts.'}</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 p-2 rounded-xl bg-amber-950/40 border border-amber-500/30 text-amber-400 text-[11px] font-medium">
+                          <AlertTriangle className="w-4 h-4 shrink-0" />
+                          <span>{isAr ? 'يوجد بلاغات جودة نشطة على هذا الخط تتطلب التدقيق.' : 'Active quality alerts detected on this station.'}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Machine Technical Metadata & OEE Telemetry */}
+                  <div className="space-y-2">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">
+                      {isAr ? 'مؤشرات الكفاءة والمسار (Telemetry & Specs)' : 'Telemetry & Specifications'}
+                    </span>
+
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800">
+                        <span className="text-slate-400 text-[10px] block">{isAr ? 'الكفاءة OEE:' : 'OEE Rate:'}</span>
+                        <span className="font-bold text-cyan-400 font-mono text-sm">{selectedEquipment.oeeEstimate || 95}%</span>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800">
+                        <span className="text-slate-400 text-[10px] block">{isAr ? 'الجودة من المرة الأولى:' : 'First Pass Yield:'}</span>
+                        <span className="font-bold text-emerald-400 font-mono text-sm">{selectedEquipment.fpyEstimate || 98.6}%</span>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800">
+                        <span className="text-slate-400 text-[10px] block">{isAr ? 'الاهتزاز (Vibration):' : 'Vibration:'}</span>
+                        <span className="font-bold text-amber-300 font-mono">{selectedEquipment.vibrationMmS || 0.12} mm/s</span>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800">
+                        <span className="text-slate-400 text-[10px] block">{isAr ? 'الحرارة (Temp):' : 'Temperature:'}</span>
+                        <span className="font-bold text-cyan-300 font-mono">{selectedEquipment.temperatureC || 24}°C</span>
+                      </div>
+                      <div className="col-span-2 p-2.5 rounded-xl bg-slate-900 border border-slate-800">
+                        <span className="text-slate-400 text-[10px] block">{isAr ? 'الموقع الفعلي / الوصف:' : 'Physical Location / Desc:'}</span>
+                        <span className="font-bold text-white">{isAr ? selectedEquipment.locationAr : selectedEquipment.locationEn}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Direct Deep Navigation Actions */}
+                  <div className="space-y-2 pt-2 border-t border-white/10">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">
+                      {isAr ? 'إجراءات الجودة السريعة' : 'Quick Actions'}
+                    </span>
+
+                    <div className="space-y-1.5">
+                      <button
+                        onClick={() => navigate(selectedEquipment.moduleUrl)}
+                        className="w-full py-2.5 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center justify-center gap-2 shadow-md transition-all hover:scale-[1.02] active:scale-95"
+                      >
+                        <span>{isAr ? `الانتقال إلى ${selectedEquipment.moduleLabelAr}` : `Open ${selectedEquipment.moduleLabelAr}`}</span>
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </button>
+
+                      <button
+                        onClick={() => navigate(`/quality-shopfloor?station=${encodeURIComponent(selectedEquipment.code)}`)}
+                        className="w-full py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-white font-bold text-xs flex items-center justify-between transition-colors"
+                      >
+                        <span>{isAr ? '📝 تسجيل عيب سريع على هذه المحطة' : 'Fast Shopfloor Entry'}</span>
+                        <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+                      </button>
+
+                      <button
+                        onClick={() => navigate(`/quality/records/ncr?create=1&title=${encodeURIComponent(selectedEquipment.titleAr)}`)}
+                        className="w-full py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-white font-bold text-xs flex items-center justify-between transition-colors"
+                      >
+                        <span>{isAr ? '⚠️ إصدار تقرير عدم مطابقة NCR' : 'Create NCR Report'}</span>
+                        <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+                      </button>
+
+                      <button
+                        onClick={() => navigate('/spc')}
+                        className="w-full py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-white font-bold text-xs flex items-center justify-between transition-colors"
+                      >
+                        <span>{isAr ? '📊 كارتات التحكم الإحصائي SPC' : 'Open SPC Control Charts'}</span>
+                        <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {/* TAB 2: DEFECTS & NCR RECORDS */}
+              {drawerTab === 'defects-ncr' && (
+                <div className="space-y-4">
+                  {/* Quick Action Button */}
+                  <button
+                    onClick={() => navigate(`/quality-shopfloor?station=${encodeURIComponent(selectedEquipment.code)}`)}
+                    className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black text-xs flex items-center justify-center gap-2 shadow"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>{isAr ? 'تسجيل عيب صالة إنتاج جديد هنا' : 'Log New Defect On This Station'}</span>
+                  </button>
+
+                  {/* Real NCRs Section */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-red-400 flex items-center gap-1">
+                        <ShieldAlert className="w-3.5 h-3.5" />
+                        <span>{isAr ? `تقارير عدم المطابقة (${selectedStatus?.matchedNcrs?.length || 0})` : `NCR Reports (${selectedStatus?.matchedNcrs?.length || 0})`}</span>
+                      </span>
+                    </div>
+
+                    {selectedStatus && selectedStatus.matchedNcrs?.length > 0 ? (
+                      <div className="space-y-2 max-h-48 overflow-y-auto">
+                        {selectedStatus.matchedNcrs.map((n, i) => (
+                          <div 
+                            key={i} 
+                            onClick={() => navigate('/quality/records/ncr')}
+                            className="p-3 rounded-xl bg-red-950/30 border border-red-500/30 hover:border-red-400 text-xs space-y-1.5 cursor-pointer transition-colors"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="font-mono font-bold text-red-400">{n.ncrNumber || n.id}</span>
+                              <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-red-500/20 text-red-300">
+                                {n.status || 'Open'}
+                              </span>
+                            </div>
+                            <p className="text-white font-medium text-xs line-clamp-1">{n.title || n.description}</p>
+                            <div className="flex items-center justify-between text-[10px] text-slate-400 pt-1 border-t border-white/5">
+                              <span>{n.createdDate || n.date || 'حديث'}</span>
+                              <span className="text-amber-300 font-bold">{n.severity || 'Major'}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 text-center text-xs text-slate-400">
+                        {isAr ? 'لا توجد تقارير عدم مطابقة (NCR) مسجلة على هذه المحطة' : 'Zero NCR records on this workstation'}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Real Defects Section */}
+                  <div className="space-y-2">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-amber-400 flex items-center gap-1">
+                      <AlertTriangle className="w-3.5 h-3.5" />
+                      <span>{isAr ? `العيوب الميدانية المسجلة (${selectedStatus?.matchedDefects?.length || 0})` : `Shopfloor Defects (${selectedStatus?.matchedDefects?.length || 0})`}</span>
+                    </span>
+
+                    {selectedStatus && selectedStatus.matchedDefects?.length > 0 ? (
+                      <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                        {selectedStatus.matchedDefects.map((d, i) => (
+                          <div key={i} className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs flex justify-between items-center">
+                            <div>
+                              <span className="font-bold text-amber-300 block">{d.defectType || d.type || 'عيب تشغيلي'}</span>
+                              <span className="text-[10px] text-slate-400">{d.date || d.createdAt || 'اليوم'} - {d.partNameAtTime || d.partNumber || 'قطعة عامة'}</span>
+                            </div>
+                            <span className="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 text-[10px] font-black">
+                              الكمية: {d.quantity || 1}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 text-center text-xs text-slate-400">
+                        {isAr ? 'لا توجد عيوب تشغيلية مسجلة على هذه المحطة' : 'Zero shopfloor defects recorded'}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 3: CAPA & 8D PROBLEM SOLVING */}
+              {drawerTab === 'capa-8d' && (
+                <div className="space-y-4">
+                  {/* 8D Problem Solving Section */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-purple-400 flex items-center gap-1">
+                        <FileText className="w-3.5 h-3.5" />
+                        <span>{isAr ? `تحقيقات 8D الجذرية (${selectedStatus?.matchedEightDs?.length || 0})` : `8D Investigations (${selectedStatus?.matchedEightDs?.length || 0})`}</span>
+                      </span>
+                      <button
+                        onClick={() => navigate('/quality/records/eight-d')}
+                        className="text-[10px] text-purple-400 hover:text-purple-300 font-bold"
+                      >
+                        {isAr ? 'فتح الكل ←' : 'Open All →'}
+                      </button>
+                    </div>
+
+                    {selectedStatus && selectedStatus.matchedEightDs?.length > 0 ? (
+                      <div className="space-y-2 max-h-48 overflow-y-auto">
+                        {selectedStatus.matchedEightDs.map((d8, i) => (
+                          <div 
+                            key={i}
+                            onClick={() => navigate('/quality/records/eight-d')}
+                            className="p-3 rounded-xl bg-purple-950/30 border border-purple-500/30 hover:border-purple-400 text-xs space-y-1.5 cursor-pointer transition-colors"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="font-mono font-bold text-purple-300">{d8.eightDNumber || d8.id}</span>
+                              <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase bg-purple-500/20 text-purple-300">
+                                {d8.status || 'D0'}
+                              </span>
+                            </div>
+                            <p className="text-white font-medium text-xs line-clamp-1">{d8.problemTitle || d8.problemDescription}</p>
+                            <div className="flex items-center justify-between text-[10px] text-slate-400 pt-1 border-t border-white/5">
+                              <span>قائد الفريق: {d8.teamLeader || 'فريق الجودة'}</span>
+                              <span className="text-cyan-400 font-mono">{d8.dateDetected || '2026'}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 text-center text-xs text-slate-400">
+                        {isAr ? 'لا توجد تحقيقات 8D نشطة على هذه المحطة' : 'Zero 8D investigations on this station'}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* CAPA Corrective Actions Section */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-cyan-400 flex items-center gap-1">
+                        <CheckSquare className="w-3.5 h-3.5" />
+                        <span>{isAr ? `خطط الإجراءات التصحيحية CAPA (${selectedStatus?.matchedCapas?.length || 0})` : `CAPA Actions (${selectedStatus?.matchedCapas?.length || 0})`}</span>
+                      </span>
+                      <button
+                        onClick={() => navigate('/quality/records/capa')}
+                        className="text-[10px] text-cyan-400 hover:text-cyan-300 font-bold"
+                      >
+                        {isAr ? 'فتح الكل ←' : 'Open All →'}
+                      </button>
+                    </div>
+
+                    {selectedStatus && selectedStatus.matchedCapas?.length > 0 ? (
+                      <div className="space-y-2 max-h-48 overflow-y-auto">
+                        {selectedStatus.matchedCapas.map((capa, i) => (
+                          <div 
+                            key={i}
+                            onClick={() => navigate('/quality/records/capa')}
+                            className="p-3 rounded-xl bg-cyan-950/30 border border-cyan-500/30 hover:border-cyan-400 text-xs space-y-1.5 cursor-pointer transition-colors"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="font-mono font-bold text-cyan-300">{capa.capaNumber || capa.id}</span>
+                              <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-cyan-500/20 text-cyan-300">
+                                {capa.status || 'Active'}
+                              </span>
+                            </div>
+                            <p className="text-white font-medium text-xs line-clamp-1">{capa.title || capa.description}</p>
+                            <div className="flex items-center justify-between text-[10px] text-slate-400 pt-1 border-t border-white/5">
+                              <span>المسؤول: {capa.assignedTo || 'مهندس الجودة'}</span>
+                              <span className="text-amber-400 font-mono">الهدف: {capa.targetDate || '2026-04'}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 text-center text-xs text-slate-400">
+                        {isAr ? 'لا توجد خطط CAPA مسجلة على هذه المحطة' : 'Zero CAPA actions on this station'}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 4: INTERACTIVE CLOSED-LOOP QUALITY JOURNEY */}
+              {drawerTab === 'closed-loop' && (
+                <div className="space-y-3">
+                  <div className="p-3 rounded-2xl bg-cyan-950/40 border border-cyan-500/30 space-y-1">
+                    <div className="flex items-center gap-1.5 text-cyan-300 font-bold text-xs">
+                      <Workflow className="w-4 h-4 text-cyan-400" />
+                      <span>{isAr ? 'مسار الجودة الدائري المترابط (Closed-Loop)' : 'Closed-Loop Quality Traceability'}</span>
+                    </div>
+                    <p className="text-[10px] text-slate-300 leading-relaxed">
+                      {isAr 
+                        ? 'ربط تسلسلي كامل بين الخامات، الإنتاج، التفتيش، عدم المطابقة، التحقيق الجذري، والإجراءات التصحيحية'
+                        : 'End-to-end linked trace from Raw Material ➔ Defect ➔ NCR ➔ 8D ➔ CAPA ➔ OQC'}
+                    </p>
+                  </div>
+
+                  {/* 8-Stage Interactive Pipeline */}
+                  <div className="space-y-2 relative">
+                    {/* Connecting Vertical Track */}
+                    <div className="absolute right-4.5 top-3 bottom-3 w-0.5 bg-gradient-to-b from-cyan-500 via-amber-500 to-emerald-500 opacity-30 pointer-events-none" />
+
+                    {selectedStatus && selectedStatus.closedLoopChain?.map((step, idx) => {
+                      const isAlertStep = step.status === 'alert';
+                      const isWarningStep = step.status === 'warning';
+                      const isPassStep = step.status === 'pass';
+
+                      return (
+                        <div 
+                          key={idx}
+                          onClick={() => navigate(step.route)}
+                          className={`p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between text-xs ${
+                            isAlertStep
+                              ? 'bg-red-950/40 border-red-500/50 hover:bg-red-900/40'
+                              : isWarningStep
+                                ? 'bg-amber-950/30 border-amber-500/40 hover:bg-amber-900/30'
+                                : isPassStep
+                                  ? 'bg-emerald-950/30 border-emerald-500/40 hover:bg-emerald-900/30'
+                                  : 'bg-slate-900/60 border-slate-800 hover:bg-slate-800'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5">
+                            {/* Step Index Badge */}
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-[10px] shrink-0 border ${
+                              isAlertStep 
+                                ? 'bg-red-500 text-white border-red-400' 
+                                : isWarningStep 
+                                  ? 'bg-amber-500 text-slate-950 border-amber-400' 
+                                  : isPassStep
+                                    ? 'bg-emerald-500 text-slate-950 border-emerald-400'
+                                    : 'bg-slate-800 text-slate-400 border-slate-700'
+                            }`}>
+                              {idx + 1}
+                            </div>
+
+                            <div>
+                              <span className="font-bold text-white block text-[11px]">
+                                {isAr ? step.titleAr : step.titleEn}
+                              </span>
+                              <div className="flex items-center gap-1.5 text-[9px] text-slate-400">
+                                <span>{step.count} {isAr ? 'سجلات' : 'records'}</span>
+                                {step.sampleId && (
+                                  <span className="text-cyan-400 font-mono font-bold">({step.sampleId})</span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400 group-hover:text-cyan-300">
+                            <span className="hidden sm:inline">{isAr ? 'فتح' : 'View'}</span>
+                            <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           </aside>
         )}
@@ -3201,6 +3983,20 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
             </div>
           </div>
         </div>
+      )}
+
+      {/* Conveyor Connection Network Manager Modal */}
+      {showConnectionManager && (
+        <ConnectionManagerModal
+          connections={connectionsList}
+          stations={equipmentList}
+          isAr={isAr}
+          onSave={handleSaveConnection}
+          onDelete={handleDeleteConnection}
+          onAutoConnect={handleAutoConnectStations}
+          onReset={handleResetConnections}
+          onClose={() => setShowConnectionManager(false)}
+        />
       )}
     </div>
   );
@@ -3455,37 +4251,101 @@ function StationEditModal({ station, isNew, isAr, onSave, onDelete, onClose }: S
               </select>
             </div>
 
-            {/* Target Module URL */}
-            <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1">
-                {isAr ? 'الإجراء السريع المرتبط' : 'Quick Linked Module'}
+            {/* Target Module URL (16 Unified Modules) */}
+            <div className="md:col-span-2">
+              <label className="block text-xs font-bold text-slate-300 mb-1 flex items-center gap-1.5">
+                <Link2 className="w-3.5 h-3.5 text-cyan-400" />
+                <span>{isAr ? 'الربط التفاعلي المباشر بأقسام المنصة (16 موديول متصل)' : 'Direct Platform Module Integration (16 Connected Modules)'}</span>
               </label>
               <select
                 value={formData.moduleUrl}
                 onChange={e => {
                   const url = e.target.value;
-                  let label = 'تسجيل صالة الإنتاج';
-                  if (url.includes('inspection')) label = 'فحص الشحنات (IQC)';
-                  else if (url.includes('spc')) label = 'كارتات التحكم الإحصائي SPC';
-                  else if (url.includes('ncr')) label = 'تقارير عدم المطابقة (NCR)';
-                  else if (url.includes('capa')) label = 'الإجراءات التصحيحية (CAPA)';
-                  else if (url.includes('calibration')) label = 'المعايرة والأجهزة';
-                  else if (url.includes('outgoing')) label = 'فحص المنتج النهائي (OQC)';
-                  else if (url.includes('complaints')) label = 'شكاوى العملاء';
-                  setFormData({ ...formData, moduleUrl: url, moduleLabelAr: label });
+                  const found = PLATFORM_MODULE_OPTIONS.find(m => m.url === url);
+                  setFormData({
+                    ...formData,
+                    moduleUrl: url,
+                    moduleLabelAr: found ? found.shortAr : 'إجراء جودة'
+                  });
                 }}
                 className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-amber-400"
               >
-                <option value="/quality-shopfloor">تسجيل صالة الإنتاج الميداني (/quality-shopfloor)</option>
-                <option value="/compliance/hub/inspection">فحص استلام الشحنات IQC (/inspection)</option>
-                <option value="/spc">كارتات التحكم الإحصائي SPC (/spc)</option>
-                <option value="/defect-log">مسجل العيوب اليومية (/defect-log)</option>
-                <option value="/quality/records/ncr">تقارير عدم المطابقة NCR (/ncr)</option>
-                <option value="/quality/records/capa">الإجراءات التصحيحية CAPA (/capa)</option>
-                <option value="/compliance/hub/calibration">معايرة الأجهزة والمعدات (/calibration)</option>
-                <option value="/outgoing-quality">فحص المنتج النهائي OQC (/outgoing-quality)</option>
-                <option value="/quality/records/complaints">شكاوى العملاء (/complaints)</option>
+                {PLATFORM_MODULE_OPTIONS.map(mod => (
+                  <option key={mod.url} value={mod.url}>
+                    {isAr ? mod.labelAr : mod.labelEn}
+                  </option>
+                ))}
               </select>
+            </div>
+
+            {/* Critical Quality Characteristic (CTQ) */}
+            <div>
+              <label className="block text-xs font-bold text-slate-300 mb-1">
+                {isAr ? 'الخاصية / المعيار الحرج للجودة (CTQ)' : 'Critical Quality Characteristic (CTQ)'}
+              </label>
+              <input
+                type="text"
+                value={formData.criticalParameterAr || ''}
+                onChange={e => setFormData({ ...formData, criticalParameterAr: e.target.value })}
+                placeholder={isAr ? 'مثال: القطر الخارجي، عزم الربط، خشونة السطح' : 'e.g. Outer Diameter, Torque, Hardness'}
+                className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400"
+              />
+            </div>
+
+            {/* Target Spec & Tolerance */}
+            <div>
+              <label className="block text-xs font-bold text-slate-300 mb-1">
+                {isAr ? 'المواصفة المستهدفة والتفاوت (Target Spec)' : 'Target Spec & Tolerance'}
+              </label>
+              <input
+                type="text"
+                value={formData.targetSpec || ''}
+                onChange={e => setFormData({ ...formData, targetSpec: e.target.value })}
+                placeholder="e.g. 24.5 ± 0.05 mm, 120 Nm"
+                className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 font-mono"
+              />
+            </div>
+
+            {/* Active Operator */}
+            <div>
+              <label className="block text-xs font-bold text-slate-300 mb-1">
+                {isAr ? 'المشغل المسؤول بالمحطة' : 'Active Operator / Technician'}
+              </label>
+              <input
+                type="text"
+                value={formData.activeOperator || ''}
+                onChange={e => setFormData({ ...formData, activeOperator: e.target.value })}
+                placeholder={isAr ? 'مثال: م. أحمد عبد الله / وردية أ' : 'e.g. Eng. Ahmed / Shift A'}
+                className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400"
+              />
+            </div>
+
+            {/* Vibration & Temp Specs */}
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">
+                  {isAr ? 'حد الاهتزاز (mm/s)' : 'Vibration (mm/s)'}
+                </label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={formData.vibrationMmS ?? 1.2}
+                  onChange={e => setFormData({ ...formData, vibrationMmS: Number(e.target.value) })}
+                  className="w-full px-2 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white font-mono"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">
+                  {isAr ? 'درجة الحرارة (°C)' : 'Temp (°C)'}
+                </label>
+                <input
+                  type="number"
+                  step="0.5"
+                  value={formData.temperatureC ?? 38.5}
+                  onChange={e => setFormData({ ...formData, temperatureC: Number(e.target.value) })}
+                  className="w-full px-2 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white font-mono"
+                />
+              </div>
             </div>
 
             {/* Coordinates and Dimensions */}
@@ -3570,4 +4430,563 @@ function StationEditModal({ station, isNew, isAr, onSave, onDelete, onClose }: S
   );
 }
 
+// 16 Unified Platform Module Options for seamless cross-linking
+const PLATFORM_MODULE_OPTIONS = [
+  { url: '/quality-shopfloor', shortAr: 'تسجيل الصالة', labelAr: '1. تسجيل صالة الإنتاج الميداني (Shopfloor Entry)', labelEn: '1. Shopfloor Defect Entry (/quality-shopfloor)' },
+  { url: '/compliance/hub/inspection', shortAr: 'فحص الشحنات', labelAr: '2. فحص استلام الشحنات والمواد الخام (IQC Hub)', labelEn: '2. Incoming Quality Inspection Hub (/inspection)' },
+  { url: '/quality/inspection-plans', shortAr: 'خطط الفحص', labelAr: '3. خطط الفحص والتفتيش المعيارية (Inspection Plans)', labelEn: '3. Standard Inspection Plans (/inspection-plans)' },
+  { url: '/supplier-quality', shortAr: 'جودة الموردين', labelAr: '4. بوابة جودة وتأهيل الموردين (Supplier Quality)', labelEn: '4. Supplier Quality Portal (/supplier-quality)' },
+  { url: '/quality/records/ncr', shortAr: 'تقارير عدم المطابقة', labelAr: '5. تقارير حالات عدم المطابقة (NCR Registry)', labelEn: '5. Non-Conformance Reports (/ncr)' },
+  { url: '/quality/records/capa', shortAr: 'الإجراءات التصحيحية', labelAr: '6. الإجراءات التصحيحية والوقائية (CAPA)', labelEn: '6. Corrective & Preventive Action (/capa)' },
+  { url: '/quality/records/eight-d', shortAr: 'منهجية 8D', labelAr: '7. منهجية حل المشكلات الثمانية (8D Problem Solving)', labelEn: '7. 8D Problem Solving Methodology (/eight-d)' },
+  { url: '/compliance/hub/control-plan', shortAr: 'خطة المراقبة', labelAr: '8. خطة مراقبة العمليات والتصنيع (Control Plan)', labelEn: '8. Manufacturing Control Plan (/control-plan)' },
+  { url: '/spc', shortAr: 'التحكم الإحصائي', labelAr: '9. كارتات التحكم الإحصائي والقدرة العملية (SPC & Cpk)', labelEn: '9. Statistical Process Control & Capability (/spc)' },
+  { url: '/compliance/hub/calibration', shortAr: 'المعايرة', labelAr: '10. معايرة وصيانة أجهزة القياس (Calibration Hub)', labelEn: '10. Equipment & Gauge Calibration (/calibration)' },
+  { url: '/compliance/hub/audit', shortAr: 'التدقيق LPA', labelAr: '11. التدقيق الداخلي وتدقيق العمليات الطبقي (LPA Audit)', labelEn: '11. Layered Process Audits (/audit)' },
+  { url: '/outgoing-quality', shortAr: 'الفحص النهائي OQC', labelAr: '12. فحص وتحرير المنتج النهائي للشحن (Outgoing OQC)', labelEn: '12. Outgoing Quality Final Release (/outgoing-quality)' },
+  { url: '/quality/records/complaints', shortAr: 'شكاوى العملاء', labelAr: '13. إدارة ومتابعة شكاوى العملاء (Customer Complaints)', labelEn: '13. Customer Complaints Registry (/complaints)' },
+  { url: '/digital-twin', shortAr: 'التوأم الرقمي', labelAr: '14. التوأم الرقمي ومحاكاة الخطوط (Digital Twin)', labelEn: '14. Digital Twin Simulation (/digital-twin)' },
+  { url: '/quality-master-data', shortAr: 'البيانات الرئيسية', labelAr: '15. كتالوج البيانات الرئيسية والمعدات (Master Data)', labelEn: '15. Master Data & Assets Catalog (/quality-master-data)' },
+  { url: '/quality-dashboard', shortAr: 'لوحة القيادة', labelAr: '16. لوحة القيادة والمؤشرات التنفيذية (KPIs Dashboard)', labelEn: '16. Quality Executive Dashboard (/quality-dashboard)' },
+];
+
+// ============================================================================
+// MODAL COMPONENT: CONVEYOR NETWORK MANAGER (مدير شبكة السيور والمسارات)
+// ============================================================================
+interface ConnectionManagerModalProps {
+  connections: ScadaConnection[];
+  stations: ScadaEquipment[];
+  isAr: boolean;
+  onSave: (conn: ScadaConnection) => void;
+  onDelete: (id: string) => void;
+  onAutoConnect: () => void;
+  onReset: () => void;
+  onClose: () => void;
+}
+
+function ConnectionManagerModal({
+  connections,
+  stations,
+  isAr,
+  onSave,
+  onDelete,
+  onAutoConnect,
+  onReset,
+  onClose
+}: ConnectionManagerModalProps) {
+  const [editingConn, setEditingConn] = useState<ScadaConnection | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
+  const getStation = (id: string) => stations.find(s => s.id === id);
+
+  const emptyConn: ScadaConnection = {
+    id: `CONN-${Date.now().toString(36).toUpperCase()}`,
+    fromId: stations[0]?.id || '',
+    toId: stations[1]?.id || stations[0]?.id || '',
+    labelAr: 'مسار ناقل جديد',
+    labelEn: 'New Conveyor Flow',
+    type: 'motor-roller',
+    fromAnchor: 'right',
+    toAnchor: 'left',
+    velocityMs: 0.5,
+    motorKw: 0.75,
+    capacityUnits: 20,
+    currentWip: 0,
+    sensorType: 'Optical Retroreflective'
+  };
+
+  const currentForm = editingConn || (isCreating ? emptyConn : null);
+
+  const handleStartCreate = () => {
+    setEditingConn(null);
+    setIsCreating(true);
+  };
+
+  const handleStartEdit = (conn: ScadaConnection) => {
+    setIsCreating(false);
+    setEditingConn({ ...conn });
+  };
+
+  const handleFormChange = (patch: Partial<ScadaConnection>) => {
+    if (editingConn) {
+      setEditingConn(prev => prev ? { ...prev, ...patch } : null);
+    } else if (isCreating) {
+      setEditingConn({ ...emptyConn, ...patch });
+    }
+  };
+
+  const handleSaveForm = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentForm) return;
+    if (!currentForm.fromId || !currentForm.toId) {
+      toast.error(isAr ? 'يرجى تحديد محطة البداية ومحطة الوصول' : 'Please select from and to stations');
+      return;
+    }
+    if (currentForm.fromId === currentForm.toId) {
+      toast.error(isAr ? 'لا يمكن ربط المحطة بنفسها' : 'Cannot connect a station to itself');
+      return;
+    }
+    onSave(currentForm);
+    setEditingConn(null);
+    setIsCreating(false);
+  };
+
+  const filteredConnections = connections.filter(conn => {
+    const fromSt = getStation(conn.fromId);
+    const toSt = getStation(conn.toId);
+    const fromStr = fromSt ? `${fromSt.code} ${fromSt.titleAr} ${fromSt.titleEn}` : conn.fromId;
+    const toStr = toSt ? `${toSt.code} ${toSt.titleAr} ${toSt.titleEn}` : conn.toId;
+    const q = searchQuery.toLowerCase();
+    const matchesSearch = !searchQuery || 
+      conn.id.toLowerCase().includes(q) ||
+      conn.labelAr.toLowerCase().includes(q) ||
+      conn.labelEn.toLowerCase().includes(q) ||
+      fromStr.toLowerCase().includes(q) ||
+      toStr.toLowerCase().includes(q);
+
+    const matchesType = typeFilter === 'all' || conn.type === typeFilter;
+    return matchesSearch && matchesType;
+  });
+
+  const CONVEYOR_TYPES: { id: ScadaConnection['type']; labelAr: string; labelEn: string; icon: string }[] = [
+    { id: 'motor-roller', labelAr: 'سير رولمان بمحرك كهربائي', labelEn: 'Motorized Roller Conveyor', icon: '⚡' },
+    { id: 'belt', labelAr: 'سير مطاطي مستمر (Belt)', labelEn: 'Continuous Belt Conveyor', icon: '🔄' },
+    { id: 'gravity-roller', labelAr: 'سير جاذبية انسيابي (Gravity)', labelEn: 'Gravity Roller Lane', icon: '↘️' },
+    { id: 'chute', labelAr: 'مزلقان سريع للمرفوضات/الفحص', labelEn: 'High-Speed Drop Chute', icon: '🔻' },
+    { id: 'pneumatic', labelAr: 'أنبوب هوائي سريع لعينات الجودة', labelEn: 'Pneumatic Sample Tube', icon: '💨' },
+    { id: 'bridge', labelAr: 'جسر ناقل هوائي معلق (Bridge)', labelEn: 'Overhead Transfer Bridge', icon: '🌉' },
+    { id: 'dock-ramp', labelAr: 'رامب ومنحدر تحميل رصيف الشحن', labelEn: 'Dock Loading Ramp', icon: '🚛' },
+  ];
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 overflow-y-auto">
+      <div className="bg-[#080d19] border-2 border-cyan-500/50 rounded-3xl max-w-4xl w-full p-6 shadow-2xl space-y-5 text-white my-8 max-h-[90vh] flex flex-col" dir={isAr ? 'rtl' : 'ltr'}>
+        {/* Header */}
+        <div className="flex items-center justify-between pb-4 border-b border-white/10 shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-2xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center border border-cyan-500/40">
+              <Workflow className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-black text-white">
+                  {isAr ? 'مدير شبكة السيور والمسارات الناقلة' : 'Conveyor Flow Network Manager'}
+                </h2>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                  {connections.length} {isAr ? 'مسار نشط' : 'active routes'}
+                </span>
+              </div>
+              <p className="text-xs text-slate-400">
+                {isAr ? 'إدارة خطوط النقل الميكانيكية بين محطات المصنع، سرعات النقل، بوابات التغذية وسعة التشغيل' : 'Manage mechanical conveyor connections between stations, speeds, and dock anchors'}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onAutoConnect}
+              className="px-3 py-1.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/40 font-bold text-xs flex items-center gap-1.5 transition-all"
+              title={isAr ? 'ربط جميع المحطات تسلسلياً آلياً' : 'Auto-connect all stations sequentially'}
+            >
+              <Sparkles className="w-3.5 h-3.5 text-cyan-300" />
+              <span className="hidden sm:inline">{isAr ? 'ربط آلي انسيابي' : 'Auto-Connect'}</span>
+            </button>
+            <button
+              onClick={onReset}
+              className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs flex items-center gap-1.5 transition-all"
+              title={isAr ? 'استعادة المسارات الافتراضية للمصنع' : 'Reset default factory connections'}
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{isAr ? 'استعادة الافتراضي' : 'Reset'}</span>
+            </button>
+            {!isCreating && !editingConn && (
+              <button
+                onClick={handleStartCreate}
+                className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs flex items-center gap-1.5 transition-all shadow-lg shadow-emerald-500/20"
+              >
+                <Plus className="w-4 h-4" />
+                <span>{isAr ? 'مسار جديد' : 'New Conveyor'}</span>
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Create / Edit Form Drawer */}
+        {(isCreating || editingConn) && currentForm && (
+          <form onSubmit={handleSaveForm} className="p-4 rounded-2xl bg-cyan-950/30 border border-cyan-500/40 space-y-4 shrink-0 animate-in fade-in duration-200">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-black text-cyan-300 flex items-center gap-1.5">
+                <Edit3 className="w-3.5 h-3.5" />
+                {editingConn ? (isAr ? 'تعديل بيانات المسار الناقل' : 'Edit Conveyor Route') : (isAr ? 'إضافة مسار ناقل جديد بين محطتين' : 'Create New Conveyor Route')}
+              </span>
+              <button
+                type="button"
+                onClick={() => { setIsCreating(false); setEditingConn(null); }}
+                className="text-xs text-slate-400 hover:text-white"
+              >
+                {isAr ? 'إلغاء' : 'Cancel'}
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+              {/* From Station */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-300 mb-1">
+                  {isAr ? 'محطة الانطلاق (From Station) *' : 'Origin Station *'}
+                </label>
+                <select
+                  value={currentForm.fromId}
+                  onChange={e => handleFormChange({ fromId: e.target.value })}
+                  className="w-full px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-cyan-400"
+                >
+                  {stations.map(st => (
+                    <option key={st.id} value={st.id}>
+                      {st.code} - {isAr ? st.titleAr : st.titleEn}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* From Anchor */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-300 mb-1">
+                  {isAr ? 'بوابة الخروج (Outfeed Dock)' : 'Outfeed Anchor Port'}
+                </label>
+                <select
+                  value={currentForm.fromAnchor || 'right'}
+                  onChange={e => handleFormChange({ fromAnchor: e.target.value as any })}
+                  className="w-full px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-cyan-400"
+                >
+                  <option value="right">{isAr ? 'اليمين (Right)' : 'Right'}</option>
+                  <option value="left">{isAr ? 'اليسار (Left)' : 'Left'}</option>
+                  <option value="bottom">{isAr ? 'الأسفل (Bottom)' : 'Bottom'}</option>
+                  <option value="top">{isAr ? 'الأعلى (Top)' : 'Top'}</option>
+                </select>
+              </div>
+
+              {/* To Station */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-300 mb-1">
+                  {isAr ? 'محطة الوصول (To Station) *' : 'Destination Station *'}
+                </label>
+                <select
+                  value={currentForm.toId}
+                  onChange={e => handleFormChange({ toId: e.target.value })}
+                  className="w-full px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-cyan-400"
+                >
+                  {stations.map(st => (
+                    <option key={st.id} value={st.id}>
+                      {st.code} - {isAr ? st.titleAr : st.titleEn}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* To Anchor */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-300 mb-1">
+                  {isAr ? 'بوابة الدخول (Infeed Dock)' : 'Infeed Anchor Port'}
+                </label>
+                <select
+                  value={currentForm.toAnchor || 'left'}
+                  onChange={e => handleFormChange({ toAnchor: e.target.value as any })}
+                  className="w-full px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-cyan-400"
+                >
+                  <option value="left">{isAr ? 'اليسار (Left)' : 'Left'}</option>
+                  <option value="right">{isAr ? 'اليمين (Right)' : 'Right'}</option>
+                  <option value="top">{isAr ? 'الأعلى (Top)' : 'Top'}</option>
+                  <option value="bottom">{isAr ? 'الأسفل (Bottom)' : 'Bottom'}</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+              {/* Conveyor Type */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-300 mb-1">
+                  {isAr ? 'نوع تقنية النقل' : 'Conveyor Technology'}
+                </label>
+                <select
+                  value={currentForm.type}
+                  onChange={e => handleFormChange({ type: e.target.value as any })}
+                  className="w-full px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-cyan-400"
+                >
+                  {CONVEYOR_TYPES.map(t => (
+                    <option key={t.id} value={t.id}>
+                      {t.icon} {isAr ? t.labelAr : t.labelEn}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Label Arabic */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-300 mb-1">
+                  {isAr ? 'اسم المسار (بالعربية)' : 'Route Label (Arabic)'}
+                </label>
+                <input
+                  type="text"
+                  value={currentForm.labelAr}
+                  onChange={e => handleFormChange({ labelAr: e.target.value })}
+                  placeholder="مثال: ناقل أوتوماتيكي إلى الفحص"
+                  className="w-full px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-cyan-400"
+                />
+              </div>
+
+              {/* Label English */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-300 mb-1">
+                  {isAr ? 'اسم المسار (بالإنجليزية)' : 'Route Label (English)'}
+                </label>
+                <input
+                  type="text"
+                  value={currentForm.labelEn}
+                  onChange={e => handleFormChange({ labelEn: e.target.value })}
+                  placeholder="e.g. Automated Transfer Lane"
+                  className="w-full px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-cyan-400"
+                />
+              </div>
+            </div>
+
+            {/* Telemetry specs: Velocity, Motor kW, Capacity, Sensor */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div>
+                <label className="block text-[10px] text-slate-400 mb-1">{isAr ? 'السرعة (م/ث)' : 'Velocity (m/s)'}</label>
+                <input
+                  type="number"
+                  step="0.05"
+                  value={currentForm.velocityMs ?? 0.5}
+                  onChange={e => handleFormChange({ velocityMs: Number(e.target.value) })}
+                  className="w-full px-2 py-1 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white font-mono"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] text-slate-400 mb-1">{isAr ? 'قدرة المحرك (kW)' : 'Motor Power (kW)'}</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={currentForm.motorKw ?? 0.75}
+                  onChange={e => handleFormChange({ motorKw: Number(e.target.value) })}
+                  className="w-full px-2 py-1 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white font-mono"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] text-slate-400 mb-1">{isAr ? 'سعة السير (قطع)' : 'WIP Capacity'}</label>
+                <input
+                  type="number"
+                  value={currentForm.capacityUnits ?? 20}
+                  onChange={e => handleFormChange({ capacityUnits: Number(e.target.value) })}
+                  className="w-full px-2 py-1 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white font-mono"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] text-slate-400 mb-1">{isAr ? 'حساس المراقبة' : 'Sensor'}</label>
+                <input
+                  type="text"
+                  value={currentForm.sensorType || 'Optical Retroreflective'}
+                  onChange={e => handleFormChange({ sensorType: e.target.value })}
+                  className="w-full px-2 py-1 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-cyan-500/20">
+              <button
+                type="button"
+                onClick={() => { setIsCreating(false); setEditingConn(null); }}
+                className="px-4 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs"
+              >
+                {isAr ? 'إلغاء' : 'Cancel'}
+              </button>
+              <button
+                type="submit"
+                className="px-5 py-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs shadow-lg shadow-cyan-500/20 flex items-center gap-1.5"
+              >
+                <Save className="w-3.5 h-3.5" />
+                <span>{isAr ? 'حفظ مسار النقل' : 'Save Route'}</span>
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* Search & Filter Bar */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shrink-0">
+          <div className="relative flex-1">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 rtl:right-3 rtl:left-auto top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder={isAr ? 'بحث بكود المحطة، الاسم، أو نوع الناقل...' : 'Search by station code, name, or conveyor type...'}
+              className="w-full pl-9 pr-4 rtl:pr-9 rtl:pl-4 py-2 rounded-xl bg-slate-900/90 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400"
+            />
+          </div>
+
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+            <button
+              onClick={() => setTypeFilter('all')}
+              className={`px-3 py-1 rounded-xl text-xs font-bold border transition-all shrink-0 ${
+                typeFilter === 'all'
+                  ? 'bg-cyan-500 text-slate-950 border-cyan-400'
+                  : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
+              }`}
+            >
+              {isAr ? 'الكل' : 'All'}
+            </button>
+            {CONVEYOR_TYPES.slice(0, 4).map(t => (
+              <button
+                key={t.id}
+                onClick={() => setTypeFilter(t.id)}
+                className={`px-2.5 py-1 rounded-xl text-xs font-bold border transition-all shrink-0 flex items-center gap-1 ${
+                  typeFilter === t.id
+                    ? 'bg-cyan-500 text-slate-950 border-cyan-400'
+                    : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
+                }`}
+              >
+                <span>{t.icon}</span>
+                <span className="hidden sm:inline">{isAr ? t.labelAr.split(' ')[0] : t.id}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Connections List / Grid */}
+        <div className="flex-1 overflow-y-auto space-y-2.5 pr-1">
+          {filteredConnections.length === 0 ? (
+            <div className="p-8 text-center rounded-2xl bg-slate-900/40 border border-dashed border-slate-800 text-slate-400">
+              <Workflow className="w-8 h-8 text-slate-600 mx-auto mb-2" />
+              <p className="text-xs font-bold">{isAr ? 'لا توجد مسارات مطابقة' : 'No matching conveyor routes found'}</p>
+            </div>
+          ) : (
+            filteredConnections.map(conn => {
+              const fromSt = getStation(conn.fromId);
+              const toSt = getStation(conn.toId);
+              const typeMeta = CONVEYOR_TYPES.find(t => t.id === conn.type) || CONVEYOR_TYPES[0];
+
+              return (
+                <div
+                  key={conn.id}
+                  className="p-3.5 rounded-2xl bg-slate-900/70 border border-slate-800 hover:border-cyan-500/40 transition-all flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-lg shrink-0">
+                      {typeMeta.icon}
+                    </div>
+
+                    <div>
+                      {/* Flow badges */}
+                      <div className="flex items-center gap-2 flex-wrap text-xs">
+                        <span className="font-mono font-bold text-cyan-300 bg-cyan-950/60 px-2 py-0.5 rounded-lg border border-cyan-500/30">
+                          {fromSt?.code || conn.fromId}
+                        </span>
+                        <div className="flex items-center text-slate-500">
+                          <span className="text-[10px] text-slate-400">[{conn.fromAnchor || 'right'}]</span>
+                          <ArrowRight className="w-3.5 h-3.5 text-cyan-400 mx-1 animate-pulse" />
+                          <span className="text-[10px] text-slate-400">[{conn.toAnchor || 'left'}]</span>
+                        </div>
+                        <span className="font-mono font-bold text-amber-300 bg-amber-950/60 px-2 py-0.5 rounded-lg border border-amber-500/30">
+                          {toSt?.code || conn.toId}
+                        </span>
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
+                          {isAr ? typeMeta.labelAr : typeMeta.labelEn}
+                        </span>
+                      </div>
+
+                      {/* Station Names & Meta */}
+                      <p className="text-xs text-slate-300 mt-1">
+                        {isAr ? conn.labelAr : conn.labelEn}
+                        <span className="text-slate-500 text-[11px] mx-1">·</span>
+                        <span className="text-slate-400 text-[11px]">
+                          {fromSt ? (isAr ? fromSt.titleAr : fromSt.titleEn) : ''} ➔ {toSt ? (isAr ? toSt.titleAr : toSt.titleEn) : ''}
+                        </span>
+                      </p>
+
+                      {/* Telemetry specs pills */}
+                      <div className="flex items-center gap-2 mt-1.5 text-[10px] text-slate-400">
+                        <span className="font-mono text-cyan-400">⚡ {conn.velocityMs ?? 0.5} m/s</span>
+                        <span>·</span>
+                        <span className="font-mono text-slate-300">⚙️ {conn.motorKw ?? 0.75} kW</span>
+                        <span>·</span>
+                        <span className="font-mono text-emerald-400">📦 سعة: {conn.capacityUnits ?? 20}</span>
+                        {conn.sensorType && (
+                          <>
+                            <span>·</span>
+                            <span className="text-slate-400">📡 {conn.sensorType}</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                    <button
+                      onClick={() => handleStartEdit(conn)}
+                      className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+                      title={isAr ? 'تعديل المسار' : 'Edit Route'}
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => setDeleteConfirmId(conn.id)}
+                      className="p-2 rounded-xl bg-red-950/40 hover:bg-red-900/60 text-red-400 hover:text-red-300 border border-red-500/30 transition-colors"
+                      title={isAr ? 'حذف المسار' : 'Delete Route'}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Delete Confirmation inside Connection Manager */}
+        {deleteConfirmId && (
+          <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+            <div className="bg-[#0f172a] border border-red-500/40 rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-center">
+              <div className="w-12 h-12 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center mx-auto">
+                <Trash2 className="w-6 h-6" />
+              </div>
+              <h3 className="text-base font-black text-white">
+                {isAr ? 'تأكيد حذف مسار النقل' : 'Confirm Delete Conveyor'}
+              </h3>
+              <p className="text-xs text-slate-400">
+                {isAr ? 'هل أنت متأكد من حذف هذا المسار الناقل من شبكة المصنع؟' : 'Are you sure you want to remove this conveyor from the factory floorplan?'}
+              </p>
+              <div className="flex items-center justify-center gap-3 pt-2">
+                <button
+                  onClick={() => setDeleteConfirmId(null)}
+                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs"
+                >
+                  {isAr ? 'إلغاء' : 'Cancel'}
+                </button>
+                <button
+                  onClick={() => {
+                    onDelete(deleteConfirmId);
+                    setDeleteConfirmId(null);
+                  }}
+                  className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs shadow-lg shadow-red-600/30"
+                >
+                  {isAr ? 'نعم، احذف المسار' : 'Yes, Delete'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default QualityControlTower;
+
