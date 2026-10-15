@@ -3695,6 +3695,14 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                   setIsDrawerOpen(true);
                   if (soundEnabled) playIndustrialChime('camera');
                 }}
+                selectedDepartmentId={selectedDeptId}
+                onSelectDepartment={(deptId) => {
+                  setSelectedDeptId(deptId);
+                  setDrawerTab('department');
+                  setIsDrawerOpen(true);
+                  if (soundEnabled) playIndustrialChime('camera');
+                }}
+                departmentCounts={departmentCounts}
                 isAr={isAr}
               />
             </ErrorBoundary>
