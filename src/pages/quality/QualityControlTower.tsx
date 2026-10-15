@@ -1170,6 +1170,13 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState<{ clientX: number; clientY: number; initPanX: number; initPanY: number } | null>(null);
 
+  // Instant Direct Connector Dragging State (Figma/Miro port drag-and-drop)
+  const [activeConnectorDrag, setActiveConnectorDrag] = useState<{
+    fromStationId: string;
+    fromAnchor: 'left' | 'right' | 'top' | 'bottom';
+    currentPos: { x: number; y: number };
+  } | null>(null);
+
   // Quick Editing & Nudge Step State
   const [nudgeStep, setNudgeStep] = useState<number>(20);
   const [quickConnectTargetId, setQuickConnectTargetId] = useState<string>('');
@@ -1949,14 +1956,35 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
     }
   };
 
-  // Station Pointer Down
+  // Instant Direct Connector Pointer Down (Figma/Miro style port drag)
+  const handleConnectorPointerDown = (e: React.PointerEvent, stationId: string, anchor: 'left' | 'right' | 'top' | 'bottom') => {
+    e.stopPropagation();
+    e.preventDefault();
+    const coords = getFloorCoords(e);
+    setActiveConnectorDrag({
+      fromStationId: stationId,
+      fromAnchor: anchor,
+      currentPos: coords
+    });
+    try {
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    } catch {}
+  };
+
+  // Direct Station Pointer Down - Anytime Dragging (بدون الحاجة لأي أوضاع!)
   const handleStationPointerDown = (e: React.PointerEvent, station: ScadaEquipment) => {
     if (isDrawingPath) {
       handleStationClickWhileDrawing(station, e);
       return;
     }
     setSelectedStationId(station.id);
-    if (!isCustomizing) return;
+
+    // Don't drag if clicking an interactive inner button
+    const target = e.target as HTMLElement;
+    if (target.closest('button') || target.closest('a') || target.closest('input')) {
+      return;
+    }
+
     e.stopPropagation();
     e.preventDefault();
     setDraggingId(station.id);
@@ -1973,6 +2001,13 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
 
   // Universal Unified Pointer Move
   const handlePointerMove = (e: React.PointerEvent) => {
+    // 0. Active Direct Connector Dragging (Figma/Miro style port drag-and-drop)
+    if (activeConnectorDrag) {
+      const coords = getFloorCoords(e);
+      setActiveConnectorDrag(prev => prev ? { ...prev, currentPos: coords } : null);
+      return;
+    }
+
     // 1. Waypoint Dragging
     if (draggingWaypoint) {
       const deltaX = (e.clientX - draggingWaypoint.startClientX) / zoomLevel;
@@ -2025,6 +2060,68 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
 
   // Universal Unified Pointer Up
   const handlePointerUp = (e: React.PointerEvent) => {
+    // Complete Direct Connector Dragging
+    if (activeConnectorDrag) {
+      const dropCoords = getFloorCoords(e);
+      const targetStation = equipmentList.find(eq => 
+        eq.id !== activeConnectorDrag.fromStationId &&
+        dropCoords.x >= eq.x - 20 && dropCoords.x <= eq.x + eq.w + 20 &&
+        dropCoords.y >= eq.y - 20 && dropCoords.y <= eq.y + eq.h + 20
+      );
+
+      if (targetStation) {
+        const dx = (targetStation.x + targetStation.w / 2) - dropCoords.x;
+        const dy = (targetStation.y + targetStation.h / 2) - dropCoords.y;
+        let toAnchor: 'left' | 'right' | 'top' | 'bottom' = 'left';
+        if (Math.abs(dx) > Math.abs(dy)) {
+          toAnchor = dx >= 0 ? 'left' : 'right';
+        } else {
+          toAnchor = dy >= 0 ? 'top' : 'bottom';
+        }
+
+        const fromSt = equipmentMap[activeConnectorDrag.fromStationId];
+        const newConn: ScadaConnection = {
+          id: `CONN-${fromSt?.code || ''}-${targetStation.code}-${Date.now().toString(36).slice(-4)}`,
+          fromId: activeConnectorDrag.fromStationId,
+          toId: targetStation.id,
+          labelAr: `مسار: ${fromSt?.code || ''} ➔ ${targetStation.code}`,
+          labelEn: `Conveyor: ${fromSt?.code || ''} ➔ ${targetStation.code}`,
+          type: 'motor-roller',
+          fromAnchor: activeConnectorDrag.fromAnchor,
+          toAnchor,
+          velocityMs: 0.5,
+          motorKw: 0.75,
+          capacityUnits: 20,
+          currentWip: 0,
+          sensorType: 'Optical Retroreflective'
+        };
+
+        setConnectionsList(prev => {
+          const filtered = prev.filter(c => !(c.fromId === newConn.fromId && c.toId === newConn.toId));
+          const next = [...filtered, newConn];
+          try {
+            localStorage.setItem(SCADA_CONNECTIONS_KEY, JSON.stringify(next));
+          } catch {}
+          return next;
+        });
+
+        setSelectedConveyorId(newConn.id);
+        if (soundEnabled) playIndustrialChime('success');
+        toast.success(isAr 
+          ? `✨ تم ربط سير ناقل جديد فوراً بالسحب بين [${fromSt?.code}] و [${targetStation.code}]!` 
+          : `✨ Instantly connected conveyor between [${fromSt?.code}] and [${targetStation.code}]!`
+        );
+      } else {
+        // Quick tap/click fallback on the connector handle
+        handleAnchorClick(activeConnectorDrag.fromStationId, activeConnectorDrag.fromAnchor);
+      }
+
+      try {
+        (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+      } catch {}
+      setActiveConnectorDrag(null);
+    }
+
     if (draggingWaypoint) {
       try {
         (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
@@ -3769,6 +3866,24 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                         setSelectedConveyorId(conn.id);
                         if (soundEnabled) playIndustrialChime('camera');
                       }}
+                      onDoubleClick={(e) => {
+                        e.stopPropagation();
+                        const coords = getFloorCoords(e);
+                        setConnectionsList(prev => {
+                          const next = prev.map(c => {
+                            if (c.id !== conn.id) return c;
+                            const existing = c.waypoints ? [...c.waypoints] : [];
+                            return { ...c, waypoints: [...existing, coords] };
+                          });
+                          try {
+                            localStorage.setItem(SCADA_CONNECTIONS_KEY, JSON.stringify(next));
+                          } catch {}
+                          return next;
+                        });
+                        setSelectedConveyorId(conn.id);
+                        if (soundEnabled) playIndustrialChime('camera');
+                        toast.success(isAr ? '➕ تم وضع نقطة ثني جديدة هنا! يمكنك سحبها بالماوس لتشكيل السير' : '➕ Added bend point! Drag it to shape the conveyor');
+                      }}
                     >
                       {/* Conveyor Bed Drop Shadow */}
                       <path 
@@ -4027,6 +4142,82 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                         <g transform={`translate(${drawCurrentMouse.x}, ${drawCurrentMouse.y})`}>
                           <circle r={14} fill="none" stroke="#facc15" strokeWidth={2} strokeDasharray="4,4" className="animate-spin" />
                           <circle r={4} fill="#facc15" />
+                        </g>
+                      )}
+                    </g>
+                  );
+                })()}
+
+                {/* ========================================================== */}
+                {/* DIRECT CONNECTOR DRAG LIVE RUBBERBAND CABLE (FIGMA/MIRO)   */}
+                {/* ========================================================== */}
+                {activeConnectorDrag && equipmentMap[activeConnectorDrag.fromStationId] && (() => {
+                  const src = equipmentMap[activeConnectorDrag.fromStationId];
+                  let sx = src.x;
+                  let sy = src.y;
+                  if (activeConnectorDrag.fromAnchor === 'left') { sx = src.x; sy = src.y + src.h / 2; }
+                  else if (activeConnectorDrag.fromAnchor === 'right') { sx = src.x + src.w; sy = src.y + src.h / 2; }
+                  else if (activeConnectorDrag.fromAnchor === 'top') { sx = src.x + src.w / 2; sy = src.y; }
+                  else if (activeConnectorDrag.fromAnchor === 'bottom') { sx = src.x + src.w / 2; sy = src.y + src.h; }
+
+                  const hoveredTarget = equipmentList.find(eq => 
+                    eq.id !== activeConnectorDrag.fromStationId &&
+                    activeConnectorDrag.currentPos.x >= eq.x - 20 && activeConnectorDrag.currentPos.x <= eq.x + eq.w + 20 &&
+                    activeConnectorDrag.currentPos.y >= eq.y - 20 && activeConnectorDrag.currentPos.y <= eq.y + eq.h + 20
+                  );
+
+                  const midX = (sx + activeConnectorDrag.currentPos.x) / 2;
+                  const midY = (sy + activeConnectorDrag.currentPos.y) / 2;
+                  const curvePath = `M ${sx} ${sy} Q ${midX} ${midY - 25} ${activeConnectorDrag.currentPos.x} ${activeConnectorDrag.currentPos.y}`;
+
+                  return (
+                    <g className="pointer-events-none">
+                      {/* Outer Glow Aura */}
+                      <path
+                        d={curvePath}
+                        fill="none"
+                        stroke={hoveredTarget ? '#10b981' : '#06b6d4'}
+                        strokeWidth="18"
+                        strokeOpacity="0.3"
+                        strokeLinecap="round"
+                      />
+                      {/* Solid Conveyor Core */}
+                      <path
+                        d={curvePath}
+                        fill="none"
+                        stroke={hoveredTarget ? '#059669' : '#0284c7'}
+                        strokeWidth="6"
+                        strokeLinecap="round"
+                      />
+                      {/* Dynamic White Dashed Flow Line */}
+                      <path
+                        d={curvePath}
+                        fill="none"
+                        stroke="#ffffff"
+                        strokeWidth="2.5"
+                        strokeDasharray="6,4"
+                        className="animate-[dash_0.6s_linear_infinite]"
+                        strokeLinecap="round"
+                      />
+                      {/* Source Port Indicator */}
+                      <circle cx={sx} cy={sy} r="9" fill="#06b6d4" className="animate-ping" />
+                      <circle cx={sx} cy={sy} r="5" fill="#ffffff" />
+                      {/* Target Reticle / Cursor Ring */}
+                      <circle 
+                        cx={activeConnectorDrag.currentPos.x} 
+                        cy={activeConnectorDrag.currentPos.y} 
+                        r={hoveredTarget ? 16 : 9} 
+                        fill={hoveredTarget ? '#10b981' : '#38bdf8'} 
+                        stroke="#ffffff" 
+                        strokeWidth="2.5" 
+                        className={hoveredTarget ? 'animate-bounce' : ''} 
+                      />
+                      {hoveredTarget && (
+                        <g transform={`translate(${activeConnectorDrag.currentPos.x}, ${activeConnectorDrag.currentPos.y - 22})`}>
+                          <rect x="-80" y="-12" width="160" height="24" rx="6" fill="#0f172a" stroke="#10b981" strokeWidth="1.5" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.8))" />
+                          <text x="0" y="4" textAnchor="middle" fill="#34d399" fontSize="10" fontWeight="900">
+                            ✓ {isAr ? `إفلات للربط بـ [${hoveredTarget.code}]` : `Release to connect [${hoveredTarget.code}]`}
+                          </text>
                         </g>
                       )}
                     </g>
@@ -4309,11 +4500,11 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                                 : '-12px 18px 24px rgba(0,0,0,0.7), -1px 2px 0px rgba(255,255,255,0.15)')
                         : undefined,
                       border: isDeptHighlighted ? `2px solid ${dept?.accentHex || '#38bdf8'}` : undefined,
-                      cursor: isCustomizing ? 'grab' : 'pointer'
+                      cursor: draggingId === eq.id ? 'grabbing' : 'grab'
                     }}
                     className={`
                       absolute rounded-2xl transition-all duration-200 p-2.5 flex flex-col justify-between
-                      backdrop-blur-md select-none group relative ${isWiringMode ? 'overflow-visible ring-2 ring-cyan-400/40' : 'overflow-hidden'}
+                      backdrop-blur-md select-none group relative overflow-visible ${isWiringMode ? 'ring-2 ring-cyan-400/40' : ''}
                       ${isDragging ? 'z-50 ring-4 ring-amber-400 shadow-2xl opacity-95' : ''}
                       ${ambientTheme === 'cleanroom'
                         ? isSelected 
@@ -4340,96 +4531,111 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                     <div className="absolute bottom-1 left-1 w-1 h-1 rounded-full bg-slate-500/40 pointer-events-none" />
                     <div className="absolute bottom-1 right-1 w-1 h-1 rounded-full bg-slate-500/40 pointer-events-none" />
 
-                    {/* PHYSICAL CONVEYOR DOCKING PORTS (4 INTERACTIVE PORTS IN WIRING MODE) */}
-                    {isWiringMode ? (
-                      <>
-                        {/* LEFT DOCK PORT */}
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleAnchorClick(eq.id, 'left');
-                          }}
-                          className={`absolute -left-3.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full border-2 flex items-center justify-center text-[10px] font-black z-30 transition-all hover:scale-125 shadow-lg ${
-                            wiringSource?.stationId === eq.id && wiringSource?.anchor === 'left'
-                              ? 'bg-amber-400 border-white text-slate-950 ring-4 ring-amber-400/50 animate-pulse'
-                              : 'bg-cyan-500 hover:bg-cyan-400 border-white text-slate-950 shadow-cyan-500/50'
-                          }`}
-                          title={isAr ? `منفذ أيسر - محطة ${eq.code}` : `Left Port - ${eq.code}`}
-                        >
-                          ◀
-                        </button>
+                    {/* PHYSICAL CONVEYOR DOCKING PORTS (4 UNIVERSAL INTERACTIVE MAGNETIC PORTS) */}
+                    {/* LEFT DOCK PORT */}
+                    <button
+                      type="button"
+                      onPointerDown={(e) => handleConnectorPointerDown(e, eq.id, 'left')}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAnchorClick(eq.id, 'left');
+                      }}
+                      className={`absolute -left-3.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full border-2 flex items-center justify-center text-[10px] font-black z-30 transition-all cursor-crosshair shadow-lg ${
+                        isWiringMode || activeConnectorDrag || isSelected
+                          ? 'opacity-100 scale-100 hover:scale-125'
+                          : 'opacity-0 group-hover:opacity-100 scale-75 group-hover:scale-100 hover:scale-125'
+                      } ${
+                        wiringSource?.stationId === eq.id && wiringSource?.anchor === 'left'
+                          ? 'bg-amber-400 border-white text-slate-950 ring-4 ring-amber-400/50 animate-pulse'
+                          : 'bg-cyan-500 hover:bg-cyan-400 border-white text-slate-950 shadow-cyan-500/50'
+                      }`}
+                      title={isAr ? `منفذ أيسر - اسحب بالماوس للربط بسير ناقل أو انقر للتوصيل` : `Left Port - Drag to connect conveyor or click`}
+                    >
+                      ◀
+                    </button>
 
-                        {/* RIGHT DOCK PORT */}
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleAnchorClick(eq.id, 'right');
-                          }}
-                          className={`absolute -right-3.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full border-2 flex items-center justify-center text-[10px] font-black z-30 transition-all hover:scale-125 shadow-lg ${
-                            wiringSource?.stationId === eq.id && wiringSource?.anchor === 'right'
-                              ? 'bg-amber-400 border-white text-slate-950 ring-4 ring-amber-400/50 animate-pulse'
-                              : 'bg-emerald-500 hover:bg-emerald-400 border-white text-slate-950 shadow-emerald-500/50'
-                          }`}
-                          title={isAr ? `منفذ أيمن - محطة ${eq.code}` : `Right Port - ${eq.code}`}
-                        >
-                          ▶
-                        </button>
+                    {/* RIGHT DOCK PORT */}
+                    <button
+                      type="button"
+                      onPointerDown={(e) => handleConnectorPointerDown(e, eq.id, 'right')}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAnchorClick(eq.id, 'right');
+                      }}
+                      className={`absolute -right-3.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full border-2 flex items-center justify-center text-[10px] font-black z-30 transition-all cursor-crosshair shadow-lg ${
+                        isWiringMode || activeConnectorDrag || isSelected
+                          ? 'opacity-100 scale-100 hover:scale-125'
+                          : 'opacity-0 group-hover:opacity-100 scale-75 group-hover:scale-100 hover:scale-125'
+                      } ${
+                        wiringSource?.stationId === eq.id && wiringSource?.anchor === 'right'
+                          ? 'bg-amber-400 border-white text-slate-950 ring-4 ring-amber-400/50 animate-pulse'
+                          : 'bg-emerald-500 hover:bg-emerald-400 border-white text-slate-950 shadow-emerald-500/50'
+                      }`}
+                      title={isAr ? `منفذ أيمن - اسحب بالماوس للربط بسير ناقل أو انقر للتوصيل` : `Right Port - Drag to connect conveyor or click`}
+                    >
+                      ▶
+                    </button>
 
-                        {/* TOP DOCK PORT */}
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleAnchorClick(eq.id, 'top');
-                          }}
-                          className={`absolute top-[-14px] left-1/2 -translate-x-1/2 w-6 h-6 rounded-full border-2 flex items-center justify-center text-[10px] font-black z-30 transition-all hover:scale-125 shadow-lg ${
-                            wiringSource?.stationId === eq.id && wiringSource?.anchor === 'top'
-                              ? 'bg-amber-400 border-white text-slate-950 ring-4 ring-amber-400/50 animate-pulse'
-                              : 'bg-blue-500 hover:bg-blue-400 border-white text-slate-950 shadow-blue-500/50'
-                          }`}
-                          title={isAr ? `منفذ علوي - محطة ${eq.code}` : `Top Port - ${eq.code}`}
-                        >
-                          ▲
-                        </button>
+                    {/* TOP DOCK PORT */}
+                    <button
+                      type="button"
+                      onPointerDown={(e) => handleConnectorPointerDown(e, eq.id, 'top')}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAnchorClick(eq.id, 'top');
+                      }}
+                      className={`absolute top-[-14px] left-1/2 -translate-x-1/2 w-6 h-6 rounded-full border-2 flex items-center justify-center text-[10px] font-black z-30 transition-all cursor-crosshair shadow-lg ${
+                        isWiringMode || activeConnectorDrag || isSelected
+                          ? 'opacity-100 scale-100 hover:scale-125'
+                          : 'opacity-0 group-hover:opacity-100 scale-75 group-hover:scale-100 hover:scale-125'
+                      } ${
+                        wiringSource?.stationId === eq.id && wiringSource?.anchor === 'top'
+                          ? 'bg-amber-400 border-white text-slate-950 ring-4 ring-amber-400/50 animate-pulse'
+                          : 'bg-blue-500 hover:bg-blue-400 border-white text-slate-950 shadow-blue-500/50'
+                      }`}
+                      title={isAr ? `منفذ علوي - اسحب بالماوس للربط بسير ناقل أو انقر للتوصيل` : `Top Port - Drag to connect conveyor or click`}
+                    >
+                      ▲
+                    </button>
 
-                        {/* BOTTOM DOCK PORT */}
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleAnchorClick(eq.id, 'bottom');
-                          }}
-                          className={`absolute bottom-[-14px] left-1/2 -translate-x-1/2 w-6 h-6 rounded-full border-2 flex items-center justify-center text-[10px] font-black z-30 transition-all hover:scale-125 shadow-lg ${
-                            wiringSource?.stationId === eq.id && wiringSource?.anchor === 'bottom'
-                              ? 'bg-amber-400 border-white text-slate-950 ring-4 ring-amber-400/50 animate-pulse'
-                              : 'bg-purple-500 hover:bg-purple-400 border-white text-slate-950 shadow-purple-500/50'
-                          }`}
-                          title={isAr ? `منفذ سفلي - محطة ${eq.code}` : `Bottom Port - ${eq.code}`}
-                        >
-                          ▼
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        {hasInfeed && (
-                          <div 
-                            className="absolute -left-1.5 top-1/2 -translate-y-1/2 w-2 h-5 rounded-l bg-cyan-500/90 shadow-[0_0_8px_#06b6d4] flex items-center justify-center text-[7px] font-mono text-slate-950 font-black pointer-events-none" 
-                            title="Conveyor Infeed Port"
-                          >
-                            ▶
-                          </div>
-                        )}
-                        {hasOutfeed && (
-                          <div 
-                            className="absolute -right-1.5 top-1/2 -translate-y-1/2 w-2 h-5 rounded-r bg-emerald-500/90 shadow-[0_0_8px_#10b981] flex items-center justify-center text-[7px] font-mono text-slate-950 font-black pointer-events-none" 
-                            title="Conveyor Outfeed Port"
-                          >
-                            ▶
-                          </div>
-                        )}
-                      </>
+                    {/* BOTTOM DOCK PORT */}
+                    <button
+                      type="button"
+                      onPointerDown={(e) => handleConnectorPointerDown(e, eq.id, 'bottom')}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAnchorClick(eq.id, 'bottom');
+                      }}
+                      className={`absolute bottom-[-14px] left-1/2 -translate-x-1/2 w-6 h-6 rounded-full border-2 flex items-center justify-center text-[10px] font-black z-30 transition-all cursor-crosshair shadow-lg ${
+                        isWiringMode || activeConnectorDrag || isSelected
+                          ? 'opacity-100 scale-100 hover:scale-125'
+                          : 'opacity-0 group-hover:opacity-100 scale-75 group-hover:scale-100 hover:scale-125'
+                      } ${
+                        wiringSource?.stationId === eq.id && wiringSource?.anchor === 'bottom'
+                          ? 'bg-amber-400 border-white text-slate-950 ring-4 ring-amber-400/50 animate-pulse'
+                          : 'bg-purple-500 hover:bg-purple-400 border-white text-slate-950 shadow-purple-500/50'
+                      }`}
+                      title={isAr ? `منفذ سفلي - اسحب بالماوس للربط بسير ناقل أو انقر للتوصيل` : `Bottom Port - Drag to connect conveyor or click`}
+                    >
+                      ▼
+                    </button>
+
+                    {/* Conveyor Infeed / Outfeed Subtle Markers when not hovered */}
+                    {hasInfeed && (
+                      <div 
+                        className="absolute -left-1.5 top-1/2 -translate-y-1/2 w-2 h-5 rounded-l bg-cyan-500/90 shadow-[0_0_8px_#06b6d4] flex items-center justify-center text-[7px] font-mono text-slate-950 font-black pointer-events-none group-hover:opacity-0 transition-opacity" 
+                        title="Conveyor Infeed Port"
+                      >
+                        ▶
+                      </div>
+                    )}
+                    {hasOutfeed && (
+                      <div 
+                        className="absolute -right-1.5 top-1/2 -translate-y-1/2 w-2 h-5 rounded-r bg-emerald-500/90 shadow-[0_0_8px_#10b981] flex items-center justify-center text-[7px] font-mono text-slate-950 font-black pointer-events-none group-hover:opacity-0 transition-opacity" 
+                        title="Conveyor Outfeed Port"
+                      >
+                        ▶
+                      </div>
                     )}
 
                     {/* HOLOGRAPHIC VERTICAL LASER BEACON */}
@@ -4621,6 +4827,285 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                   </div>
                 );
               })}
+
+              {/* ============================================================== */}
+              {/* CONTEXTUAL FLOATING ACTION MINI-TOOLBAR FOR SELECTED STATION   */}
+              {/* ============================================================== */}
+              {selectedStationId && equipmentMap[selectedStationId] && (() => {
+                const eq = equipmentMap[selectedStationId];
+                // Find closest station not yet connected to this station
+                const otherStations = equipmentList.filter(o => o.id !== eq.id);
+                const unconnected = otherStations.filter(o => 
+                  !connectionsList.some(c => (c.fromId === eq.id && c.toId === o.id) || (c.fromId === o.id && c.toId === eq.id))
+                );
+                const nearest = (unconnected.length > 0 ? unconnected : otherStations)
+                  .map(o => ({
+                    st: o,
+                    dist: Math.hypot((o.x + o.w / 2) - (eq.x + eq.w / 2), (o.y + o.h / 2) - (eq.y + eq.h / 2))
+                  }))
+                  .sort((a, b) => a.dist - b.dist)[0]?.st;
+
+                const posX = Math.max(90, Math.min(1110, eq.x + eq.w / 2));
+                const posY = Math.max(16, eq.y - 48);
+
+                return (
+                  <div 
+                    key={`station-hud-${eq.id}`}
+                    className="absolute z-50 pointer-events-auto flex items-center gap-1.5 p-1 rounded-2xl bg-[#0a1020]/95 backdrop-blur-xl border border-amber-400/90 shadow-[0_12px_36px_rgba(0,0,0,0.85),0_0_20px_rgba(245,158,11,0.35)] animate-in fade-in zoom-in-95 duration-150 select-none"
+                    style={{
+                      left: `${posX}px`,
+                      top: `${posY}px`,
+                      transform: 'translateX(-50%)'
+                    }}
+                    onClick={e => e.stopPropagation()}
+                  >
+                    {/* Station Code Badge */}
+                    <span className="px-2 py-0.5 rounded-lg bg-amber-400 text-slate-950 font-black text-[10px] font-mono shadow">
+                      {eq.code}
+                    </span>
+
+                    {/* 1-Click Fast Connect to Nearest Station */}
+                    {nearest && (
+                      <button
+                        type="button"
+                        onClick={() => handleQuickConnect(eq.id, nearest.id)}
+                        className="px-2 py-1 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-[10px] flex items-center gap-1 shadow-md transition-all active:scale-95"
+                        title={isAr ? `ربط فوري بسير ناقل مع أقرب محطة [${nearest.code}]` : `1-Click link conveyor to nearest [${nearest.code}]`}
+                      >
+                        <Workflow className="w-3 h-3 text-slate-950" />
+                        <span>{isAr ? `ربط بـ [${nearest.code}]` : `Link ${nearest.code}`}</span>
+                      </button>
+                    )}
+
+                    {/* Precision 4-Way Nudge Controls */}
+                    <div className="flex items-center bg-black/60 rounded-xl p-0.5 border border-white/10">
+                      <button 
+                        type="button"
+                        onClick={() => nudgeStation(eq.id, -15, 0)} 
+                        className="p-1 rounded text-slate-300 hover:text-white hover:bg-white/10 transition-colors" 
+                        title={isAr ? 'إزاحة يسار (15px)' : 'Nudge Left (15px)'}
+                      >
+                        <ArrowLeft className="w-3 h-3" />
+                      </button>
+                      <button 
+                        type="button"
+                        onClick={() => nudgeStation(eq.id, 0, -15)} 
+                        className="p-1 rounded text-slate-300 hover:text-white hover:bg-white/10 transition-colors" 
+                        title={isAr ? 'إزاحة لأعلى (15px)' : 'Nudge Up (15px)'}
+                      >
+                        <ArrowUp className="w-3 h-3" />
+                      </button>
+                      <button 
+                        type="button"
+                        onClick={() => nudgeStation(eq.id, 0, 15)} 
+                        className="p-1 rounded text-slate-300 hover:text-white hover:bg-white/10 transition-colors" 
+                        title={isAr ? 'إزاحة لأسفل (15px)' : 'Nudge Down (15px)'}
+                      >
+                        <ArrowDown className="w-3 h-3" />
+                      </button>
+                      <button 
+                        type="button"
+                        onClick={() => nudgeStation(eq.id, 15, 0)} 
+                        className="p-1 rounded text-slate-300 hover:text-white hover:bg-white/10 transition-colors" 
+                        title={isAr ? 'إزاحة يمين (15px)' : 'Nudge Right (15px)'}
+                      >
+                        <ArrowRight className="w-3 h-3" />
+                      </button>
+                    </div>
+
+                    {/* Quick Edit */}
+                    <button
+                      type="button"
+                      onClick={() => setEditingStation(eq)}
+                      className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 transition-colors"
+                      title={isAr ? 'تعديل البيانات' : 'Edit Specs'}
+                    >
+                      <Edit3 className="w-3 h-3" />
+                    </button>
+
+                    {/* Delete Station */}
+                    <button
+                      type="button"
+                      onClick={() => setDeleteConfirmId(eq.id)}
+                      className="p-1.5 rounded-xl bg-red-950/80 hover:bg-red-800 text-red-300 border border-red-500/40 transition-colors"
+                      title={isAr ? 'حذف المحطة' : 'Delete Station'}
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+
+                    {/* Close Selection */}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedStationId(null)}
+                      className="p-1 rounded-lg text-slate-400 hover:text-white transition-colors"
+                      title={isAr ? 'إلغاء التحديد' : 'Deselect'}
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                );
+              })()}
+
+              {/* ============================================================== */}
+              {/* CONTEXTUAL FLOATING ACTION MINI-TOOLBAR FOR SELECTED CONVEYOR */}
+              {/* ============================================================== */}
+              {selectedConveyorId && (() => {
+                const selConn = connectionsList.find(c => c.id === selectedConveyorId);
+                if (!selConn) return null;
+                const fromSt = equipmentMap[selConn.fromId];
+                const toSt = equipmentMap[selConn.toId];
+                if (!fromSt || !toSt) return null;
+
+                let midX = (fromSt.x + fromSt.w / 2 + toSt.x + toSt.w / 2) / 2;
+                let midY = (fromSt.y + fromSt.h / 2 + toSt.y + toSt.h / 2) / 2;
+                if (selConn.waypoints && selConn.waypoints.length > 0) {
+                  midX = selConn.waypoints[0].x;
+                  midY = selConn.waypoints[0].y;
+                }
+
+                const posX = Math.max(110, Math.min(1090, midX));
+                const posY = Math.max(16, midY - 44);
+
+                return (
+                  <div 
+                    key={`conveyor-hud-${selConn.id}`}
+                    className="absolute z-50 pointer-events-auto flex items-center gap-1.5 p-1 rounded-2xl bg-[#081024]/95 backdrop-blur-xl border border-cyan-400 shadow-[0_12px_36px_rgba(0,0,0,0.85),0_0_20px_rgba(6,182,212,0.45)] animate-in fade-in zoom-in-95 duration-150 select-none"
+                    style={{
+                      left: `${posX}px`,
+                      top: `${posY}px`,
+                      transform: 'translateX(-50%)'
+                    }}
+                    onClick={e => e.stopPropagation()}
+                  >
+                    {/* Conveyor Type Badge */}
+                    <span className="px-2 py-0.5 rounded-lg bg-cyan-500 text-slate-950 font-black text-[10px] font-mono shadow">
+                      {selConn.type}
+                    </span>
+
+                    {/* 1-Click Reverse Direction */}
+                    <button
+                      type="button"
+                      onClick={() => handleReverseConnection(selConn.id)}
+                      className="px-2 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 font-bold text-[10px] flex items-center gap-1 border border-cyan-500/30 transition-all active:scale-95"
+                      title={isAr ? 'عكس اتجاه حركة وتدفق المنتجات' : 'Reverse Conveyor Flow'}
+                    >
+                      <RotateCcw className="w-3 h-3 text-cyan-400" />
+                      <span>{isAr ? 'عكس الاتجاه' : 'Reverse'}</span>
+                    </button>
+
+                    {/* 1-Click Add Bend Waypoint */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setConnectionsList(prev => {
+                          const next = prev.map(c => {
+                            if (c.id !== selConn.id) return c;
+                            const existing = c.waypoints ? [...c.waypoints] : [];
+                            return { ...c, waypoints: [...existing, { x: Math.round(midX), y: Math.round(midY) }] };
+                          });
+                          try {
+                            localStorage.setItem(SCADA_CONNECTIONS_KEY, JSON.stringify(next));
+                          } catch {}
+                          return next;
+                        });
+                        if (soundEnabled) playIndustrialChime('camera');
+                        toast.success(isAr ? '➕ تم وضع نقطة ثني جديدة! اسحبها بالماوس' : '➕ Added bend point! Drag it');
+                      }}
+                      className="px-2 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold text-[10px] flex items-center gap-1 border border-amber-500/30 transition-all active:scale-95"
+                      title={isAr ? 'إضافة نقطة ثني وانعطاف للسير' : 'Add Bend Waypoint'}
+                    >
+                      <Plus className="w-3 h-3 text-amber-400" />
+                      <span>{isAr ? '+ ثنية' : '+ Bend'}</span>
+                    </button>
+
+                    {/* Cycle Technology */}
+                    <button
+                      type="button"
+                      onClick={() => handleCycleConveyorType(selConn.id)}
+                      className="px-2 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-purple-300 font-bold text-[10px] flex items-center gap-1 border border-purple-500/30 transition-all active:scale-95"
+                      title={isAr ? 'تبديل نوع وتقنية السير' : 'Cycle Conveyor Type'}
+                    >
+                      <Workflow className="w-3 h-3 text-purple-400" />
+                      <span>{isAr ? 'نوع السير' : 'Type'}</span>
+                    </button>
+
+                    {/* Delete Conveyor */}
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteConnection(selConn.id)}
+                      className="p-1.5 rounded-xl bg-red-950/80 hover:bg-red-800 text-red-300 border border-red-500/40 transition-colors"
+                      title={isAr ? 'حذف هذا السير الناقل' : 'Delete Conveyor'}
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+
+                    {/* Close Selection */}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedConveyorId(null)}
+                      className="p-1 rounded-lg text-slate-400 hover:text-white transition-colors"
+                      title={isAr ? 'إلغاء التحديد' : 'Deselect'}
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                );
+              })()}
+
+              {/* ============================================================== */}
+              {/* CANVAS TOP FLOATING QUICK ACTION MAGIC BAR                     */}
+              {/* ============================================================== */}
+              <div 
+                className="absolute top-3 left-1/2 -translate-x-1/2 z-40 flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-[#090f1e]/90 backdrop-blur-xl border border-white/10 shadow-2xl select-none pointer-events-auto"
+                onClick={e => e.stopPropagation()}
+              >
+                {/* Smart Auto-Flow */}
+                <button
+                  type="button"
+                  onClick={handleAutoConnectStations}
+                  className="px-2.5 py-1 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-[11px] flex items-center gap-1.5 shadow-md shadow-cyan-500/20 transition-all active:scale-95"
+                  title={isAr ? 'ربط تسلسلي ذكي وتلقائي لكافة محطات المصنع بسيور ناقلة بضغطة زر واحدة!' : 'Smart auto-connect all factory stations with sequential conveyors in 1-click!'}
+                >
+                  <Zap className="w-3.5 h-3.5 fill-slate-950 text-slate-950" />
+                  <span>{isAr ? '⚡ ربط تسلسلي ذكي' : '⚡ Auto Flow'}</span>
+                </button>
+
+                {/* Auto-Align Layout */}
+                <button
+                  type="button"
+                  onClick={handleAutoAlignLayout}
+                  className="px-2.5 py-1 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-amber-300 border border-amber-500/30 font-bold text-[11px] flex items-center gap-1.5 transition-all active:scale-95"
+                  title={isAr ? 'محاذاة وترتيب المحطات تلقائياً حسب عنابر المصنع' : 'Auto-align stations by factory bays'}
+                >
+                  <AlignJustify className="w-3.5 h-3.5 text-amber-400" />
+                  <span className="hidden sm:inline">{isAr ? '📐 محاذاة العنابر' : '📐 Auto Align'}</span>
+                </button>
+
+                {/* Freehand Draw Pen */}
+                <button
+                  type="button"
+                  onClick={handleStartDrawingMode}
+                  className={`px-2.5 py-1 rounded-xl font-bold text-[11px] flex items-center gap-1.5 transition-all active:scale-95 border ${
+                    isDrawingPath 
+                      ? 'bg-amber-400 text-slate-950 border-white ring-2 ring-amber-400' 
+                      : 'bg-slate-900/90 hover:bg-slate-800 text-yellow-300 border-yellow-500/30'
+                  }`}
+                  title={isAr ? 'رسم مسار حر بالماوس' : 'Draw conveyor path'}
+                >
+                  <PenTool className="w-3.5 h-3.5 text-yellow-400" />
+                  <span className="hidden sm:inline">{isDrawingPath ? (isAr ? '✕ إنهاء الرسم' : 'Done') : (isAr ? '✏️ رسم حر' : 'Pen')}</span>
+                </button>
+
+                {/* Reset Connections */}
+                <button
+                  type="button"
+                  onClick={handleResetConnections}
+                  className="p-1 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-700 transition-colors"
+                  title={isAr ? 'استعادة شبكة المسارات النموذجية' : 'Reset default flow'}
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
 
             {/* ============================================================== */}
