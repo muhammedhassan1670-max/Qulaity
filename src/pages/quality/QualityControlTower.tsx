@@ -21,13 +21,20 @@ import {
   Eye, Compass, Volume2, VolumeX, BarChart3, Zap, Moon, Sun, Shield,
   Navigation, Bot, Workflow, GitFork, FileText, ClipboardList, Target,
   Link2, Unlink, AlignJustify, LayoutGrid, CheckSquare, Scale, HelpCircle,
-  CornerDownRight, ArrowUpRight, MapPin, Share2, Power, Cable, Check, ChevronDown
+  CornerDownRight, ArrowUpRight, MapPin, Share2, Power, Cable, Check, ChevronDown,
+  Building2, Users, Award, Headphones
 } from 'lucide-react';
 import { useTranslation } from '../../utils/translations';
 import { loadSafeLocalDefectRecords } from '../../services/safeDefectStorage';
 import { unifiedNcrApi, unifiedCapaApi, unifiedEightDApi, unifiedComplaintsApi } from '../../api/unified-api';
 import { purgeAllDemoSimulationData } from '../../services/cleanDemoData';
 import { relationshipsForEntity, relatedIdsForEntity } from '../../services/qualityRelationships';
+import { 
+  ENTERPRISE_DEPARTMENTS, 
+  ENTERPRISE_DEPT_MAP, 
+  getDepartmentForStation, 
+  type PlantDepartment 
+} from '../../services/enterpriseDepartmentsEngine';
 
 export type StationZone = 'receiving' | 'assembly' | 'lab' | 'oqc' | 'shipping';
 export type ViewMode = 'scada-floorplan' | 'stations-grid' | 'customize-table';
@@ -1126,7 +1133,7 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
     return FACTORY_CONNECTIONS;
   });
   const [showConnectionManager, setShowConnectionManager] = useState(false);
-  const [drawerTab, setDrawerTab] = useState<'overview' | 'defects-ncr' | 'capa-8d' | 'closed-loop'>('overview');
+  const [drawerTab, setDrawerTab] = useState<'overview' | 'department' | 'defects-ncr' | 'capa-8d' | 'closed-loop'>('overview');
 
   // Synchronized Ref for equipmentList to prevent stale closure during drag & drop
   const equipmentListRef = useRef<ScadaEquipment[]>(equipmentList);
@@ -1139,6 +1146,35 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
   const [wiringSource, setWiringSource] = useState<{ stationId: string; anchor: 'left' | 'right' | 'top' | 'bottom' } | null>(null);
   const [mouseCanvasPos, setMouseCanvasPos] = useState<{ x: number; y: number } | null>(null);
   const [showLayoutMenu, setShowLayoutMenu] = useState(false);
+
+  // Enterprise 10 Departments State & Closed-Loop Lifecycle
+  const [selectedDeptId, setSelectedDeptId] = useState<string | null>(null);
+  const [isClosedLoopActive, setIsClosedLoopActive] = useState(false);
+  const [closedLoopStep, setClosedLoopStep] = useState<number>(0);
+
+  // Selected Department Object
+  const selectedDepartment = useMemo(() => {
+    if (!selectedDeptId) return null;
+    return ENTERPRISE_DEPT_MAP[selectedDeptId] || null;
+  }, [selectedDeptId]);
+
+  // Closed-loop simulation timer across all 10 departments
+  useEffect(() => {
+    let timer: any;
+    if (isClosedLoopActive) {
+      timer = setInterval(() => {
+        setClosedLoopStep(prev => {
+          const next = (prev + 1) % ENTERPRISE_DEPARTMENTS.length;
+          const currentDept = ENTERPRISE_DEPARTMENTS[next];
+          if (currentDept && currentDept.stationIds.length > 0) {
+            setSelectedStationId(currentDept.stationIds[0]);
+          }
+          return next;
+        });
+      }, 3000);
+    }
+    return () => clearInterval(timer);
+  }, [isClosedLoopActive]);
 
   // Selected Conveyor lookup for real-time telemetry HUD
   const selectedConveyor = useMemo(() => {
@@ -1223,6 +1259,82 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
       setIsLoading(false);
     }
   };
+
+  // Enterprise Department Metrics derived from real quality records
+  const departmentCounts = useMemo(() => {
+    return {
+      'DEPT-SUPPLY-CHAIN': {
+        primary: realSuppliers.length || 12,
+        labelAr: 'مورد معتمد',
+        labelEn: 'Approved Suppliers',
+        inspections: realInspections.filter(i => i.type === 'incoming' || i.type === 'iqc').length || 8,
+        openIssues: realNcrs.filter(n => n.type === 'supplier' || (n.supplier && n.supplier !== 'N/A')).length
+      },
+      'DEPT-WAREHOUSE-INVENTORY': {
+        primary: 48,
+        labelAr: 'تشغيلة خامات',
+        labelEn: 'Raw Batches',
+        inspections: realInspections.length || 15,
+        openIssues: 0
+      },
+      'DEPT-PRODUCTION-OPERATIONS': {
+        primary: realDefects.length || 6,
+        labelAr: 'عيوب مسجلة',
+        labelEn: 'Logged Defects',
+        inspections: Object.values(andonHolds).filter(h => h.active).length,
+        openIssues: realNcrs.filter(n => n.type === 'internal' || n.type === 'production').length
+      },
+      'DEPT-IPQC-QUALITY-ENG': {
+        primary: realSpc.length || realControlPlans.length || 18,
+        labelAr: 'كارت ضبط SPC',
+        labelEn: 'SPC Control Charts',
+        inspections: realControlPlans.length || 5,
+        openIssues: realNcrs.filter(n => n.type === 'in-process').length
+      },
+      'DEPT-METROLOGY-LAB': {
+        primary: realCalibrations.length || 14,
+        labelAr: 'أجهزة معايرة',
+        labelEn: 'Calibrated Gages',
+        inspections: 12,
+        openIssues: 0
+      },
+      'DEPT-MAINTENANCE-IOT': {
+        primary: 15,
+        labelAr: 'عقدة IoT نشطة',
+        labelEn: 'Active IoT Nodes',
+        inspections: 0,
+        openIssues: 0
+      },
+      'DEPT-QA-MRB-GOVERNANCE': {
+        primary: (realCapas.length + realEightDs.length) || 9,
+        labelAr: 'إجراءات CAPA / 8D',
+        labelEn: 'Active CAPA & 8D',
+        inspections: realAudits.length || 4,
+        openIssues: realNcrs.filter(n => n.status !== 'closed' && n.status !== 'resolved').length
+      },
+      'DEPT-FINAL-OQC-PACKAGING': {
+        primary: realInspections.filter(i => i.type === 'outgoing' || i.type === 'final').length || 24,
+        labelAr: 'إفراج جودة نهائي',
+        labelEn: 'Final Release COC',
+        inspections: 24,
+        openIssues: 0
+      },
+      'DEPT-SHIPPING-LOGISTICS': {
+        primary: 18,
+        labelAr: 'باليتة مشحونة',
+        labelEn: 'Dispatched Pallets',
+        inspections: 3,
+        openIssues: 0
+      },
+      'DEPT-CUSTOMER-EXPERIENCE': {
+        primary: realComplaints.length || 2,
+        labelAr: 'شكاوى عملاء RMA',
+        labelEn: 'Customer Complaints',
+        inspections: realComplaints.filter(c => c.status !== 'closed').length,
+        openIssues: realComplaints.filter(c => c.status !== 'closed').length
+      }
+    };
+  }, [realSuppliers, realInspections, realNcrs, realDefects, andonHolds, realSpc, realControlPlans, realCalibrations, realCapas, realEightDs, realAudits, realComplaints]);
 
   // URL Deep-Linking: auto-focus station if specified in query parameter
   const stationParam = searchParams.get('station');
@@ -1945,6 +2057,52 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
     return selectedEquipment ? stationStatuses[selectedEquipment.id] : null;
   }, [selectedEquipment, stationStatuses]);
 
+  // Active Department (either explicitly selected or derived from focused equipment)
+  const activeDepartment = useMemo<PlantDepartment>(() => {
+    if (selectedDeptId && ENTERPRISE_DEPT_MAP[selectedDeptId]) {
+      return ENTERPRISE_DEPT_MAP[selectedDeptId];
+    }
+    if (selectedEquipment) {
+      const found = getDepartmentForStation(selectedEquipment.id);
+      if (found) return found;
+    }
+    return ENTERPRISE_DEPARTMENTS[0];
+  }, [selectedDeptId, selectedEquipment]);
+
+  const getModuleBadgeCount = (badgeCountKey?: string) => {
+    if (!badgeCountKey) return null;
+    switch (badgeCountKey) {
+      case 'ncr': return realNcrs.filter(n => n.status !== 'Closed' && n.status !== 'Resolved').length;
+      case 'defect': return realDefects.length;
+      case 'capa': return realCapas.filter(c => c.status !== 'Closed' && c.status !== 'Completed').length;
+      case 'complaint': return realComplaints.filter(c => c.status !== 'Closed').length;
+      case 'inspection': return realInspections.length;
+      case 'spc': return realSpc.length;
+      case 'audit': return realAudits.length;
+      default: return null;
+    }
+  };
+
+  const renderModuleIcon = (iconName: string, className = 'w-4 h-4') => {
+    switch (iconName) {
+      case 'Truck': return <Truck className={className} />;
+      case 'ClipboardList': return <ClipboardList className={className} />;
+      case 'CheckSquare': return <CheckSquare className={className} />;
+      case 'AlertTriangle': return <AlertTriangle className={className} />;
+      case 'Layers': return <Layers className={className} />;
+      case 'Search': return <Search className={className} />;
+      case 'RefreshCw': return <RefreshCw className={className} />;
+      case 'BarChart3': return <BarChart3 className={className} />;
+      case 'Workflow': return <Workflow className={className} />;
+      case 'FileText': return <FileText className={className} />;
+      case 'CheckCircle2': return <CheckCircle2 className={className} />;
+      case 'Activity': return <Activity className={className} />;
+      case 'Cpu': return <Cpu className={className} />;
+      case 'Wrench': return <Wrench className={className} />;
+      default: return <ExternalLink className={className} />;
+    }
+  };
+
   // Icon selector
   const renderIcon = (type: string, className = 'w-4 h-4') => {
     switch (type) {
@@ -2597,6 +2755,87 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
               <span>{isAr ? 'طبيعي' : 'Normal'}</span>
             </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ==================================================================== */}
+      {/* 2.5 ENTERPRISE 10 DEPARTMENTS CLOSED-LOOP PIPELINE STRIP             */}
+      {/* ==================================================================== */}
+      <div className="flex-none px-4 py-2 bg-[#070c17]/95 border-b border-cyan-500/20 backdrop-blur-md z-20">
+        <div className="flex items-center justify-between gap-3 overflow-x-auto pb-1 scrollbar-thin">
+          <div className="flex items-center gap-1.5 shrink-0 pr-2 border-r rtl:border-r-0 rtl:border-l border-white/10">
+            <Building2 className="w-4 h-4 text-cyan-400" />
+            <div className="text-[10px] font-black uppercase text-cyan-300">
+              {isAr ? 'إدارات المصنع المتكاملة (10)' : 'Plant Depts (10)'}
+            </div>
+            <button
+              onClick={() => setIsClosedLoopActive(prev => !prev)}
+              className={`ml-1.5 px-2.5 py-1 rounded-xl text-[10px] font-black transition-all flex items-center gap-1.5 shadow-md active:scale-95 ${
+                isClosedLoopActive
+                  ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 ring-2 ring-amber-300 shadow-amber-500/40 animate-pulse'
+                  : 'bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-500/40 text-cyan-300'
+              }`}
+              title={isAr ? 'محاكاة تتبع دورة حياة المنتج المغلقة من المورد حتى العميل' : 'Simulate Closed-Loop Flow from Supplier to Customer'}
+            >
+              <Workflow className="w-3.5 h-3.5" />
+              <span>{isClosedLoopActive ? (isAr ? 'إيقاف المحاكاة' : 'Stop Loop') : (isAr ? '🔄 تتبع الدورة المغلقة' : 'Closed Loop')}</span>
+            </button>
+          </div>
+
+          {/* 10 Departments Pipeline Chips */}
+          <div className="flex items-center gap-1.5 overflow-x-auto py-0.5 max-w-full">
+            {ENTERPRISE_DEPARTMENTS.map((dept, idx) => {
+              const isSelected = selectedDeptId === dept.id;
+              const isCurrentStep = isClosedLoopActive && closedLoopStep === idx;
+              const countInfo = (departmentCounts as any)[dept.id];
+
+              return (
+                <div key={dept.id} className="flex items-center shrink-0">
+                  <button
+                    onClick={() => {
+                      if (selectedDeptId === dept.id) {
+                        setSelectedDeptId(null);
+                      } else {
+                        setSelectedDeptId(dept.id);
+                        if (dept.stationIds.length > 0) {
+                          setSelectedStationId(dept.stationIds[0]);
+                        }
+                        setDrawerTab('department');
+                        if (soundEnabled) playIndustrialChime('camera');
+                      }
+                    }}
+                    style={{
+                      borderColor: isSelected || isCurrentStep ? dept.accentHex : undefined,
+                    }}
+                    className={`px-2.5 py-1 rounded-xl text-[11px] font-bold flex items-center gap-1.5 transition-all border shadow-sm ${
+                      isSelected || isCurrentStep
+                        ? 'bg-slate-900 text-white ring-2 shadow-lg scale-105'
+                        : 'bg-slate-950/70 hover:bg-slate-900/90 text-slate-300 border-white/5 hover:border-white/20'
+                    }`}
+                  >
+                    <span 
+                      style={{ backgroundColor: dept.accentHex }} 
+                      className="w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-black text-slate-950 shrink-0 shadow-inner"
+                    >
+                      {dept.number}
+                    </span>
+                    <span className="truncate max-w-[120px] sm:max-w-[150px]">
+                      {isAr ? dept.shortNameAr : dept.shortNameEn}
+                    </span>
+                    {countInfo?.openIssues > 0 && (
+                      <span className="px-1.5 py-0.2 rounded text-[8px] font-black bg-red-500/25 text-red-300 border border-red-500/40 animate-pulse">
+                        {countInfo.openIssues} NCR
+                      </span>
+                    )}
+                  </button>
+
+                  {idx < ENTERPRISE_DEPARTMENTS.length - 1 && (
+                    <ArrowRight className={`w-3.5 h-3.5 mx-0.5 shrink-0 transition-colors ${isCurrentStep ? 'text-amber-400 animate-pulse' : 'text-slate-600'}`} />
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -3371,6 +3610,8 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
               {/* SCADA EQUIPMENT PODS WITH 3D EXTRUSION, DOCKING PORTS & LASER BEACONS */}
               {filteredEquipment.map(eq => {
                 const st = stationStatuses[eq.id];
+                const dept = getDepartmentForStation(eq.id);
+                const isDeptHighlighted = (selectedDeptId === dept?.id) || (isClosedLoopActive && ENTERPRISE_DEPARTMENTS[closedLoopStep]?.id === dept?.id);
                 const isSelected = selectedStationId === eq.id;
                 const isDragging = draggingId === eq.id;
                 const isAndonActive = Boolean(st?.isAndonActive);
@@ -3387,22 +3628,30 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                   <div
                     key={eq.id}
                     onPointerDown={(e) => handlePointerDown(e, eq)}
-                    onClick={() => setSelectedStationId(eq.id)}
+                    onClick={() => {
+                      setSelectedStationId(eq.id);
+                      if (dept && !selectedDeptId) {
+                        // Keep drawer synchronized with department if on department tab
+                      }
+                    }}
                     style={{
                       left: `${eq.x}px`,
                       top: `${eq.y}px`,
                       width: `${eq.w}px`,
                       height: `${eq.h}px`,
                       transform: is3D 
-                        ? (isDragging ? 'translateZ(65px) scale(1.08)' : isSelected ? 'translateZ(46px) scale(1.04)' : 'translateZ(26px)')
-                        : (isDragging ? 'scale(1.05)' : isSelected ? 'scale(1.02)' : 'none'),
+                        ? (isDragging ? 'translateZ(65px) scale(1.08)' : isSelected || isDeptHighlighted ? 'translateZ(46px) scale(1.04)' : 'translateZ(26px)')
+                        : (isDragging ? 'scale(1.05)' : isSelected || isDeptHighlighted ? 'scale(1.02)' : 'none'),
                       boxShadow: is3D
                         ? (isDragging 
                             ? '-20px 30px 40px rgba(0,0,0,0.8), -2px 4px 0px rgba(255,255,255,0.2)' 
-                            : isAlert || isAndonActive 
-                              ? '-15px 22px 30px rgba(239,68,68,0.5), -1px 2px 0px rgba(255,255,255,0.15)'
-                              : '-12px 18px 24px rgba(0,0,0,0.7), -1px 2px 0px rgba(255,255,255,0.15)')
+                            : isDeptHighlighted
+                              ? `0 0 25px ${dept?.accentHex || '#38bdf8'}99, -15px 22px 30px rgba(0,0,0,0.8)`
+                              : isAlert || isAndonActive 
+                                ? '-15px 22px 30px rgba(239,68,68,0.5), -1px 2px 0px rgba(255,255,255,0.15)'
+                                : '-12px 18px 24px rgba(0,0,0,0.7), -1px 2px 0px rgba(255,255,255,0.15)')
                         : undefined,
+                      border: isDeptHighlighted ? `2px solid ${dept?.accentHex || '#38bdf8'}` : undefined,
                       cursor: isCustomizing ? 'grab' : 'pointer'
                     }}
                     className={`
@@ -3568,6 +3817,16 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                         <span className={`text-[10px] font-mono font-black px-1.5 py-0.5 rounded-md border ${ambientTheme === 'cleanroom' ? 'bg-slate-100 text-slate-700 border-slate-300' : 'text-slate-300 bg-black/40 border-white/5'}`}>
                           {eq.code}
                         </span>
+
+                        {dept && (
+                          <span 
+                            style={{ borderColor: `${dept.accentHex}40`, color: dept.accentHex }}
+                            className="text-[8px] font-mono font-black px-1.5 py-0.2 rounded bg-black/60 border hidden sm:inline"
+                            title={isAr ? dept.nameAr : dept.nameEn}
+                          >
+                            {dept.code}
+                          </span>
+                        )}
 
                         {/* ALWAYS-VISIBLE EDIT PENCIL */}
                         <button
@@ -4120,10 +4379,10 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
             </div>
 
             {/* Drawer Navigation Tabs Bar */}
-            <div className="flex items-center gap-1 p-2 bg-[#080d1a] border-b border-white/10 text-xs shrink-0">
+            <div className="flex items-center gap-1 p-2 bg-[#080d1a] border-b border-white/10 text-xs shrink-0 overflow-x-auto">
               <button
                 onClick={() => setDrawerTab('overview')}
-                className={`flex-1 py-1.5 px-2 rounded-xl font-bold flex items-center justify-center gap-1.5 transition-all ${
+                className={`flex-1 py-1.5 px-1.5 rounded-xl font-bold flex items-center justify-center gap-1 transition-all text-[11px] shrink-0 ${
                   drawerTab === 'overview'
                     ? 'bg-amber-500 text-slate-950 shadow-md font-black'
                     : 'text-slate-400 hover:text-white hover:bg-white/5'
@@ -4133,8 +4392,19 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                 <span>{isAr ? 'المحطة' : 'Station'}</span>
               </button>
               <button
+                onClick={() => setDrawerTab('department')}
+                className={`flex-1 py-1.5 px-1.5 rounded-xl font-bold flex items-center justify-center gap-1 transition-all text-[11px] shrink-0 ${
+                  drawerTab === 'department'
+                    ? 'bg-blue-600 text-white shadow-md font-black'
+                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                <Building2 className="w-3.5 h-3.5" />
+                <span>{isAr ? 'الإدارة' : 'Dept'}</span>
+              </button>
+              <button
                 onClick={() => setDrawerTab('defects-ncr')}
-                className={`flex-1 py-1.5 px-2 rounded-xl font-bold flex items-center justify-center gap-1.5 transition-all relative ${
+                className={`flex-1 py-1.5 px-1.5 rounded-xl font-bold flex items-center justify-center gap-1 transition-all text-[11px] shrink-0 relative ${
                   drawerTab === 'defects-ncr'
                     ? 'bg-red-500 text-white shadow-md font-black'
                     : 'text-slate-400 hover:text-white hover:bg-white/5'
@@ -4148,7 +4418,7 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
               </button>
               <button
                 onClick={() => setDrawerTab('capa-8d')}
-                className={`flex-1 py-1.5 px-2 rounded-xl font-bold flex items-center justify-center gap-1.5 transition-all ${
+                className={`flex-1 py-1.5 px-1.5 rounded-xl font-bold flex items-center justify-center gap-1 transition-all text-[11px] shrink-0 ${
                   drawerTab === 'capa-8d'
                     ? 'bg-purple-600 text-white shadow-md font-black'
                     : 'text-slate-400 hover:text-white hover:bg-white/5'
@@ -4159,14 +4429,14 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
               </button>
               <button
                 onClick={() => setDrawerTab('closed-loop')}
-                className={`flex-1 py-1.5 px-2 rounded-xl font-bold flex items-center justify-center gap-1.5 transition-all ${
+                className={`flex-1 py-1.5 px-1.5 rounded-xl font-bold flex items-center justify-center gap-1 transition-all text-[11px] shrink-0 ${
                   drawerTab === 'closed-loop'
                     ? 'bg-cyan-500 text-slate-950 shadow-md font-black'
                     : 'text-slate-400 hover:text-white hover:bg-white/5'
                 }`}
               >
                 <Workflow className="w-3.5 h-3.5" />
-                <span>{isAr ? 'المسار' : 'Journey'}</span>
+                <span>{isAr ? 'المسار' : 'Trace'}</span>
               </button>
             </div>
 
@@ -4556,6 +4826,275 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                         </div>
                       );
                     })}
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 5: ENTERPRISE DEPARTMENT INTEGRATED COCKPIT */}
+              {drawerTab === 'department' && (
+                <div className="space-y-4">
+                  {/* Department Switcher Dropdown */}
+                  <div className="flex items-center justify-between gap-1 p-2 bg-black/40 rounded-xl border border-white/5">
+                    <span className="text-[10px] text-slate-400 font-bold px-1 flex items-center gap-1.5 shrink-0">
+                      <Building2 className="w-3.5 h-3.5 text-cyan-400" />
+                      <span>{isAr ? 'الإدارة المعنية:' : 'Department:'}</span>
+                    </span>
+                    <select
+                      value={activeDepartment.id}
+                      onChange={(e) => {
+                        setSelectedDeptId(e.target.value);
+                        const dept = ENTERPRISE_DEPT_MAP[e.target.value];
+                        if (dept && dept.stationIds.length > 0) {
+                          setSelectedStationId(dept.stationIds[0]);
+                        }
+                      }}
+                      className="bg-[#0b1329] border border-white/10 rounded-lg text-xs font-bold text-cyan-300 py-1 px-2 focus:outline-none focus:ring-1 focus:ring-cyan-400 max-w-[200px] truncate"
+                    >
+                      {ENTERPRISE_DEPARTMENTS.map(d => (
+                        <option key={d.id} value={d.id}>
+                          [{d.number}] {isAr ? d.shortNameAr : d.shortNameEn}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Department Hero Card */}
+                  <div 
+                    style={{ borderColor: `${activeDepartment.accentHex}40` }}
+                    className={`p-4 rounded-2xl border bg-gradient-to-br ${activeDepartment.bgGradient} space-y-3 relative overflow-hidden shadow-xl`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <span 
+                          style={{ backgroundColor: activeDepartment.accentHex }}
+                          className="w-8 h-8 rounded-xl flex items-center justify-center font-black text-slate-950 text-sm shadow-lg shrink-0"
+                        >
+                          {activeDepartment.number}
+                        </span>
+                        <div>
+                          <span className="text-[10px] font-mono font-bold text-amber-300 block">
+                            {activeDepartment.code}
+                          </span>
+                          <h4 className="text-xs md:text-sm font-black text-white leading-tight">
+                            {isAr ? activeDepartment.nameAr : activeDepartment.nameEn}
+                          </h4>
+                        </div>
+                      </div>
+                      <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-white/10 text-slate-300 border border-white/15 shrink-0">
+                        SLA: {activeDepartment.slaHours} {isAr ? 'ساعات' : 'hrs'}
+                      </span>
+                    </div>
+
+                    {/* Physical Location */}
+                    <div className="flex items-center gap-1.5 text-[10px] text-slate-300 bg-black/40 p-2 rounded-xl border border-white/5">
+                      <MapPin className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                      <span className="truncate">
+                        {isAr ? activeDepartment.physicalLocationAr : activeDepartment.physicalLocationEn}
+                      </span>
+                    </div>
+
+                    {/* Leadership & Manager Card */}
+                    <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/70 border border-white/10 text-xs">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-cyan-500/20 text-cyan-300 flex items-center justify-center font-bold text-xs border border-cyan-500/40 shrink-0">
+                          <Users className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <span className="font-bold text-white block text-xs">
+                            {isAr ? activeDepartment.headOfDeptAr : activeDepartment.headOfDeptEn}
+                          </span>
+                          <span className="text-[9px] text-slate-400 block line-clamp-1">
+                            {isAr ? activeDepartment.headTitleAr : activeDepartment.headTitleEn}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Primary KPI Card */}
+                    <div className="p-2.5 rounded-xl bg-black/50 border border-white/10 flex items-center justify-between text-xs">
+                      <div>
+                        <span className="text-[9px] text-slate-400 block uppercase font-mono">
+                          {isAr ? activeDepartment.primaryKpiAr : activeDepartment.primaryKpiEn}
+                        </span>
+                        <span className="text-sm font-black text-amber-400 font-mono">
+                          {activeDepartment.targetKpiValue}
+                        </span>
+                      </div>
+                      <div className="text-right rtl:text-left">
+                        <span className="text-[9px] text-slate-400 block">
+                          {isAr ? 'الحالة التشغيلية' : 'Operating Status'}
+                        </span>
+                        <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                          ✓ 100% {isAr ? 'مطابق' : 'Compliant'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Input / Output Handshake Contract Matrix */}
+                  <div className="p-3 rounded-2xl bg-slate-900/80 border border-white/10 space-y-2.5">
+                    <div className="flex items-center justify-between text-[11px] font-black uppercase text-cyan-300">
+                      <span className="flex items-center gap-1.5">
+                        <GitFork className="w-3.5 h-3.5 text-cyan-400" />
+                        <span>{isAr ? 'بروتوكول الربط والتسليم البيني (I/O)' : 'Department Handshake Matrix'}</span>
+                      </span>
+                    </div>
+
+                    {/* Inbound Input */}
+                    <div className="p-2.5 rounded-xl bg-[#090f1d] border border-cyan-500/20 space-y-1">
+                      <div className="flex items-center justify-between text-[10px]">
+                        <span className="font-black text-cyan-300 flex items-center gap-1">
+                          <span>📥 {isAr ? 'المدخلات الواردة:' : 'Inbound Inputs:'}</span>
+                        </span>
+                        {activeDepartment.upstreamDeptId && ENTERPRISE_DEPT_MAP[activeDepartment.upstreamDeptId] && (
+                          <button
+                            onClick={() => {
+                              setSelectedDeptId(activeDepartment.upstreamDeptId!);
+                              const upDept = ENTERPRISE_DEPT_MAP[activeDepartment.upstreamDeptId!];
+                              if (upDept?.stationIds.length > 0) setSelectedStationId(upDept.stationIds[0]);
+                            }}
+                            className="text-[9px] text-cyan-400 hover:text-cyan-200 underline font-mono flex items-center gap-0.5"
+                          >
+                            <span>← {isAr ? ENTERPRISE_DEPT_MAP[activeDepartment.upstreamDeptId].shortNameAr : ENTERPRISE_DEPT_MAP[activeDepartment.upstreamDeptId].shortNameEn}</span>
+                          </button>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-slate-300 leading-relaxed">
+                        {isAr ? activeDepartment.inputDescriptionAr : activeDepartment.inputDescriptionEn}
+                      </p>
+                    </div>
+
+                    {/* Outbound Output */}
+                    <div className="p-2.5 rounded-xl bg-[#090f1d] border border-emerald-500/20 space-y-1">
+                      <div className="flex items-center justify-between text-[10px]">
+                        <span className="font-black text-emerald-300 flex items-center gap-1">
+                          <span>📤 {isAr ? 'المخرجات المسلمة:' : 'Outbound Deliverables:'}</span>
+                        </span>
+                        {activeDepartment.downstreamDeptId && ENTERPRISE_DEPT_MAP[activeDepartment.downstreamDeptId] && (
+                          <button
+                            onClick={() => {
+                              setSelectedDeptId(activeDepartment.downstreamDeptId!);
+                              const downDept = ENTERPRISE_DEPT_MAP[activeDepartment.downstreamDeptId!];
+                              if (downDept?.stationIds.length > 0) setSelectedStationId(downDept.stationIds[0]);
+                            }}
+                            className="text-[9px] text-emerald-400 hover:text-emerald-200 underline font-mono flex items-center gap-0.5"
+                          >
+                            <span>{isAr ? ENTERPRISE_DEPT_MAP[activeDepartment.downstreamDeptId].shortNameAr : ENTERPRISE_DEPT_MAP[activeDepartment.downstreamDeptId].shortNameEn} →</span>
+                          </button>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-slate-300 leading-relaxed">
+                        {isAr ? activeDepartment.outputDescriptionAr : activeDepartment.outputDescriptionEn}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Connected Physical Equipment & Stations */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-amber-400 flex items-center gap-1">
+                        <Factory className="w-3.5 h-3.5" />
+                        <span>{isAr ? `المحطات والماكينات التابعة (${activeDepartment.stationIds.length})` : `Assigned Equipment (${activeDepartment.stationIds.length})`}</span>
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-1.5">
+                      {activeDepartment.stationIds.map(stId => {
+                        const eq = equipmentMap[stId];
+                        const stStatus = stationStatuses[stId];
+                        const isThisSelected = selectedStationId === stId;
+
+                        return (
+                          <div
+                            key={stId}
+                            onClick={() => {
+                              setSelectedStationId(stId);
+                              if (soundEnabled) playIndustrialChime('camera');
+                            }}
+                            className={`p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between text-xs ${
+                              isThisSelected
+                                ? 'bg-amber-500/20 border-amber-500 text-white shadow-md'
+                                : 'bg-slate-900/70 border-white/5 hover:border-white/20 text-slate-300'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="p-1 rounded-lg bg-black/40 text-amber-400 font-mono text-[10px] font-black border border-white/5">
+                                {eq?.code || stId}
+                              </span>
+                              <div>
+                                <span className="font-bold text-white block text-xs">
+                                  {eq ? (isAr ? eq.titleAr : eq.titleEn) : stId}
+                                </span>
+                                <span className="text-[9px] text-slate-400">
+                                  OEE: {eq?.oeeEstimate || 92}% | FPY: {eq?.fpyEstimate || 98}%
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-1.5">
+                              <span 
+                                className="px-2 py-0.5 rounded-full text-[9px] font-bold border"
+                                style={{
+                                  color: stStatus?.statusColor || '#10b981',
+                                  borderColor: `${stStatus?.statusColor || '#10b981'}40`,
+                                  backgroundColor: `${stStatus?.statusColor || '#10b981'}15`
+                                }}
+                              >
+                                {isAr ? stStatus?.statusLabelAr || 'طبيعي' : stStatus?.statusLabelEn || 'Normal'}
+                              </span>
+                              <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Direct Platform Module Launchers */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-cyan-400 flex items-center gap-1">
+                        <Layers className="w-3.5 h-3.5" />
+                        <span>{isAr ? 'وحدات المنصة المترابطة مع هذه الإدارة' : 'Direct QMS Module Launchers'}</span>
+                      </span>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      {activeDepartment.linkedModules.map(mod => {
+                        const badgeCount = getModuleBadgeCount(mod.badgeCountKey);
+
+                        return (
+                          <div
+                            key={mod.id}
+                            onClick={() => navigate(mod.path)}
+                            className="p-2.5 rounded-xl bg-slate-900 hover:bg-cyan-950/40 border border-white/10 hover:border-cyan-500/40 transition-all cursor-pointer flex items-center justify-between group"
+                          >
+                            <div className="flex items-center gap-2.5">
+                              <div className="p-1.5 rounded-lg bg-black/40 text-cyan-400 group-hover:text-cyan-300 border border-white/5">
+                                {renderModuleIcon(mod.icon, "w-4 h-4")}
+                              </div>
+                              <div>
+                                <span className="font-bold text-white group-hover:text-cyan-300 text-xs block transition-colors">
+                                  {isAr ? mod.labelAr : mod.labelEn}
+                                </span>
+                                <span className="text-[9px] text-slate-400 font-mono">
+                                  {mod.path}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              {badgeCount !== null && badgeCount > 0 && (
+                                <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                  {badgeCount}
+                                </span>
+                              )}
+                              <ExternalLink className="w-3.5 h-3.5 text-slate-500 group-hover:text-cyan-400 transition-colors" />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
               )}
