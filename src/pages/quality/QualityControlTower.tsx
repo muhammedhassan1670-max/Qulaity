@@ -21,7 +21,7 @@ import {
   Eye, Compass, Volume2, VolumeX, BarChart3, Zap, Moon, Sun, Shield,
   Navigation, Bot, Workflow, GitFork, FileText, ClipboardList, Target,
   Link2, Unlink, AlignJustify, LayoutGrid, CheckSquare, Scale, HelpCircle,
-  CornerDownRight, ArrowUpRight, MapPin, Share2
+  CornerDownRight, ArrowUpRight, MapPin, Share2, Power, Cable, Check, ChevronDown
 } from 'lucide-react';
 import { useTranslation } from '../../utils/translations';
 import { loadSafeLocalDefectRecords } from '../../services/safeDefectStorage';
@@ -652,103 +652,347 @@ function calculateConnectionPath(
   const toEq = equipmentMap[conn.toId];
   if (!fromEq || !toEq) return null;
 
+  // Determine effective dock ports
+  let fromAnchor = conn.fromAnchor;
+  let toAnchor = conn.toAnchor;
+
+  // If anchors missing or identical, auto-determine optimal docking faces
+  if (!fromAnchor || !toAnchor) {
+    const dx = (toEq.x + toEq.w / 2) - (fromEq.x + fromEq.w / 2);
+    const dy = (toEq.y + toEq.h / 2) - (fromEq.y + fromEq.h / 2);
+    if (Math.abs(dx) >= Math.abs(dy)) {
+      fromAnchor = dx >= 0 ? 'right' : 'left';
+      toAnchor = dx >= 0 ? 'left' : 'right';
+    } else {
+      fromAnchor = dy >= 0 ? 'bottom' : 'top';
+      toAnchor = dy >= 0 ? 'top' : 'bottom';
+    }
+  }
+
+  // Exact docking port centers on machine perimeter
   let sx = fromEq.x + fromEq.w / 2;
   let sy = fromEq.y + fromEq.h / 2;
+  if (fromAnchor === 'right') { sx = fromEq.x + fromEq.w; sy = fromEq.y + fromEq.h / 2; }
+  else if (fromAnchor === 'left') { sx = fromEq.x; sy = fromEq.y + fromEq.h / 2; }
+  else if (fromAnchor === 'top') { sx = fromEq.x + fromEq.w / 2; sy = fromEq.y; }
+  else if (fromAnchor === 'bottom') { sx = fromEq.x + fromEq.w / 2; sy = fromEq.y + fromEq.h; }
+
   let ex = toEq.x + toEq.w / 2;
   let ey = toEq.y + toEq.h / 2;
+  if (toAnchor === 'right') { ex = toEq.x + toEq.w; ey = toEq.y + toEq.h / 2; }
+  else if (toAnchor === 'left') { ex = toEq.x; ey = toEq.y + toEq.h / 2; }
+  else if (toAnchor === 'top') { ex = toEq.x + toEq.w / 2; ey = toEq.y; }
+  else if (toAnchor === 'bottom') { ex = toEq.x + toEq.w / 2; ey = toEq.y + toEq.h; }
 
-  // Specific anchor offsets
-  if (conn.id === 'CONN-IQC-BUF') {
-    sx = fromEq.x + fromEq.w * 0.75;
-    sy = fromEq.y + fromEq.h;
-    ex = toEq.x + toEq.w / 2;
-    ey = toEq.y;
-    return { pathD: `M ${sx} ${sy} L ${ex} ${ey}`, startX: sx, startY: sy, endX: ex, endY: ey };
-  } else if (conn.id === 'CONN-IQC-QRN') {
-    sx = fromEq.x + fromEq.w * 0.25;
-    sy = fromEq.y + fromEq.h;
-    ex = toEq.x + toEq.w / 2;
-    ey = toEq.y;
-    return { pathD: `M ${sx} ${sy} L ${ex} ${ey}`, startX: sx, startY: sy, endX: ex, endY: ey };
-  } else if (conn.id === 'CONN-BUF-CNC') {
-    sx = fromEq.x + fromEq.w;
-    sy = fromEq.y + fromEq.h / 2;
-    ex = toEq.x;
-    ey = toEq.y + toEq.h / 2;
-    const midX = Math.round((sx + ex) / 2);
-    return {
-      pathD: `M ${sx} ${sy} L ${midX} ${sy} L ${midX} ${ey} L ${ex} ${ey}`,
-      startX: sx, startY: sy, endX: ex, endY: ey
-    };
-  } else if (conn.id === 'CONN-TRQ-PRS') {
-    sx = fromEq.x + fromEq.w;
-    sy = fromEq.y + fromEq.h / 2;
-    ex = toEq.x + toEq.w;
-    ey = toEq.y + toEq.h / 2;
-    const loopX = Math.max(sx, ex) + 26;
-    return {
-      pathD: `M ${sx} ${sy} L ${loopX} ${sy} Q ${loopX + 12} ${(sy + ey) / 2} ${loopX} ${ey} L ${ex} ${ey}`,
-      startX: sx, startY: sy, endX: ex, endY: ey
-    };
-  } else if (conn.id === 'CONN-IPQC-OQC') {
-    sx = fromEq.x + fromEq.w;
-    sy = fromEq.y + fromEq.h / 2;
-    ex = toEq.x;
-    ey = toEq.y + toEq.h / 2;
-    const midX = Math.round((sx + ex) / 2);
-    return {
-      pathD: `M ${sx} ${sy} L ${midX} ${sy} L ${midX} ${ey} L ${ex} ${ey}`,
-      startX: sx, startY: sy, endX: ex, endY: ey
-    };
-  } else if (conn.id === 'CONN-IPQC-CMM' || conn.id === 'CONN-IPQC-MRB') {
-    sx = fromEq.x + (conn.id === 'CONN-IPQC-CMM' ? fromEq.w * 0.35 : fromEq.w * 0.75);
-    sy = fromEq.y + fromEq.h;
-    ex = toEq.x + toEq.w / 2;
-    ey = toEq.y;
-    const midY = Math.round((sy + ey) / 2);
-    return {
-      pathD: `M ${sx} ${sy} L ${sx} ${midY} L ${ex} ${midY} L ${ex} ${ey}`,
-      startX: sx, startY: sy, endX: ex, endY: ey
-    };
+  // Clearance offset from machine casing to prevent overlapping with pod
+  const c = 24;
+  const points: { x: number; y: number }[] = [{ x: sx, y: sy }];
+
+  // Compute directional departure clearance point
+  let exitX = sx;
+  let exitY = sy;
+  if (fromAnchor === 'right') exitX = sx + c;
+  else if (fromAnchor === 'left') exitX = sx - c;
+  else if (fromAnchor === 'top') exitY = sy - c;
+  else if (fromAnchor === 'bottom') exitY = sy + c;
+  points.push({ x: exitX, y: exitY });
+
+  // Compute directional arrival clearance point
+  let enterX = ex;
+  let enterY = ey;
+  if (toAnchor === 'right') enterX = ex + c;
+  else if (toAnchor === 'left') enterX = ex - c;
+  else if (toAnchor === 'top') enterY = ey - c;
+  else if (toAnchor === 'bottom') enterY = ey + c;
+
+  // Intermediate routing between exit and enter points
+  if (fromAnchor === 'right' && toAnchor === 'left') {
+    if (ex >= sx) {
+      const midX = Math.round((exitX + enterX) / 2);
+      points.push({ x: midX, y: exitY });
+      points.push({ x: midX, y: enterY });
+    } else {
+      const bypassY = Math.min(fromEq.y, toEq.y) - 28 > 25 
+        ? Math.min(fromEq.y, toEq.y) - 28 
+        : Math.max(fromEq.y + fromEq.h, toEq.y + toEq.h) + 28;
+      points.push({ x: exitX, y: bypassY });
+      points.push({ x: enterX, y: bypassY });
+    }
+  } else if (fromAnchor === 'left' && toAnchor === 'right') {
+    if (ex <= sx) {
+      const midX = Math.round((exitX + enterX) / 2);
+      points.push({ x: midX, y: exitY });
+      points.push({ x: midX, y: enterY });
+    } else {
+      const bypassY = Math.min(fromEq.y, toEq.y) - 28 > 25 
+        ? Math.min(fromEq.y, toEq.y) - 28 
+        : Math.max(fromEq.y + fromEq.h, toEq.y + toEq.h) + 28;
+      points.push({ x: exitX, y: bypassY });
+      points.push({ x: enterX, y: bypassY });
+    }
+  } else if (fromAnchor === 'bottom' && toAnchor === 'top') {
+    if (ey >= sy) {
+      const midY = Math.round((exitY + enterY) / 2);
+      points.push({ x: exitX, y: midY });
+      points.push({ x: enterX, y: midY });
+    } else {
+      const bypassX = Math.max(fromEq.x + fromEq.w, toEq.x + toEq.w) + 28;
+      points.push({ x: bypassX, y: exitY });
+      points.push({ x: bypassX, y: enterY });
+    }
+  } else if (fromAnchor === 'top' && toAnchor === 'bottom') {
+    if (ey <= sy) {
+      const midY = Math.round((exitY + enterY) / 2);
+      points.push({ x: exitX, y: midY });
+      points.push({ x: enterX, y: midY });
+    } else {
+      const bypassX = Math.max(fromEq.x + fromEq.w, toEq.x + toEq.w) + 28;
+      points.push({ x: bypassX, y: exitY });
+      points.push({ x: bypassX, y: enterY });
+    }
+  } else if (fromAnchor === 'right' && toAnchor === 'right') {
+    const loopX = Math.max(exitX, enterX) + 26;
+    points.push({ x: loopX, y: exitY });
+    points.push({ x: loopX, y: enterY });
+  } else if (fromAnchor === 'left' && toAnchor === 'left') {
+    const loopX = Math.min(exitX, enterX) - 26;
+    points.push({ x: loopX, y: exitY });
+    points.push({ x: loopX, y: enterY });
+  } else if (fromAnchor === 'bottom' && toAnchor === 'bottom') {
+    const loopY = Math.max(exitY, enterY) + 26;
+    points.push({ x: exitX, y: loopY });
+    points.push({ x: enterX, y: loopY });
+  } else if (fromAnchor === 'top' && toAnchor === 'top') {
+    const loopY = Math.min(exitY, enterY) - 26;
+    points.push({ x: exitX, y: loopY });
+    points.push({ x: enterX, y: loopY });
+  } else if (fromAnchor === 'right' || fromAnchor === 'left') {
+    points.push({ x: enterX, y: exitY });
   } else {
-    if (conn.fromAnchor === 'bottom') {
-      sx = fromEq.x + fromEq.w / 2;
-      sy = fromEq.y + fromEq.h;
-    } else if (conn.fromAnchor === 'top') {
-      sx = fromEq.x + fromEq.w / 2;
-      sy = fromEq.y;
-    } else if (conn.fromAnchor === 'left') {
-      sx = fromEq.x;
-      sy = fromEq.y + fromEq.h / 2;
-    } else if (conn.fromAnchor === 'right') {
-      sx = fromEq.x + fromEq.w;
-      sy = fromEq.y + fromEq.h / 2;
-    }
+    points.push({ x: exitX, y: enterY });
+  }
 
-    if (conn.toAnchor === 'top') {
-      ex = toEq.x + toEq.w / 2;
-      ey = toEq.y;
-    } else if (conn.toAnchor === 'bottom') {
-      ex = toEq.x + toEq.w / 2;
-      ey = toEq.y + toEq.h;
-    } else if (conn.toAnchor === 'left') {
-      ex = toEq.x;
-      ey = toEq.y + toEq.h / 2;
-    } else if (conn.toAnchor === 'right') {
-      ex = toEq.x + toEq.w;
-      ey = toEq.y + toEq.h / 2;
-    }
+  points.push({ x: enterX, y: enterY });
+  points.push({ x: ex, y: ey });
 
-    if (Math.abs(sx - ex) < 8 || Math.abs(sy - ey) < 8) {
-      return { pathD: `M ${sx} ${sy} L ${ex} ${ey}`, startX: sx, startY: sy, endX: ex, endY: ey };
+  // Clean deduplicated points
+  const cleaned: { x: number; y: number }[] = [points[0]];
+  for (let i = 1; i < points.length; i++) {
+    const prev = cleaned[cleaned.length - 1];
+    const curr = points[i];
+    if (prev.x === curr.x && prev.y === curr.y) continue;
+    if (i < points.length - 1) {
+      const next = points[i + 1];
+      if ((prev.x === curr.x && curr.x === next.x) || (prev.y === curr.y && curr.y === next.y)) {
+        continue;
+      }
     }
+    cleaned.push(curr);
+  }
 
-    const midX = (sx + ex) / 2;
+  const pathD = cleaned.reduce((acc, pt, idx) => {
+    return idx === 0 ? `M ${pt.x} ${pt.y}` : `${acc} L ${pt.x} ${pt.y}`;
+  }, '');
+
+  return { pathD, startX: sx, startY: sy, endX: ex, endY: ey };
+}
+
+// ============================================================================
+// INDUSTRIAL FACTORY FLOOR LAYOUT PRESETS ENGINE (محرّك التنسيقات المصنعية)
+// ============================================================================
+function buildLayoutPresetData(
+  presetId: 'bays' | 'u-cell' | 'linear' | 'serpentine' | 'default',
+  currentList: ScadaEquipment[]
+): { equipment: ScadaEquipment[]; connections: ScadaConnection[]; nameAr: string; nameEn: string } {
+  if (presetId === 'default') {
     return {
-      pathD: `M ${sx} ${sy} L ${midX} ${sy} L ${midX} ${ey} L ${ex} ${ey}`,
-      startX: sx, startY: sy, endX: ex, endY: ey
+      equipment: DEFAULT_EQUIPMENT_PODS,
+      connections: FACTORY_CONNECTIONS,
+      nameAr: 'المصنع الافتراضي القياسي',
+      nameEn: 'Default SCADA Plant'
     };
   }
+
+  if (presetId === 'bays') {
+    // 1. Bays Layout: Left Bay A, Center-Top Bay B, Center-Bottom Hub C, Right-Top Bay D, Right-Bottom Bay E
+    const coords: Record<string, { x: number; y: number; w: number; h: number }> = {
+      'DOCK-RECEIVING-01': { x: 35, y: 65, w: 235, h: 90 },
+      'STATION-IQC-INSPECT': { x: 35, y: 180, w: 235, h: 90 },
+      'QUARANTINE-CAGE': { x: 35, y: 295, w: 110, h: 95 },
+      'WAREHOUSE-RAW-STAGING': { x: 160, y: 295, w: 110, h: 95 },
+      'STATION-CNC-MILLING': { x: 335, y: 65, w: 220, h: 90 },
+      'STATION-SUB-ASSEMBLY': { x: 335, y: 180, w: 220, h: 90 },
+      'STATION-TORQUE-BENCH': { x: 595, y: 65, w: 220, h: 90 },
+      'STATION-PRESSURE-TEST': { x: 595, y: 180, w: 220, h: 90 },
+      'STATION-IPQC-GATE': { x: 465, y: 295, w: 230, h: 95 },
+      'LAB-METROLOGY-CMM': { x: 335, y: 490, w: 220, h: 95 },
+      'ROOM-MRB-CAPA': { x: 595, y: 490, w: 220, h: 95 },
+      'BENCH-OQC-RELEASE': { x: 890, y: 65, w: 245, h: 90 },
+      'STATION-PACKAGING': { x: 890, y: 185, w: 245, h: 90 },
+      'DOCK-SHIPPING-03': { x: 890, y: 345, w: 245, h: 95 },
+      'TRUCK-CUSTOMER-DELIVERY': { x: 890, y: 470, w: 245, h: 95 }
+    };
+
+    const equipment = currentList.map(item => {
+      const c = coords[item.id];
+      if (c) return { ...item, ...c };
+      return item;
+    });
+
+    const connections: ScadaConnection[] = [
+      { id: 'CONN-BAYS-1', fromId: 'DOCK-RECEIVING-01', toId: 'STATION-IQC-INSPECT', fromAnchor: 'bottom', toAnchor: 'top', type: 'gravity-roller', labelAr: 'سير رولمان استلام الفحص', labelEn: 'Inbound Infeed Conveyor', velocityMs: 0.35, motorKw: 0.55, capacityUnits: 15, currentWip: 5 },
+      { id: 'CONN-BAYS-2', fromId: 'STATION-IQC-INSPECT', toId: 'WAREHOUSE-RAW-STAGING', fromAnchor: 'bottom', toAnchor: 'top', type: 'motor-roller', labelAr: 'مسار الخامات المعتمدة', labelEn: 'Approved Material Line', velocityMs: 0.48, motorKw: 0.75, capacityUnits: 20, currentWip: 8 },
+      { id: 'CONN-BAYS-3', fromId: 'STATION-IQC-INSPECT', toId: 'QUARANTINE-CAGE', fromAnchor: 'bottom', toAnchor: 'top', type: 'chute', labelAr: 'مزلقان عزل الشحنات المرفوضة', labelEn: 'Quarantine Diverter Chute', velocityMs: 0.6, motorKw: 0.37, capacityUnits: 10, currentWip: 1 },
+      { id: 'CONN-BAYS-4', fromId: 'WAREHOUSE-RAW-STAGING', toId: 'STATION-CNC-MILLING', fromAnchor: 'right', toAnchor: 'left', type: 'bridge', labelAr: 'جسر تغذية خط التشغيل الميكانيكي', labelEn: 'CNC Infeed Transfer Bridge', velocityMs: 0.45, motorKw: 0.75, capacityUnits: 16, currentWip: 6 },
+      { id: 'CONN-BAYS-5', fromId: 'STATION-CNC-MILLING', toId: 'STATION-SUB-ASSEMBLY', fromAnchor: 'bottom', toAnchor: 'top', type: 'motor-roller', labelAr: 'سير نقل المكونات المخرطة', labelEn: 'Machined Parts Conveyor', velocityMs: 0.5, motorKw: 1.1, capacityUnits: 25, currentWip: 12 },
+      { id: 'CONN-BAYS-6', fromId: 'STATION-CNC-MILLING', toId: 'STATION-TORQUE-BENCH', fromAnchor: 'right', toAnchor: 'left', type: 'belt', labelAr: 'سير التغذية المتقاطعة للربط', labelEn: 'Cross-Bay Torque Feed', velocityMs: 0.45, motorKw: 0.75, capacityUnits: 20, currentWip: 7 },
+      { id: 'CONN-BAYS-7', fromId: 'STATION-TORQUE-BENCH', toId: 'STATION-PRESSURE-TEST', fromAnchor: 'bottom', toAnchor: 'top', type: 'motor-roller', labelAr: 'سير محطة الضغط والهيدروليك', labelEn: 'Hydrostatic Pressure Line', velocityMs: 0.45, motorKw: 1.1, capacityUnits: 20, currentWip: 6 },
+      { id: 'CONN-BAYS-8', fromId: 'STATION-SUB-ASSEMBLY', toId: 'STATION-PRESSURE-TEST', fromAnchor: 'right', toAnchor: 'left', type: 'motor-roller', labelAr: 'سير التجميع لاختبار الضغط', labelEn: 'Assembly to Pressure Test', velocityMs: 0.4, motorKw: 0.75, capacityUnits: 18, currentWip: 4 },
+      { id: 'CONN-BAYS-9', fromId: 'STATION-PRESSURE-TEST', toId: 'STATION-IPQC-GATE', fromAnchor: 'bottom', toAnchor: 'top', type: 'motor-roller', labelAr: 'بوابة فحص الجودة أثناء التشغيل', labelEn: 'IPQC Release Conveyor', velocityMs: 0.5, motorKw: 0.75, capacityUnits: 22, currentWip: 9 },
+      { id: 'CONN-BAYS-10', fromId: 'STATION-IPQC-GATE', toId: 'LAB-METROLOGY-CMM', fromAnchor: 'bottom', toAnchor: 'top', type: 'pneumatic', labelAr: 'أنبوب هوائي سريع لعينات CMM', labelEn: 'Pneumatic CMM Sample Tube', velocityMs: 1.8, motorKw: 2.2, capacityUnits: 5, currentWip: 1 },
+      { id: 'CONN-BAYS-11', fromId: 'STATION-IPQC-GATE', toId: 'ROOM-MRB-CAPA', fromAnchor: 'bottom', toAnchor: 'top', type: 'chute', labelAr: 'مسار العزل الهندسي ولجنة MRB', labelEn: 'MRB Engineering Review Chute', velocityMs: 0.6, motorKw: 0.37, capacityUnits: 8, currentWip: 2 },
+      { id: 'CONN-BAYS-12', fromId: 'STATION-IPQC-GATE', toId: 'BENCH-OQC-RELEASE', fromAnchor: 'right', toAnchor: 'left', type: 'bridge', labelAr: 'جسر نقل الفحص النهائي OQC', labelEn: 'Final Release Transfer Bridge', velocityMs: 0.5, motorKw: 1.1, capacityUnits: 25, currentWip: 10 },
+      { id: 'CONN-BAYS-13', fromId: 'BENCH-OQC-RELEASE', toId: 'STATION-PACKAGING', fromAnchor: 'bottom', toAnchor: 'top', type: 'motor-roller', labelAr: 'سير محطة التعبئة والتغليف', labelEn: 'Final Packaging Conveyor', velocityMs: 0.45, motorKw: 0.75, capacityUnits: 20, currentWip: 8 },
+      { id: 'CONN-BAYS-14', fromId: 'STATION-PACKAGING', toId: 'DOCK-SHIPPING-03', fromAnchor: 'bottom', toAnchor: 'top', type: 'motor-roller', labelAr: 'سير رصيف الشحن والتصدير', labelEn: 'Outbound Shipping Conveyor', velocityMs: 0.45, motorKw: 0.75, capacityUnits: 24, currentWip: 6 },
+      { id: 'CONN-BAYS-15', fromId: 'DOCK-SHIPPING-03', toId: 'TRUCK-CUSTOMER-DELIVERY', fromAnchor: 'bottom', toAnchor: 'top', type: 'dock-ramp', labelAr: 'رامب تحميل شاحنات التوزيع', labelEn: 'Customer Dispatch Ramp', velocityMs: 0.3, motorKw: 0.55, capacityUnits: 30, currentWip: 15 }
+    ];
+
+    return { equipment, connections, nameAr: 'العنابر الصناعية المتوازية (Bays Grid)', nameEn: 'Industrial Bays Grid' };
+  }
+
+  if (presetId === 'u-cell') {
+    // 2. Continuous U-Shape Horseshoe Loop
+    const coords: Record<string, { x: number; y: number; w: number; h: number }> = {
+      'DOCK-RECEIVING-01': { x: 45, y: 65, w: 200, h: 90 },
+      'STATION-IQC-INSPECT': { x: 270, y: 65, w: 200, h: 90 },
+      'WAREHOUSE-RAW-STAGING': { x: 495, y: 65, w: 200, h: 90 },
+      'STATION-CNC-MILLING': { x: 720, y: 65, w: 200, h: 90 },
+      'STATION-SUB-ASSEMBLY': { x: 945, y: 65, w: 205, h: 90 },
+      'STATION-TORQUE-BENCH': { x: 945, y: 205, w: 205, h: 90 },
+      'STATION-PRESSURE-TEST': { x: 945, y: 345, w: 205, h: 90 },
+      'STATION-IPQC-GATE': { x: 945, y: 485, w: 205, h: 90 },
+      'LAB-METROLOGY-CMM': { x: 720, y: 485, w: 200, h: 90 },
+      'ROOM-MRB-CAPA': { x: 495, y: 485, w: 200, h: 90 },
+      'BENCH-OQC-RELEASE': { x: 270, y: 485, w: 200, h: 90 },
+      'STATION-PACKAGING': { x: 45, y: 485, w: 200, h: 90 },
+      'DOCK-SHIPPING-03': { x: 45, y: 345, w: 200, h: 90 },
+      'TRUCK-CUSTOMER-DELIVERY': { x: 45, y: 205, w: 200, h: 90 },
+      'QUARANTINE-CAGE': { x: 270, y: 205, w: 180, h: 90 }
+    };
+
+    const equipment = currentList.map(item => {
+      const c = coords[item.id];
+      if (c) return { ...item, ...c };
+      return item;
+    });
+
+    const connections: ScadaConnection[] = [
+      { id: 'CONN-U-1', fromId: 'DOCK-RECEIVING-01', toId: 'STATION-IQC-INSPECT', fromAnchor: 'right', toAnchor: 'left', type: 'motor-roller', labelAr: 'سير رولمان استلام IQC', labelEn: 'Dock to IQC Conveyor', velocityMs: 0.45, motorKw: 0.75, capacityUnits: 15, currentWip: 5 },
+      { id: 'CONN-U-2', fromId: 'STATION-IQC-INSPECT', toId: 'WAREHOUSE-RAW-STAGING', fromAnchor: 'right', toAnchor: 'left', type: 'motor-roller', labelAr: 'سير الخامات المفحوصة', labelEn: 'IQC to Raw Buffer', velocityMs: 0.5, motorKw: 0.75, capacityUnits: 20, currentWip: 8 },
+      { id: 'CONN-U-3', fromId: 'STATION-IQC-INSPECT', toId: 'QUARANTINE-CAGE', fromAnchor: 'bottom', toAnchor: 'top', type: 'chute', labelAr: 'مزلقان العزل والحجر', labelEn: 'Quarantine Diverter Chute', velocityMs: 0.6, motorKw: 0.37, capacityUnits: 10, currentWip: 1 },
+      { id: 'CONN-U-4', fromId: 'WAREHOUSE-RAW-STAGING', toId: 'STATION-CNC-MILLING', fromAnchor: 'right', toAnchor: 'left', type: 'motor-roller', labelAr: 'سير تغذية ماكينات CNC', labelEn: 'Buffer to CNC Infeed', velocityMs: 0.5, motorKw: 1.1, capacityUnits: 22, currentWip: 11 },
+      { id: 'CONN-U-5', fromId: 'STATION-CNC-MILLING', toId: 'STATION-SUB-ASSEMBLY', fromAnchor: 'right', toAnchor: 'left', type: 'motor-roller', labelAr: 'سير خط التجميع 01', labelEn: 'CNC to Assembly Line', velocityMs: 0.5, motorKw: 1.1, capacityUnits: 25, currentWip: 14 },
+      { id: 'CONN-U-6', fromId: 'STATION-SUB-ASSEMBLY', toId: 'STATION-TORQUE-BENCH', fromAnchor: 'bottom', toAnchor: 'top', type: 'motor-roller', labelAr: 'سير محطة الربط والعزم', labelEn: 'Assembly to Torque Cell', velocityMs: 0.45, motorKw: 0.75, capacityUnits: 18, currentWip: 7 },
+      { id: 'CONN-U-7', fromId: 'STATION-TORQUE-BENCH', toId: 'STATION-PRESSURE-TEST', fromAnchor: 'bottom', toAnchor: 'top', type: 'motor-roller', labelAr: 'سير كابينة اختبار الضغط', labelEn: 'Torque to Pressure Chamber', velocityMs: 0.45, motorKw: 1.1, capacityUnits: 20, currentWip: 6 },
+      { id: 'CONN-U-8', fromId: 'STATION-PRESSURE-TEST', toId: 'STATION-IPQC-GATE', fromAnchor: 'bottom', toAnchor: 'top', type: 'motor-roller', labelAr: 'سير بوابة فحص الصالة', labelEn: 'Pressure to IPQC Gate', velocityMs: 0.5, motorKw: 0.75, capacityUnits: 20, currentWip: 9 },
+      { id: 'CONN-U-9', fromId: 'STATION-IPQC-GATE', toId: 'LAB-METROLOGY-CMM', fromAnchor: 'left', toAnchor: 'right', type: 'pneumatic', labelAr: 'أنبوب هوائي سريع لغرفة CMM', labelEn: 'IPQC to CMM Metrology', velocityMs: 1.8, motorKw: 2.2, capacityUnits: 5, currentWip: 1 },
+      { id: 'CONN-U-10', fromId: 'LAB-METROLOGY-CMM', toId: 'ROOM-MRB-CAPA', fromAnchor: 'left', toAnchor: 'right', type: 'motor-roller', labelAr: 'مسار لجنة MRB والإجراءات', labelEn: 'CMM to MRB Hold', velocityMs: 0.45, motorKw: 0.55, capacityUnits: 12, currentWip: 3 },
+      { id: 'CONN-U-11', fromId: 'ROOM-MRB-CAPA', toId: 'BENCH-OQC-RELEASE', fromAnchor: 'left', toAnchor: 'right', type: 'motor-roller', labelAr: 'مسار الإفراج النهائي OQC', labelEn: 'MRB to OQC Release Bench', velocityMs: 0.5, motorKw: 0.75, capacityUnits: 20, currentWip: 8 },
+      { id: 'CONN-U-12', fromId: 'BENCH-OQC-RELEASE', toId: 'STATION-PACKAGING', fromAnchor: 'left', toAnchor: 'right', type: 'motor-roller', labelAr: 'سير التعبئة والتغليف الآلي', labelEn: 'OQC to Auto Packaging', velocityMs: 0.5, motorKw: 0.75, capacityUnits: 25, currentWip: 10 },
+      { id: 'CONN-U-13', fromId: 'STATION-PACKAGING', toId: 'DOCK-SHIPPING-03', fromAnchor: 'top', toAnchor: 'bottom', type: 'motor-roller', labelAr: 'سير رصيف الشحن والتصدير', labelEn: 'Packaging to Shipping Dock', velocityMs: 0.45, motorKw: 0.75, capacityUnits: 24, currentWip: 7 },
+      { id: 'CONN-U-14', fromId: 'DOCK-SHIPPING-03', toId: 'TRUCK-CUSTOMER-DELIVERY', fromAnchor: 'top', toAnchor: 'bottom', type: 'dock-ramp', labelAr: 'رامب شحن الشاحنات', labelEn: 'Dock to Truck Ramp', velocityMs: 0.35, motorKw: 0.55, capacityUnits: 30, currentWip: 14 }
+    ];
+
+    return { equipment, connections, nameAr: 'خلية تصنيع U الهندسية (Lean TPS U-Cell)', nameEn: 'Lean TPS U-Cell' };
+  }
+
+  if (presetId === 'linear') {
+    // 3. Dual Linear Cascade Lines (Upper Manufacturing, Lower Quality & Release)
+    const coords: Record<string, { x: number; y: number; w: number; h: number }> = {
+      'DOCK-RECEIVING-01': { x: 35, y: 120, w: 175, h: 90 },
+      'STATION-IQC-INSPECT': { x: 230, y: 120, w: 175, h: 90 },
+      'WAREHOUSE-RAW-STAGING': { x: 425, y: 120, w: 175, h: 90 },
+      'STATION-CNC-MILLING': { x: 620, y: 120, w: 175, h: 90 },
+      'STATION-SUB-ASSEMBLY': { x: 815, y: 120, w: 175, h: 90 },
+      'STATION-TORQUE-BENCH': { x: 1010, y: 120, w: 160, h: 90 },
+      'STATION-PRESSURE-TEST': { x: 1010, y: 380, w: 160, h: 90 },
+      'STATION-IPQC-GATE': { x: 815, y: 380, w: 175, h: 90 },
+      'LAB-METROLOGY-CMM': { x: 620, y: 380, w: 175, h: 90 },
+      'BENCH-OQC-RELEASE': { x: 425, y: 380, w: 175, h: 90 },
+      'STATION-PACKAGING': { x: 230, y: 380, w: 175, h: 90 },
+      'DOCK-SHIPPING-03': { x: 35, y: 380, w: 175, h: 90 },
+      'TRUCK-CUSTOMER-DELIVERY': { x: 35, y: 505, w: 175, h: 90 },
+      'QUARANTINE-CAGE': { x: 230, y: 245, w: 175, h: 80 },
+      'ROOM-MRB-CAPA': { x: 620, y: 245, w: 175, h: 80 }
+    };
+
+    const equipment = currentList.map(item => {
+      const c = coords[item.id];
+      if (c) return { ...item, ...c };
+      return item;
+    });
+
+    const connections: ScadaConnection[] = [
+      { id: 'CONN-LIN-1', fromId: 'DOCK-RECEIVING-01', toId: 'STATION-IQC-INSPECT', fromAnchor: 'right', toAnchor: 'left', type: 'motor-roller', labelAr: 'سير رولمان استلام الشحنات', labelEn: 'Dock to IQC', velocityMs: 0.45, motorKw: 0.75, capacityUnits: 15, currentWip: 4 },
+      { id: 'CONN-LIN-2', fromId: 'STATION-IQC-INSPECT', toId: 'WAREHOUSE-RAW-STAGING', fromAnchor: 'right', toAnchor: 'left', type: 'motor-roller', labelAr: 'سير الخامات المفحوصة', labelEn: 'IQC to Raw Buffer', velocityMs: 0.5, motorKw: 0.75, capacityUnits: 20, currentWip: 8 },
+      { id: 'CONN-LIN-3', fromId: 'STATION-IQC-INSPECT', toId: 'QUARANTINE-CAGE', fromAnchor: 'bottom', toAnchor: 'top', type: 'chute', labelAr: 'مزلقان العزل والحجز', labelEn: 'Quarantine Chute', velocityMs: 0.6, motorKw: 0.37, capacityUnits: 8, currentWip: 1 },
+      { id: 'CONN-LIN-4', fromId: 'WAREHOUSE-RAW-STAGING', toId: 'STATION-CNC-MILLING', fromAnchor: 'right', toAnchor: 'left', type: 'motor-roller', labelAr: 'سير تغذية ماكينات CNC', labelEn: 'Buffer to CNC Milling', velocityMs: 0.5, motorKw: 1.1, capacityUnits: 22, currentWip: 11 },
+      { id: 'CONN-LIN-5', fromId: 'STATION-CNC-MILLING', toId: 'STATION-SUB-ASSEMBLY', fromAnchor: 'right', toAnchor: 'left', type: 'motor-roller', labelAr: 'سير خط التجميع 01', labelEn: 'CNC to Assembly', velocityMs: 0.5, motorKw: 1.1, capacityUnits: 25, currentWip: 13 },
+      { id: 'CONN-LIN-6', fromId: 'STATION-SUB-ASSEMBLY', toId: 'STATION-TORQUE-BENCH', fromAnchor: 'right', toAnchor: 'left', type: 'motor-roller', labelAr: 'سير محطة الربط والعزم', labelEn: 'Assembly to Torque', velocityMs: 0.45, motorKw: 0.75, capacityUnits: 18, currentWip: 7 },
+      { id: 'CONN-LIN-7', fromId: 'STATION-TORQUE-BENCH', toId: 'STATION-PRESSURE-TEST', fromAnchor: 'bottom', toAnchor: 'top', type: 'bridge', labelAr: 'جسر نقل الاختبارات الهيدروليكية', labelEn: 'Torque to Pressure Bridge', velocityMs: 0.45, motorKw: 1.1, capacityUnits: 20, currentWip: 6 },
+      { id: 'CONN-LIN-8', fromId: 'STATION-PRESSURE-TEST', toId: 'STATION-IPQC-GATE', fromAnchor: 'left', toAnchor: 'right', type: 'motor-roller', labelAr: 'سير بوابة فحص الصالة', labelEn: 'Pressure to IPQC', velocityMs: 0.5, motorKw: 0.75, capacityUnits: 20, currentWip: 8 },
+      { id: 'CONN-LIN-9', fromId: 'STATION-IPQC-GATE', toId: 'LAB-METROLOGY-CMM', fromAnchor: 'left', toAnchor: 'right', type: 'pneumatic', labelAr: 'أنبوب هوائي لغرفة القياس CMM', labelEn: 'IPQC to CMM Lab', velocityMs: 1.8, motorKw: 2.2, capacityUnits: 5, currentWip: 1 },
+      { id: 'CONN-LIN-10', fromId: 'LAB-METROLOGY-CMM', toId: 'BENCH-OQC-RELEASE', fromAnchor: 'left', toAnchor: 'right', type: 'motor-roller', labelAr: 'سير الإفراج والتحرير النهائي', labelEn: 'Metrology to OQC', velocityMs: 0.5, motorKw: 0.75, capacityUnits: 22, currentWip: 9 },
+      { id: 'CONN-LIN-11', fromId: 'BENCH-OQC-RELEASE', toId: 'STATION-PACKAGING', fromAnchor: 'left', toAnchor: 'right', type: 'motor-roller', labelAr: 'سير محطة التعبئة والتغليف', labelEn: 'OQC to Packaging', velocityMs: 0.5, motorKw: 0.75, capacityUnits: 25, currentWip: 12 },
+      { id: 'CONN-LIN-12', fromId: 'STATION-PACKAGING', toId: 'DOCK-SHIPPING-03', fromAnchor: 'left', toAnchor: 'right', type: 'motor-roller', labelAr: 'سير رصيف الشحن والتصدير', labelEn: 'Packaging to Shipping Dock', velocityMs: 0.45, motorKw: 0.75, capacityUnits: 24, currentWip: 7 },
+      { id: 'CONN-LIN-13', fromId: 'DOCK-SHIPPING-03', toId: 'TRUCK-CUSTOMER-DELIVERY', fromAnchor: 'bottom', toAnchor: 'top', type: 'dock-ramp', labelAr: 'رامب شحن الشاحنات', labelEn: 'Dock to Dispatch Ramp', velocityMs: 0.35, motorKw: 0.55, capacityUnits: 30, currentWip: 16 }
+    ];
+
+    return { equipment, connections, nameAr: 'خط الإنتاج التسلسلي المزدوج (Linear Cascade)', nameEn: 'Dual Linear Cascade' };
+  }
+
+  // 4. Serpentine S-Flow (Triple Tier)
+  const coords: Record<string, { x: number; y: number; w: number; h: number }> = {
+    'DOCK-RECEIVING-01': { x: 40, y: 70, w: 200, h: 85 },
+    'STATION-IQC-INSPECT': { x: 265, y: 70, w: 200, h: 85 },
+    'WAREHOUSE-RAW-STAGING': { x: 490, y: 70, w: 200, h: 85 },
+    'STATION-CNC-MILLING': { x: 715, y: 70, w: 200, h: 85 },
+    'STATION-SUB-ASSEMBLY': { x: 940, y: 70, w: 210, h: 85 },
+    'STATION-TORQUE-BENCH': { x: 940, y: 260, w: 210, h: 85 },
+    'STATION-PRESSURE-TEST': { x: 715, y: 260, w: 200, h: 85 },
+    'STATION-IPQC-GATE': { x: 490, y: 260, w: 200, h: 85 },
+    'LAB-METROLOGY-CMM': { x: 265, y: 260, w: 200, h: 85 },
+    'ROOM-MRB-CAPA': { x: 40, y: 260, w: 200, h: 85 },
+    'BENCH-OQC-RELEASE': { x: 40, y: 465, w: 200, h: 85 },
+    'STATION-PACKAGING': { x: 265, y: 465, w: 200, h: 85 },
+    'DOCK-SHIPPING-03': { x: 490, y: 465, w: 200, h: 85 },
+    'TRUCK-CUSTOMER-DELIVERY': { x: 715, y: 465, w: 200, h: 85 },
+    'QUARANTINE-CAGE': { x: 940, y: 465, w: 210, h: 85 }
+  };
+
+  const equipment = currentList.map(item => {
+    const c = coords[item.id];
+    if (c) return { ...item, ...c };
+    return item;
+  });
+
+  const connections: ScadaConnection[] = [
+    { id: 'CONN-S-1', fromId: 'DOCK-RECEIVING-01', toId: 'STATION-IQC-INSPECT', fromAnchor: 'right', toAnchor: 'left', type: 'motor-roller', labelAr: 'سير رولمان استلام الفحص', labelEn: 'Dock to IQC', velocityMs: 0.45, motorKw: 0.75, capacityUnits: 15, currentWip: 5 },
+    { id: 'CONN-S-2', fromId: 'STATION-IQC-INSPECT', toId: 'WAREHOUSE-RAW-STAGING', fromAnchor: 'right', toAnchor: 'left', type: 'motor-roller', labelAr: 'سير الخامات المفحوصة', labelEn: 'IQC to Buffer', velocityMs: 0.5, motorKw: 0.75, capacityUnits: 20, currentWip: 8 },
+    { id: 'CONN-S-3', fromId: 'WAREHOUSE-RAW-STAGING', toId: 'STATION-CNC-MILLING', fromAnchor: 'right', toAnchor: 'left', type: 'motor-roller', labelAr: 'سير تغذية ماكينات CNC', labelEn: 'Buffer to CNC', velocityMs: 0.5, motorKw: 1.1, capacityUnits: 22, currentWip: 11 },
+    { id: 'CONN-S-4', fromId: 'STATION-CNC-MILLING', toId: 'STATION-SUB-ASSEMBLY', fromAnchor: 'right', toAnchor: 'left', type: 'motor-roller', labelAr: 'سير خط التجميع 01', labelEn: 'CNC to Assembly', velocityMs: 0.5, motorKw: 1.1, capacityUnits: 25, currentWip: 14 },
+    { id: 'CONN-S-5', fromId: 'STATION-SUB-ASSEMBLY', toId: 'STATION-TORQUE-BENCH', fromAnchor: 'bottom', toAnchor: 'top', type: 'motor-roller', labelAr: 'منحنى دوران السير 180°', labelEn: 'Tier 1 Turnaround Loop', velocityMs: 0.45, motorKw: 1.1, capacityUnits: 18, currentWip: 7 },
+    { id: 'CONN-S-6', fromId: 'STATION-TORQUE-BENCH', toId: 'STATION-PRESSURE-TEST', fromAnchor: 'left', toAnchor: 'right', type: 'motor-roller', labelAr: 'سير اختبارات الضغط', labelEn: 'Torque to Pressure', velocityMs: 0.45, motorKw: 1.1, capacityUnits: 20, currentWip: 6 },
+    { id: 'CONN-S-7', fromId: 'STATION-PRESSURE-TEST', toId: 'STATION-IPQC-GATE', fromAnchor: 'left', toAnchor: 'right', type: 'motor-roller', labelAr: 'سير بوابة فحص الصالة', labelEn: 'Pressure to IPQC', velocityMs: 0.5, motorKw: 0.75, capacityUnits: 20, currentWip: 8 },
+    { id: 'CONN-S-8', fromId: 'STATION-IPQC-GATE', toId: 'LAB-METROLOGY-CMM', fromAnchor: 'left', toAnchor: 'right', type: 'pneumatic', labelAr: 'أنبوب هوائي سريع لغرفة CMM', labelEn: 'IPQC to CMM Metrology', velocityMs: 1.8, motorKw: 2.2, capacityUnits: 5, currentWip: 1 },
+    { id: 'CONN-S-9', fromId: 'LAB-METROLOGY-CMM', toId: 'ROOM-MRB-CAPA', fromAnchor: 'left', toAnchor: 'right', type: 'motor-roller', labelAr: 'مسار العزل الهندسي ولجنة MRB', labelEn: 'Metrology to MRB', velocityMs: 0.45, motorKw: 0.55, capacityUnits: 12, currentWip: 3 },
+    { id: 'CONN-S-10', fromId: 'ROOM-MRB-CAPA', toId: 'BENCH-OQC-RELEASE', fromAnchor: 'bottom', toAnchor: 'top', type: 'motor-roller', labelAr: 'منحنى دوران السير 180° للمرحلة الثالثة', labelEn: 'Tier 2 Turnaround Loop', velocityMs: 0.45, motorKw: 1.1, capacityUnits: 18, currentWip: 6 },
+    { id: 'CONN-S-11', fromId: 'BENCH-OQC-RELEASE', toId: 'STATION-PACKAGING', fromAnchor: 'right', toAnchor: 'left', type: 'motor-roller', labelAr: 'سير محطة التعبئة والتغليف', labelEn: 'OQC to Packaging', velocityMs: 0.5, motorKw: 0.75, capacityUnits: 22, currentWip: 9 },
+    { id: 'CONN-S-12', fromId: 'STATION-PACKAGING', toId: 'DOCK-SHIPPING-03', fromAnchor: 'right', toAnchor: 'left', type: 'motor-roller', labelAr: 'سير رصيف الشحن والتصدير', labelEn: 'Packaging to Shipping Dock', velocityMs: 0.45, motorKw: 0.75, capacityUnits: 24, currentWip: 7 },
+    { id: 'CONN-S-13', fromId: 'DOCK-SHIPPING-03', toId: 'TRUCK-CUSTOMER-DELIVERY', fromAnchor: 'right', toAnchor: 'left', type: 'dock-ramp', labelAr: 'رامب شحن الشاحنات', labelEn: 'Dock to Dispatch Ramp', velocityMs: 0.35, motorKw: 0.55, capacityUnits: 30, currentWip: 15 }
+  ];
+
+  return { equipment, connections, nameAr: 'الخط التموجي المتعرج (Serpentine S-Flow)', nameEn: 'Serpentine S-Flow' };
 }
 
 function loadSavedEquipment(): ScadaEquipment[] {
@@ -884,6 +1128,18 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
   const [showConnectionManager, setShowConnectionManager] = useState(false);
   const [drawerTab, setDrawerTab] = useState<'overview' | 'defects-ncr' | 'capa-8d' | 'closed-loop'>('overview');
 
+  // Synchronized Ref for equipmentList to prevent stale closure during drag & drop
+  const equipmentListRef = useRef<ScadaEquipment[]>(equipmentList);
+  useEffect(() => {
+    equipmentListRef.current = equipmentList;
+  }, [equipmentList]);
+
+  // Interactive Visual Wiring State
+  const [isWiringMode, setIsWiringMode] = useState(false);
+  const [wiringSource, setWiringSource] = useState<{ stationId: string; anchor: 'left' | 'right' | 'top' | 'bottom' } | null>(null);
+  const [mouseCanvasPos, setMouseCanvasPos] = useState<{ x: number; y: number } | null>(null);
+  const [showLayoutMenu, setShowLayoutMenu] = useState(false);
+
   // Selected Conveyor lookup for real-time telemetry HUD
   const selectedConveyor = useMemo(() => {
     if (!selectedConveyorId) return null;
@@ -987,87 +1243,117 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
     }
   }, [stationParam, equipmentList, isAr]);
 
-  // Dynamic Flow Auto-Alignment (Organize stations into optimal industrial bays)
-  const handleAutoAlignLayout = () => {
-    const byZone: Record<StationZone, ScadaEquipment[]> = {
-      receiving: [],
-      assembly: [],
-      lab: [],
-      oqc: [],
-      shipping: []
-    };
-    
-    equipmentList.forEach(eq => {
-      const z = eq.zone || 'assembly';
-      if (byZone[z]) byZone[z].push(eq);
-      else byZone.assembly.push(eq);
-    });
-
-    const updated: ScadaEquipment[] = [];
-
-    // Bay A: Receiving (Left column)
-    byZone.receiving.forEach((eq, idx) => {
-      updated.push({
-        ...eq,
-        x: 35,
-        y: 60 + idx * 115,
-        w: 235,
-        h: 95
-      });
-    });
-
-    // Bay B: Assembly & Machining (2 Center columns)
-    byZone.assembly.forEach((eq, idx) => {
-      const col = idx % 2;
-      const row = Math.floor(idx / 2);
-      updated.push({
-        ...eq,
-        x: 330 + col * 245,
-        y: 60 + row * 115,
-        w: 220,
-        h: 95
-      });
-    });
-
-    // Hub C: Quality Lab & Metrology (Bottom Center)
-    byZone.lab.forEach((eq, idx) => {
-      updated.push({
-        ...eq,
-        x: 330 + idx * 245,
-        y: 490,
-        w: 220,
-        h: 95
-      });
-    });
-
-    // Bay D: OQC (Upper Right)
-    byZone.oqc.forEach((eq, idx) => {
-      updated.push({
-        ...eq,
-        x: 885,
-        y: 60 + idx * 125,
-        w: 245,
-        h: 105
-      });
-    });
-
-    // Bay E: Shipping (Lower Right)
-    byZone.shipping.forEach((eq, idx) => {
-      updated.push({
-        ...eq,
-        x: 885,
-        y: 340 + idx * 125,
-        w: 245,
-        h: 105
-      });
-    });
-
-    setEquipmentList(updated);
+  // Comprehensive Industrial Layout Presets & Auto-Wiring Engine
+  const handleApplyLayoutPreset = (presetId: 'bays' | 'u-cell' | 'linear' | 'serpentine' | 'default') => {
+    const res = buildLayoutPresetData(presetId, equipmentList);
+    setEquipmentList(res.equipment);
+    setConnectionsList(res.connections);
     try {
-      localStorage.setItem(SCADA_STORAGE_KEY, JSON.stringify(updated));
+      localStorage.setItem(SCADA_STORAGE_KEY, JSON.stringify(res.equipment));
+      localStorage.setItem(SCADA_CONNECTIONS_KEY, JSON.stringify(res.connections));
     } catch {}
+    setShowLayoutMenu(false);
     if (soundEnabled) playIndustrialChime('success');
-    toast.success(isAr ? '✨ تم تنظيم وتنسيق محطات المصنع انسيابياً وبدقة صناعية متطابقة!' : '✨ Factory stations auto-aligned with optimal industrial flow!');
+    toast.success(isAr ? `✨ تم تطبيق: ${res.nameAr} وإعادة توجيه كافة المسارات بنجاح!` : `✨ Applied: ${res.nameEn} with reconnected conveyors!`);
+  };
+
+  const handleAutoAlignLayout = () => {
+    handleApplyLayoutPreset('bays');
+  };
+
+  // Reverse conveyor direction
+  const handleReverseConnection = (connId: string) => {
+    setConnectionsList(prev => {
+      const next = prev.map(c => {
+        if (c.id !== connId) return c;
+        const newFrom = c.toId;
+        const newTo = c.fromId;
+        const newFromAnchor = c.toAnchor || 'right';
+        const newToAnchor = c.fromAnchor || 'left';
+        const fromSt = equipmentMap[newFrom];
+        const toSt = equipmentMap[newTo];
+        return {
+          ...c,
+          fromId: newFrom,
+          toId: newTo,
+          fromAnchor: newFromAnchor,
+          toAnchor: newToAnchor,
+          labelAr: `مسار: ${fromSt?.code || newFrom} ➔ ${toSt?.code || newTo}`,
+          labelEn: `Flow: ${fromSt?.code || newFrom} ➔ ${toSt?.code || newTo}`
+        };
+      });
+      try {
+        localStorage.setItem(SCADA_CONNECTIONS_KEY, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+    if (soundEnabled) playIndustrialChime('success');
+    toast.success(isAr ? '🔄 تم عكس اتجاه السير الناقل بنجاح!' : '🔄 Conveyor flow direction reversed!');
+  };
+
+  // Cycle conveyor technology
+  const handleCycleConveyorType = (connId: string) => {
+    const types: ScadaConnection['type'][] = ['motor-roller', 'belt', 'gravity-roller', 'chute', 'pneumatic', 'bridge', 'dock-ramp'];
+    setConnectionsList(prev => {
+      const next = prev.map(c => {
+        if (c.id !== connId) return c;
+        const currIdx = types.indexOf(c.type);
+        const nextType = types[(currIdx + 1) % types.length];
+        return { ...c, type: nextType };
+      });
+      try {
+        localStorage.setItem(SCADA_CONNECTIONS_KEY, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+    if (soundEnabled) playIndustrialChime('camera');
+    toast.info(isAr ? '⚙️ تم تغيير تقنية السير الناقل' : '⚙️ Conveyor technology updated');
+  };
+
+  // Interactive Dock Port Click (Visual Wiring)
+  const handleAnchorClick = (stationId: string, anchor: 'left' | 'right' | 'top' | 'bottom') => {
+    const clickedSt = equipmentMap[stationId];
+    if (!wiringSource) {
+      setWiringSource({ stationId, anchor });
+      if (soundEnabled) playIndustrialChime('camera');
+      toast.info(isAr ? `🔌 محطة الانطلاق: ${clickedSt?.code} [منفذ ${anchor}]. انقر الآن على منفذ محطة الوصول!` : `🔌 Selected source: ${clickedSt?.code} [${anchor} port]. Now click target station port!`);
+    } else {
+      if (wiringSource.stationId === stationId) {
+        toast.warning(isAr ? 'لا يمكن ربط المحطة بنفسها. انقر على محطة أخرى!' : 'Cannot connect a station to itself. Select a different station!');
+        return;
+      }
+      const srcSt = equipmentMap[wiringSource.stationId];
+      const newConn: ScadaConnection = {
+        id: `CONN-${Date.now().toString(36).toUpperCase()}`,
+        fromId: wiringSource.stationId,
+        toId: stationId,
+        labelAr: `مسار ناقل: ${srcSt?.code || ''} ➔ ${clickedSt?.code || ''}`,
+        labelEn: `Conveyor: ${srcSt?.code || ''} ➔ ${clickedSt?.code || ''}`,
+        type: 'motor-roller',
+        fromAnchor: wiringSource.anchor,
+        toAnchor: anchor,
+        velocityMs: 0.5,
+        motorKw: 0.75,
+        capacityUnits: 20,
+        currentWip: 0,
+        sensorType: 'Optical Retroreflective'
+      };
+
+      setConnectionsList(prev => {
+        const exists = prev.some(c => (c.fromId === wiringSource.stationId && c.toId === stationId) || (c.fromId === stationId && c.toId === wiringSource.stationId));
+        const next = exists 
+          ? prev.map(c => ((c.fromId === wiringSource.stationId && c.toId === stationId) || (c.fromId === stationId && c.toId === wiringSource.stationId)) ? newConn : c)
+          : [...prev, newConn];
+        try {
+          localStorage.setItem(SCADA_CONNECTIONS_KEY, JSON.stringify(next));
+        } catch {}
+        return next;
+      });
+
+      setWiringSource(null);
+      if (soundEnabled) playIndustrialChime('success');
+      toast.success(isAr ? `✨ تم توصيل الخط الناقل بنجاح بين ${srcSt?.code} و ${clickedSt?.code}!` : `✨ Connected conveyor between ${srcSt?.code} and ${clickedSt?.code}!`);
+    }
   };
 
   // Conveyor Connection Management Handlers
@@ -1104,13 +1390,27 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
   };
 
   const handleAutoConnectStations = () => {
-    // Sequentially connect stations by process order
+    // Smart sequential auto-connection with proximity-based docking ports
     const autoConns: ScadaConnection[] = [];
     const ordered = [...equipmentList].sort((a, b) => a.x - b.x || a.y - b.y);
 
     for (let i = 0; i < ordered.length - 1; i++) {
       const from = ordered[i];
       const to = ordered[i + 1];
+
+      const dx = (to.x + to.w / 2) - (from.x + from.w / 2);
+      const dy = (to.y + to.h / 2) - (from.y + from.h / 2);
+      let fromAnchor: 'left' | 'right' | 'top' | 'bottom' = 'right';
+      let toAnchor: 'left' | 'right' | 'top' | 'bottom' = 'left';
+
+      if (Math.abs(dy) > Math.abs(dx)) {
+        fromAnchor = dy >= 0 ? 'bottom' : 'top';
+        toAnchor = dy >= 0 ? 'top' : 'bottom';
+      } else {
+        fromAnchor = dx >= 0 ? 'right' : 'left';
+        toAnchor = dx >= 0 ? 'left' : 'right';
+      }
+
       autoConns.push({
         id: `AUTO-CONN-${from.code}-${to.code}`,
         fromId: from.id,
@@ -1118,8 +1418,8 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
         labelAr: `مسار آلي من ${from.code} إلى ${to.code}`,
         labelEn: `Auto Flow: ${from.code} ➔ ${to.code}`,
         type: 'motor-roller',
-        fromAnchor: 'right',
-        toAnchor: 'left',
+        fromAnchor,
+        toAnchor,
         velocityMs: 0.5,
         motorKw: 0.75,
         capacityUnits: 20,
@@ -1132,7 +1432,8 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
     try {
       localStorage.setItem(SCADA_CONNECTIONS_KEY, JSON.stringify(autoConns));
     } catch {}
-    toast.success(isAr ? `✓ تم ربط ${autoConns.length} مسار ناقل تسلسلياً بين جميع المحطات!` : `✓ Auto-connected ${autoConns.length} sequential conveyors!`);
+    if (soundEnabled) playIndustrialChime('success');
+    toast.success(isAr ? `✓ تم ربط ${autoConns.length} مسار ناقل تسلسلياً وبمنافذ دقيقة بين جميع المحطات!` : `✓ Auto-connected ${autoConns.length} sequential conveyors!`);
   };
 
   useEffect(() => {
@@ -1221,7 +1522,7 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
       setDraggingId(null);
       setDragStart(null);
       try {
-        localStorage.setItem(SCADA_STORAGE_KEY, JSON.stringify(equipmentList));
+        localStorage.setItem(SCADA_STORAGE_KEY, JSON.stringify(equipmentListRef.current));
       } catch (err) {}
     }
   };
@@ -2054,14 +2355,142 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
             {soundEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
           </button>
 
-          {/* Dynamic Flow Auto-Alignment Button */}
+          {/* Factory Layout Presets Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setShowLayoutMenu(prev => !prev)}
+              className={`px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm active:scale-95 ${
+                showLayoutMenu
+                  ? 'bg-amber-500 text-slate-950 font-black ring-2 ring-amber-300 shadow-md'
+                  : 'bg-cyan-950/80 hover:bg-cyan-900/80 text-cyan-300 border border-cyan-500/40'
+              }`}
+              title={isAr ? 'اختيار تنسيق هندسي متكامل للمصنع وإعادة ربط السيور' : 'Factory Layout & Conveyor Presets'}
+            >
+              <LayoutGrid className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="hidden sm:inline">{isAr ? '📐 تنسيقات المصنع' : 'Layout Presets'}</span>
+              <ChevronDown className="w-3 h-3 text-cyan-400" />
+            </button>
+
+            {showLayoutMenu && (
+              <div 
+                className="absolute top-full mt-2 left-0 sm:right-0 sm:left-auto z-50 w-72 rounded-2xl bg-[#090f1e]/98 backdrop-blur-xl border border-cyan-500/40 p-2 shadow-2xl shadow-cyan-950/80 animate-in fade-in zoom-in-95 duration-150"
+                onClick={e => e.stopPropagation()}
+              >
+                <div className="px-3 py-2 border-b border-cyan-500/20 mb-1">
+                  <h5 className="text-xs font-black text-cyan-300 flex items-center gap-1.5">
+                    <Factory className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>{isAr ? 'تنسيقات المصنع والسيور الهندسية' : 'SCADA Factory Layout Presets'}</span>
+                  </h5>
+                  <p className="text-[10px] text-slate-400 mt-0.5">
+                    {isAr ? 'إعادة ترتيب فوري للمحطات مع وصلات هندسية دقيقة' : 'Instant rearrangement with non-overlapping conveyors'}
+                  </p>
+                </div>
+
+                <div className="space-y-1">
+                  <button
+                    onClick={() => handleApplyLayoutPreset('bays')}
+                    className="w-full text-left rtl:text-right px-3 py-2 rounded-xl hover:bg-cyan-500/15 border border-transparent hover:border-cyan-500/30 transition-all flex items-center justify-between group"
+                  >
+                    <div>
+                      <div className="text-xs font-black text-white group-hover:text-cyan-300 flex items-center gap-1.5">
+                        <span>🏭</span>
+                        <span>{isAr ? 'العنابر المتوازية (Bays Grid)' : 'Parallel Bays Grid'}</span>
+                      </div>
+                      <p className="text-[9px] text-slate-400">{isAr ? 'أجنحة A, B, C, D, E مع 15 خط سير منظم' : 'Bays A-E with 15 orthogonal lines'}</p>
+                    </div>
+                    <span className="text-[9px] font-mono text-cyan-400 bg-cyan-950/60 px-1.5 py-0.5 rounded border border-cyan-500/30">15 Convs</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleApplyLayoutPreset('u-cell')}
+                    className="w-full text-left rtl:text-right px-3 py-2 rounded-xl hover:bg-amber-500/15 border border-transparent hover:border-amber-500/30 transition-all flex items-center justify-between group"
+                  >
+                    <div>
+                      <div className="text-xs font-black text-white group-hover:text-amber-300 flex items-center gap-1.5">
+                        <span>🔄</span>
+                        <span>{isAr ? 'خلية U المتكاملة (Lean U-Cell)' : 'Lean TPS U-Cell'}</span>
+                      </div>
+                      <p className="text-[9px] text-slate-400">{isAr ? 'تدفق حلقي متواصل من الاستلام إلى الشحن' : 'Continuous horseshoe loop'}</p>
+                    </div>
+                    <span className="text-[9px] font-mono text-amber-400 bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-500/30">Lean Loop</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleApplyLayoutPreset('linear')}
+                    className="w-full text-left rtl:text-right px-3 py-2 rounded-xl hover:bg-emerald-500/15 border border-transparent hover:border-emerald-500/30 transition-all flex items-center justify-between group"
+                  >
+                    <div>
+                      <div className="text-xs font-black text-white group-hover:text-emerald-300 flex items-center gap-1.5">
+                        <span>⚡</span>
+                        <span>{isAr ? 'خط إنتاج تسلسلي (Linear Cascade)' : 'Linear Cascade'}</span>
+                      </div>
+                      <p className="text-[9px] text-slate-400">{isAr ? 'خطين متوازيين مع جسر نقل علوي' : 'Dual parallel lines with cross bridge'}</p>
+                    </div>
+                    <span className="text-[9px] font-mono text-emerald-400 bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-500/30">Cascade</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleApplyLayoutPreset('serpentine')}
+                    className="w-full text-left rtl:text-right px-3 py-2 rounded-xl hover:bg-purple-500/15 border border-transparent hover:border-purple-500/30 transition-all flex items-center justify-between group"
+                  >
+                    <div>
+                      <div className="text-xs font-black text-white group-hover:text-purple-300 flex items-center gap-1.5">
+                        <span>〰️</span>
+                        <span>{isAr ? 'خط متعرج تموجي (Serpentine S-Flow)' : 'Serpentine S-Flow'}</span>
+                      </div>
+                      <p className="text-[9px] text-slate-400">{isAr ? '3 مسارات متتالية مع لفات 180°' : 'Triple-tier continuous S-curves'}</p>
+                    </div>
+                    <span className="text-[9px] font-mono text-purple-400 bg-purple-950/60 px-1.5 py-0.5 rounded border border-purple-500/30">S-Curves</span>
+                  </button>
+
+                  <div className="pt-1.5 border-t border-white/10 flex items-center gap-1">
+                    <button
+                      onClick={() => handleApplyLayoutPreset('default')}
+                      className="flex-1 py-1.5 px-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 text-center text-[10px] font-bold transition-all"
+                    >
+                      🔄 {isAr ? 'الافتراضي' : 'Default'}
+                    </button>
+                    <button
+                      onClick={handleAutoConnectStations}
+                      className="flex-1 py-1.5 px-2 rounded-xl bg-cyan-950/80 hover:bg-cyan-900/80 border border-cyan-500/30 text-cyan-300 text-center text-[10px] font-bold transition-all"
+                    >
+                      ⚡ {isAr ? 'ربط آلي ذكي' : 'Auto-Wire'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Interactive Visual Wiring Mode Toggle */}
           <button
-            onClick={handleAutoAlignLayout}
-            className="px-2.5 py-1.5 rounded-xl bg-cyan-950/80 hover:bg-cyan-900/80 text-cyan-300 border border-cyan-500/40 text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm active:scale-95"
-            title={isAr ? 'تنظيم وتنسيق انسيابي لمحطات المصنع في أجنحة متناسقة' : 'Auto-Align Stations in Industrial Bays'}
+            onClick={() => {
+              setIsWiringMode(prev => {
+                const next = !prev;
+                if (next) {
+                  setCameraPreset('top-down');
+                  setWiringSource(null);
+                  toast.info(isAr ? '🔌 وضع التوصيل المرئي نشط: انقر على منفذ البداية ثم منفذ النهاية!' : '🔌 Wiring Mode Active: Click start port then end port!');
+                } else {
+                  setWiringSource(null);
+                  setMouseCanvasPos(null);
+                }
+                return next;
+              });
+            }}
+            className={`px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm active:scale-95 ${
+              isWiringMode
+                ? 'bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 font-black ring-2 ring-cyan-300 shadow-cyan-500/50 scale-105'
+                : 'bg-cyan-950/80 hover:bg-cyan-900/80 text-cyan-300 border border-cyan-500/40'
+            }`}
+            title={isAr ? 'تفعيل وضع التوصيل المرئي بين منافذ الماكينات' : 'Visual Conveyor Wiring Mode'}
           >
-            <AlignJustify className="w-3.5 h-3.5 text-cyan-400" />
-            <span className="hidden sm:inline">{isAr ? '📐 تنسيق انسيابي' : 'Auto-Align'}</span>
+            <Cable className={`w-3.5 h-3.5 ${isWiringMode ? 'text-slate-950 animate-bounce' : 'text-cyan-400'}`} />
+            <span className="hidden sm:inline">
+              {isWiringMode 
+                ? (isAr ? '✓ إنهاء التوصيل' : '✓ Done Wiring') 
+                : (isAr ? '🔌 توصيل مرئي' : '🔌 Wire Mode')}
+            </span>
           </button>
 
           {/* Manage Conveyor Network Button */}
@@ -2244,6 +2673,44 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
         </div>
       )}
 
+      {/* Interactive Conveyor Wiring Mode Hint Banner */}
+      {isWiringMode && (
+        <div className="bg-gradient-to-r from-cyan-600/30 via-blue-600/30 to-purple-600/30 border-b border-cyan-500/50 px-4 py-2 flex items-center justify-between text-xs text-cyan-200 z-30">
+          <div className="flex items-center gap-2">
+            <Cable className="w-4 h-4 text-cyan-400 animate-pulse" />
+            <span className="font-black">
+              {wiringSource 
+                ? (isAr 
+                    ? `🔌 تم تحديد منفذ [${wiringSource.anchor}] لمحطة [${equipmentMap[wiringSource.stationId]?.code || wiringSource.stationId}]. انقر الآن على أي منفذ في محطة أخرى لربط السير الناقل فوراً!` 
+                    : `🔌 Selected [${wiringSource.anchor}] port of [${equipmentMap[wiringSource.stationId]?.code || wiringSource.stationId}]. Now click any port on target station to connect conveyor!`)
+                : (isAr 
+                    ? '🔌 وضع التوصيل المرئي للسيور نشط: انقر على أي منفذ من المنافذ الأربعة (◀ ▶ ▲ ▼) على أي ماكينة لبدء مد خط سير ناقل جديد.' 
+                    : '🔌 Visual Conveyor Wiring Active: Click any docking port (◀ ▶ ▲ ▼) on a machine to begin routing.')}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            {wiringSource && (
+              <button
+                onClick={() => setWiringSource(null)}
+                className="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 hover:text-white text-xs font-bold border border-slate-700 transition-colors"
+              >
+                {isAr ? 'إلغاء المنفذ' : 'Cancel Port'}
+              </button>
+            )}
+            <button
+              onClick={() => {
+                setIsWiringMode(false);
+                setWiringSource(null);
+                setMouseCanvasPos(null);
+              }}
+              className="px-3 py-1 rounded-lg bg-cyan-500 text-slate-950 font-black text-xs hover:bg-cyan-400 shadow-md transition-all active:scale-95"
+            >
+              {isAr ? '✓ إنهاء التوصيل' : '✓ Done Wiring'}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ==================================================================== */}
       {/* 3. MAIN WORKSPACE: SCADA FLOORPLAN (2D / 2.5D ISOMETRIC MULTI-ANGLE) */}
       {/* ==================================================================== */}
@@ -2251,7 +2718,21 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
         {viewMode === 'scada-floorplan' ? (
           <div 
             ref={canvasRef}
-            onPointerMove={handlePointerMove}
+            onPointerMove={(e) => {
+              handlePointerMove(e);
+              if (isWiringMode && wiringSource) {
+                const floorBoard = canvasRef.current?.querySelector('.scada-floor-board') as HTMLElement;
+                if (floorBoard) {
+                  const rect = floorBoard.getBoundingClientRect();
+                  const rawX = (e.clientX - rect.left) / (rect.width / 1200);
+                  const rawY = (e.clientY - rect.top) / (rect.height / 640);
+                  setMouseCanvasPos({ 
+                    x: Math.max(10, Math.min(1190, Math.round(rawX))), 
+                    y: Math.max(10, Math.min(630, Math.round(rawY))) 
+                  });
+                }
+              }
+            }}
             onPointerUp={handlePointerUp}
             className={`flex-1 w-full h-full relative overflow-auto p-4 md:p-8 flex items-center justify-center transition-colors duration-500 ${
               ambientTheme === 'cleanroom' 
@@ -2262,7 +2743,7 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
             }`}
             style={{ 
               perspective: is3D ? '1400px' : 'none',
-              cursor: isCustomizing && draggingId ? 'grabbing' : 'default'
+              cursor: isCustomizing && draggingId ? 'grabbing' : isWiringMode ? 'crosshair' : 'default'
             }}
           >
             <div 
@@ -2272,7 +2753,7 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                 transformStyle: is3D ? 'preserve-3d' : 'flat',
                 transition: draggingId ? 'none' : 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)'
               }}
-              className={`relative w-[1200px] h-[640px] shrink-0 rounded-3xl border-2 transition-all duration-500 ${
+              className={`scada-floor-board relative w-[1200px] h-[640px] shrink-0 rounded-3xl border-2 transition-all duration-500 ${
                 ambientTheme === 'cleanroom'
                   ? 'bg-[#f8fafc] border-slate-300 shadow-[0_30px_60px_rgba(0,0,0,0.15)] ring-2 ring-sky-500/20 text-slate-900'
                   : ambientTheme === 'night-shift'
@@ -2661,6 +3142,48 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                 })}
 
                 {/* ========================================================== */}
+                {/* INTERACTIVE WIRING MODE LIVE RUBBERBAND CABLE              */}
+                {/* ========================================================== */}
+                {isWiringMode && wiringSource && mouseCanvasPos && equipmentMap[wiringSource.stationId] && (() => {
+                  const src = equipmentMap[wiringSource.stationId];
+                  let sx = src.x;
+                  let sy = src.y;
+                  if (wiringSource.anchor === 'left') { sx = src.x; sy = src.y + src.h / 2; }
+                  else if (wiringSource.anchor === 'right') { sx = src.x + src.w; sy = src.y + src.h / 2; }
+                  else if (wiringSource.anchor === 'top') { sx = src.x + src.w / 2; sy = src.y; }
+                  else if (wiringSource.anchor === 'bottom') { sx = src.x + src.w / 2; sy = src.y + src.h; }
+                  
+                  return (
+                    <g className="pointer-events-none">
+                      {/* Wide Glow Aura */}
+                      <line 
+                        x1={sx} y1={sy} 
+                        x2={mouseCanvasPos.x} y2={mouseCanvasPos.y} 
+                        stroke="#06b6d4" 
+                        strokeWidth="10" 
+                        strokeOpacity="0.25"
+                        strokeLinecap="round" 
+                      />
+                      {/* Main Dynamic Dashed Conveyor Cable */}
+                      <line 
+                        x1={sx} y1={sy} 
+                        x2={mouseCanvasPos.x} y2={mouseCanvasPos.y} 
+                        stroke="#38bdf8" 
+                        strokeWidth="3.5" 
+                        strokeDasharray="8,6" 
+                        strokeLinecap="round"
+                        className="animate-pulse"
+                      />
+                      {/* Source Port Indicator */}
+                      <circle cx={sx} cy={sy} r="8" fill="#06b6d4" className="animate-ping" />
+                      <circle cx={sx} cy={sy} r="5" fill="#38bdf8" stroke="#ffffff" strokeWidth="2" />
+                      {/* Mouse Cursor Floating Puck */}
+                      <circle cx={mouseCanvasPos.x} cy={mouseCanvasPos.y} r="8" fill="#0284c7" stroke="#ffffff" strokeWidth="2" filter="drop-shadow(0 0 8px #38bdf8)" />
+                    </g>
+                  );
+                })()}
+
+                {/* ========================================================== */}
                 {/* DIVERTER GATES: D-01 REJECT GATE & D-02 QC LAB SHUTTLE     */}
                 {/* ========================================================== */}
                 {/* DIVERTER D-01: IQC Material Split Gate */}
@@ -2884,7 +3407,7 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                     }}
                     className={`
                       absolute rounded-2xl transition-all duration-200 p-2.5 flex flex-col justify-between
-                      backdrop-blur-md select-none group relative overflow-hidden
+                      backdrop-blur-md select-none group relative ${isWiringMode ? 'overflow-visible ring-2 ring-cyan-400/40' : 'overflow-hidden'}
                       ${isDragging ? 'z-50 ring-4 ring-amber-400 shadow-2xl opacity-95' : ''}
                       ${ambientTheme === 'cleanroom'
                         ? isSelected 
@@ -2911,22 +3434,96 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                     <div className="absolute bottom-1 left-1 w-1 h-1 rounded-full bg-slate-500/40 pointer-events-none" />
                     <div className="absolute bottom-1 right-1 w-1 h-1 rounded-full bg-slate-500/40 pointer-events-none" />
 
-                    {/* PHYSICAL CONVEYOR DOCKING PORTS */}
-                    {hasInfeed && (
-                      <div 
-                        className="absolute -left-1.5 top-1/2 -translate-y-1/2 w-2 h-5 rounded-l bg-cyan-500/90 shadow-[0_0_8px_#06b6d4] flex items-center justify-center text-[7px] font-mono text-slate-950 font-black pointer-events-none" 
-                        title="Conveyor Infeed Port"
-                      >
-                        ▶
-                      </div>
-                    )}
-                    {hasOutfeed && (
-                      <div 
-                        className="absolute -right-1.5 top-1/2 -translate-y-1/2 w-2 h-5 rounded-r bg-emerald-500/90 shadow-[0_0_8px_#10b981] flex items-center justify-center text-[7px] font-mono text-slate-950 font-black pointer-events-none" 
-                        title="Conveyor Outfeed Port"
-                      >
-                        ▶
-                      </div>
+                    {/* PHYSICAL CONVEYOR DOCKING PORTS (4 INTERACTIVE PORTS IN WIRING MODE) */}
+                    {isWiringMode ? (
+                      <>
+                        {/* LEFT DOCK PORT */}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAnchorClick(eq.id, 'left');
+                          }}
+                          className={`absolute -left-3.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full border-2 flex items-center justify-center text-[10px] font-black z-30 transition-all hover:scale-125 shadow-lg ${
+                            wiringSource?.stationId === eq.id && wiringSource?.anchor === 'left'
+                              ? 'bg-amber-400 border-white text-slate-950 ring-4 ring-amber-400/50 animate-pulse'
+                              : 'bg-cyan-500 hover:bg-cyan-400 border-white text-slate-950 shadow-cyan-500/50'
+                          }`}
+                          title={isAr ? `منفذ أيسر - محطة ${eq.code}` : `Left Port - ${eq.code}`}
+                        >
+                          ◀
+                        </button>
+
+                        {/* RIGHT DOCK PORT */}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAnchorClick(eq.id, 'right');
+                          }}
+                          className={`absolute -right-3.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full border-2 flex items-center justify-center text-[10px] font-black z-30 transition-all hover:scale-125 shadow-lg ${
+                            wiringSource?.stationId === eq.id && wiringSource?.anchor === 'right'
+                              ? 'bg-amber-400 border-white text-slate-950 ring-4 ring-amber-400/50 animate-pulse'
+                              : 'bg-emerald-500 hover:bg-emerald-400 border-white text-slate-950 shadow-emerald-500/50'
+                          }`}
+                          title={isAr ? `منفذ أيمن - محطة ${eq.code}` : `Right Port - ${eq.code}`}
+                        >
+                          ▶
+                        </button>
+
+                        {/* TOP DOCK PORT */}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAnchorClick(eq.id, 'top');
+                          }}
+                          className={`absolute top-[-14px] left-1/2 -translate-x-1/2 w-6 h-6 rounded-full border-2 flex items-center justify-center text-[10px] font-black z-30 transition-all hover:scale-125 shadow-lg ${
+                            wiringSource?.stationId === eq.id && wiringSource?.anchor === 'top'
+                              ? 'bg-amber-400 border-white text-slate-950 ring-4 ring-amber-400/50 animate-pulse'
+                              : 'bg-blue-500 hover:bg-blue-400 border-white text-slate-950 shadow-blue-500/50'
+                          }`}
+                          title={isAr ? `منفذ علوي - محطة ${eq.code}` : `Top Port - ${eq.code}`}
+                        >
+                          ▲
+                        </button>
+
+                        {/* BOTTOM DOCK PORT */}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAnchorClick(eq.id, 'bottom');
+                          }}
+                          className={`absolute bottom-[-14px] left-1/2 -translate-x-1/2 w-6 h-6 rounded-full border-2 flex items-center justify-center text-[10px] font-black z-30 transition-all hover:scale-125 shadow-lg ${
+                            wiringSource?.stationId === eq.id && wiringSource?.anchor === 'bottom'
+                              ? 'bg-amber-400 border-white text-slate-950 ring-4 ring-amber-400/50 animate-pulse'
+                              : 'bg-purple-500 hover:bg-purple-400 border-white text-slate-950 shadow-purple-500/50'
+                          }`}
+                          title={isAr ? `منفذ سفلي - محطة ${eq.code}` : `Bottom Port - ${eq.code}`}
+                        >
+                          ▼
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        {hasInfeed && (
+                          <div 
+                            className="absolute -left-1.5 top-1/2 -translate-y-1/2 w-2 h-5 rounded-l bg-cyan-500/90 shadow-[0_0_8px_#06b6d4] flex items-center justify-center text-[7px] font-mono text-slate-950 font-black pointer-events-none" 
+                            title="Conveyor Infeed Port"
+                          >
+                            ▶
+                          </div>
+                        )}
+                        {hasOutfeed && (
+                          <div 
+                            className="absolute -right-1.5 top-1/2 -translate-y-1/2 w-2 h-5 rounded-r bg-emerald-500/90 shadow-[0_0_8px_#10b981] flex items-center justify-center text-[7px] font-mono text-slate-950 font-black pointer-events-none" 
+                            title="Conveyor Outfeed Port"
+                          >
+                            ▶
+                          </div>
+                        )}
+                      </>
                     )}
 
                     {/* HOLOGRAPHIC VERTICAL LASER BEACON */}
@@ -3206,6 +3803,39 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                     </div>
                     <span className="font-mono text-cyan-300 font-bold">{isAr ? 'إشارة شعاع نشطة ✓' : 'BEAM ACTIVE'}</span>
                   </div>
+                </div>
+
+                {/* On-Canvas Direct Conveyor Operations Toolbar */}
+                <div className="grid grid-cols-3 gap-1.5 pt-2 border-t border-white/10 text-xs">
+                  {/* Reverse Direction */}
+                  <button
+                    onClick={() => handleReverseConnection(selectedConveyor.id)}
+                    className="py-1.5 px-2 rounded-xl bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-500/40 text-cyan-300 font-bold text-[10px] flex items-center justify-center gap-1 transition-all active:scale-95 shadow-sm"
+                    title={isAr ? 'عكس اتجاه حركة وتدفق السير' : 'Reverse Conveyor Flow Direction'}
+                  >
+                    <span>🔄</span>
+                    <span>{isAr ? 'عكس' : 'Reverse'}</span>
+                  </button>
+
+                  {/* Cycle Conveyor Type */}
+                  <button
+                    onClick={() => handleCycleConveyorType(selectedConveyor.id)}
+                    className="py-1.5 px-2 rounded-xl bg-purple-950/80 hover:bg-purple-900 border border-purple-500/40 text-purple-300 font-bold text-[10px] flex items-center justify-center gap-1 transition-all active:scale-95 shadow-sm truncate"
+                    title={isAr ? 'تغيير نوع السير (رولمان / سير مطاطي / مزلقان / أنبوب هوائي)' : 'Cycle Conveyor Type'}
+                  >
+                    <span>⚙️</span>
+                    <span className="truncate">{selectedConveyor.type}</span>
+                  </button>
+
+                  {/* Delete Conveyor */}
+                  <button
+                    onClick={() => handleDeleteConnection(selectedConveyor.id)}
+                    className="py-1.5 px-2 rounded-xl bg-red-950/80 hover:bg-red-900 border border-red-500/40 text-red-300 font-bold text-[10px] flex items-center justify-center gap-1 transition-all active:scale-95 shadow-sm"
+                    title={isAr ? 'حذف هذا السير الناقل' : 'Delete this Conveyor'}
+                  >
+                    <Trash2 className="w-3 h-3 text-red-400" />
+                    <span>{isAr ? 'حذف' : 'Delete'}</span>
+                  </button>
                 </div>
 
                 {/* Stations Jump & Routing */}
