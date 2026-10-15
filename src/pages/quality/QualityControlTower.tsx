@@ -59,6 +59,7 @@ export interface ScadaEquipment {
   moduleUrl: string;
   moduleLabelAr: string;
   oeeEstimate?: number;
+  cycleTimeSec?: number;
   fpyEstimate?: number;
   activeOperator?: string;
   vibrationMmS?: number;
@@ -1079,12 +1080,10 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
   // Dynamic Equipment Pods State
   const [equipmentList, setEquipmentList] = useState<ScadaEquipment[]>(loadSavedEquipment);
   
-  // View Modes & Advanced Perspectives
-  const initialMode: ViewMode = (searchParams.get('mode') === 'customize' || searchParams.get('tab') === 'customize')
-    ? 'customize-table'
-    : searchParams.get('view') === '2d'
-      ? 'scada-floorplan'
-      : '3d-webgl';
+  // View Modes & Advanced Perspectives: 3D Living Twin or 2D Architectural SCADA
+  const initialMode: ViewMode = searchParams.get('view') === '2d'
+    ? 'scada-floorplan'
+    : '3d-webgl';
 
   const [viewMode, setViewMode] = useState<ViewMode>(initialMode);
   
@@ -1147,6 +1146,8 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
     return FACTORY_CONNECTIONS;
   });
   const [showConnectionManager, setShowConnectionManager] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(true);
+  const [drawerStationSearch, setDrawerStationSearch] = useState('');
   const [drawerTab, setDrawerTab] = useState<'overview' | 'department' | 'defects-ncr' | 'capa-8d' | 'closed-loop'>('overview');
 
   // Synchronized Ref for equipmentList to prevent stale closure during drag & drop
@@ -2614,7 +2615,8 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
   }, [equipmentList, stationStatuses, filterZone, filterStatus, searchQuery]);
 
   const selectedEquipment = useMemo(() => {
-    return equipmentList.find(e => e.id === selectedStationId) || equipmentList[0];
+    if (!selectedStationId) return null;
+    return equipmentList.find(e => e.id === selectedStationId) || null;
   }, [equipmentList, selectedStationId]);
 
   const selectedStatus = useMemo(() => {
@@ -2907,7 +2909,7 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
           </div>
         </div>
 
-        {/* PRIMARY VIEW MODE SWITCHER: 3D WEBGL TWIN vs 2D SCADA FLOORPLAN */}
+        {/* PRIMARY VIEW MODE SWITCHER: 3D WEBGL TWIN vs 2D SCADA FLOORPLAN + FACTORY SETTINGS */}
         <div className="flex items-center gap-1 bg-[#090f1e]/95 p-1 rounded-2xl border border-cyan-500/40 shadow-xl shrink-0">
           <button
             onClick={() => {
@@ -2921,7 +2923,7 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
             }`}
           >
             <Box className="w-4 h-4 text-cyan-400" />
-            <span>{isAr ? '🌐 التوأم الرقمي 3D (WebGL)' : '🌐 3D Digital Twin'}</span>
+            <span>{isAr ? '🌐 التوأم الرقمي 3D' : '🌐 3D Twin'}</span>
             <span className="px-1.5 py-0.2 rounded-full bg-cyan-950 text-cyan-300 text-[9px] font-mono border border-cyan-500/40">Three.js</span>
           </button>
 
@@ -2937,7 +2939,24 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
             }`}
           >
             <Layers className="w-4 h-4 text-amber-400" />
-            <span>{isAr ? '🗺️ خريطة SCADA ومخطط 2D' : '🗺️ 2D SCADA Plan'}</span>
+            <span>{isAr ? '🗺️ خريطة 2D' : '🗺️ 2D Plan'}</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setSelectedStationId(null);
+              setIsDrawerOpen(prev => !prev);
+              if (soundEnabled) playIndustrialChime('camera');
+            }}
+            className={`px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all ${
+              isDrawerOpen && !selectedStationId
+                ? 'bg-amber-500 text-slate-950 shadow-md ring-2 ring-amber-300 scale-105'
+                : 'text-amber-400 hover:text-white hover:bg-amber-500/20'
+            }`}
+            title={isAr ? 'فتح لوحة إعدادات وتعديل المصنع والربط' : 'Factory Settings & Integrated Customizer'}
+          >
+            <Settings2 className="w-4 h-4 text-amber-400" />
+            <span>{isAr ? '⚙️ إعدادات وتعديل المصنع' : '⚙️ Factory Settings'}</span>
           </button>
         </div>
 
@@ -3657,13 +3676,14 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                 selectedStationId={selectedStationId}
                 onSelectStation={(id) => {
                   setSelectedStationId(id);
+                  setIsDrawerOpen(true);
                   if (soundEnabled) playIndustrialChime('camera');
                 }}
                 isAr={isAr}
               />
             </Suspense>
           </div>
-        ) : viewMode === 'scada-floorplan' ? (
+        ) : (
           <div 
             ref={canvasRef}
             onPointerDown={handleCanvasPointerDown}
@@ -5542,322 +5562,259 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
               </button>
             </div>
           </div>
-        ) : viewMode === 'stations-grid' ? (
-          /* ================================================================ */
-          /* STATIONS GRID MATRIX VIEW                                        */
-          /* ================================================================ */
-          <div className="flex-1 w-full h-full overflow-y-auto p-4 md:p-6 bg-[#050811]">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {filteredEquipment.map(eq => {
-                const st = stationStatuses[eq.id];
-                const isSelected = selectedStationId === eq.id;
-                const isAlert = st?.status === 'alert';
-                const isAndonActive = Boolean(st?.isAndonActive);
-
-                return (
-                  <div
-                    key={eq.id}
-                    onClick={() => setSelectedStationId(eq.id)}
-                    className={`
-                      p-4 rounded-2xl cursor-pointer transition-all duration-200 border flex flex-col justify-between
-                      ${isSelected 
-                        ? 'border-amber-400 bg-slate-800/90 shadow-xl' 
-                        : isAndonActive
-                          ? 'border-pink-500 bg-pink-950/20'
-                          : isAlert
-                            ? 'border-red-500/80 bg-red-950/20'
-                            : 'border-white/10 bg-slate-900/60 hover:bg-slate-900 hover:border-white/20'
-                      }
-                    `}
-                  >
-                    <div>
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          <span className="p-2 rounded-xl bg-white/5 text-amber-400">
-                            {renderIcon(eq.iconType, 'w-4 h-4')}
-                          </span>
-                          <div>
-                            <span className="text-[10px] font-mono text-slate-400 block">{eq.code}</span>
-                            <span className="text-xs font-black text-white">{isAr ? eq.titleAr : eq.titleEn}</span>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-1">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setEditingStation(eq);
-                            }}
-                            className="p-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500 hover:text-slate-950 text-amber-300 transition-colors"
-                            title={isAr ? 'تعديل بيانات المحطة' : 'Edit station'}
-                          >
-                            <Edit3 className="w-3.5 h-3.5" />
-                          </button>
-
-                          <span 
-                            className="px-2 py-0.5 rounded-full text-[10px] font-black border"
-                            style={{
-                              color: st?.statusColor,
-                              borderColor: `${st?.statusColor}40`,
-                              backgroundColor: `${st?.statusColor}15`
-                            }}
-                          >
-                            {isAr ? st?.statusLabelAr : st?.statusLabelEn}
-                          </span>
-                        </div>
-                      </div>
-
-                      <p className="text-xs text-slate-400 mb-3 line-clamp-2">
-                        {isAr ? eq.locationAr : eq.locationEn}
-                      </p>
-
-                      <div className="flex items-center justify-between p-2 rounded-xl bg-slate-950/60 border border-white/5 text-[11px] font-mono text-slate-300 mb-3">
-                        <span>OEE: <strong className="text-cyan-400">{eq.oeeEstimate || 95}%</strong></span>
-                        <span>FPY: <strong className="text-emerald-400">{eq.fpyEstimate || 98.8}%</strong></span>
-                      </div>
-                    </div>
-
-                    <div className="pt-3 border-t border-white/5 flex items-center justify-between text-xs">
-                      <span className="text-slate-400 font-mono text-[11px]">{eq.line}</span>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(eq.moduleUrl);
-                        }}
-                        className="text-amber-400 hover:text-amber-300 text-xs font-bold flex items-center gap-1"
-                      >
-                        <span>{isAr ? eq.moduleLabelAr : 'Open Module'}</span>
-                        <ChevronRight className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        ) : (
-          /* ================================================================ */
-          /* 3RD VIEW MODE: FULL CUSTOMIZATION & MANAGEMENT TABLE             */
-          /* ================================================================ */
-          <div className="flex-1 w-full h-full overflow-y-auto p-4 md:p-6 bg-[#050811] space-y-4">
-            <div className="p-4 rounded-2xl bg-[#090f1e] border border-amber-500/30 flex flex-wrap items-center justify-between gap-3 shadow-xl">
-              <div>
-                <h2 className="text-sm md:text-base font-black text-white flex items-center gap-2">
-                  <Settings2 className="w-4 h-4 text-amber-400" />
-                  <span>{isAr ? 'لوحة إدارة وتخصيص محطات وماكينات المصنع (Customize Stations)' : 'Factory Workstations & Pods Customizer'}</span>
-                </h2>
-                <p className="text-xs text-slate-400">
-                  {isAr 
-                    ? 'يمكنك من هنا إعادة تسمية أي ماكينة، تغيير كودها، تعديل خط الإنتاج، أو إضافة وحذف المحطات' 
-                    : 'Manage, rename, configure codes, production lines, and physical descriptions for all plant units'}
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handleAddNewTemplate('assembly')}
-                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs flex items-center gap-1.5 shadow-md shadow-emerald-600/30 transition-all hover:scale-105"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>{isAr ? '+ إضافة محطة جديدة' : '+ Add New Station'}</span>
-                </button>
-                <button
-                  onClick={handleResetToDefaults}
-                  className="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 font-bold text-xs flex items-center gap-1"
-                >
-                  <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
-                  <span>{isAr ? 'استعادة الافتراضي' : 'Reset to Default'}</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Stations Customization Table */}
-            <div className="rounded-2xl border border-white/10 bg-[#090f1d] overflow-hidden shadow-2xl">
-              <table className="w-full text-left text-xs border-collapse" dir={isAr ? 'rtl' : 'ltr'}>
-                <thead>
-                  <tr className="bg-[#0e172c] border-b border-white/10 text-slate-400 font-black">
-                    <th className="p-3.5">{isAr ? 'الكود' : 'Code'}</th>
-                    <th className="p-3.5">{isAr ? 'اسم المحطة (بالعربية)' : 'Title (Arabic)'}</th>
-                    <th className="p-3.5">{isAr ? 'اسم المحطة (بالإنجليزية)' : 'Title (English)'}</th>
-                    <th className="p-3.5">{isAr ? 'العنبر / الجناح' : 'Zone / Bay'}</th>
-                    <th className="p-3.5">{isAr ? 'خط الإنتاج' : 'Line'}</th>
-                    <th className="p-3.5">{isAr ? 'الموقع الفعلي / الوصف' : 'Description'}</th>
-                    <th className="p-3.5">{isAr ? 'حالة الجودة الحية' : 'Live Status'}</th>
-                    <th className="p-3.5 text-center">{isAr ? 'الإجراءات' : 'Actions'}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {filteredEquipment.map(eq => {
-                    const st = stationStatuses[eq.id];
-                    return (
-                      <tr key={eq.id} className="hover:bg-white/[0.03] transition-colors">
-                        <td className="p-3.5 font-mono font-black text-amber-400">
-                          {eq.code}
-                        </td>
-                        <td className="p-3.5 font-bold text-white">
-                          <div className="flex items-center gap-2">
-                            <span className="p-1 rounded bg-slate-800 text-slate-300">
-                              {renderIcon(eq.iconType, 'w-3.5 h-3.5')}
-                            </span>
-                            <span>{eq.titleAr}</span>
-                          </div>
-                        </td>
-                        <td className="p-3.5 text-slate-300">
-                          {eq.titleEn}
-                        </td>
-                        <td className="p-3.5 text-slate-400">
-                          {isAr ? eq.zoneNameAr : eq.zoneNameEn}
-                        </td>
-                        <td className="p-3.5 font-mono text-slate-300">
-                          {eq.line}
-                        </td>
-                        <td className="p-3.5 text-slate-400 truncate max-w-xs">
-                          {isAr ? eq.locationAr : eq.locationEn}
-                        </td>
-                        <td className="p-3.5">
-                          <span 
-                            className="px-2 py-0.5 rounded-full text-[10px] font-black border"
-                            style={{
-                              color: st?.statusColor,
-                              borderColor: `${st?.statusColor}40`,
-                              backgroundColor: `${st?.statusColor}15`
-                            }}
-                          >
-                            {isAr ? st?.statusLabelAr : st?.statusLabelEn}
-                          </span>
-                        </td>
-                        <td className="p-3.5 text-center">
-                          <div className="flex items-center justify-center gap-1.5">
-                            <button
-                              onClick={() => setEditingStation(eq)}
-                              className="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center gap-1 shadow-sm transition-all hover:scale-105"
-                            >
-                              <Edit3 className="w-3 h-3" />
-                              <span>{isAr ? 'تعديل' : 'Edit'}</span>
-                            </button>
-                            <button
-                              onClick={() => setDeleteConfirmId(eq.id)}
-                              className="p-1 rounded-lg bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white transition-colors"
-                              title={isAr ? 'حذف' : 'Delete'}
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
         )}
 
         {/* ==================================================================== */}
-        {/* 4. SLIDE-OVER SCADA COCKPIT DRAWER (INSPECTION & ACTIONS)            */}
+        {/* 4. SLIDE-OVER SCADA COCKPIT DRAWER (INSPECTION, ACTIONS & SETTINGS)  */}
         {/* ==================================================================== */}
-        {selectedEquipment && viewMode !== 'customize-table' && (
+        {isDrawerOpen ? (
           <aside className="w-80 md:w-96 flex-none bg-[#090f1d] border-r md:border-r-0 md:border-l border-white/10 flex flex-col z-20 shadow-2xl overflow-y-auto">
-            {/* Drawer Header */}
-            <div className="p-4 bg-[#0d162b] border-b border-white/10 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <span className="p-2 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30">
-                  {renderIcon(selectedEquipment.iconType, 'w-5 h-5')}
-                </span>
-                <div>
-                  <h3 className="text-sm font-black text-white leading-tight">
-                    {isAr ? selectedEquipment.titleAr : selectedEquipment.titleEn}
-                  </h3>
-                  <span className="text-[10px] font-mono font-bold text-amber-400">{selectedEquipment.code}</span>
+            {selectedEquipment ? (
+              <>
+                {/* Drawer Header */}
+                <div className="p-4 bg-[#0d162b] border-b border-white/10 flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <span className="p-2 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                      {renderIcon(selectedEquipment.iconType, 'w-5 h-5')}
+                    </span>
+                    <div>
+                      <h3 className="text-sm font-black text-white leading-tight">
+                        {isAr ? selectedEquipment.titleAr : selectedEquipment.titleEn}
+                      </h3>
+                      <span className="text-[10px] font-mono font-bold text-amber-400">{selectedEquipment.code}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => setSelectedStationId(null)}
+                      className="p-1.5 rounded-lg text-amber-400 hover:text-white hover:bg-amber-500/20 transition-colors"
+                      title={isAr ? 'الانتقال إلى إعدادات وتخصيص المصنع العامة' : 'Switch to Global Plant Settings'}
+                    >
+                      <Settings2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => setEditingStation(selectedEquipment)}
+                      className="p-1.5 rounded-lg text-amber-400 hover:text-white hover:bg-amber-500/20 transition-colors"
+                      title={isAr ? 'تعديل بيانات هذه المحطة' : 'Edit station'}
+                    >
+                      <Edit3 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => setIsDrawerOpen(false)}
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+                      title={isAr ? 'إغلاق القائمة الجانبية' : 'Close Drawer'}
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
-              </div>
 
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => setEditingStation(selectedEquipment)}
-                  className="p-1.5 rounded-lg text-amber-400 hover:text-white hover:bg-amber-500/20 transition-colors"
-                  title={isAr ? 'تعديل بيانات هذه المحطة' : 'Edit station'}
-                >
-                  <Edit3 className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => setSelectedStationId(null)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
+                {/* Direct Platform Quick Actions Bar */}
+                <div className="px-3 py-2 bg-gradient-to-r from-slate-900 to-[#0b1329] border-b border-white/10 space-y-1.5">
+                  <div className="flex items-center justify-between text-[10px] font-black uppercase text-amber-400">
+                    <span className="flex items-center gap-1">
+                      <Zap className="w-3 h-3 text-amber-400" />
+                      <span>{isAr ? 'ربط المنصة المباشر (1-Click Action)' : 'Direct Platform Actions'}</span>
+                    </span>
+                    <span className="text-[9px] text-slate-400 font-mono">{selectedEquipment.code}</span>
+                  </div>
 
-            {/* Drawer Navigation Tabs Bar */}
-            <div className="flex items-center gap-1 p-2 bg-[#080d1a] border-b border-white/10 text-xs shrink-0 overflow-x-auto">
-              <button
-                onClick={() => setDrawerTab('overview')}
-                className={`flex-1 py-1.5 px-1.5 rounded-xl font-bold flex items-center justify-center gap-1 transition-all text-[11px] shrink-0 ${
-                  drawerTab === 'overview'
-                    ? 'bg-amber-500 text-slate-950 shadow-md font-black'
-                    : 'text-slate-400 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                <Cpu className="w-3.5 h-3.5" />
-                <span>{isAr ? 'المحطة' : 'Station'}</span>
-              </button>
-              <button
-                onClick={() => setDrawerTab('department')}
-                className={`flex-1 py-1.5 px-1.5 rounded-xl font-bold flex items-center justify-center gap-1 transition-all text-[11px] shrink-0 ${
-                  drawerTab === 'department'
-                    ? 'bg-blue-600 text-white shadow-md font-black'
-                    : 'text-slate-400 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                <Building2 className="w-3.5 h-3.5" />
-                <span>{isAr ? 'الإدارة' : 'Dept'}</span>
-              </button>
-              <button
-                onClick={() => setDrawerTab('defects-ncr')}
-                className={`flex-1 py-1.5 px-1.5 rounded-xl font-bold flex items-center justify-center gap-1 transition-all text-[11px] shrink-0 relative ${
-                  drawerTab === 'defects-ncr'
-                    ? 'bg-red-500 text-white shadow-md font-black'
-                    : 'text-slate-400 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                <ShieldAlert className="w-3.5 h-3.5" />
-                <span>{isAr ? 'العيوب & NCR' : 'Defects/NCR'}</span>
-                {selectedStatus && (selectedStatus.defectCount > 0 || selectedStatus.openNcrCount > 0) && (
-                  <span className="w-2 h-2 rounded-full bg-red-400 animate-ping absolute top-1 right-1" />
-                )}
-              </button>
-              <button
-                onClick={() => setDrawerTab('capa-8d')}
-                className={`flex-1 py-1.5 px-1.5 rounded-xl font-bold flex items-center justify-center gap-1 transition-all text-[11px] shrink-0 ${
-                  drawerTab === 'capa-8d'
-                    ? 'bg-purple-600 text-white shadow-md font-black'
-                    : 'text-slate-400 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                <FileText className="w-3.5 h-3.5" />
-                <span>{isAr ? '8D & CAPA' : '8D/CAPA'}</span>
-              </button>
-              <button
-                onClick={() => setDrawerTab('closed-loop')}
-                className={`flex-1 py-1.5 px-1.5 rounded-xl font-bold flex items-center justify-center gap-1 transition-all text-[11px] shrink-0 ${
-                  drawerTab === 'closed-loop'
-                    ? 'bg-cyan-500 text-slate-950 shadow-md font-black'
-                    : 'text-slate-400 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                <Workflow className="w-3.5 h-3.5" />
-                <span>{isAr ? 'المسار' : 'Trace'}</span>
-              </button>
-            </div>
+                  <div className="grid grid-cols-2 gap-1 text-[11px]">
+                    <button
+                      onClick={() => navigate(`/quality-shopfloor?station=${encodeURIComponent(selectedEquipment.code)}`)}
+                      className="p-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 font-bold flex items-center gap-1.5 transition-all text-start"
+                    >
+                      <Plus className="w-3.5 h-3.5 shrink-0 text-amber-400" />
+                      <span className="truncate">{isAr ? 'تسجيل عيب للماكينة' : 'Log Defect'}</span>
+                    </button>
 
-            {/* Drawer Body */}
-            <div className="p-4 space-y-4 flex-1 overflow-y-auto">
-              {/* TAB 1: OVERVIEW & SCADA TELEMETRY */}
-              {drawerTab === 'overview' && (
-                <div className="space-y-3.5">
-                  {/* 1. FAST NUDGE & POSITION CONTROL PAD (D-PAD) */}
-                  <div className="p-3.5 rounded-2xl bg-[#090f1e] border border-amber-500/40 space-y-3 shadow-xl">
+                    <button
+                      onClick={() => navigate(`/quality/records/ncr?create=1&station=${encodeURIComponent(selectedEquipment.code)}&title=${encodeURIComponent(selectedEquipment.titleAr)}`)}
+                      className="p-1.5 rounded-xl bg-red-500/15 hover:bg-red-500/25 border border-red-500/30 text-red-300 font-bold flex items-center gap-1.5 transition-all text-start"
+                    >
+                      <ShieldAlert className="w-3.5 h-3.5 shrink-0 text-red-400" />
+                      <span className="truncate">{isAr ? 'فتح تقرير NCR' : 'Open NCR'}</span>
+                    </button>
+
+                    <button
+                      onClick={() => navigate(`/quality/records/capa?station=${encodeURIComponent(selectedEquipment.code)}`)}
+                      className="p-1.5 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/30 text-purple-300 font-bold flex items-center gap-1.5 transition-all text-start"
+                    >
+                      <CheckSquare className="w-3.5 h-3.5 shrink-0 text-purple-400" />
+                      <span className="truncate">{isAr ? 'إجراء تصحيحي CAPA' : 'Open CAPA'}</span>
+                    </button>
+
+                    <button
+                      onClick={() => navigate(`/spc?line=${encodeURIComponent(selectedEquipment.line)}`)}
+                      className="p-1.5 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/30 text-cyan-300 font-bold flex items-center gap-1.5 transition-all text-start"
+                    >
+                      <BarChart3 className="w-3.5 h-3.5 shrink-0 text-cyan-400" />
+                      <span className="truncate">{isAr ? 'كارت ضبط SPC' : 'SPC Chart'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Drawer Navigation Tabs Bar */}
+                <div className="flex items-center gap-1 p-2 bg-[#080d1a] border-b border-white/10 text-xs shrink-0 overflow-x-auto">
+                  <button
+                    onClick={() => setDrawerTab('overview')}
+                    className={`flex-1 py-1.5 px-1.5 rounded-xl font-bold flex items-center justify-center gap-1 transition-all text-[11px] shrink-0 ${
+                      drawerTab === 'overview'
+                        ? 'bg-amber-500 text-slate-950 shadow-md font-black'
+                        : 'text-slate-400 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    <Cpu className="w-3.5 h-3.5" />
+                    <span>{isAr ? 'المحطة' : 'Station'}</span>
+                  </button>
+                  <button
+                    onClick={() => setDrawerTab('department')}
+                    className={`flex-1 py-1.5 px-1.5 rounded-xl font-bold flex items-center justify-center gap-1 transition-all text-[11px] shrink-0 ${
+                      drawerTab === 'department'
+                        ? 'bg-blue-600 text-white shadow-md font-black'
+                        : 'text-slate-400 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    <Building2 className="w-3.5 h-3.5" />
+                    <span>{isAr ? 'الإدارة' : 'Dept'}</span>
+                  </button>
+                  <button
+                    onClick={() => setDrawerTab('defects-ncr')}
+                    className={`flex-1 py-1.5 px-1.5 rounded-xl font-bold flex items-center justify-center gap-1 transition-all text-[11px] shrink-0 relative ${
+                      drawerTab === 'defects-ncr'
+                        ? 'bg-red-500 text-white shadow-md font-black'
+                        : 'text-slate-400 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    <ShieldAlert className="w-3.5 h-3.5" />
+                    <span>{isAr ? 'العيوب & NCR' : 'Defects/NCR'}</span>
+                    {selectedStatus && (selectedStatus.defectCount > 0 || selectedStatus.openNcrCount > 0) && (
+                      <span className="w-2 h-2 rounded-full bg-red-400 animate-ping absolute top-1 right-1" />
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setDrawerTab('capa-8d')}
+                    className={`flex-1 py-1.5 px-1.5 rounded-xl font-bold flex items-center justify-center gap-1 transition-all text-[11px] shrink-0 ${
+                      drawerTab === 'capa-8d'
+                        ? 'bg-purple-600 text-white shadow-md font-black'
+                        : 'text-slate-400 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    <span>{isAr ? '8D & CAPA' : '8D/CAPA'}</span>
+                  </button>
+                  <button
+                    onClick={() => setDrawerTab('closed-loop')}
+                    className={`flex-1 py-1.5 px-1.5 rounded-xl font-bold flex items-center justify-center gap-1 transition-all text-[11px] shrink-0 ${
+                      drawerTab === 'closed-loop'
+                        ? 'bg-cyan-500 text-slate-950 shadow-md font-black'
+                        : 'text-slate-400 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    <Workflow className="w-3.5 h-3.5" />
+                    <span>{isAr ? 'المسار' : 'Trace'}</span>
+                  </button>
+                </div>
+
+                {/* Drawer Body */}
+                <div className="p-4 space-y-4 flex-1 overflow-y-auto">
+                  {/* TAB 1: OVERVIEW & SCADA TELEMETRY */}
+                  {drawerTab === 'overview' && (
+                    <div className="space-y-3.5">
+                      {/* LIVE CYCLE TIME & TARGET OEE SLIDERS (Instant Real-time Sync) */}
+                      <div className="p-3.5 rounded-2xl bg-[#090f1e] border border-cyan-500/40 space-y-3 shadow-xl">
+                        <div className="flex items-center justify-between text-xs font-black text-cyan-300">
+                          <div className="flex items-center gap-1.5">
+                            <Gauge className="w-4 h-4 text-cyan-400" />
+                            <span>{isAr ? 'زمن الدورة (CT) وكفاءة OEE الحية' : 'Live Cycle Time & Target OEE'}</span>
+                          </div>
+                          <span className="text-[9px] font-mono text-cyan-400 bg-cyan-950/80 px-1.5 py-0.5 rounded border border-cyan-500/30 animate-pulse">
+                            3D Live Sync
+                          </span>
+                        </div>
+
+                        {/* Cycle Time Slider */}
+                        <div className="space-y-1.5 bg-black/40 p-2.5 rounded-xl border border-white/5">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-slate-300 font-bold text-[11px]">
+                              {isAr ? 'زمن الدورة التشغيلي (Cycle Time):' : 'Workstation Cycle Time:'}
+                            </span>
+                            <span className="font-mono font-black text-cyan-300 text-sm">
+                              {selectedEquipment.cycleTimeSec ?? 24} {isAr ? 'ثانية' : 'sec'}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2.5">
+                            <input
+                              type="range"
+                              min={5}
+                              max={180}
+                              step={1}
+                              value={selectedEquipment.cycleTimeSec ?? 24}
+                              onChange={(e) => updateStationField(selectedEquipment.id, 'cycleTimeSec', Number(e.target.value))}
+                              className="flex-1 accent-cyan-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer"
+                            />
+                            <div className="flex items-center gap-1">
+                              <input
+                                type="number"
+                                min={5}
+                                max={300}
+                                value={selectedEquipment.cycleTimeSec ?? 24}
+                                onChange={(e) => updateStationField(selectedEquipment.id, 'cycleTimeSec', Math.max(1, Number(e.target.value)))}
+                                className="w-14 bg-slate-900 border border-cyan-500/40 rounded-lg px-1.5 py-1 text-center font-mono font-bold text-xs text-cyan-300 focus:outline-none"
+                              />
+                              <span className="text-[10px] text-slate-400 font-mono">s</span>
+                            </div>
+                          </div>
+                          <div className="flex justify-between text-[9px] text-slate-500 font-mono">
+                            <span>5s ({isAr ? 'سريع' : 'Fast'})</span>
+                            <span>45s ({isAr ? 'متوسط' : 'Standard'})</span>
+                            <span>180s ({isAr ? 'دقيق' : 'Detailed'})</span>
+                          </div>
+                        </div>
+
+                        {/* Target OEE Slider */}
+                        <div className="space-y-1.5 bg-black/40 p-2.5 rounded-xl border border-white/5">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-slate-300 font-bold text-[11px]">
+                              {isAr ? 'كفاءة الماكينة المستهدفة (Target OEE):' : 'Target OEE Rate:'}
+                            </span>
+                            <span className="font-mono font-black text-emerald-400 text-sm">
+                              {selectedEquipment.oeeEstimate || 95}%
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2.5">
+                            <input
+                              type="range"
+                              min={50}
+                              max={100}
+                              step={1}
+                              value={selectedEquipment.oeeEstimate || 95}
+                              onChange={(e) => updateStationField(selectedEquipment.id, 'oeeEstimate', Number(e.target.value))}
+                              className="flex-1 accent-emerald-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer"
+                            />
+                            <div className="flex items-center gap-1">
+                              <input
+                                type="number"
+                                min={10}
+                                max={100}
+                                value={selectedEquipment.oeeEstimate || 95}
+                                onChange={(e) => updateStationField(selectedEquipment.id, 'oeeEstimate', Math.min(100, Math.max(1, Number(e.target.value))))}
+                                className="w-14 bg-slate-900 border border-emerald-500/40 rounded-lg px-1.5 py-1 text-center font-mono font-bold text-xs text-emerald-300 focus:outline-none"
+                              />
+                              <span className="text-[10px] text-slate-400 font-mono">%</span>
+                            </div>
+                          </div>
+                          <div className="flex justify-between text-[9px] text-slate-500 font-mono">
+                            <span>50%</span>
+                            <span>85% ({isAr ? 'معيار عالمي' : 'World Class'})</span>
+                            <span>100%</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 1. FAST NUDGE & POSITION CONTROL PAD (D-PAD) */}
+                      <div className="p-3.5 rounded-2xl bg-[#090f1e] border border-amber-500/40 space-y-3 shadow-xl">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1.5 text-xs font-black text-amber-400">
                         <Move className="w-3.5 h-3.5 text-amber-400" />
@@ -6789,7 +6746,383 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                 </div>
               )}
             </div>
+          </>
+        ) : (
+              /* GLOBAL PLANT SETTINGS & WORKSTATION CUSTOMIZER MODE */
+              <div className="flex flex-col h-full">
+                {/* Global Settings Drawer Header */}
+                <div className="p-4 bg-[#0d162b] border-b border-white/10 flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <span className="p-2 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                      <Settings2 className="w-5 h-5 text-amber-400" />
+                    </span>
+                    <div>
+                      <h3 className="text-sm font-black text-white leading-tight">
+                        {isAr ? 'إعدادات وتعديل المصنع والربط' : 'Plant Settings & Platform Hub'}
+                      </h3>
+                      <span className="text-[10px] font-mono font-bold text-amber-400">
+                        {equipmentList.length} {isAr ? 'محطات نشطة' : 'active workstations'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => setIsDrawerOpen(false)}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+                    title={isAr ? 'إغلاق اللوحة الجانبية' : 'Close drawer'}
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="p-4 space-y-4 flex-1 overflow-y-auto">
+                  {/* 1. Quick Add New Station Button */}
+                  <div className="p-3.5 rounded-2xl bg-gradient-to-br from-emerald-950/40 to-slate-900 border border-emerald-500/40 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black text-emerald-300 flex items-center gap-1.5">
+                        <Plus className="w-4 h-4 text-emerald-400" />
+                        <span>{isAr ? 'إضافة محطة أو ماكينة جديدة' : 'Add Workstation'}</span>
+                      </span>
+                      <button
+                        onClick={handleResetToDefaults}
+                        className="text-[10px] text-slate-400 hover:text-amber-300 font-mono flex items-center gap-1"
+                      >
+                        <RotateCcw className="w-3 h-3" />
+                        <span>{isAr ? 'استعادة الافتراضي' : 'Reset'}</span>
+                      </button>
+                    </div>
+                    <p className="text-[10px] text-slate-300">
+                      {isAr 
+                        ? 'إضافة محطة تجميع، تشغيل CNC، محطة ربط عزم، أو محطة فحص جودة' 
+                        : 'Add assembly, CNC machining, torque station, or quality inspection point'}
+                    </p>
+                    <button
+                      onClick={() => handleAddNewTemplate('assembly')}
+                      className="w-full py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/30 transition-all active:scale-95"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>{isAr ? '+ إنشاء محطة جديدة للمصنع' : '+ Create New Workstation'}</span>
+                    </button>
+                  </div>
+
+                  {/* 2. Platform 1-Click Ecosystem Hub (ربط المصنع بكامل أقسام المنصة) */}
+                  <div className="p-3.5 rounded-2xl bg-slate-900 border border-cyan-500/30 space-y-2.5">
+                    <div className="flex items-center justify-between text-xs font-black text-cyan-300">
+                      <span className="flex items-center gap-1.5">
+                        <Workflow className="w-3.5 h-3.5 text-cyan-400" />
+                        <span>{isAr ? 'ربط المصنع بكافة أقسام المنصة' : 'Platform Modules Ecosystem'}</span>
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-1.5 text-xs">
+                      <button
+                        onClick={() => navigate('/quality-shopfloor')}
+                        className="p-2 rounded-xl bg-slate-950/80 hover:bg-slate-800 border border-white/5 hover:border-amber-500/40 text-start transition-all group"
+                      >
+                        <span className="text-amber-400 font-black block text-[11px] group-hover:text-amber-300">📝 {isAr ? 'مسجل عيوب الصالة' : 'Shopfloor Defects'}</span>
+                        <span className="text-[9px] text-slate-400">{realDefects.length} {isAr ? 'عيوب مسجلة' : 'records'}</span>
+                      </button>
+
+                      <button
+                        onClick={() => navigate('/quality/records/ncr')}
+                        className="p-2 rounded-xl bg-slate-950/80 hover:bg-slate-800 border border-white/5 hover:border-red-500/40 text-start transition-all group"
+                      >
+                        <span className="text-red-400 font-black block text-[11px] group-hover:text-red-300">🚨 {isAr ? 'عدم المطابقة NCR' : 'NCR System'}</span>
+                        <span className="text-[9px] text-slate-400">{realNcrs.filter(n => n.status !== 'Closed').length} {isAr ? 'مفتوح' : 'open'}</span>
+                      </button>
+
+                      <button
+                        onClick={() => navigate('/quality/records/capa')}
+                        className="p-2 rounded-xl bg-slate-950/80 hover:bg-slate-800 border border-white/5 hover:border-purple-500/40 text-start transition-all group"
+                      >
+                        <span className="text-purple-400 font-black block text-[11px] group-hover:text-purple-300">🛠️ {isAr ? 'إجراءات CAPA' : 'CAPA Actions'}</span>
+                        <span className="text-[9px] text-slate-400">{realCapas.filter(c => c.status !== 'Closed').length} {isAr ? 'خطة جارية' : 'active'}</span>
+                      </button>
+
+                      <button
+                        onClick={() => navigate('/spc')}
+                        className="p-2 rounded-xl bg-slate-950/80 hover:bg-slate-800 border border-white/5 hover:border-cyan-500/40 text-start transition-all group"
+                      >
+                        <span className="text-cyan-400 font-black block text-[11px] group-hover:text-cyan-300">📊 {isAr ? 'تحكم إحصائي SPC' : 'SPC Charts'}</span>
+                        <span className="text-[9px] text-slate-400">Cp / Cpk / I-MR</span>
+                      </button>
+
+                      <button
+                        onClick={() => navigate('/quality-inspection-plans')}
+                        className="p-2 rounded-xl bg-slate-950/80 hover:bg-slate-800 border border-white/5 hover:border-emerald-500/40 text-start transition-all group"
+                      >
+                        <span className="text-emerald-400 font-black block text-[11px] group-hover:text-emerald-300">🔬 {isAr ? 'خطط فحص الجودة' : 'Inspection Plans'}</span>
+                        <span className="text-[9px] text-slate-400">{realControlPlans.length} {isAr ? 'خطة معتمدة' : 'plans'}</span>
+                      </button>
+
+                      <button
+                        onClick={() => navigate('/quality/records/eight-d')}
+                        className="p-2 rounded-xl bg-slate-950/80 hover:bg-slate-800 border border-white/5 hover:border-pink-500/40 text-start transition-all group"
+                      >
+                        <span className="text-pink-400 font-black block text-[11px] group-hover:text-pink-300">🔍 {isAr ? 'تحقيقات 8D' : '8D Root Cause'}</span>
+                        <span className="text-[9px] text-slate-400">{realEightDs.length} {isAr ? 'تقارير' : 'reports'}</span>
+                      </button>
+
+                      <button
+                        onClick={() => navigate('/traceability')}
+                        className="p-2 rounded-xl bg-slate-950/80 hover:bg-slate-800 border border-white/5 hover:border-blue-500/40 text-start transition-all group"
+                      >
+                        <span className="text-blue-400 font-black block text-[11px] group-hover:text-blue-300">📦 {isAr ? 'تتبع الدفعة والمسار' : 'Traceability Hub'}</span>
+                        <span className="text-[9px] text-slate-400">Batch Genealogies</span>
+                      </button>
+
+                      <button
+                        onClick={() => navigate('/record-hub')}
+                        className="p-2 rounded-xl bg-slate-950/80 hover:bg-slate-800 border border-white/5 hover:border-slate-500/40 text-start transition-all group"
+                      >
+                        <span className="text-slate-300 font-black block text-[11px] group-hover:text-white">📋 {isAr ? 'مركز السجلات الشامل' : 'All Records'}</span>
+                        <span className="text-[9px] text-slate-400">{summaryMetrics.totalStations} {isAr ? 'محطة' : 'pods'}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 3. Plant Layout Architecture Presets */}
+                  <div className="p-3.5 rounded-2xl bg-slate-900 border border-amber-500/30 space-y-2.5">
+                    <div className="flex items-center justify-between text-xs font-black text-amber-300">
+                      <span className="flex items-center gap-1.5">
+                        <LayoutGrid className="w-3.5 h-3.5 text-amber-400" />
+                        <span>{isAr ? 'تنسيقات المصنع والسيور الهندسية' : 'Factory Layout & Conveyor Presets'}</span>
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-1.5 text-xs">
+                      <button
+                        onClick={() => handleApplyLayoutPreset('bays')}
+                        className="p-2 rounded-xl bg-black/40 hover:bg-cyan-950/60 border border-white/5 hover:border-cyan-500/40 text-start transition-all"
+                      >
+                        <span className="font-bold text-white block text-[11px]">🏭 {isAr ? 'العنابر المتوازية' : 'Bays Grid'}</span>
+                        <span className="text-[9px] text-slate-400">Bay A, B, C, D, E</span>
+                      </button>
+
+                      <button
+                        onClick={() => handleApplyLayoutPreset('u-cell')}
+                        className="p-2 rounded-xl bg-black/40 hover:bg-amber-950/60 border border-white/5 hover:border-amber-500/40 text-start transition-all"
+                      >
+                        <span className="font-bold text-white block text-[11px]">🔄 {isAr ? 'خلية U الرشيقة' : 'Lean U-Cell'}</span>
+                        <span className="text-[9px] text-slate-400">TPS Continuous Flow</span>
+                      </button>
+
+                      <button
+                        onClick={() => handleApplyLayoutPreset('linear')}
+                        className="p-2 rounded-xl bg-black/40 hover:bg-emerald-950/60 border border-white/5 hover:border-emerald-500/40 text-start transition-all"
+                      >
+                        <span className="font-bold text-white block text-[11px]">⚡ {isAr ? 'خط إنتاج تسلسلي' : 'Linear Cascade'}</span>
+                        <span className="text-[9px] text-slate-400">Dual Lines & Bridge</span>
+                      </button>
+
+                      <button
+                        onClick={() => handleApplyLayoutPreset('serpentine')}
+                        className="p-2 rounded-xl bg-black/40 hover:bg-purple-950/60 border border-white/5 hover:border-purple-500/40 text-start transition-all"
+                      >
+                        <span className="font-bold text-white block text-[11px]">〰️ {isAr ? 'مسار متعرج' : 'Serpentine Flow'}</span>
+                        <span className="text-[9px] text-slate-400">180° Curved Conveyors</span>
+                      </button>
+                    </div>
+
+                    <div className="pt-2 flex items-center gap-1.5 border-t border-white/5">
+                      <button
+                        onClick={handleAutoConnectStations}
+                        className="flex-1 py-1.5 px-2 rounded-xl bg-purple-950 hover:bg-purple-900 border border-purple-500/40 text-purple-200 font-bold text-[10px] flex items-center justify-center gap-1 transition-all"
+                        title={isAr ? 'ربط جميع السيور الناقلة تسلسلياً بذكاء' : 'Smart auto-connect'}
+                      >
+                        <Cable className="w-3.5 h-3.5 text-purple-400" />
+                        <span>{isAr ? '⚡ ربط السيور الذكي' : 'Auto Wire'}</span>
+                      </button>
+
+                      <button
+                        onClick={handleAutoAlignLayout}
+                        className="flex-1 py-1.5 px-2 rounded-xl bg-cyan-950 hover:bg-cyan-900 border border-cyan-500/40 text-cyan-200 font-bold text-[10px] flex items-center justify-center gap-1 transition-all"
+                        title={isAr ? 'محاذاة هندسية وترتيب المسافات' : 'Auto align layout'}
+                      >
+                        <AlignJustify className="w-3.5 h-3.5 text-cyan-400" />
+                        <span>{isAr ? '📐 محاذاة العنابر' : 'Auto Align'}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 4. Ambience & Simulation Controls */}
+                  <div className="p-3.5 rounded-2xl bg-slate-900 border border-slate-700 space-y-2.5">
+                    <div className="flex items-center justify-between text-xs font-black text-slate-300">
+                      <span>{isAr ? 'المظهر والمحاكاة الصناعية' : 'Ambience & Simulation Controls'}</span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <button
+                        onClick={() => setIsAgvActive(prev => !prev)}
+                        className={`p-2 rounded-xl border flex items-center justify-between font-bold transition-all ${
+                          isAgvActive ? 'bg-amber-500/20 border-amber-500/50 text-amber-300' : 'bg-black/40 border-white/5 text-slate-500'
+                        }`}
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <Bot className="w-3.5 h-3.5" />
+                          <span>{isAr ? 'روبوتات AGV' : 'AGV Robots'}</span>
+                        </span>
+                        <span className="text-[9px] font-mono">{isAgvActive ? 'ON' : 'OFF'}</span>
+                      </button>
+
+                      <button
+                        onClick={() => setIsHeatmapActive(prev => !prev)}
+                        className={`p-2 rounded-xl border flex items-center justify-between font-bold transition-all ${
+                          isHeatmapActive ? 'bg-rose-500/20 border-rose-500/50 text-rose-300' : 'bg-black/40 border-white/5 text-slate-500'
+                        }`}
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <Flame className="w-3.5 h-3.5" />
+                          <span>{isAr ? 'خريطة العيوب' : 'Heatmap'}</span>
+                        </span>
+                        <span className="text-[9px] font-mono">{isHeatmapActive ? 'ON' : 'OFF'}</span>
+                      </button>
+
+                      <button
+                        onClick={() => setIsMaterialFlowActive(prev => !prev)}
+                        className={`p-2 rounded-xl border flex items-center justify-between font-bold transition-all ${
+                          isMaterialFlowActive ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300' : 'bg-black/40 border-white/5 text-slate-500'
+                        }`}
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <Play className="w-3.5 h-3.5" />
+                          <span>{isAr ? 'تدفق الباليتات' : 'Pallet Flow'}</span>
+                        </span>
+                        <span className="text-[9px] font-mono">{isMaterialFlowActive ? 'ON' : 'OFF'}</span>
+                      </button>
+
+                      <button
+                        onClick={() => setSoundEnabled(prev => !prev)}
+                        className={`p-2 rounded-xl border flex items-center justify-between font-bold transition-all ${
+                          soundEnabled ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-300' : 'bg-black/40 border-white/5 text-slate-500'
+                        }`}
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <Volume2 className="w-3.5 h-3.5" />
+                          <span>{isAr ? 'نغمات SCADA' : 'Audio Chimes'}</span>
+                        </span>
+                        <span className="text-[9px] font-mono">{soundEnabled ? 'ON' : 'OFF'}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 5. All Workstations List & In-Place Editing */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black text-white flex items-center gap-1.5">
+                        <Factory className="w-3.5 h-3.5 text-amber-400" />
+                        <span>{isAr ? `ماكينات ومحطات المصنع (${equipmentList.length})` : `All Workstations (${equipmentList.length})`}</span>
+                      </span>
+                    </div>
+
+                    {/* Quick Search inside Drawer */}
+                    <div className="relative">
+                      <Search className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="text"
+                        value={drawerStationSearch}
+                        onChange={(e) => setDrawerStationSearch(e.target.value)}
+                        placeholder={isAr ? 'بحث سريع عن ماكينة أو كود...' : 'Search station or code...'}
+                        className="w-full pr-8 pl-3 py-1.5 rounded-xl bg-black/50 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 font-mono"
+                      />
+                      {drawerStationSearch && (
+                        <button
+                          onClick={() => setDrawerStationSearch('')}
+                          className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Stations List Items */}
+                    <div className="space-y-1.5 max-h-72 overflow-y-auto pr-0.5">
+                      {equipmentList
+                        .filter(eq => {
+                          if (!drawerStationSearch.trim()) return true;
+                          const q = drawerStationSearch.toLowerCase();
+                          return (
+                            eq.titleAr.toLowerCase().includes(q) ||
+                            eq.titleEn.toLowerCase().includes(q) ||
+                            eq.code.toLowerCase().includes(q) ||
+                            eq.line.toLowerCase().includes(q)
+                          );
+                        })
+                        .map(eq => {
+                          return (
+                            <div
+                              key={eq.id}
+                              onClick={() => {
+                                setSelectedStationId(eq.id);
+                                if (soundEnabled) playIndustrialChime('camera');
+                              }}
+                              className="p-2.5 rounded-xl bg-slate-900/80 hover:bg-slate-800/90 border border-white/5 hover:border-amber-500/40 transition-all cursor-pointer flex items-center justify-between text-xs group"
+                            >
+                              <div className="flex items-center gap-2">
+                                <span className="p-1 rounded-lg bg-black/40 text-amber-400">
+                                  {renderIcon(eq.iconType, 'w-3.5 h-3.5')}
+                                </span>
+                                <div>
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="font-mono font-bold text-amber-400 text-[10px]">{eq.code}</span>
+                                    <span className="font-bold text-white text-xs">{isAr ? eq.titleAr : eq.titleEn}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2 text-[10px] text-slate-400 font-mono">
+                                    <span>{eq.line}</span>
+                                    <span>•</span>
+                                    <span className="text-cyan-400">OEE: {eq.oeeEstimate || 95}%</span>
+                                    <span>•</span>
+                                    <span className="text-purple-300">CT: {eq.cycleTimeSec ?? 24}s</span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-1.5">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setEditingStation(eq);
+                                  }}
+                                  className="p-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500 text-amber-300 hover:text-slate-950 transition-colors"
+                                  title={isAr ? 'تعديل المحطة' : 'Edit station'}
+                                >
+                                  <Edit3 className="w-3 h-3" />
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setDeleteConfirmId(eq.id);
+                                  }}
+                                  className="p-1.5 rounded-lg bg-red-950/40 hover:bg-red-800 text-red-400 hover:text-white transition-colors"
+                                  title={isAr ? 'حذف المحطة' : 'Delete station'}
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                                <ChevronRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-amber-400 transition-colors" />
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </aside>
+        ) : (
+          /* FLOATING REOPEN BUTTON WHEN DRAWER IS CLOSED */
+          <div className="absolute bottom-4 end-4 z-40">
+            <button
+              onClick={() => setIsDrawerOpen(true)}
+              className="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs flex items-center gap-2 shadow-2xl shadow-amber-500/40 border border-amber-300 ring-2 ring-amber-400/30 transition-all hover:scale-105 active:scale-95"
+            >
+              <Settings2 className="w-4 h-4 animate-spin-slow" />
+              <span>{isAr ? '⚙️ إعدادات وتحكم المصنع' : '⚙️ Factory Controls & Settings'}</span>
+              <span className="px-1.5 py-0.5 rounded-full bg-slate-950 text-amber-300 text-[10px] font-mono font-bold">
+                {equipmentList.length}
+              </span>
+            </button>
+          </div>
         )}
       </div>
 

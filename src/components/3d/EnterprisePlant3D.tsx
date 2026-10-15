@@ -596,7 +596,7 @@ function HolographicStationBillboard({
 }) {
   const isAlert = statusInfo?.status === 'fail' || (statusInfo?.openNcrCount && statusInfo.openNcrCount > 0);
   const isWarning = statusInfo?.status === 'warning' || (statusInfo?.defectCount && statusInfo.defectCount > 0);
-  const cycleTimeSeconds = Math.round(28 + (station.code.charCodeAt(0) % 25));
+  const cycleTimeSeconds = station.cycleTimeSec ?? Math.round(28 + (station.code.charCodeAt(0) % 25));
 
   return (
     <Html

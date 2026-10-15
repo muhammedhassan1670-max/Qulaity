@@ -17,8 +17,7 @@ const QualityModules = lazy(() => import('../sections/QualityModules'));
 const NoCodeBuilder = lazy(() => import('../sections/NoCodeBuilder'));
 const AIIntelligence = lazy(() => import('../sections/AIIntelligence'));
 const AIChatPage = lazy(() => import('../pages/AIChat'));
-const DigitalTwin = lazy(() => import('../sections/DigitalTwin'));
-const ProductionLayoutEditor = lazy(() => import('../pages/ProductionLayoutEditor'));
+
 const SPCSystem = lazy(() => import('../sections/SPCSystem'));
 const IoTIntegration = lazy(() => import('../sections/IoTIntegration'));
 const ExecutiveMode = lazy(() => import('../sections/ExecutiveMode'));
@@ -138,8 +137,8 @@ const routes: RouteObject[] = [
       { path: 'ai/defect-prediction', element: <LazyWrapper><AIIntelligence /></LazyWrapper> },
       { path: 'defect-prediction', element: <Navigate to="/ai/defect-prediction" replace /> },
       { path: 'ai-chat', element: <LazyWrapper><AIChatPage /></LazyWrapper> },
-      { path: 'digital-twin', element: <LazyWrapper><DigitalTwin /></LazyWrapper> },
-      { path: 'production-layout', element: <LazyWrapper><ProductionLayoutEditor /></LazyWrapper> },
+      { path: 'digital-twin', element: <Navigate to="/quality-control-tower" replace /> },
+      { path: 'production-layout', element: <Navigate to="/quality-control-tower" replace /> },
       { path: 'spc', element: <ProtectedRoute requiredPermissions={['spc.view']}><LazyWrapper><SPCSystem /></LazyWrapper></ProtectedRoute> },
       { path: 'iot', element: <LazyWrapper><IoTIntegration /></LazyWrapper> },
       { path: 'executive', element: <LazyWrapper><ExecutiveMode /></LazyWrapper> },
@@ -260,8 +259,8 @@ const routes: RouteObject[] = [
       { path: 'quality/knowledge-base', element: <Navigate to="/quality-knowledge-base" replace /> },
       { path: 'quality/intelligence-search', element: <Navigate to="/quality-search" replace /> },
       { path: 'quality/form-designer', element: <Navigate to="/quality-form-designer" replace /> },
-      { path: 'quality/production-layout', element: <Navigate to="/production-layout" replace /> },
-      { path: 'quality/production-layout/:id', element: <LazyWrapper><ProductionLayoutEditor /></LazyWrapper> },
+      { path: 'quality/production-layout', element: <Navigate to="/quality-control-tower" replace /> },
+      { path: 'quality/production-layout/:id', element: <Navigate to="/quality-control-tower" replace /> },
       { path: 'audit', element: <ProtectedRoute requiredPermissions={['audit.manage', 'capa.manage', 'admin.access']}><LazyWrapper><AuditPage /></LazyWrapper></ProtectedRoute> },
       { path: 'audit/:id', element: <ProtectedRoute requiredPermissions={['audit.manage', 'capa.manage', 'admin.access']}><LazyWrapper><AuditPage /></LazyWrapper></ProtectedRoute> },
       { path: 'inspection', element: <ProtectedRoute requiredPermissions={['iqc.inspect', 'admin.access']}><LazyWrapper><InspectionPage /></LazyWrapper></ProtectedRoute> },
