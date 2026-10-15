@@ -35,8 +35,8 @@ import {
   getDepartmentForStation, 
   type PlantDepartment 
 } from '../../services/enterpriseDepartmentsEngine';
-
-const EnterprisePlant3D = React.lazy(() => import('../../components/3d/EnterprisePlant3D'));
+import { ErrorBoundary } from '../../components/ErrorBoundary';
+import EnterprisePlant3D from '../../components/3d/EnterprisePlant3D';
 
 export type StationZone = 'receiving' | 'assembly' | 'lab' | 'oqc' | 'shipping';
 export type ViewMode = '3d-webgl' | 'scada-floorplan' | 'stations-grid' | 'customize-table';
@@ -3662,14 +3662,30 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
       <div className="flex-1 relative flex overflow-hidden">
         {viewMode === '3d-webgl' ? (
           <div className="flex-1 w-full h-full relative overflow-hidden bg-[#040711]">
-            <Suspense fallback={
-              <div className="w-full h-full flex flex-col items-center justify-center bg-[#050811] text-cyan-400 gap-3">
-                <div className="w-10 h-10 border-4 border-cyan-500/20 border-t-cyan-400 rounded-full animate-spin" />
-                <span className="text-xs font-mono font-bold tracking-wider animate-pulse">
-                  {isAr ? 'جاري تشغيل محرك التوأم الرقمي ثلاثي الأبعاد (Three.js WebGL)...' : 'Loading 3D Digital Twin Engine (WebGL)...'}
-                </span>
-              </div>
-            }>
+            <ErrorBoundary
+              fallback={
+                <div className="w-full h-full flex flex-col items-center justify-center bg-[#050811] text-amber-400 gap-4 p-6 text-center">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 text-2xl font-black">
+                    ⚠️
+                  </div>
+                  <h3 className="text-base font-bold text-white">
+                    {isAr ? 'تعذر تشغيل محرك 3D WebGL على هذا المتصفح' : 'WebGL 3D Engine could not initialize'}
+                  </h3>
+                  <p className="text-xs text-slate-400 max-w-md">
+                    {isAr 
+                      ? 'قد يحتاج متصفحك إلى تفعيل تسريع الرسوميات (Hardware Acceleration) أو يمكنك استخدام المخطط الصناعي التفاعلي 2D بكامل الميزات.'
+                      : 'Hardware acceleration may be disabled. You can instantly switch to the 2D SCADA Industrial Plan with all live features.'}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('scada-floorplan')}
+                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-slate-950 font-black text-xs shadow-lg transition-all"
+                  >
+                    {isAr ? '📐 التبديل إلى المخطط الصناعي الذكي 2D SCADA' : '📐 Switch to 2D SCADA Floorplan'}
+                  </button>
+                </div>
+              }
+            >
               <EnterprisePlant3D
                 equipmentList={equipmentList}
                 stationStatuses={stationStatuses}
@@ -3681,7 +3697,7 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                 }}
                 isAr={isAr}
               />
-            </Suspense>
+            </ErrorBoundary>
           </div>
         ) : (
           <div 

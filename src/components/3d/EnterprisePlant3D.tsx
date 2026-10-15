@@ -9,7 +9,6 @@ import {
   Plane,
   Html,
   Grid,
-  Text,
   Billboard,
   GizmoHelper,
   GizmoViewport,
@@ -519,9 +518,12 @@ function QualityTestingLabChamber({ position, isTesting = true }: {
       <pointLight ref={laserRef} position={[-1.2, 1.3, 0]} color="#10b981" intensity={1.5} distance={4} />
       {/* QA Holographic Overhead Signboard */}
       <Billboard position={[0, 3.2, 0]}>
-        <Text fontSize={0.32} color="#38bdf8" anchorX="center" anchorY="middle" font="monospace">
-          🔬 QUALITY ASSURANCE & TESTING LAB
-        </Text>
+        <Html center transform distanceFactor={16}>
+          <div className="select-none px-3 py-1 rounded-lg bg-sky-950/90 border border-sky-400/50 text-sky-300 text-[11px] font-mono font-black whitespace-nowrap shadow-xl flex items-center gap-1.5 backdrop-blur-md">
+            <span>🔬</span>
+            <span>QUALITY ASSURANCE & TESTING LAB</span>
+          </div>
+        </Html>
       </Billboard>
     </group>
   );
@@ -586,7 +588,7 @@ function HolographicStationBillboard({
   statusInfo, 
   isSelected, 
   onSelect,
-  isAr = true 
+  isAr = true
 }: {
   station: ScadaEquipment;
   statusInfo?: any;
@@ -594,9 +596,13 @@ function HolographicStationBillboard({
   onSelect: () => void;
   isAr?: boolean;
 }) {
+  if (!station) return null;
   const isAlert = statusInfo?.status === 'fail' || (statusInfo?.openNcrCount && statusInfo.openNcrCount > 0);
   const isWarning = statusInfo?.status === 'warning' || (statusInfo?.defectCount && statusInfo.defectCount > 0);
-  const cycleTimeSeconds = station.cycleTimeSec ?? Math.round(28 + (station.code.charCodeAt(0) % 25));
+  const cycleTimeSeconds = station.cycleTimeSec ?? (station as any).cycleTime ?? 45;
+  const stationTitle = isAr 
+    ? (station.titleAr || (station as any).nameAr || station.titleEn || station.code || 'محطة')
+    : (station.titleEn || (station as any).nameEn || station.titleAr || station.code || 'Station');
 
   return (
     <Html
@@ -627,7 +633,7 @@ function HolographicStationBillboard({
               {station.code}
             </span>
             <span className="text-white font-black text-xs truncate max-w-[100px]">
-              {isAr ? station.titleAr : station.titleEn}
+              {stationTitle}
             </span>
           </div>
           <div className="flex items-center gap-1">
@@ -844,7 +850,8 @@ export function EnterprisePlant3D({
         <color attach="background" args={['#040711']} />
         <fog attach="fog" args={['#040711', 35, 95]} />
 
-        {/* Camera Control Modes */}
+        <Suspense fallback={null}>
+          {/* Camera Control Modes */}
         {cameraMode === 'orbit' ? (
           <OrbitControls
             ref={controlsRef}
@@ -992,11 +999,10 @@ export function EnterprisePlant3D({
         {/* ================================================================ */}
         {/* FLOATING 3D HOLOGRAPHIC STATION BILLBOARDS                       */}
         {/* ================================================================ */}
-        <Suspense fallback={null}>
-          {equipmentList.map(eq => {
-            const pos = station3DCoords[eq.id] || [0, 0, 0];
-            const isSelected = selectedStationId === eq.id;
-            const st = stationStatuses[eq.id];
+        {equipmentList.filter(Boolean).map(eq => {
+          const pos = station3DCoords[eq.id] || [0, 0, 0];
+          const isSelected = selectedStationId === eq.id;
+          const st = stationStatuses?.[eq.id];
 
             return (
               <group key={eq.id} position={pos}>
