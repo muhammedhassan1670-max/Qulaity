@@ -8,7 +8,7 @@
 // 5. 3 Ambient Floor Lighting Modes (Cyber-Dark, Cleanroom Epoxy White, Night-Shift Spotlights)
 // 6. Running Executive Production & Zero-Accident Ticker Bar
 // 7. True Drag & Drop with Magnetic Snap, Heatmaps, and Digital Andon Cord Pull
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, Suspense } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { 
@@ -36,8 +36,10 @@ import {
   type PlantDepartment 
 } from '../../services/enterpriseDepartmentsEngine';
 
+const EnterprisePlant3D = React.lazy(() => import('../../components/3d/EnterprisePlant3D'));
+
 export type StationZone = 'receiving' | 'assembly' | 'lab' | 'oqc' | 'shipping';
-export type ViewMode = 'scada-floorplan' | 'stations-grid' | 'customize-table';
+export type ViewMode = '3d-webgl' | 'scada-floorplan' | 'stations-grid' | 'customize-table';
 export type FilterStatus = 'all' | 'alerts-only' | 'normal-only';
 export type CameraPreset = 'iso-nw' | 'iso-ne' | 'elevation' | 'top-down';
 export type AmbientTheme = 'cyber-dark' | 'cleanroom' | 'night-shift';
@@ -1080,7 +1082,9 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
   // View Modes & Advanced Perspectives
   const initialMode: ViewMode = (searchParams.get('mode') === 'customize' || searchParams.get('tab') === 'customize')
     ? 'customize-table'
-    : 'scada-floorplan';
+    : searchParams.get('view') === '2d'
+      ? 'scada-floorplan'
+      : '3d-webgl';
 
   const [viewMode, setViewMode] = useState<ViewMode>(initialMode);
   
@@ -2903,6 +2907,40 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
           </div>
         </div>
 
+        {/* PRIMARY VIEW MODE SWITCHER: 3D WEBGL TWIN vs 2D SCADA FLOORPLAN */}
+        <div className="flex items-center gap-1 bg-[#090f1e]/95 p-1 rounded-2xl border border-cyan-500/40 shadow-xl shrink-0">
+          <button
+            onClick={() => {
+              setViewMode('3d-webgl');
+              if (soundEnabled) playIndustrialChime('camera');
+            }}
+            className={`px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all ${
+              viewMode === '3d-webgl'
+                ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 shadow-md shadow-cyan-500/30 ring-2 ring-cyan-300 scale-105'
+                : 'text-slate-400 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <Box className="w-4 h-4 text-cyan-400" />
+            <span>{isAr ? '🌐 التوأم الرقمي 3D (WebGL)' : '🌐 3D Digital Twin'}</span>
+            <span className="px-1.5 py-0.2 rounded-full bg-cyan-950 text-cyan-300 text-[9px] font-mono border border-cyan-500/40">Three.js</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setViewMode('scada-floorplan');
+              if (soundEnabled) playIndustrialChime('camera');
+            }}
+            className={`px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all ${
+              viewMode === 'scada-floorplan'
+                ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 shadow-md shadow-amber-500/30 ring-2 ring-amber-300 scale-105'
+                : 'text-slate-400 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <Layers className="w-4 h-4 text-amber-400" />
+            <span>{isAr ? '🗺️ خريطة SCADA ومخطط 2D' : '🗺️ 2D SCADA Plan'}</span>
+          </button>
+        </div>
+
         {/* HIGH-TECH MULTI-ANGLE CAMERA PRESET SWITCHER */}
         <div className="flex items-center gap-1 bg-slate-950/80 p-1 rounded-xl border border-slate-800">
           <span className="text-[10px] font-bold text-slate-400 px-1 hidden md:inline">{isAr ? 'الكاميرا:' : 'Camera:'}</span>
@@ -3603,7 +3641,29 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
       {/* 3. MAIN WORKSPACE: SCADA FLOORPLAN (2D / 2.5D ISOMETRIC MULTI-ANGLE) */}
       {/* ==================================================================== */}
       <div className="flex-1 relative flex overflow-hidden">
-        {viewMode === 'scada-floorplan' ? (
+        {viewMode === '3d-webgl' ? (
+          <div className="flex-1 w-full h-full relative overflow-hidden bg-[#040711]">
+            <Suspense fallback={
+              <div className="w-full h-full flex flex-col items-center justify-center bg-[#050811] text-cyan-400 gap-3">
+                <div className="w-10 h-10 border-4 border-cyan-500/20 border-t-cyan-400 rounded-full animate-spin" />
+                <span className="text-xs font-mono font-bold tracking-wider animate-pulse">
+                  {isAr ? 'جاري تشغيل محرك التوأم الرقمي ثلاثي الأبعاد (Three.js WebGL)...' : 'Loading 3D Digital Twin Engine (WebGL)...'}
+                </span>
+              </div>
+            }>
+              <EnterprisePlant3D
+                equipmentList={equipmentList}
+                stationStatuses={stationStatuses}
+                selectedStationId={selectedStationId}
+                onSelectStation={(id) => {
+                  setSelectedStationId(id);
+                  if (soundEnabled) playIndustrialChime('camera');
+                }}
+                isAr={isAr}
+              />
+            </Suspense>
+          </div>
+        ) : viewMode === 'scada-floorplan' ? (
           <div 
             ref={canvasRef}
             onPointerDown={handleCanvasPointerDown}
