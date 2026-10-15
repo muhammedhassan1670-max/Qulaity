@@ -22,7 +22,7 @@ import {
   Navigation, Bot, Workflow, GitFork, FileText, ClipboardList, Target,
   Link2, Unlink, AlignJustify, LayoutGrid, CheckSquare, Scale, HelpCircle,
   CornerDownRight, ArrowUpRight, MapPin, Share2, Power, Cable, Check, ChevronDown,
-  Building2, Users, Award, Headphones
+  Building2, Users, Award, Headphones, PenTool, Hand, MousePointer
 } from 'lucide-react';
 import { useTranslation } from '../../utils/translations';
 import { loadSafeLocalDefectRecords } from '../../services/safeDefectStorage';
@@ -430,6 +430,7 @@ export interface ScadaConnection {
   capacityUnits?: number;
   currentWip?: number;
   sensorType?: string;
+  waypoints?: { x: number; y: number }[];
 }
 
 export const FACTORY_CONNECTIONS: ScadaConnection[] = [
@@ -654,7 +655,7 @@ export const FACTORY_CONNECTIONS: ScadaConnection[] = [
 function calculateConnectionPath(
   conn: ScadaConnection,
   equipmentMap: Record<string, ScadaEquipment>
-): { pathD: string; startX: number; startY: number; endX: number; endY: number } | null {
+): { pathD: string; startX: number; startY: number; endX: number; endY: number; points: { x: number; y: number }[] } | null {
   const fromEq = equipmentMap[conn.fromId];
   const toEq = equipmentMap[conn.toId];
   if (!fromEq || !toEq) return null;
@@ -690,6 +691,15 @@ function calculateConnectionPath(
   else if (toAnchor === 'left') { ex = toEq.x; ey = toEq.y + toEq.h / 2; }
   else if (toAnchor === 'top') { ex = toEq.x + toEq.w / 2; ey = toEq.y; }
   else if (toAnchor === 'bottom') { ex = toEq.x + toEq.w / 2; ey = toEq.y + toEq.h; }
+
+  // IF CUSTOM WAYPOINTS DEFINED BY USER, FOLLOW THEM PRECISELY!
+  if (conn.waypoints && conn.waypoints.length > 0) {
+    const customPoints = [{ x: sx, y: sy }, ...conn.waypoints, { x: ex, y: ey }];
+    const pathD = customPoints.reduce((acc, pt, idx) => {
+      return idx === 0 ? `M ${pt.x} ${pt.y}` : `${acc} L ${pt.x} ${pt.y}`;
+    }, '');
+    return { pathD, startX: sx, startY: sy, endX: ex, endY: ey, points: customPoints };
+  }
 
   // Clearance offset from machine casing to prevent overlapping with pod
   const c = 24;
@@ -801,7 +811,7 @@ function calculateConnectionPath(
     return idx === 0 ? `M ${pt.x} ${pt.y}` : `${acc} L ${pt.x} ${pt.y}`;
   }, '');
 
-  return { pathD, startX: sx, startY: sy, endX: ex, endY: ey };
+  return { pathD, startX: sx, startY: sy, endX: ex, endY: ey, points: cleaned };
 }
 
 // ============================================================================
@@ -1146,6 +1156,19 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
   const [wiringSource, setWiringSource] = useState<{ stationId: string; anchor: 'left' | 'right' | 'top' | 'bottom' } | null>(null);
   const [mouseCanvasPos, setMouseCanvasPos] = useState<{ x: number; y: number } | null>(null);
   const [showLayoutMenu, setShowLayoutMenu] = useState(false);
+
+  // Interactive Custom Path Drawing Tool State (أداة رسم وتوجيه المسارات باليد)
+  const [isDrawingPath, setIsDrawingPath] = useState(false);
+  const [drawStartStationId, setDrawStartStationId] = useState<string | null>(null);
+  const [drawWaypoints, setDrawWaypoints] = useState<{ x: number; y: number }[]>([]);
+  const [drawCurrentMouse, setDrawCurrentMouse] = useState<{ x: number; y: number } | null>(null);
+  const [draggingWaypoint, setDraggingWaypoint] = useState<{ connId: string; index: number; startClientX: number; startClientY: number; initX: number; initY: number } | null>(null);
+
+  // Canvas Pan & Navigation State
+  const [panOffset, setPanOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [isPanToolActive, setIsPanToolActive] = useState(false);
+  const [isPanning, setIsPanning] = useState(false);
+  const [panStart, setPanStart] = useState<{ clientX: number; clientY: number; initPanX: number; initPanY: number } | null>(null);
 
   // Quick Editing & Nudge Step State
   const [nudgeStep, setNudgeStep] = useState<number>(20);
@@ -1715,8 +1738,224 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
     }
   };
 
-  // True Drag & Drop Pointer Events
-  const handlePointerDown = (e: React.PointerEvent, station: ScadaEquipment) => {
+  // Helper to get exact SCADA 1200x640 floor coordinates from screen pointer event
+  const getFloorCoords = (e: React.PointerEvent | MouseEvent) => {
+    const floorBoard = canvasRef.current?.querySelector('.scada-floor-board') as HTMLElement;
+    if (!floorBoard) return { x: 0, y: 0 };
+    const rect = floorBoard.getBoundingClientRect();
+    const rawX = (e.clientX - rect.left) / (rect.width / 1200);
+    const rawY = (e.clientY - rect.top) / (rect.height / 640);
+    return {
+      x: Math.max(10, Math.min(1190, Math.round(rawX))),
+      y: Math.max(10, Math.min(630, Math.round(rawY)))
+    };
+  };
+
+  // Waypoint Dragging & Management Handlers
+  const handleWaypointPointerDown = (e: React.PointerEvent, connId: string, wpIndex: number) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const conn = connectionsList.find(c => c.id === connId);
+    if (!conn || !conn.waypoints || !conn.waypoints[wpIndex]) return;
+    const wp = conn.waypoints[wpIndex];
+    setDraggingWaypoint({
+      connId,
+      index: wpIndex,
+      startClientX: e.clientX,
+      startClientY: e.clientY,
+      initX: wp.x,
+      initY: wp.y
+    });
+    try {
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    } catch {}
+  };
+
+  const handleDeleteWaypoint = (connId: string, wpIndex: number) => {
+    setConnectionsList(prev => {
+      const next = prev.map(c => {
+        if (c.id !== connId) return c;
+        const wps = (c.waypoints || []).filter((_, idx) => idx !== wpIndex);
+        return { ...c, waypoints: wps.length > 0 ? wps : undefined };
+      });
+      try {
+        localStorage.setItem(SCADA_CONNECTIONS_KEY, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+    if (soundEnabled) playIndustrialChime('camera');
+    toast.info(isAr ? 'تم حذف نقطة الثني من المسار' : 'Waypoint removed from path');
+  };
+
+  const handleAddWaypointToConveyor = (connId: string) => {
+    const conn = connectionsList.find(c => c.id === connId);
+    if (!conn) return;
+    const pathInfo = calculateConnectionPath(conn, equipmentMap);
+    if (!pathInfo) return;
+    const pts = pathInfo.points || [{ x: pathInfo.startX, y: pathInfo.startY }, { x: pathInfo.endX, y: pathInfo.endY }];
+    const midPt = pts[Math.floor(pts.length / 2)] || { x: (pathInfo.startX + pathInfo.endX) / 2, y: (pathInfo.startY + pathInfo.endY) / 2 };
+    const newWp = { x: Math.round(midPt.x) + 20, y: Math.round(midPt.y) + 20 };
+
+    setConnectionsList(prev => {
+      const next = prev.map(c => {
+        if (c.id !== connId) return c;
+        const existing = c.waypoints ? [...c.waypoints] : pts.slice(1, -1);
+        return { ...c, waypoints: [...existing, newWp] };
+      });
+      try {
+        localStorage.setItem(SCADA_CONNECTIONS_KEY, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+    if (soundEnabled) playIndustrialChime('camera');
+    toast.success(isAr ? '➕ تمت إضافة نقطة ثني جديدة! اسحب الدائرة البرتقالية بالماوس لتوجيه المسار' : '➕ Added new waypoint handle! Drag the amber handle to bend path');
+  };
+
+  const handleResetConveyorWaypoints = (connId: string) => {
+    setConnectionsList(prev => {
+      const next = prev.map(c => {
+        if (c.id !== connId) return c;
+        const copy = { ...c };
+        delete copy.waypoints;
+        return copy;
+      });
+      try {
+        localStorage.setItem(SCADA_CONNECTIONS_KEY, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+    if (soundEnabled) playIndustrialChime('success');
+    toast.success(isAr ? '✓ تمت استعادة المسار الهندسي التلقائي للسير' : '✓ Reset to auto-routed conveyor');
+  };
+
+  // Interactive Path Drawing Pen Tool Handlers
+  const handleStartDrawingMode = () => {
+    setIsDrawingPath(prev => {
+      const next = !prev;
+      if (next) {
+        setIsWiringMode(false);
+        setCameraPreset('top-down');
+        setDrawStartStationId(null);
+        setDrawWaypoints([]);
+        setDrawCurrentMouse(null);
+        if (soundEnabled) playIndustrialChime('camera');
+        toast.info(isAr 
+          ? '✏️ أداة رسم المسارات بالماوس نشطة: 1) انقر على محطة البداية، 2) انقر على الصالة لتحديد ثنيات المسار، 3) انقر على محطة الوصول لإتمام السير الناقل!' 
+          : '✏️ Path Drawing Active: 1) Click start station, 2) Click floor to set waypoints, 3) Click destination station to finish conveyor!'
+        );
+      } else {
+        setDrawStartStationId(null);
+        setDrawWaypoints([]);
+        setDrawCurrentMouse(null);
+      }
+      return next;
+    });
+  };
+
+  const handleFloorClickWhileDrawing = (e: React.PointerEvent) => {
+    if (!isDrawingPath) return;
+    if (!drawStartStationId) {
+      toast.warning(isAr ? 'يرجى النقر على محطة البداية أولاً لتوصيل السير بها!' : 'Please click on the starting station first!');
+      return;
+    }
+    const coords = getFloorCoords(e);
+    setDrawWaypoints(prev => [...prev, coords]);
+    if (soundEnabled) playIndustrialChime('camera');
+  };
+
+  const handleStationClickWhileDrawing = (station: ScadaEquipment, e: React.MouseEvent | React.PointerEvent) => {
+    e.stopPropagation();
+    if (!drawStartStationId) {
+      setDrawStartStationId(station.id);
+      if (soundEnabled) playIndustrialChime('camera');
+      toast.success(isAr ? `✓ محطة البداية: [${station.code} - ${station.titleAr}]. الآن انقر على الصالة لرسم مسار السير!` : `✓ Start Station: [${station.code}]. Now click on floor to draw path!`);
+    } else if (drawStartStationId === station.id) {
+      toast.warning(isAr ? 'المسار لا يمكن أن يبدأ وينتهي في نفس المحطة! اختر محطة وصول أخرى.' : 'Start and destination cannot be identical! Choose another station.');
+    } else {
+      const fromSt = equipmentMap[drawStartStationId];
+      const toSt = station;
+      const newConn: ScadaConnection = {
+        id: `CONN-CUSTOM-${Date.now().toString(36).toUpperCase()}`,
+        fromId: drawStartStationId,
+        toId: toSt.id,
+        labelAr: `مسار يدوي: ${fromSt?.code || ''} ➔ ${toSt.code}`,
+        labelEn: `Custom Flow: ${fromSt?.code || ''} ➔ ${toSt.code}`,
+        type: 'motor-roller',
+        fromAnchor: 'right',
+        toAnchor: 'left',
+        waypoints: [...drawWaypoints],
+        velocityMs: 0.5,
+        motorKw: 0.75,
+        capacityUnits: 20,
+        currentWip: 0,
+        sensorType: 'Optical Retroreflective'
+      };
+
+      setConnectionsList(prev => {
+        const next = [...prev, newConn];
+        try {
+          localStorage.setItem(SCADA_CONNECTIONS_KEY, JSON.stringify(next));
+        } catch {}
+        return next;
+      });
+
+      setIsDrawingPath(false);
+      setDrawStartStationId(null);
+      setDrawWaypoints([]);
+      setDrawCurrentMouse(null);
+      setSelectedConveyorId(newConn.id);
+
+      if (soundEnabled) playIndustrialChime('success');
+      toast.success(isAr 
+        ? `✨ تم بنجاح رسم وتوصيل السير الناقل بين ${fromSt?.code} و ${toSt.code} مع ${drawWaypoints.length} نقاط ثني!` 
+        : `✨ Conveyor created between ${fromSt?.code} and ${toSt.code} with ${drawWaypoints.length} waypoints!`
+      );
+    }
+  };
+
+  // Canvas Pan and Background Pointer Down
+  const handleCanvasPointerDown = (e: React.PointerEvent) => {
+    if (isDrawingPath) {
+      handleFloorClickWhileDrawing(e);
+      return;
+    }
+
+    if (e.button === 1 || isPanToolActive || e.altKey) {
+      e.preventDefault();
+      setIsPanning(true);
+      setPanStart({
+        clientX: e.clientX,
+        clientY: e.clientY,
+        initPanX: panOffset.x,
+        initPanY: panOffset.y
+      });
+      return;
+    }
+
+    const target = e.target as HTMLElement;
+    if (
+      target === canvasRef.current || 
+      target.classList.contains('scada-floor-board') || 
+      target.tagName?.toLowerCase() === 'svg' || 
+      (target.tagName?.toLowerCase() === 'rect' && target.getAttribute('width') === '1200')
+    ) {
+      setIsPanning(true);
+      setPanStart({
+        clientX: e.clientX,
+        clientY: e.clientY,
+        initPanX: panOffset.x,
+        initPanY: panOffset.y
+      });
+    }
+  };
+
+  // Station Pointer Down
+  const handleStationPointerDown = (e: React.PointerEvent, station: ScadaEquipment) => {
+    if (isDrawingPath) {
+      handleStationClickWhileDrawing(station, e);
+      return;
+    }
+    setSelectedStationId(station.id);
     if (!isCustomizing) return;
     e.stopPropagation();
     e.preventDefault();
@@ -1732,24 +1971,73 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
     } catch (err) {}
   };
 
+  // Universal Unified Pointer Move
   const handlePointerMove = (e: React.PointerEvent) => {
-    if (!draggingId || !dragStart) return;
-    const deltaX = (e.clientX - dragStart.pointerX) / zoomLevel;
-    const deltaY = (e.clientY - dragStart.pointerY) / zoomLevel;
-    
-    // Magnetic Snap to 10px Grid
-    const snap = (v: number) => Math.round(v / 10) * 10;
+    // 1. Waypoint Dragging
+    if (draggingWaypoint) {
+      const deltaX = (e.clientX - draggingWaypoint.startClientX) / zoomLevel;
+      const deltaY = (e.clientY - draggingWaypoint.startClientY) / zoomLevel;
+      const snap = (v: number) => Math.round(v / 10) * 10;
+      const nextX = Math.max(10, Math.min(1190, snap(draggingWaypoint.initX + deltaX)));
+      const nextY = Math.max(10, Math.min(630, snap(draggingWaypoint.initY + deltaY)));
 
-    setEquipmentList(prev => {
-      const target = prev.find(item => item.id === draggingId);
-      if (!target) return prev;
-      const nextX = Math.max(20, Math.min(1180 - target.w, snap(dragStart.initX + deltaX)));
-      const nextY = Math.max(30, Math.min(620 - target.h, snap(dragStart.initY + deltaY)));
-      return prev.map(item => item.id === draggingId ? { ...item, x: nextX, y: nextY } : item);
-    });
+      setConnectionsList(prev => {
+        return prev.map(c => {
+          if (c.id !== draggingWaypoint.connId) return c;
+          const wps = [...(c.waypoints || [])];
+          wps[draggingWaypoint.index] = { x: nextX, y: nextY };
+          return { ...c, waypoints: wps };
+        });
+      });
+      return;
+    }
+
+    // 2. Canvas Panning
+    if (isPanning && panStart) {
+      setPanOffset({
+        x: Math.round(panStart.initPanX + (e.clientX - panStart.clientX)),
+        y: Math.round(panStart.initPanY + (e.clientY - panStart.clientY))
+      });
+      return;
+    }
+
+    // 3. Station Dragging
+    if (draggingId && dragStart) {
+      const deltaX = (e.clientX - dragStart.pointerX) / zoomLevel;
+      const deltaY = (e.clientY - dragStart.pointerY) / zoomLevel;
+      const snap = (v: number) => Math.round(v / 10) * 10;
+
+      setEquipmentList(prev => {
+        const target = prev.find(item => item.id === draggingId);
+        if (!target) return prev;
+        const nextX = Math.max(20, Math.min(1180 - target.w, snap(dragStart.initX + deltaX)));
+        const nextY = Math.max(30, Math.min(620 - target.h, snap(dragStart.initY + deltaY)));
+        return prev.map(item => item.id === draggingId ? { ...item, x: nextX, y: nextY } : item);
+      });
+      return;
+    }
+
+    // 4. Drawing path mouse preview
+    if (isDrawingPath && drawStartStationId) {
+      setDrawCurrentMouse(getFloorCoords(e));
+    }
   };
 
+  // Universal Unified Pointer Up
   const handlePointerUp = (e: React.PointerEvent) => {
+    if (draggingWaypoint) {
+      try {
+        (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+      } catch {}
+      setDraggingWaypoint(null);
+      try {
+        localStorage.setItem(SCADA_CONNECTIONS_KEY, JSON.stringify(connectionsList));
+      } catch {}
+    }
+    if (isPanning) {
+      setIsPanning(false);
+      setPanStart(null);
+    }
     if (draggingId) {
       try {
         (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
@@ -1761,6 +2049,58 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
       } catch (err) {}
     }
   };
+
+  // Global Keyboard Listener for Ultra-Intuitive Factory Floor Control
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeEl = document.activeElement;
+      if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || (activeEl as HTMLElement).isContentEditable)) {
+        return;
+      }
+
+      // Escape: cancel drawing, wiring, or clear selection
+      if (e.key === 'Escape') {
+        if (isDrawingPath) {
+          setIsDrawingPath(false);
+          setDrawStartStationId(null);
+          setDrawWaypoints([]);
+          setDrawCurrentMouse(null);
+          toast.info(isAr ? 'تم إلغاء رسم المسار' : 'Path drawing cancelled');
+        } else if (isWiringMode) {
+          setIsWiringMode(false);
+          setWiringSource(null);
+          setMouseCanvasPos(null);
+        } else if (selectedConveyorId) {
+          setSelectedConveyorId(null);
+        } else if (selectedStationId) {
+          setSelectedStationId(null);
+        }
+        return;
+      }
+
+      // Delete or Backspace: delete selected conveyor
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (selectedConveyorId) {
+          handleDeleteConnection(selectedConveyorId);
+          e.preventDefault();
+        }
+        return;
+      }
+
+      // Arrow keys: precision nudge for selected station
+      if (selectedStationId && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        e.preventDefault();
+        const step = e.shiftKey ? nudgeStep * 2 : nudgeStep;
+        if (e.key === 'ArrowUp') nudgeStation(selectedStationId, 0, -step);
+        if (e.key === 'ArrowDown') nudgeStation(selectedStationId, 0, step);
+        if (e.key === 'ArrowLeft') nudgeStation(selectedStationId, -step, 0);
+        if (e.key === 'ArrowRight') nudgeStation(selectedStationId, step, 0);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isDrawingPath, isWiringMode, selectedConveyorId, selectedStationId, nudgeStep, isAr, connectionsList]);
 
   // Station Save / Edit / Delete handlers
   const handleSaveStation = (stationData: ScadaEquipment) => {
@@ -2784,6 +3124,24 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
             <span className="hidden sm:inline">{isAr ? '🔗 المسارات' : 'Conveyors'}</span>
           </button>
 
+          {/* Interactive Freehand Path Drawing Pen Tool */}
+          <button
+            onClick={handleStartDrawingMode}
+            className={`px-2.5 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all shadow-md active:scale-95 ${
+              isDrawingPath
+                ? 'bg-gradient-to-r from-yellow-400 via-amber-400 to-orange-500 text-slate-950 ring-2 ring-yellow-300 shadow-yellow-500/50 scale-105 animate-pulse'
+                : 'bg-yellow-950/80 hover:bg-yellow-900/80 text-yellow-300 border border-yellow-500/40'
+            }`}
+            title={isAr ? 'أداة رسم المسارات والسيور يدوياً بالماوس مع تحديد نقاط الانعطاف' : 'Interactive Path Drawing Pen Tool with Waypoints'}
+          >
+            <PenTool className={`w-3.5 h-3.5 ${isDrawingPath ? 'text-slate-950 animate-bounce' : 'text-yellow-400'}`} />
+            <span>
+              {isDrawingPath 
+                ? (isAr ? '✓ إنهاء الرسم' : '✓ Done Drawing') 
+                : (isAr ? '✏️ ارسم مسار باليد' : '✏️ Draw Path')}
+            </span>
+          </button>
+
           {/* Edit & Layout Mode Toggle Button */}
           <button
             onClick={() => {
@@ -3104,6 +3462,46 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
         </div>
       )}
 
+      {/* Interactive Conveyor Path Drawing Guidance Banner */}
+      {isDrawingPath && (
+        <div className="bg-gradient-to-r from-yellow-600/35 via-amber-600/35 to-orange-600/35 border-b border-yellow-500/60 px-4 py-2 flex items-center justify-between text-xs text-yellow-200 z-30 shadow-lg backdrop-blur-md">
+          <div className="flex items-center gap-2">
+            <PenTool className="w-4 h-4 text-yellow-400 animate-bounce" />
+            <span className="font-black">
+              {drawStartStationId 
+                ? (isAr 
+                    ? `✏️ محطة البداية: [${equipmentMap[drawStartStationId]?.code || drawStartStationId}]. انقر على الصالة لتحديد ثنيات المسار (${drawWaypoints.length} نقاط حالياً)، ثم انقر على محطة الوصول لإتمام السير الناقل فوراً!`
+                    : `✏️ Start Station: [${equipmentMap[drawStartStationId]?.code || drawStartStationId}]. Click floor to add bend waypoints (${drawWaypoints.length} bends), then click target station to finish!`)
+                : (isAr 
+                    ? '✏️ أداة رسم المسارات بالماوس: انقر على محطة البداية التي سينطلق منها الخط الناقل.' 
+                    : '✏️ Conveyor Path Drawing Pen: Click on the starting station to begin routing.')}
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            {drawWaypoints.length > 0 && (
+              <button
+                onClick={() => setDrawWaypoints(prev => prev.slice(0, -1))}
+                className="px-2.5 py-1 rounded-lg bg-slate-900/90 text-yellow-300 hover:text-white text-xs font-bold border border-yellow-500/30 transition-colors"
+                title={isAr ? 'تراجع عن آخر نقطة ثني' : 'Undo last waypoint'}
+              >
+                ⤺ {isAr ? 'تراجع عن نقطة' : 'Undo Point'}
+              </button>
+            )}
+            <button
+              onClick={() => {
+                setIsDrawingPath(false);
+                setDrawStartStationId(null);
+                setDrawWaypoints([]);
+                setDrawCurrentMouse(null);
+              }}
+              className="px-2.5 py-1 rounded-lg bg-slate-900/90 text-slate-300 hover:text-white text-xs font-bold border border-slate-700 transition-colors"
+            >
+              {isAr ? '✕ إلغاء الرسم (Esc)' : '✕ Cancel (Esc)'}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ==================================================================== */}
       {/* 3. MAIN WORKSPACE: SCADA FLOORPLAN (2D / 2.5D ISOMETRIC MULTI-ANGLE) */}
       {/* ==================================================================== */}
@@ -3111,6 +3509,7 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
         {viewMode === 'scada-floorplan' ? (
           <div 
             ref={canvasRef}
+            onPointerDown={handleCanvasPointerDown}
             onPointerMove={(e) => {
               handlePointerMove(e);
               if (isWiringMode && wiringSource) {
@@ -3127,7 +3526,7 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
               }
             }}
             onPointerUp={handlePointerUp}
-            className={`flex-1 w-full h-full relative overflow-auto p-4 md:p-8 flex items-center justify-center transition-colors duration-500 ${
+            className={`flex-1 w-full h-full relative overflow-hidden p-4 md:p-8 flex items-center justify-center transition-colors duration-500 ${
               ambientTheme === 'cleanroom' 
                 ? 'bg-[#e2e8f0]' 
                 : ambientTheme === 'night-shift' 
@@ -3136,15 +3535,15 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
             }`}
             style={{ 
               perspective: is3D ? '1400px' : 'none',
-              cursor: isCustomizing && draggingId ? 'grabbing' : isWiringMode ? 'crosshair' : 'default'
+              cursor: isDrawingPath ? 'crosshair' : isPanToolActive || isPanning ? 'grab' : isCustomizing && draggingId ? 'grabbing' : isWiringMode ? 'crosshair' : 'default'
             }}
           >
             <div 
               style={{
-                transform: getCameraTransform(),
+                transform: `translate(${panOffset.x}px, ${panOffset.y}px) ${getCameraTransform()}`,
                 transformOrigin: 'center center',
                 transformStyle: is3D ? 'preserve-3d' : 'flat',
-                transition: draggingId ? 'none' : 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)'
+                transition: (draggingId || isPanning || draggingWaypoint) ? 'none' : 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)'
               }}
               className={`scada-floor-board relative w-[1200px] h-[640px] shrink-0 rounded-3xl border-2 transition-all duration-500 ${
                 ambientTheme === 'cleanroom'
@@ -3534,6 +3933,106 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                   );
                 })}
 
+                {/* SELECTED CONVEYOR WAYPOINT DRAG HANDLES (ثنيات المسار التفاعلية بالسحب) */}
+                {selectedConveyor && selectedConveyor.waypoints && selectedConveyor.waypoints.map((wp, wpIdx) => (
+                  <g 
+                    key={`wp-handle-${selectedConveyor.id}-${wpIdx}`}
+                    className="pointer-events-auto cursor-grab active:cursor-grabbing group"
+                    onPointerDown={(e) => handleWaypointPointerDown(e, selectedConveyor.id, wpIdx)}
+                    onDoubleClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteWaypoint(selectedConveyor.id, wpIdx);
+                    }}
+                  >
+                    {/* Pulsing Aura */}
+                    <circle cx={wp.x} cy={wp.y} r={14} fill="#f59e0b" fillOpacity={0.25} className="animate-ping pointer-events-none" />
+                    {/* Waypoint Handle */}
+                    <circle 
+                      cx={wp.x} 
+                      cy={wp.y} 
+                      r={9} 
+                      fill="#f59e0b" 
+                      stroke="#ffffff" 
+                      strokeWidth={2} 
+                      className="group-hover:scale-125 transition-transform drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]" 
+                    />
+                    {/* Waypoint Number */}
+                    <text x={wp.x} y={wp.y + 3.5} textAnchor="middle" fill="#000000" fontSize="8" fontWeight="900" pointerEvents="none">
+                      {wpIdx + 1}
+                    </text>
+                  </g>
+                ))}
+
+                {/* ========================================================== */}
+                {/* INTERACTIVE PATH DRAWING LIVE PREVIEW CABLE                */}
+                {/* ========================================================== */}
+                {isDrawingPath && drawStartStationId && equipmentMap[drawStartStationId] && (() => {
+                  const fromEq = equipmentMap[drawStartStationId];
+                  const sx = fromEq.x + fromEq.w / 2;
+                  const sy = fromEq.y + fromEq.h / 2;
+                  const allPts = [{ x: sx, y: sy }, ...drawWaypoints];
+                  if (drawCurrentMouse) {
+                    allPts.push(drawCurrentMouse);
+                  }
+                  const previewD = allPts.reduce((acc, pt, idx) => (idx === 0 ? `M ${pt.x} ${pt.y}` : `${acc} L ${pt.x} ${pt.y}`), '');
+
+                  return (
+                    <g className="pointer-events-none">
+                      {/* Outer Glow */}
+                      <path
+                        d={previewD}
+                        fill="none"
+                        stroke="#f59e0b"
+                        strokeWidth={22}
+                        strokeOpacity={0.3}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      {/* Conveyor Bed */}
+                      <path
+                        d={previewD}
+                        fill="none"
+                        stroke="#0f172a"
+                        strokeWidth={14}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      {/* Animated Live Dashes */}
+                      <path
+                        d={previewD}
+                        fill="none"
+                        stroke="#facc15"
+                        strokeWidth={4}
+                        strokeDasharray="6,6"
+                        className="animate-[dash_0.8s_linear_infinite]"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      {/* Start Point Pulsing Ring */}
+                      <circle cx={sx} cy={sy} r={12} fill="#06b6d4" fillOpacity={0.3} className="animate-ping" />
+                      <circle cx={sx} cy={sy} r={6} fill="#06b6d4" stroke="#ffffff" strokeWidth={2} />
+
+                      {/* Waypoint Markers */}
+                      {drawWaypoints.map((wp, idx) => (
+                        <g key={`draw-wp-${idx}`}>
+                          <circle cx={wp.x} cy={wp.y} r={10} fill="#f59e0b" stroke="#ffffff" strokeWidth={2} />
+                          <text x={wp.x} y={wp.y + 3.5} textAnchor="middle" fill="#000000" fontSize="9" fontWeight="900">
+                            {idx + 1}
+                          </text>
+                        </g>
+                      ))}
+
+                      {/* Cursor Target Reticle */}
+                      {drawCurrentMouse && (
+                        <g transform={`translate(${drawCurrentMouse.x}, ${drawCurrentMouse.y})`}>
+                          <circle r={14} fill="none" stroke="#facc15" strokeWidth={2} strokeDasharray="4,4" className="animate-spin" />
+                          <circle r={4} fill="#facc15" />
+                        </g>
+                      )}
+                    </g>
+                  );
+                })()}
+
                 {/* ========================================================== */}
                 {/* INTERACTIVE WIRING MODE LIVE RUBBERBAND CABLE              */}
                 {/* ========================================================== */}
@@ -3781,8 +4280,12 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                 return (
                   <div
                     key={eq.id}
-                    onPointerDown={(e) => handlePointerDown(e, eq)}
-                    onClick={() => {
+                    onPointerDown={(e) => handleStationPointerDown(e, eq)}
+                    onClick={(e) => {
+                      if (isDrawingPath) {
+                        handleStationClickWhileDrawing(eq, e);
+                        return;
+                      }
                       setSelectedStationId(eq.id);
                       if (dept && !selectedDeptId) {
                         // Keep drawer synchronized with department if on department tab
@@ -4218,6 +4721,77 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                   </div>
                 </div>
 
+                {/* Custom Waypoints Routing & Adjustment Bar */}
+                <div className="p-2.5 rounded-xl bg-slate-950/80 border border-amber-500/30 my-2 space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-amber-300 flex items-center gap-1">
+                      <PenTool className="w-3.5 h-3.5 text-amber-400" />
+                      <span>{isAr ? 'توجيه المسار ونقاط الثني:' : 'Custom Waypoints & Bends:'}</span>
+                    </span>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-950/70 text-amber-300 border border-amber-500/40 font-bold">
+                      {selectedConveyor.waypoints?.length || 0} {isAr ? 'نقاط ثني' : 'bends'}
+                    </span>
+                  </div>
+
+                  {/* Waypoint Action Buttons */}
+                  <div className="grid grid-cols-3 gap-1 text-[10px]">
+                    <button
+                      onClick={() => handleAddWaypointToConveyor(selectedConveyor.id)}
+                      className="py-1 px-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500 hover:text-slate-950 text-amber-300 font-black border border-amber-500/40 transition-all text-center flex items-center justify-center gap-1 shadow-sm"
+                      title={isAr ? 'إضافة نقطة ثني جديدة في منتصف المسار لسحبها' : 'Add bend waypoint handle to drag'}
+                    >
+                      <Plus className="w-3 h-3" />
+                      <span>{isAr ? 'ثنية جديدة' : '+ Bend'}</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setDrawStartStationId(selectedConveyor.fromId);
+                        setDrawWaypoints([]);
+                        setIsDrawingPath(true);
+                        setCameraPreset('top-down');
+                        toast.info(isAr ? '✏️ ارسم المسار بالماوس ثم انقر على محطة الوجهة!' : '✏️ Draw path bends then click destination!');
+                      }}
+                      className="py-1 px-1.5 rounded-lg bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-500/40 text-cyan-300 font-bold transition-all text-center flex items-center justify-center gap-1 shadow-sm"
+                      title={isAr ? 'إعادة رسم هذا المسار بالكامل بالماوس' : 'Redraw this path with mouse pen'}
+                    >
+                      <PenTool className="w-3 h-3 text-cyan-400" />
+                      <span>{isAr ? 'إعادة رسم' : 'Redraw'}</span>
+                    </button>
+
+                    <button
+                      onClick={() => handleResetConveyorWaypoints(selectedConveyor.id)}
+                      className="py-1 px-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white font-bold transition-all text-center flex items-center justify-center gap-1 shadow-sm"
+                      title={isAr ? 'استعادة المسار الهندسي التلقائي وحذف الثنيات المخصصة' : 'Reset to auto-routed connection'}
+                    >
+                      <RotateCcw className="w-3 h-3 text-slate-400" />
+                      <span>{isAr ? 'تلقائي' : 'Auto'}</span>
+                    </button>
+                  </div>
+
+                  {/* Waypoint Coordinates Chips if present */}
+                  {selectedConveyor.waypoints && selectedConveyor.waypoints.length > 0 && (
+                    <div className="flex flex-wrap gap-1 pt-1 border-t border-white/5">
+                      {selectedConveyor.waypoints.map((wp, wpIdx) => (
+                        <div 
+                          key={wpIdx}
+                          className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-black/60 border border-amber-500/30 text-[9px] font-mono text-amber-200"
+                        >
+                          <span className="font-bold">P{wpIdx + 1}:</span>
+                          <span>({wp.x}, {wp.y})</span>
+                          <button
+                            onClick={() => handleDeleteWaypoint(selectedConveyor.id, wpIdx)}
+                            className="text-red-400 hover:text-red-200 ml-0.5 font-bold"
+                            title={isAr ? 'حذف هذه النقطة' : 'Delete point'}
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
                 {/* On-Canvas Direct Conveyor Operations Toolbar */}
                 <div className="grid grid-cols-3 gap-1.5 pt-2 border-t border-white/10 text-xs">
                   {/* Reverse Direction */}
@@ -4337,7 +4911,7 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                 </button>
               </div>
 
-              {/* Zoom Controls */}
+              {/* Zoom & Pan Reset Controls */}
               <div className="flex items-center gap-0.5 bg-black/50 p-1 rounded-xl border border-white/5 text-xs">
                 <button
                   onClick={() => setZoomLevel(prev => Math.min(1.8, prev + 0.15))}
@@ -4354,13 +4928,53 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                   <ZoomOut className="w-3.5 h-3.5" />
                 </button>
                 <button
-                  onClick={() => setZoomLevel(1)}
+                  onClick={() => {
+                    setZoomLevel(1);
+                    setPanOffset({ x: 0, y: 0 });
+                    toast.info(isAr ? '🎯 تم توسيط وضبط الشاشة 100%' : '🎯 Centered view 100%');
+                  }}
                   className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10"
-                  title={isAr ? 'توسيط وإعادة ضبط (100%)' : 'Reset Zoom'}
+                  title={isAr ? 'توسيط وإعادة ضبط (100%)' : 'Reset Zoom & Center'}
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                 </button>
               </div>
+
+              {/* Interactive Floor Pan Tool Toggle */}
+              <button
+                onClick={() => {
+                  setIsPanToolActive(prev => {
+                    const next = !prev;
+                    if (next) {
+                      toast.info(isAr ? '✋ أداة سحب الصالة نشطة: انقر واسحب بالماوس للتحرك في أي اتجاه!' : '✋ Pan Tool Active: Click & drag mouse to pan around!');
+                    }
+                    return next;
+                  });
+                }}
+                className={`px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 transition-all ${
+                  isPanToolActive
+                    ? 'bg-cyan-500 text-slate-950 font-black shadow-md shadow-cyan-500/30'
+                    : 'bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700'
+                }`}
+                title={isAr ? 'تفعيل أداة سحب وتحريك الصالة بحرية' : 'Pan Canvas Tool'}
+              >
+                <Hand className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">{isAr ? 'سحب الصالة' : 'Pan Floor'}</span>
+              </button>
+
+              {/* Interactive Draw Conveyor Path Tool */}
+              <button
+                onClick={handleStartDrawingMode}
+                className={`px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm ${
+                  isDrawingPath
+                    ? 'bg-yellow-400 text-slate-950 font-black shadow-yellow-500/40 ring-2 ring-yellow-300 scale-105'
+                    : 'bg-slate-900 hover:bg-yellow-950 text-yellow-300 hover:text-yellow-200 border border-yellow-500/30'
+                }`}
+                title={isAr ? 'أداة رسم المسارات بالماوس وتحديد نقاط الانعطاف' : 'Interactive Path Drawing Pen'}
+              >
+                <PenTool className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">{isAr ? 'رسم مسار' : 'Draw Path'}</span>
+              </button>
 
               {/* Auto Layout Quick Alignment */}
               <button
@@ -4771,6 +5385,15 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                           ▼
                         </button>
                       </div>
+                    </div>
+
+                    {/* Keyboard shortcut indicator */}
+                    <div className="pt-1 text-[10px] text-slate-400 flex items-center justify-between border-t border-white/5">
+                      <span className="flex items-center gap-1">
+                        <span className="px-1.5 py-0.5 rounded bg-slate-800 text-amber-300 font-mono text-[9px] border border-white/10">▲ ▼ ◀ ▶</span>
+                        <span>{isAr ? 'أسهم الكيبورد للتحريك المباشر' : 'Arrow keys to nudge'}</span>
+                      </span>
+                      <span className="text-[9px] text-slate-500 font-mono">Shift = 2x</span>
                     </div>
 
                     {/* Quick Move to Bay Buttons */}
