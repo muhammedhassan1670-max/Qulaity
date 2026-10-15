@@ -719,70 +719,87 @@ function HolographicStationBillboard({
       distanceFactor={18}
       zIndexRange={[100, 0]}
     >
-      <div
-        onClick={(e) => {
-          e.stopPropagation();
-          onSelect();
-        }}
-        className={`select-none cursor-pointer rounded-2xl p-2.5 backdrop-blur-xl border transition-all duration-300 shadow-2xl min-w-[190px] ${
-          isSelected 
-            ? 'bg-[#0f1b33]/95 border-amber-400 ring-4 ring-amber-400/50 scale-110 shadow-amber-500/40 z-50' 
-            : isAlert 
-              ? 'bg-[#1e0a14]/90 border-red-500 animate-pulse shadow-red-500/30' 
+      {!isSelected ? (
+        // Minimalist Sleek Holographic Pin (Zero Overlap / Clutter!)
+        <div
+          onClick={(e) => {
+            e.stopPropagation();
+            onSelect();
+          }}
+          className={`group select-none cursor-pointer flex items-center gap-1.5 px-2.5 py-1 rounded-full border backdrop-blur-xl transition-all duration-300 hover:scale-125 shadow-lg ${
+            isAlert 
+              ? 'bg-red-950/90 border-red-500 text-red-200 ring-2 ring-red-500/50 animate-pulse shadow-red-500/40' 
               : isWarning
-                ? 'bg-[#1e150a]/90 border-amber-500 shadow-amber-500/20'
-                : 'bg-[#090f1e]/90 border-cyan-500/40 hover:border-cyan-400 hover:scale-105'
-        }`}
-      >
-        {/* Header: Station Code & Status LED */}
-        <div className="flex items-center justify-between gap-2 pb-1.5 border-b border-white/10">
-          <div className="flex items-center gap-1.5">
-            <span className="px-1.5 py-0.5 rounded-md bg-cyan-950 text-cyan-300 font-mono font-black text-[10px] border border-cyan-500/40">
-              {station.code}
-            </span>
-            <span className="text-white font-black text-xs truncate max-w-[100px]">
-              {stationTitle}
-            </span>
-          </div>
-          <div className="flex items-center gap-1">
-            <span className={`w-2.5 h-2.5 rounded-full ${isAlert ? 'bg-red-500 animate-ping' : isWarning ? 'bg-amber-400' : 'bg-emerald-400 shadow-[0_0_8px_#10b981]'}`} />
-          </div>
-        </div>
-
-        {/* Core Metrics: Cycle Time (CT) & OEE */}
-        <div className="grid grid-cols-2 gap-1.5 my-2">
-          {/* Cycle Time (CT sec) - Exactly like in LinkedIn Video! */}
-          <div className="p-1.5 rounded-xl bg-black/60 border border-white/5">
-            <span className="text-[9px] text-slate-400 block font-mono">
-              {isAr ? 'زمن الدورة (CT):' : 'Cycle Time:'}
-            </span>
-            <span className="text-sm font-black font-mono text-cyan-400">
-              {cycleTimeSeconds}s
-            </span>
-            <span className="text-[8px] text-slate-500 ml-1">/ pc</span>
-          </div>
-
-          {/* OEE Efficiency */}
-          <div className="p-1.5 rounded-xl bg-black/60 border border-white/5">
-            <span className="text-[9px] text-slate-400 block font-mono">
-              {isAr ? 'الكفاءة OEE:' : 'OEE Rate:'}
-            </span>
-            <span className="text-sm font-black font-mono text-emerald-400">
-              {station.oeeEstimate || 94.8}%
-            </span>
-          </div>
-        </div>
-
-        {/* Footer: Operator & Zone */}
-        <div className="flex items-center justify-between text-[9px] text-slate-400 pt-1 border-t border-white/5">
-          <span className="truncate max-w-[100px] text-slate-300">
-            👤 {station.activeOperator || (isAr ? 'فني المناوبة' : 'Lead Tech')}
+                ? 'bg-amber-950/90 border-amber-500 text-amber-200 ring-1 ring-amber-400/40'
+                : 'bg-[#090f1e]/90 border-cyan-500/40 text-cyan-300 hover:border-cyan-300 shadow-cyan-500/20'
+          }`}
+        >
+          <span className={`w-2 h-2 rounded-full shrink-0 ${isAlert ? 'bg-red-500 animate-ping' : isWarning ? 'bg-amber-400' : 'bg-emerald-400 shadow-[0_0_8px_#10b981]'}`} />
+          <span className="font-mono font-black text-[11px] tracking-wider">{station.code}</span>
+          <span className="text-[10px] text-slate-300 font-bold max-w-[80px] truncate hidden group-hover:inline">
+            {stationTitle}
           </span>
-          <span className="font-mono text-amber-300">
-            {station.line}
+          <span className="text-[9px] font-mono text-emerald-400 font-bold ml-0.5">
+            {station.oeeEstimate || 95}%
           </span>
         </div>
-      </div>
+      ) : (
+        // Full Rich Expanded Cockpit Card (Only for the Selected Station!)
+        <div
+          onClick={(e) => {
+            e.stopPropagation();
+            onSelect();
+          }}
+          className="select-none cursor-pointer rounded-2xl p-3 backdrop-blur-2xl border transition-all duration-300 shadow-2xl min-w-[210px] bg-[#0f1b33]/98 border-amber-400 ring-4 ring-amber-400/50 scale-110 shadow-amber-500/40 z-50 animate-in fade-in zoom-in-95"
+        >
+          {/* Header: Station Code & Status LED */}
+          <div className="flex items-center justify-between gap-2 pb-2 border-b border-white/10">
+            <div className="flex items-center gap-1.5">
+              <span className="px-1.5 py-0.5 rounded-md bg-amber-400 text-slate-950 font-mono font-black text-[10px]">
+                {station.code}
+              </span>
+              <span className="text-white font-black text-xs truncate max-w-[120px]">
+                {stationTitle}
+              </span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className={`w-2.5 h-2.5 rounded-full ${isAlert ? 'bg-red-500 animate-ping' : isWarning ? 'bg-amber-400' : 'bg-emerald-400 shadow-[0_0_8px_#10b981]'}`} />
+            </div>
+          </div>
+
+          {/* Core Metrics: Cycle Time (CT) & OEE */}
+          <div className="grid grid-cols-2 gap-2 my-2">
+            <div className="p-2 rounded-xl bg-black/70 border border-white/5">
+              <span className="text-[9px] text-slate-400 block font-mono">
+                {isAr ? 'زمن الدورة (CT):' : 'Cycle Time:'}
+              </span>
+              <span className="text-base font-black font-mono text-cyan-400">
+                {cycleTimeSeconds}s
+              </span>
+              <span className="text-[8px] text-slate-500 ml-1">/ pc</span>
+            </div>
+
+            <div className="p-2 rounded-xl bg-black/70 border border-white/5">
+              <span className="text-[9px] text-slate-400 block font-mono">
+                {isAr ? 'الكفاءة OEE:' : 'OEE Rate:'}
+              </span>
+              <span className="text-base font-black font-mono text-emerald-400">
+                {station.oeeEstimate || 94.8}%
+              </span>
+            </div>
+          </div>
+
+          {/* Footer: Operator & Zone */}
+          <div className="flex items-center justify-between text-[9px] text-slate-400 pt-1.5 border-t border-white/10">
+            <span className="truncate max-w-[110px] text-slate-300">
+              👤 {(station as any).activeOperator || (isAr ? 'فني المناوبة' : 'Lead Tech')}
+            </span>
+            <span className="font-mono text-amber-300 font-bold">
+              {station.line || 'Line 1'}
+            </span>
+          </div>
+        </div>
+      )}
     </Html>
   );
 }
@@ -960,6 +977,40 @@ export function EnterprisePlant3D({
         </div>
       </div>
 
+      {/* Floating 1-Click Camera Navigation HUD (Effortless 3D Control!) */}
+      <div className="absolute bottom-6 left-6 z-40 flex items-center gap-1.5 bg-[#090f1e]/95 backdrop-blur-2xl border border-white/10 p-1.5 rounded-2xl shadow-2xl">
+        <button
+          onClick={() => {
+            setSelectedBayId(null);
+            setViewpoint('overview');
+            flyToPreset([0, 24, 28], [0, 0, 0]);
+          }}
+          className="px-3 py-1.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-cyan-300 text-xs font-bold flex items-center gap-1.5 border border-cyan-500/30 transition-all hover:scale-105 shadow-md"
+          title={isAr ? 'إعادة ضبط المنظور للوضع العام' : 'Reset Camera to Overview'}
+        >
+          <RotateCcw className="w-3.5 h-3.5" />
+          <span>{isAr ? 'إعادة ضبط الكاميرا' : 'Reset View'}</span>
+        </button>
+
+        <button
+          onClick={() => flyToPreset([-22, 18, 22], [0, 0, 0])}
+          className="px-2.5 py-1.5 rounded-xl hover:bg-white/10 text-slate-300 hover:text-white text-xs font-bold flex items-center gap-1 transition-all"
+          title={isAr ? 'زاوية أيزومترية مائلة' : 'Isometric Perspective'}
+        >
+          <span>📐</span>
+          <span>{isAr ? 'أيزومتري' : 'Isometric'}</span>
+        </button>
+
+        <button
+          onClick={() => flyToPreset([0, 34, 1], [0, 0, 0])}
+          className="px-2.5 py-1.5 rounded-xl hover:bg-white/10 text-slate-300 hover:text-white text-xs font-bold flex items-center gap-1 transition-all"
+          title={isAr ? 'منظور علوي مباشر' : 'Top-Down View'}
+        >
+          <span>⬆️</span>
+          <span>{isAr ? 'منظر علوي' : 'Top Down'}</span>
+        </button>
+      </div>
+
       {/* Walk Mode Guidance Tooltip Banner */}
       {cameraMode === 'walk' && (
         <div className="absolute top-20 left-1/2 -translate-x-1/2 z-40 bg-black/85 backdrop-blur-md border border-emerald-400/60 px-4 py-2 rounded-2xl text-xs text-emerald-200 flex items-center gap-3 shadow-2xl animate-bounce">
@@ -991,12 +1042,15 @@ export function EnterprisePlant3D({
           <OrbitControls
             ref={controlsRef}
             autoRotate={autoRotate}
-            autoRotateSpeed={0.8}
+            autoRotateSpeed={0.5}
             enableDamping
-            dampingFactor={0.06}
-            minDistance={6}
-            maxDistance={70}
-            maxPolarAngle={Math.PI / 2 - 0.05} // Do not go below floor
+            dampingFactor={0.08}
+            rotateSpeed={0.65}
+            zoomSpeed={0.85}
+            minDistance={8}
+            maxDistance={50}
+            maxPolarAngle={Math.PI / 2.3}
+            minPolarAngle={Math.PI / 8}
           />
         ) : (
           <>
@@ -1075,76 +1129,11 @@ export function EnterprisePlant3D({
                 <meshStandardMaterial color={bay.accentHex} emissive={bay.accentHex} emissiveIntensity={isSelected ? 2.0 : 0.8} />
               </Box>
 
-              {/* Floor Entrance Zone Stencil Bar */}
+              {/* Clean Flat Industrial Floor Demarcation (Lies flat on ground, never blocks 3D models!) */}
               <group position={[bay.bounds.x, 0.015, bay.bounds.z + (bay.bounds.z > 0 ? bay.bounds.d / 2 - 0.7 : -bay.bounds.d / 2 + 0.7)]} rotation={[-Math.PI / 2, 0, 0]}>
-                <Plane args={[bay.bounds.w * 0.85, 0.6]}>
-                  <meshBasicMaterial color={bay.accentHex} transparent opacity={isSelected ? 0.4 : 0.2} />
+                <Plane args={[bay.bounds.w * 0.9, 0.6]}>
+                  <meshBasicMaterial color={bay.accentHex} transparent opacity={isSelected ? 0.4 : 0.15} />
                 </Plane>
-              </group>
-
-              {/* Overhead Hanging Industrial Department Neon Signboard */}
-              <group position={[bay.bounds.x, 5.0, bay.bounds.z]}>
-                {/* 2 Steel Suspension Cables connected to ceiling trusses */}
-                <Cylinder args={[0.015, 0.015, 2.8, 8]} position={[-2.0, 1.4, 0]}>
-                  <meshStandardMaterial color="#64748b" metalness={0.9} />
-                </Cylinder>
-                <Cylinder args={[0.015, 0.015, 2.8, 8]} position={[2.0, 1.4, 0]}>
-                  <meshStandardMaterial color="#64748b" metalness={0.9} />
-                </Cylinder>
-                {/* Top Mounting Steel Bar */}
-                <Box args={[4.6, 0.08, 0.15]} position={[0, 0.65, 0]}>
-                  <meshStandardMaterial color="#1e293b" metalness={0.8} />
-                </Box>
-
-                {/* Overhead Billboard Banner */}
-                <Billboard>
-                  <Html center transform distanceFactor={22}>
-                    <div
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedBayId(bay.id);
-                        flyToPreset(bay.camera.pos, bay.camera.target);
-                      }}
-                      className={`select-none cursor-pointer px-4 py-2.5 rounded-2xl border backdrop-blur-xl transition-all duration-300 shadow-2xl flex items-center gap-3 whitespace-nowrap ${
-                        isSelected
-                          ? 'bg-slate-950/95 ring-4 ring-cyan-400 scale-110 shadow-cyan-500/50'
-                          : 'bg-black/85 hover:bg-black/95 hover:scale-105 shadow-black/80'
-                      }`}
-                      style={{
-                        borderColor: bay.accentHex,
-                        boxShadow: `0 0 25px ${bay.accentHex}40`
-                      }}
-                    >
-                      <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0 border"
-                        style={{ backgroundColor: `${bay.accentHex}25`, borderColor: `${bay.accentHex}60` }}
-                      >
-                        {bay.icon}
-                      </div>
-                      <div className="flex flex-col text-right">
-                        <div className="flex items-center gap-2">
-                          <span
-                            className="px-2 py-0.5 rounded text-[10px] font-mono font-black shadow-sm"
-                            style={{ backgroundColor: bay.accentHex, color: '#090d16' }}
-                          >
-                            {bay.code}
-                          </span>
-                          <span className="text-white font-black text-xs">
-                            {isAr ? bay.nameAr : bay.nameEn}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between text-[10px] text-slate-400 mt-1">
-                          <span className="text-slate-300 font-mono">
-                            {count} {isAr ? 'محطات ومعدات' : 'Stations'}
-                          </span>
-                          <span className="font-mono font-bold" style={{ color: bay.accentHex }}>
-                            ● {isAr ? 'عنبر نشط' : 'Active Bay'}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </Html>
-                </Billboard>
               </group>
             </group>
           );
