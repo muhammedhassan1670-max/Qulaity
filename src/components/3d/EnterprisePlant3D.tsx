@@ -37,6 +37,114 @@ export interface EnterprisePlant3DProps {
   isAr?: boolean;
 }
 
+export interface FactoryBay3D {
+  id: string;
+  code: string;
+  number: number;
+  icon: string;
+  nameAr: string;
+  nameEn: string;
+  accentHex: string;
+  floorColor: string;
+  bounds: { x: number; z: number; w: number; d: number };
+  camera: { pos: [number, number, number]; target: [number, number, number] };
+  stationIds: string[];
+}
+
+export const PLANT_3D_BAYS: FactoryBay3D[] = [
+  {
+    id: 'bay-receiving',
+    code: 'BAY 01',
+    number: 1,
+    icon: '🚚',
+    nameAr: 'رصيف الاستلام وفحص التوريد (IQC)',
+    nameEn: 'Inbound Receiving & IQC Port',
+    accentHex: '#f59e0b',
+    floorColor: '#1c1406',
+    bounds: { x: -24, z: 8, w: 15, d: 11 },
+    camera: { pos: [-24, 11, 20], target: [-23, 0, 8] },
+    stationIds: ['DOCK-RECEIVING-01', 'STATION-IQC-INSPECT', 'QUARANTINE-CAGE']
+  },
+  {
+    id: 'bay-warehouse',
+    code: 'BAY 02',
+    number: 2,
+    icon: '📦',
+    nameAr: 'مستودع الخامات والمخازن الذكية',
+    nameEn: 'Raw Materials & High-Bay Warehouse',
+    accentHex: '#0284c7',
+    floorColor: '#07162b',
+    bounds: { x: -24, z: -9, w: 15, d: 13 },
+    camera: { pos: [-24, 12, 3], target: [-20, 0, -9] },
+    stationIds: ['STATION-WH-STORAGE', 'WAREHOUSE-RAW-STAGING']
+  },
+  {
+    id: 'bay-fabrication',
+    code: 'BAY 03',
+    number: 3,
+    icon: '⚙️',
+    nameAr: 'عنبر التشكيل والمكابس والتشغيل CNC',
+    nameEn: 'Heavy Fabrication, Press & CNC',
+    accentHex: '#ef4444',
+    floorColor: '#200b10',
+    bounds: { x: -5, z: 4.5, w: 20, d: 11 },
+    camera: { pos: [-5, 12, 17], target: [-5, 0, 4.5] },
+    stationIds: ['STATION-STAMPING-PRESS', 'STATION-CNC-MILLING', 'STATION-WELD-ROBOT']
+  },
+  {
+    id: 'bay-assembly',
+    code: 'BAY 04',
+    number: 4,
+    icon: '🔌',
+    nameAr: 'خطوط التجميع والتركيب النهائي',
+    nameEn: 'SMT Electronics & Final Assembly',
+    accentHex: '#3b82f6',
+    floorColor: '#091836',
+    bounds: { x: -5, z: -4.5, w: 20, d: 9 },
+    camera: { pos: [-5, 12, 8], target: [-5, 0, -4.5] },
+    stationIds: ['STATION-SMT-ASSEMBLY', 'STATION-AOI-INSPECTOR', 'STATION-FINAL-ASSEMBLY', 'STATION-SUB-ASSEMBLY', 'STATION-TORQUE-BENCH']
+  },
+  {
+    id: 'bay-quality-lab',
+    code: 'BAY 05',
+    number: 5,
+    icon: '🔬',
+    nameAr: 'معمل توكيد الجودة والمترولوجيا CMM',
+    nameEn: 'Cleanroom Metrology & QA Testing Lab',
+    accentHex: '#10b981',
+    floorColor: '#072421',
+    bounds: { x: 14, z: -8, w: 15, d: 13 },
+    camera: { pos: [14, 11, 4], target: [14, 0, -8] },
+    stationIds: ['STATION-LAB-SPECTRO', 'STATION-CMM-METROLOGY', 'LAB-METROLOGY-CMM', 'ROOM-MRB-CAPA']
+  },
+  {
+    id: 'bay-packaging',
+    code: 'BAY 06',
+    number: 6,
+    icon: '📦',
+    nameAr: 'التعبئة والتغليف والباركود OQC',
+    nameEn: 'Packaging & Final OQC Inspection',
+    accentHex: '#8b5cf6',
+    floorColor: '#170b2c',
+    bounds: { x: 10, z: 4.5, w: 9, d: 11 },
+    camera: { pos: [10, 11, 16], target: [10, 0, 4.5] },
+    stationIds: ['STATION-OQC-PACKAGING', 'BENCH-OQC-RELEASE', 'STATION-PACKAGING']
+  },
+  {
+    id: 'bay-shipping',
+    code: 'BAY 07',
+    number: 7,
+    icon: '🚛',
+    nameAr: 'ساحة البضائع الجاهزة ورصيف الشحن',
+    nameEn: 'Finished Goods & Outbound Freight Dock',
+    accentHex: '#22c55e',
+    floorColor: '#072412',
+    bounds: { x: 23, z: 4.5, w: 15, d: 13 },
+    camera: { pos: [24, 12, 17], target: [23, 0, 4.5] },
+    stationIds: ['STATION-FG-STAGING', 'DOCK-SHIPPING-01', 'DOCK-SHIPPING-03', 'TRUCK-CUSTOMER-DELIVERY']
+  }
+];
+
 // ----------------------------------------------------------------------------
 // 3D Worker / Technician Avatar with Safety Helmet & Uniform
 // ----------------------------------------------------------------------------
@@ -692,6 +800,7 @@ export function EnterprisePlant3D({
   const [cameraMode, setCameraMode] = useState<'orbit' | 'walk'>('orbit');
   const [autoRotate, setAutoRotate] = useState<boolean>(false);
   const [viewpoint, setViewpoint] = useState<string>('overview');
+  const [selectedBayId, setSelectedBayId] = useState<string | null>(null);
   const controlsRef = useRef<any>(null);
 
   // Map stations to 3D Coordinates (Spread along factory floor 60m x 35m)
@@ -798,30 +907,56 @@ export function EnterprisePlant3D({
           </button>
         )}
 
-        {/* Camera Viewpoint Presets */}
-        <div className="hidden md:flex items-center gap-1 bg-[#090f1e]/90 backdrop-blur-xl border border-white/10 p-1 rounded-2xl">
-          {[
-            { id: 'overview', labelAr: '🏭 المصنع بالكامل', labelEn: 'All Factory', pos: [0, 24, 28], target: [0, 0, 0] },
-            { id: 'receiving', labelAr: '📥 عنبر الاستلام', labelEn: 'Receiving', pos: [-24, 8, 18], target: [-22, 0, 8] },
-            { id: 'assembly', labelAr: '⚙️ خطوط التجميع', labelEn: 'Assembly', pos: [0, 7, 12], target: [0, 0, 0] },
-            { id: 'lab', labelAr: '🔬 مختبر الجودة', labelEn: 'QA Lab', pos: [14, 8, -1], target: [14, 0, -8] },
-            { id: 'shipping', labelAr: '🚚 عنبر الشحن', labelEn: 'Shipping', pos: [26, 8, 16], target: [24, 0, 4] },
-          ].map(vp => (
-            <button
-              key={vp.id}
-              onClick={() => {
-                setViewpoint(vp.id);
-                flyToPreset(vp.pos as any, vp.target as any);
-              }}
-              className={`px-2.5 py-1 rounded-xl text-[11px] font-bold transition-all ${
-                viewpoint === vp.id
-                  ? 'bg-slate-800 text-cyan-300 border border-cyan-500/40 shadow-sm'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              {isAr ? vp.labelAr : vp.labelEn}
-            </button>
-          ))}
+        {/* Comprehensive Factory Departments & Zones Bar */}
+        <div className="flex items-center gap-1.5 overflow-x-auto max-w-[calc(100vw-360px)] bg-[#090f1e]/90 backdrop-blur-xl border border-white/10 p-1 rounded-2xl shadow-2xl scrollbar-none">
+          <button
+            onClick={() => {
+              setSelectedBayId(null);
+              setViewpoint('overview');
+              flyToPreset([0, 24, 28], [0, 0, 0]);
+            }}
+            className={`px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all shrink-0 ${
+              !selectedBayId 
+                ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 ring-2 ring-cyan-300 shadow-lg' 
+                : 'text-slate-400 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <span>🏭</span>
+            <span>{isAr ? 'كل المصنع' : 'All Factory'}</span>
+          </button>
+          {PLANT_3D_BAYS.map(b => {
+            const isSelected = selectedBayId === b.id;
+            return (
+              <button
+                key={b.id}
+                onClick={() => {
+                  setSelectedBayId(b.id);
+                  setViewpoint(b.id);
+                  flyToPreset(b.camera.pos as any, b.camera.target as any);
+                }}
+                className={`px-2.5 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all shrink-0 border ${
+                  isSelected
+                    ? 'text-slate-950 ring-2 shadow-lg scale-105'
+                    : 'text-slate-300 hover:text-white bg-black/40 border-white/5 hover:border-white/20'
+                }`}
+                style={{
+                  backgroundColor: isSelected ? b.accentHex : undefined,
+                  borderColor: isSelected ? b.accentHex : undefined,
+                  color: isSelected ? '#090d16' : undefined
+                }}
+              >
+                <span>{b.icon}</span>
+                <span className="truncate max-w-[125px]">{isAr ? b.nameAr : b.nameEn}</span>
+                <span 
+                  className={`px-1.5 py-0.2 rounded text-[9px] font-mono font-bold ${
+                    isSelected ? 'bg-black/30 text-slate-950' : 'bg-slate-800 text-slate-300'
+                  }`}
+                >
+                  {b.code}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -897,29 +1032,148 @@ export function EnterprisePlant3D({
         <pointLight position={[0, 14, 0]} intensity={0.9} color="#f59e0b" distance={35} />
 
         {/* ================================================================ */}
-        {/* 3D FACTORY FLOOR & ARCHITECTURE                                  */}
+        {/* 3D FACTORY FLOOR & 7 INDUSTRIAL ENTERPRISE BAYS                  */}
         {/* ================================================================ */}
-        {/* Heavy Industrial Dark Epoxy Floor */}
-        <Plane args={[72, 44]} rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]} receiveShadow>
-          <meshStandardMaterial color="#090e1a" roughness={0.3} metalness={0.5} />
+        {/* Master Factory Foundation Floor */}
+        <Plane args={[76, 46]} rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]} receiveShadow>
+          <meshStandardMaterial color="#070a12" roughness={0.4} metalness={0.4} />
         </Plane>
 
-        {/* Safety Walkway Markings (Yellow Aisles) */}
-        <Plane args={[68, 2.2]} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
+        {/* 7 INDUSTRIAL FACTORY BAYS: DISTINCT FLOORS, GLOWING PERIMETERS & OVERHEAD SIGNBOARDS */}
+        {PLANT_3D_BAYS.map((bay) => {
+          const isSelected = selectedBayId === bay.id;
+          const bayStations = equipmentList.filter(eq => bay.stationIds.includes(eq.id));
+          const count = bayStations.length || bay.stationIds.length;
+
+          return (
+            <group key={bay.id}>
+              {/* Distinct Bay Epoxy Floor Pad */}
+              <Plane
+                args={[bay.bounds.w, bay.bounds.d]}
+                rotation={[-Math.PI / 2, 0, 0]}
+                position={[bay.bounds.x, 0.003, bay.bounds.z]}
+                receiveShadow
+              >
+                <meshStandardMaterial
+                  color={bay.floorColor}
+                  roughness={0.25}
+                  metalness={0.35}
+                />
+              </Plane>
+
+              {/* Glowing Perimeter Borders (North, South, East, West) */}
+              <Box args={[bay.bounds.w, 0.04, 0.14]} position={[bay.bounds.x, 0.02, bay.bounds.z - bay.bounds.d / 2]}>
+                <meshStandardMaterial color={bay.accentHex} emissive={bay.accentHex} emissiveIntensity={isSelected ? 2.0 : 0.8} />
+              </Box>
+              <Box args={[bay.bounds.w, 0.04, 0.14]} position={[bay.bounds.x, 0.02, bay.bounds.z + bay.bounds.d / 2]}>
+                <meshStandardMaterial color={bay.accentHex} emissive={bay.accentHex} emissiveIntensity={isSelected ? 2.0 : 0.8} />
+              </Box>
+              <Box args={[0.14, 0.04, bay.bounds.d]} position={[bay.bounds.x - bay.bounds.w / 2, 0.02, bay.bounds.z]}>
+                <meshStandardMaterial color={bay.accentHex} emissive={bay.accentHex} emissiveIntensity={isSelected ? 2.0 : 0.8} />
+              </Box>
+              <Box args={[0.14, 0.04, bay.bounds.d]} position={[bay.bounds.x + bay.bounds.w / 2, 0.02, bay.bounds.z]}>
+                <meshStandardMaterial color={bay.accentHex} emissive={bay.accentHex} emissiveIntensity={isSelected ? 2.0 : 0.8} />
+              </Box>
+
+              {/* Floor Entrance Zone Stencil Bar */}
+              <group position={[bay.bounds.x, 0.015, bay.bounds.z + (bay.bounds.z > 0 ? bay.bounds.d / 2 - 0.7 : -bay.bounds.d / 2 + 0.7)]} rotation={[-Math.PI / 2, 0, 0]}>
+                <Plane args={[bay.bounds.w * 0.85, 0.6]}>
+                  <meshBasicMaterial color={bay.accentHex} transparent opacity={isSelected ? 0.4 : 0.2} />
+                </Plane>
+              </group>
+
+              {/* Overhead Hanging Industrial Department Neon Signboard */}
+              <group position={[bay.bounds.x, 5.0, bay.bounds.z]}>
+                {/* 2 Steel Suspension Cables connected to ceiling trusses */}
+                <Cylinder args={[0.015, 0.015, 2.8, 8]} position={[-2.0, 1.4, 0]}>
+                  <meshStandardMaterial color="#64748b" metalness={0.9} />
+                </Cylinder>
+                <Cylinder args={[0.015, 0.015, 2.8, 8]} position={[2.0, 1.4, 0]}>
+                  <meshStandardMaterial color="#64748b" metalness={0.9} />
+                </Cylinder>
+                {/* Top Mounting Steel Bar */}
+                <Box args={[4.6, 0.08, 0.15]} position={[0, 0.65, 0]}>
+                  <meshStandardMaterial color="#1e293b" metalness={0.8} />
+                </Box>
+
+                {/* Overhead Billboard Banner */}
+                <Billboard>
+                  <Html center transform distanceFactor={22}>
+                    <div
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedBayId(bay.id);
+                        flyToPreset(bay.camera.pos, bay.camera.target);
+                      }}
+                      className={`select-none cursor-pointer px-4 py-2.5 rounded-2xl border backdrop-blur-xl transition-all duration-300 shadow-2xl flex items-center gap-3 whitespace-nowrap ${
+                        isSelected
+                          ? 'bg-slate-950/95 ring-4 ring-cyan-400 scale-110 shadow-cyan-500/50'
+                          : 'bg-black/85 hover:bg-black/95 hover:scale-105 shadow-black/80'
+                      }`}
+                      style={{
+                        borderColor: bay.accentHex,
+                        boxShadow: `0 0 25px ${bay.accentHex}40`
+                      }}
+                    >
+                      <div
+                        className="w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0 border"
+                        style={{ backgroundColor: `${bay.accentHex}25`, borderColor: `${bay.accentHex}60` }}
+                      >
+                        {bay.icon}
+                      </div>
+                      <div className="flex flex-col text-right">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className="px-2 py-0.5 rounded text-[10px] font-mono font-black shadow-sm"
+                            style={{ backgroundColor: bay.accentHex, color: '#090d16' }}
+                          >
+                            {bay.code}
+                          </span>
+                          <span className="text-white font-black text-xs">
+                            {isAr ? bay.nameAr : bay.nameEn}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-[10px] text-slate-400 mt-1">
+                          <span className="text-slate-300 font-mono">
+                            {count} {isAr ? 'محطات ومعدات' : 'Stations'}
+                          </span>
+                          <span className="font-mono font-bold" style={{ color: bay.accentHex }}>
+                            ● {isAr ? 'عنبر نشط' : 'Active Bay'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </Html>
+                </Billboard>
+              </group>
+            </group>
+          );
+        })}
+
+        {/* Central Safety Walkway Highway (Yellow Aisles) */}
+        <Plane args={[68, 2.4]} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.008, 0]}>
           <meshBasicMaterial color="#1e293b" />
         </Plane>
-        <Plane args={[68, 0.1]} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 1.1]}>
+        <Plane args={[68, 0.12]} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.015, 1.2]}>
           <meshBasicMaterial color="#f59e0b" />
         </Plane>
-        <Plane args={[68, 0.1]} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, -1.1]}>
+        <Plane args={[68, 0.12]} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.015, -1.2]}>
           <meshBasicMaterial color="#f59e0b" />
         </Plane>
 
-        {/* Transverse Crosswalks */}
+        {/* Transverse Crosswalks with Zebra Stripes */}
         {[-20, 0, 20].map((x, i) => (
-          <Plane key={i} args={[2.2, 36]} rotation={[-Math.PI / 2, 0, 0]} position={[x, 0.01, 0]}>
-            <meshBasicMaterial color="#1e293b" />
-          </Plane>
+          <group key={i}>
+            <Plane args={[2.2, 38]} rotation={[-Math.PI / 2, 0, 0]} position={[x, 0.008, 0]}>
+              <meshBasicMaterial color="#1e293b" />
+            </Plane>
+            {/* Zebra safety stripes */}
+            {[-8, -4, 4, 8].map((zy, zi) => (
+              <Plane key={zi} args={[1.8, 0.35]} rotation={[-Math.PI / 2, 0, 0]} position={[x, 0.016, zy]}>
+                <meshBasicMaterial color="#f8fafc" transparent opacity={0.6} />
+              </Plane>
+            ))}
+          </group>
         ))}
 
         {/* Factory Back Wall with Clerestory Windows */}

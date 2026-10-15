@@ -3873,13 +3873,37 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                   <rect x="863" y="372" width="20" height="4" />
                 </g>
 
-                {/* STENCILED FACTORY FLOOR LETTERING */}
-                <g fill={ambientTheme === 'cleanroom' ? '#94a3b8' : '#334155'} fontSize="9" fontWeight="900" letterSpacing="1.5" opacity="0.6">
-                  <text x="35" y="48">ZONE A • INBOUND LOGISTICS & IQC</text>
-                  <text x="330" y="48">ZONE B • AUTOMATED CNC & ASSEMBLY LINE 01</text>
-                  <text x="330" y="462" fill={ambientTheme === 'cleanroom' ? '#a855f7' : '#9333ea'} opacity="0.8">HUB C • CLEANROOM METROLOGY & QA MRB</text>
-                  <text x="900" y="48">ZONE D • FINAL OQC & PALLETIZING</text>
-                  <text x="900" y="312">ZONE E • FREIGHT DOCKS & DISPATCH</text>
+                {/* STENCILED FACTORY FLOOR LETTERING & PROMINENT BILINGUAL BAY HEADERS */}
+                <g className="select-none pointer-events-none">
+                  {/* Bay A: Inbound */}
+                  <rect x="30" y="28" width="245" height="26" rx="6" fill="#f59e0b" fillOpacity="0.18" stroke="#f59e0b" strokeWidth="1.2" />
+                  <text x="40" y="46" fill="#f59e0b" fontSize="11" fontWeight="900" fontFamily="sans-serif">
+                    {isAr ? '🚚 عنبر 1: رصيف الاستلام وفحص التوريد IQC' : '🚚 BAY A: INBOUND RECEIVING & IQC'}
+                  </text>
+
+                  {/* Bay B: Machining & Assembly */}
+                  <rect x="325" y="28" width="340" height="26" rx="6" fill="#0284c7" fillOpacity="0.18" stroke="#0284c7" strokeWidth="1.2" />
+                  <text x="335" y="46" fill="#38bdf8" fontSize="11" fontWeight="900" fontFamily="sans-serif">
+                    {isAr ? '⚙️ عنبر 2: التشكيل والمكابس والتشغيل CNC' : '⚙️ BAY B: HEAVY FABRICATION & CNC'}
+                  </text>
+
+                  {/* Hub C: Metrology Cleanroom & MRB */}
+                  <rect x="325" y="452" width="340" height="26" rx="6" fill="#10b981" fillOpacity="0.18" stroke="#10b981" strokeWidth="1.2" />
+                  <text x="335" y="470" fill="#34d399" fontSize="11" fontWeight="900" fontFamily="sans-serif">
+                    {isAr ? '🔬 عنبر 3: معمل الجودة والمترولوجيا CMM' : '🔬 HUB C: CLEANROOM METROLOGY & QA'}
+                  </text>
+
+                  {/* Bay D: Final OQC & Packaging */}
+                  <rect x="895" y="28" width="275" height="26" rx="6" fill="#8b5cf6" fillOpacity="0.18" stroke="#8b5cf6" strokeWidth="1.2" />
+                  <text x="905" y="46" fill="#c084fc" fontSize="11" fontWeight="900" fontFamily="sans-serif">
+                    {isAr ? '📦 عنبر 4: خطوط التعبئة والتغليف والفحص OQC' : '📦 BAY D: PACKAGING & FINAL OQC'}
+                  </text>
+
+                  {/* Bay E: Shipping Logistics Yard */}
+                  <rect x="895" y="315" width="275" height="26" rx="6" fill="#22c55e" fillOpacity="0.18" stroke="#22c55e" strokeWidth="1.2" />
+                  <text x="905" y="333" fill="#4ade80" fontSize="11" fontWeight="900" fontFamily="sans-serif">
+                    {isAr ? '🚛 عنبر 5: مستودع البضائع ورصيف الشحن' : '🚛 BAY E: FINISHED GOODS & DISPATCH'}
+                  </text>
                 </g>
 
                 {/* STRUCTURAL H-BEAM STEEL COLUMNS WITH HAZARD BASES */}
