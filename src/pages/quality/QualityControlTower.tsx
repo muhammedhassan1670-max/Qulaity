@@ -1147,6 +1147,11 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
   const [mouseCanvasPos, setMouseCanvasPos] = useState<{ x: number; y: number } | null>(null);
   const [showLayoutMenu, setShowLayoutMenu] = useState(false);
 
+  // Quick Editing & Nudge Step State
+  const [nudgeStep, setNudgeStep] = useState<number>(20);
+  const [quickConnectTargetId, setQuickConnectTargetId] = useState<string>('');
+  const [quickConnectType, setQuickConnectType] = useState<ScadaConnection['type']>('motor-roller');
+
   // Enterprise 10 Departments State & Closed-Loop Lifecycle
   const [selectedDeptId, setSelectedDeptId] = useState<string | null>(null);
   const [isClosedLoopActive, setIsClosedLoopActive] = useState(false);
@@ -1546,6 +1551,124 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
     } catch {}
     if (soundEnabled) playIndustrialChime('success');
     toast.success(isAr ? `✓ تم ربط ${autoConns.length} مسار ناقل تسلسلياً وبمنافذ دقيقة بين جميع المحطات!` : `✓ Auto-connected ${autoConns.length} sequential conveyors!`);
+  };
+
+  // Nudge Station Position step-by-step with 1-click precision (Arrow Buttons)
+  const nudgeStation = (stationId: string, dx: number, dy: number) => {
+    setEquipmentList(prev => {
+      const updated = prev.map(eq => {
+        if (eq.id !== stationId) return eq;
+        const nextX = Math.max(20, Math.min(1180 - eq.w, eq.x + dx));
+        const nextY = Math.max(30, Math.min(620 - eq.h, eq.y + dy));
+        return { ...eq, x: nextX, y: nextY };
+      });
+      try {
+        localStorage.setItem(SCADA_STORAGE_KEY, JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+    if (soundEnabled) playIndustrialChime('camera');
+  };
+
+  // Instant 1-Click Move to Factory Bay Preset
+  const moveStationToBayPreset = (stationId: string, zone: StationZone) => {
+    const bayCoordinates: Record<StationZone, { x: number; y: number; zoneNameAr: string; zoneNameEn: string }> = {
+      receiving: { x: 35, y: 185, zoneNameAr: 'عنبر الاستلام A', zoneNameEn: 'Receiving Bay A' },
+      assembly: { x: 320, y: 160, zoneNameAr: 'خط التجميع B', zoneNameEn: 'Assembly Line B' },
+      lab: { x: 480, y: 470, zoneNameAr: 'مركز الجودة C', zoneNameEn: 'Quality Hub C' },
+      oqc: { x: 895, y: 80, zoneNameAr: 'عنبر الإفراج D', zoneNameEn: 'OQC Bay D' },
+      shipping: { x: 895, y: 350, zoneNameAr: 'عنبر الشحن E', zoneNameEn: 'Shipping Bay E' },
+    };
+
+    const target = bayCoordinates[zone];
+    if (!target) return;
+
+    setEquipmentList(prev => {
+      const updated = prev.map(eq => {
+        if (eq.id !== stationId) return eq;
+        return {
+          ...eq,
+          zone,
+          zoneNameAr: target.zoneNameAr,
+          zoneNameEn: target.zoneNameEn,
+          x: target.x,
+          y: target.y
+        };
+      });
+      try {
+        localStorage.setItem(SCADA_STORAGE_KEY, JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+
+    if (soundEnabled) playIndustrialChime('success');
+    toast.success(isAr ? `✓ تم نقل المحطة إلى ${target.zoneNameAr}` : `✓ Moved station to ${target.zoneNameEn}`);
+  };
+
+  // Quick Direct Inline Field Update (Station Name, Line, Operator, OEE)
+  const updateStationField = (stationId: string, field: keyof ScadaEquipment, value: any) => {
+    setEquipmentList(prev => {
+      const updated = prev.map(eq => {
+        if (eq.id !== stationId) return eq;
+        return { ...eq, [field]: value };
+      });
+      try {
+        localStorage.setItem(SCADA_STORAGE_KEY, JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+  };
+
+  // Quick 1-Click Conveyor Connection between 2 Stations
+  const handleQuickConnect = (fromId: string, toId: string, type: ScadaConnection['type'] = 'motor-roller') => {
+    if (!fromId || !toId || fromId === toId) {
+      toast.warning(isAr ? 'يرجى اختيار محطة وصول مختلفة' : 'Please select a different target station');
+      return;
+    }
+    const fromSt = equipmentMap[fromId];
+    const toSt = equipmentMap[toId];
+    if (!fromSt || !toSt) return;
+
+    const dx = (toSt.x + toSt.w / 2) - (fromSt.x + fromSt.w / 2);
+    const dy = (toSt.y + toSt.h / 2) - (fromSt.y + fromSt.h / 2);
+    let fromAnchor: 'left' | 'right' | 'top' | 'bottom' = 'right';
+    let toAnchor: 'left' | 'right' | 'top' | 'bottom' = 'left';
+
+    if (Math.abs(dy) > Math.abs(dx)) {
+      fromAnchor = dy >= 0 ? 'bottom' : 'top';
+      toAnchor = dy >= 0 ? 'top' : 'bottom';
+    } else {
+      fromAnchor = dx >= 0 ? 'right' : 'left';
+      toAnchor = dx >= 0 ? 'left' : 'right';
+    }
+
+    const newConn: ScadaConnection = {
+      id: `CONN-${fromSt.code}-${toSt.code}-${Date.now().toString(36).slice(-4)}`,
+      fromId,
+      toId,
+      labelAr: `مسار: ${fromSt.code} ➔ ${toSt.code}`,
+      labelEn: `Conveyor: ${fromSt.code} ➔ ${toSt.code}`,
+      type,
+      fromAnchor,
+      toAnchor,
+      velocityMs: 0.5,
+      motorKw: 0.75,
+      capacityUnits: 20,
+      currentWip: 0,
+      sensorType: 'Optical Retroreflective'
+    };
+
+    setConnectionsList(prev => {
+      const filtered = prev.filter(c => !(c.fromId === fromId && c.toId === toId));
+      const next = [...filtered, newConn];
+      try {
+        localStorage.setItem(SCADA_CONNECTIONS_KEY, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+
+    if (soundEnabled) playIndustrialChime('success');
+    toast.success(isAr ? `✨ تم ربط خط سير جديد بنجاح بين ${fromSt.code} و ${toSt.code}!` : `✨ Connected conveyor between ${fromSt.code} and ${toSt.code}!`);
   };
 
   useEffect(() => {
@@ -2659,6 +2782,37 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
           >
             <Link2 className="w-3.5 h-3.5 text-purple-400" />
             <span className="hidden sm:inline">{isAr ? '🔗 المسارات' : 'Conveyors'}</span>
+          </button>
+
+          {/* Edit & Layout Mode Toggle Button */}
+          <button
+            onClick={() => {
+              setIsCustomizing(prev => {
+                const next = !prev;
+                if (next) {
+                  setCameraPreset('top-down');
+                  if (soundEnabled) playIndustrialChime('camera');
+                  toast.info(isAr ? '📐 تم تفعيل وضع التعديل: يمكنك الآن سحب الماكينات بالماوس أو تحريكها بدقة بالأزرار في القائمة الجانبية!' : '📐 Edit Mode Active: Drag stations with mouse or nudge with arrow buttons!');
+                } else {
+                  if (soundEnabled) playIndustrialChime('success');
+                  toast.success(isAr ? '✓ تم حفظ المخطط وتثبيت مواقع المحطات' : '✓ Layout locked and saved');
+                }
+                return next;
+              });
+            }}
+            className={`px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all shadow-md active:scale-95 ${
+              isCustomizing
+                ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 ring-2 ring-amber-300 shadow-amber-500/50 scale-105 animate-pulse'
+                : 'bg-amber-950/70 hover:bg-amber-900/80 text-amber-300 border border-amber-500/40'
+            }`}
+            title={isAr ? 'تفعيل وضع تحريك وسحب وتعديل الماكينات' : 'Toggle Drag & Layout Edit Mode'}
+          >
+            <Move className={`w-3.5 h-3.5 ${isCustomizing ? 'text-slate-950 animate-bounce' : 'text-amber-400'}`} />
+            <span>
+              {isCustomizing 
+                ? (isAr ? '✓ إنهاء التعديل والحفظ' : '✓ Done Editing') 
+                : (isAr ? '✏️ وضع التعديل والتحريك' : '✏️ Move & Edit Mode')}
+            </span>
           </button>
 
           {/* Add Station Button */}
@@ -4130,6 +4284,104 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                 </div>
               </div>
             )}
+
+            {/* FLOATING GUIDANCE BANNER WHEN IN EDIT MODE */}
+            {isCustomizing && (
+              <div className="absolute top-3 left-1/2 -translate-x-1/2 z-40 bg-amber-500 text-slate-950 px-4 py-2 rounded-2xl shadow-2xl flex items-center gap-3 border-2 border-white backdrop-blur-md animate-in fade-in slide-in-from-top-2">
+                <div className="w-7 h-7 rounded-full bg-slate-950 text-amber-400 flex items-center justify-center font-black shrink-0">
+                  <Move className="w-4 h-4 animate-bounce" />
+                </div>
+                <div className="text-xs">
+                  <span className="font-black block">{isAr ? 'وضع التعديل والتحريك نشط (Edit & Move Mode)' : 'Edit & Move Mode Active'}</span>
+                  <span className="text-[10px] opacity-90">{isAr ? 'اسحب الماكينات بالماوس بحرية، أو انقر على أي ماكينة لتحريكها بأزرار الأسهم في اللوحة الجانبية' : 'Drag stations with mouse or click any station to nudge with arrows in drawer'}</span>
+                </div>
+                <button
+                  onClick={() => {
+                    setIsCustomizing(false);
+                    toast.success(isAr ? '✓ تم حفظ المخطط وتثبيت المواقع' : '✓ Layout locked and saved');
+                  }}
+                  className="px-3 py-1 rounded-xl bg-slate-950 text-amber-300 hover:text-white font-black text-xs transition-colors shrink-0"
+                >
+                  {isAr ? '✓ تم الحفظ' : '✓ Done'}
+                </button>
+              </div>
+            )}
+
+            {/* FLOATING QUICK CONTROLS DOCK (BOTTOM-LEFT) */}
+            <div className="absolute bottom-4 left-4 z-30 flex items-center gap-2 bg-[#090f1d]/95 backdrop-blur-xl border border-white/10 p-1.5 rounded-2xl shadow-2xl">
+              {/* 2D / 3D Fast Switcher */}
+              <div className="flex items-center gap-1 bg-black/50 p-1 rounded-xl border border-white/5">
+                <button
+                  onClick={() => changeCameraPreset('top-down')}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-black transition-all flex items-center gap-1 ${
+                    cameraPreset === 'top-down'
+                      ? 'bg-amber-500 text-slate-950 shadow-md font-black scale-105'
+                      : 'text-slate-400 hover:text-white hover:bg-white/5'
+                  }`}
+                  title={isAr ? 'مسقط أفقي 2D هندسي مسطح (سهل للتعديل والتحريك بدقة)' : '2D Flat Plan (Easiest for Editing)'}
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                  <span>2D {isAr ? 'مسطح' : 'Plan'}</span>
+                </button>
+                <button
+                  onClick={() => changeCameraPreset('iso-nw')}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-black transition-all flex items-center gap-1 ${
+                    cameraPreset !== 'top-down'
+                      ? 'bg-cyan-500 text-slate-950 shadow-md font-black scale-105'
+                      : 'text-slate-400 hover:text-white hover:bg-white/5'
+                  }`}
+                  title={isAr ? 'مسقط ثلاثي الأبعاد 3D آيزومترك سينمائي' : '3D Isometric View'}
+                >
+                  <Box className="w-3.5 h-3.5" />
+                  <span>3D {isAr ? 'مجسم' : 'Iso'}</span>
+                </button>
+              </div>
+
+              {/* Zoom Controls */}
+              <div className="flex items-center gap-0.5 bg-black/50 p-1 rounded-xl border border-white/5 text-xs">
+                <button
+                  onClick={() => setZoomLevel(prev => Math.min(1.8, prev + 0.15))}
+                  className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10"
+                  title={isAr ? 'تكبير (+)' : 'Zoom In'}
+                >
+                  <ZoomIn className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => setZoomLevel(prev => Math.max(0.6, prev - 0.15))}
+                  className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10"
+                  title={isAr ? 'تصغير (-)' : 'Zoom Out'}
+                >
+                  <ZoomOut className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => setZoomLevel(1)}
+                  className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10"
+                  title={isAr ? 'توسيط وإعادة ضبط (100%)' : 'Reset Zoom'}
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              {/* Auto Layout Quick Alignment */}
+              <button
+                onClick={handleAutoAlignLayout}
+                className="px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-cyan-950 text-cyan-300 hover:text-cyan-200 border border-cyan-500/30 text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm"
+                title={isAr ? 'ترتيب ومحاذاة الماكينات تلقائياً بدون أي تداخل' : 'Auto-align all stations to clean grid'}
+              >
+                <LayoutGrid className="w-3.5 h-3.5 text-cyan-400" />
+                <span className="hidden sm:inline">{isAr ? 'محاذاة هندسية' : 'Auto Align'}</span>
+              </button>
+
+              {/* Auto Connect Conveyors */}
+              <button
+                onClick={handleAutoConnectStations}
+                className="px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-purple-950 text-purple-300 hover:text-purple-200 border border-purple-500/30 text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm"
+                title={isAr ? 'إعادة ربط جميع السيور الناقلة تسلسلياً بذكاء' : 'Smart Sequential Auto-Wiring'}
+              >
+                <Cable className="w-3.5 h-3.5 text-purple-400" />
+                <span className="hidden sm:inline">{isAr ? 'ربط السيور' : 'Auto Wire'}</span>
+              </button>
+            </div>
           </div>
         ) : viewMode === 'stations-grid' ? (
           /* ================================================================ */
@@ -4444,15 +4696,285 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
             <div className="p-4 space-y-4 flex-1 overflow-y-auto">
               {/* TAB 1: OVERVIEW & SCADA TELEMETRY */}
               {drawerTab === 'overview' && (
-                <div className="space-y-4">
-                  {/* BIG PROMINENT EDIT BUTTON AT TOP OF DRAWER */}
-                  <button
-                    onClick={() => setEditingStation(selectedEquipment)}
-                    className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-amber-500/25 transition-all hover:scale-[1.02]"
-                  >
-                    <Edit3 className="w-4 h-4" />
-                    <span>{isAr ? '✏️ تعديل اسم ومواصفات هذه المحطة (Edit)' : '✏️ Edit This Station Details'}</span>
-                  </button>
+                <div className="space-y-3.5">
+                  {/* 1. FAST NUDGE & POSITION CONTROL PAD (D-PAD) */}
+                  <div className="p-3.5 rounded-2xl bg-[#090f1e] border border-amber-500/40 space-y-3 shadow-xl">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 text-xs font-black text-amber-400">
+                        <Move className="w-3.5 h-3.5 text-amber-400" />
+                        <span>{isAr ? 'التحريك والمحاذاة المباشرة (D-Pad)' : 'Position & Nudge Controls'}</span>
+                      </div>
+                      <div className="flex items-center gap-1 bg-black/60 p-0.5 rounded-lg border border-white/5 text-[9px] font-mono">
+                        <span className="text-slate-400 px-1">{isAr ? 'الخطوة:' : 'Step:'}</span>
+                        {[10, 25, 50].map(s => (
+                          <button
+                            key={s}
+                            onClick={() => setNudgeStep(s)}
+                            className={`px-1.5 py-0.5 rounded ${nudgeStep === s ? 'bg-amber-400 text-slate-950 font-black' : 'text-slate-400 hover:text-white'}`}
+                          >
+                            {s}px
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* D-Pad Buttons + Coordinates Display */}
+                    <div className="flex items-center justify-between gap-3 bg-black/50 p-2.5 rounded-xl border border-white/5">
+                      {/* Coordinates */}
+                      <div className="space-y-1 text-xs font-mono">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-slate-400 text-[10px]">X:</span>
+                          <span className="font-bold text-cyan-300">{selectedEquipment.x}px</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-slate-400 text-[10px]">Y:</span>
+                          <span className="font-bold text-cyan-300">{selectedEquipment.y}px</span>
+                        </div>
+                        <div className="text-[9px] text-amber-400/90 font-sans font-bold">
+                          {selectedEquipment.zoneNameAr}
+                        </div>
+                      </div>
+
+                      {/* 4-Way Arrow Nudge Pad */}
+                      <div className="flex flex-col items-center gap-1 shrink-0">
+                        <button
+                          onClick={() => nudgeStation(selectedEquipment.id, 0, -nudgeStep)}
+                          className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-amber-500 hover:text-slate-950 text-white flex items-center justify-center font-bold text-sm shadow transition-all active:scale-90"
+                          title={isAr ? `تحريك لأعلى (${nudgeStep}px)` : `Nudge Up (${nudgeStep}px)`}
+                        >
+                          ▲
+                        </button>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => nudgeStation(selectedEquipment.id, -nudgeStep, 0)}
+                            className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-amber-500 hover:text-slate-950 text-white flex items-center justify-center font-bold text-sm shadow transition-all active:scale-90"
+                            title={isAr ? `تحريك لليسار (${nudgeStep}px)` : `Nudge Left (${nudgeStep}px)`}
+                          >
+                            ◀
+                          </button>
+                          <div className="w-8 h-8 rounded-lg bg-slate-950 text-amber-400 flex items-center justify-center font-mono text-[10px] font-black border border-white/10">
+                            🎯
+                          </div>
+                          <button
+                            onClick={() => nudgeStation(selectedEquipment.id, nudgeStep, 0)}
+                            className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-amber-500 hover:text-slate-950 text-white flex items-center justify-center font-bold text-sm shadow transition-all active:scale-90"
+                            title={isAr ? `تحريك لليمين (${nudgeStep}px)` : `Nudge Right (${nudgeStep}px)`}
+                          >
+                            ▶
+                          </button>
+                        </div>
+                        <button
+                          onClick={() => nudgeStation(selectedEquipment.id, 0, nudgeStep)}
+                          className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-amber-500 hover:text-slate-950 text-white flex items-center justify-center font-bold text-sm shadow transition-all active:scale-90"
+                          title={isAr ? `تحريك لأسفل (${nudgeStep}px)` : `Nudge Down (${nudgeStep}px)`}
+                        >
+                          ▼
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Quick Move to Bay Buttons */}
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-bold text-slate-400 block">
+                        {isAr ? 'نقل فوري إلى عنبر:' : 'Instant Transfer to Bay:'}
+                      </span>
+                      <div className="grid grid-cols-5 gap-1 text-[10px]">
+                        {[
+                          { zone: 'receiving', label: 'Bay A', title: isAr ? 'الاستلام' : 'Recv' },
+                          { zone: 'assembly', label: 'Bay B', title: isAr ? 'التجميع' : 'Asm' },
+                          { zone: 'lab', label: 'Hub C', title: isAr ? 'الجودة' : 'Lab' },
+                          { zone: 'oqc', label: 'Bay D', title: isAr ? 'الفحص' : 'OQC' },
+                          { zone: 'shipping', label: 'Bay E', title: isAr ? 'الشحن' : 'Ship' },
+                        ].map(b => (
+                          <button
+                            key={b.zone}
+                            onClick={() => moveStationToBayPreset(selectedEquipment.id, b.zone as StationZone)}
+                            className={`py-1 px-1 rounded-lg font-bold border transition-all text-center ${
+                              selectedEquipment.zone === b.zone
+                                ? 'bg-amber-500 text-slate-950 border-amber-400 font-black shadow-sm'
+                                : 'bg-black/40 border-white/10 text-slate-400 hover:text-white hover:bg-white/10'
+                            }`}
+                            title={b.title}
+                          >
+                            <span className="block text-[9px]">{b.label}</span>
+                            <span className="block text-[8px] truncate opacity-80">{b.title}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 2. INLINE DIRECT EDITING CARD (No modal needed!) */}
+                  <div className="p-3.5 rounded-2xl bg-slate-900 border border-white/10 space-y-2.5 shadow-md">
+                    <div className="flex items-center justify-between text-xs font-bold text-white">
+                      <span className="flex items-center gap-1.5 text-cyan-400">
+                        <Edit3 className="w-3.5 h-3.5" />
+                        <span>{isAr ? 'تعديل بيانات المحطة مباشرة' : 'Direct Quick Station Edit'}</span>
+                      </span>
+                      <button
+                        onClick={() => setEditingStation(selectedEquipment)}
+                        className="text-[10px] text-amber-400 hover:text-amber-300 underline font-mono"
+                      >
+                        {isAr ? 'النموذج الكامل ↗' : 'Full Form ↗'}
+                      </button>
+                    </div>
+
+                    <div className="space-y-2 text-xs">
+                      <div>
+                        <label className="text-[10px] text-slate-400 block mb-0.5">{isAr ? 'اسم المحطة (بالعربية):' : 'Station Title (Ar):'}</label>
+                        <input
+                          type="text"
+                          value={selectedEquipment.titleAr}
+                          onChange={(e) => updateStationField(selectedEquipment.id, 'titleAr', e.target.value)}
+                          className="w-full bg-black/50 border border-white/10 rounded-xl px-2.5 py-1.5 text-white font-medium focus:outline-none focus:ring-1 focus:ring-cyan-400 text-xs"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] text-slate-400 block mb-0.5">{isAr ? 'اسم المحطة (بالإنجليزية):' : 'Station Title (En):'}</label>
+                        <input
+                          type="text"
+                          value={selectedEquipment.titleEn}
+                          onChange={(e) => updateStationField(selectedEquipment.id, 'titleEn', e.target.value)}
+                          className="w-full bg-black/50 border border-white/10 rounded-xl px-2.5 py-1.5 text-white font-medium focus:outline-none focus:ring-1 focus:ring-cyan-400 text-xs"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-[10px] text-slate-400 block mb-0.5">{isAr ? 'خط الإنتاج:' : 'Line:'}</label>
+                          <input
+                            type="text"
+                            value={selectedEquipment.line}
+                            onChange={(e) => updateStationField(selectedEquipment.id, 'line', e.target.value)}
+                            className="w-full bg-black/50 border border-white/10 rounded-xl px-2.5 py-1.5 text-white font-medium focus:outline-none focus:ring-1 focus:ring-cyan-400 text-xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-slate-400 block mb-0.5">{isAr ? 'المشغل الحالي:' : 'Operator:'}</label>
+                          <input
+                            type="text"
+                            value={selectedEquipment.activeOperator || ''}
+                            onChange={(e) => updateStationField(selectedEquipment.id, 'activeOperator', e.target.value)}
+                            className="w-full bg-black/50 border border-white/10 rounded-xl px-2.5 py-1.5 text-white font-medium focus:outline-none focus:ring-1 focus:ring-cyan-400 text-xs"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 3. QUICK CONVEYOR LINKER & CONNECTED CONVEYORS MANAGER */}
+                  <div className="p-3.5 rounded-2xl bg-slate-900 border border-purple-500/30 space-y-2.5 shadow-md">
+                    <div className="flex items-center justify-between text-xs font-bold text-purple-300">
+                      <span className="flex items-center gap-1.5">
+                        <Link2 className="w-3.5 h-3.5 text-purple-400" />
+                        <span>{isAr ? 'إدارة وتوصيل السيور والمسارات' : 'Conveyor Quick Link & Manage'}</span>
+                      </span>
+                    </div>
+
+                    {/* Link to New Station */}
+                    <div className="p-2.5 rounded-xl bg-black/40 border border-white/5 space-y-2">
+                      <span className="text-[10px] text-slate-400 font-bold block">
+                        {isAr ? 'ربط سير ناقل جديد من هذه المحطة إلى:' : 'Connect new conveyor from here to:'}
+                      </span>
+                      <div className="flex flex-col gap-1.5">
+                        <select
+                          value={quickConnectTargetId}
+                          onChange={(e) => setQuickConnectTargetId(e.target.value)}
+                          className="w-full bg-[#0b1329] border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-purple-400"
+                        >
+                          <option value="">{isAr ? '-- اختر محطة الوصول --' : '-- Select target station --'}</option>
+                          {equipmentList.filter(e => e.id !== selectedEquipment.id).map(e => (
+                            <option key={e.id} value={e.id}>
+                              [{e.code}] {isAr ? e.titleAr : e.titleEn} ({e.zoneNameAr})
+                            </option>
+                          ))}
+                        </select>
+
+                        <div className="flex items-center gap-1.5">
+                          <select
+                            value={quickConnectType}
+                            onChange={(e) => setQuickConnectType(e.target.value as any)}
+                            className="flex-1 bg-[#0b1329] border border-white/10 rounded-xl px-2 py-1 text-xs text-slate-300 focus:outline-none"
+                          >
+                            <option value="motor-roller">{isAr ? 'سير بكرات كهربائي' : 'Motor Roller'}</option>
+                            <option value="belt">{isAr ? 'سير ناقل مستمر' : 'Continuous Belt'}</option>
+                            <option value="gravity-roller">{isAr ? 'بكرات انحدار' : 'Gravity Roller'}</option>
+                            <option value="chute">{isAr ? 'مجرى انزلاق سريع' : 'Chute'}</option>
+                            <option value="pneumatic">{isAr ? 'أنبوب هوائي' : 'Pneumatic Tube'}</option>
+                            <option value="bridge">{isAr ? 'جسر علوي' : 'Overhead Bridge'}</option>
+                          </select>
+
+                          <button
+                            onClick={() => {
+                              if (quickConnectTargetId) {
+                                handleQuickConnect(selectedEquipment.id, quickConnectTargetId, quickConnectType);
+                                setQuickConnectTargetId('');
+                              } else {
+                                toast.warning(isAr ? 'يرجى اختيار محطة وصول أولاً' : 'Select target station first');
+                              }
+                            }}
+                            className="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-black text-xs shrink-0 shadow-md transition-all active:scale-95"
+                          >
+                            + {isAr ? 'ربط السير' : 'Connect'}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Current Connected Conveyors for this station */}
+                    {(() => {
+                      const connected = connectionsList.filter(c => c.fromId === selectedEquipment.id || c.toId === selectedEquipment.id);
+                      if (connected.length === 0) {
+                        return (
+                          <div className="p-2 rounded-xl bg-black/20 text-center text-[10px] text-slate-500">
+                            {isAr ? 'لا توجد سيور متصلة بهذه المحطة حالياً' : 'No conveyors linked to this station'}
+                          </div>
+                        );
+                      }
+                      return (
+                        <div className="space-y-1.5 max-h-36 overflow-y-auto">
+                          {connected.map(c => {
+                            const isOutfeed = c.fromId === selectedEquipment.id;
+                            const otherId = isOutfeed ? c.toId : c.fromId;
+                            const otherSt = equipmentMap[otherId];
+
+                            return (
+                              <div key={c.id} className="p-2 rounded-xl bg-black/50 border border-white/5 flex items-center justify-between text-xs">
+                                <div>
+                                  <span className="text-[10px] font-bold text-white block">
+                                    {isOutfeed 
+                                      ? `▶ ${isAr ? 'إلى:' : 'To:'} ${otherSt?.code || otherId}` 
+                                      : `◀ ${isAr ? 'من:' : 'From:'} ${otherSt?.code || otherId}`}
+                                  </span>
+                                  <span className="text-[9px] text-slate-400 font-mono">
+                                    {c.type} • {c.velocityMs || 0.5}m/s
+                                  </span>
+                                </div>
+
+                                <div className="flex items-center gap-1">
+                                  <button
+                                    onClick={() => handleReverseConnection(c.id)}
+                                    className="p-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-300"
+                                    title={isAr ? 'عكس اتجاه السير' : 'Reverse direction'}
+                                  >
+                                    <RefreshCw className="w-3 h-3" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteConnection(c.id)}
+                                    className="p-1 rounded-lg bg-red-950/60 hover:bg-red-900/60 text-red-400"
+                                    title={isAr ? 'حذف السير' : 'Delete conveyor'}
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
+                  </div>
 
                   {/* DIGITAL ANDON EMERGENCY PULL BUTTON */}
                   <button
