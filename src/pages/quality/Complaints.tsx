@@ -129,7 +129,20 @@ export function ComplaintsPage() {
         ...complaint
       }));
       setComplaints(transformed);
+      try {
+        localStorage.setItem('qms_local_complaints', JSON.stringify(transformed));
+      } catch {}
     } catch (err) {
+      try {
+        const local = localStorage.getItem('qms_local_complaints');
+        if (local) {
+          const parsed = JSON.parse(local);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setComplaints(parsed);
+            return;
+          }
+        }
+      } catch {}
       setComplaints(mockComplaints);
       toast.info('Backend unavailable - no records loaded');
     } finally {

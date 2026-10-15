@@ -71,7 +71,20 @@ export function InspectionPage() {
         ...ins,
       }));
       setInspections(transformed);
+      try {
+        localStorage.setItem('qms_local_inspections', JSON.stringify(transformed));
+      } catch {}
     } catch (e) {
+      try {
+        const local = localStorage.getItem('qms_local_inspections');
+        if (local) {
+          const parsed = JSON.parse(local);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setInspections(parsed);
+            return;
+          }
+        }
+      } catch {}
       setInspections(mockInspections);
       toast.info('Backend unavailable - no records loaded');
     } finally {

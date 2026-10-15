@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { useConfigStore } from './configStore';
-import { purgeAllDemoSimulationData } from '@/services/cleanDemoData';
 
 export interface User {
   id: string;
@@ -127,9 +126,6 @@ export const useAppStore = create<AppState>()(
       initializeApp: async () => {
         // Reinitialize config defaults (in case of new updates to persisted store)
         useConfigStore.getState().reinitializeDefaults();
-
-        // Permanently purge any legacy demo or mock simulation data
-        purgeAllDemoSimulationData();
 
         // If already authenticated (rehydrated), don't overwrite user on refresh, but ensure avatar.
         if (get().user) {

@@ -1258,7 +1258,6 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
   const loadRealData = async () => {
     try {
       setIsLoading(true);
-      purgeAllDemoSimulationData();
 
       const defects = loadSafeLocalDefectRecords() || [];
       const [ncrRes, capaRes, eightDRes, compRes] = await Promise.all([

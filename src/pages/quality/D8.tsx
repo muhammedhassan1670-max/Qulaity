@@ -126,7 +126,7 @@ export function D8Page() {
 
   const [reports, setReports] = useState<D8Report[]>(() => {
     try {
-      const local = localStorage.getItem('qms_local_8d');
+      const local = localStorage.getItem('qms_local_8d') || localStorage.getItem('qms_local_eight-d');
       if (local) {
         const parsed = JSON.parse(local);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
@@ -203,6 +203,7 @@ export function D8Page() {
     setReports(items);
     try {
       localStorage.setItem('qms_local_8d', JSON.stringify(items));
+      localStorage.setItem('qms_local_eight-d', JSON.stringify(items));
     } catch (e) {
       console.error('Failed to save 8D reports locally:', e);
     }
@@ -233,7 +234,7 @@ export function D8Page() {
           immediateAction: report.immediateAction || report.containmentActions || '',
           containmentResponsible: report.containmentResponsible || '',
           containmentDate: report.containmentDate || report.createdAt?.split('T')[0],
-          quantityContained: report.quantityContained || 0,
+          quantityContained: Number(formData.quantityContained) || report.quantityContained || 0,
           analysisMethod: report.analysisMethod || '5why',
           whyAnalysis: report.whyAnalysis || '',
           fishboneAnalysis: report.fishboneAnalysis || '',
@@ -253,7 +254,7 @@ export function D8Page() {
         }));
         saveReports(transformed);
       } else {
-        const stored = localStorage.getItem('qms_local_8d');
+        const stored = localStorage.getItem('qms_local_8d') || localStorage.getItem('qms_local_eight-d');
         if (stored) {
           const parsed = JSON.parse(stored);
           if (Array.isArray(parsed) && parsed.length > 0) {
@@ -266,9 +267,14 @@ export function D8Page() {
         }
       }
     } catch {
-      const stored = localStorage.getItem('qms_local_8d');
+      const stored = localStorage.getItem('qms_local_8d') || localStorage.getItem('qms_local_eight-d');
       if (stored) {
-        setReports(JSON.parse(stored));
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setReports(parsed);
+        } else {
+          saveReports(DEFAULT_8DS);
+        }
       } else {
         saveReports(DEFAULT_8DS);
       }

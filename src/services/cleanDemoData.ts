@@ -1,58 +1,28 @@
 /**
  * QMS Enterprise 4.0 - Clean Demo / Mock Data Utility
- * Purges automatically generated simulation records to maintain data integrity.
+ * Safely purges only explicitly flagged simulation test records.
+ * NEVER deletes or alters genuine user-recorded reports.
  */
-
-const DEMO_PATTERNS = [
-  '2026-901',
-  'DEF-2026-0001',
-  'NCR-2026-1001',
-  'NCR-2026-089',
-  'NCR-2026-104',
-  'NCR-2026-112',
-  'CAPA-2026-2001',
-  'CAPA-2026-001',
-  'CAPA-2026-002',
-  'CAPA-2026-003',
-  '8D-2026-3001',
-  '8D-2026-001',
-  '8D-2026-002',
-  'INSP-2026-4001',
-  'COMP-2026-5001',
-  'CP-2026-6001',
-  'LOT-2026-',
-  'SUP-2026-',
-  'SUP-001',
-  'SUP-002',
-  'SUP-003',
-  'SUP-004',
-  'SUP-005',
-  'INS-2026-RM',
-  'INS-2026-OQC',
-  'NCR-SUP-2026',
-  'NCR-2026-901',
-  'CAPA-2026-901',
-  'EIGHTD-2026-901',
-  'CMP-2026-101',
-  'DEV-2026-04',
-  'CP-PUMP-01',
-  'AUD-2026-901',
-  'ASSY-PUMP-400',
-  'RM-ALUM-7075',
-  'RM-SEAL-NBR',
-  'RM-VALV-SS316',
-  'RM-BOLT-M8GR10',
-  'RM-OIL-ISO46',
-  'SG-1',
-  'Obs-1',
-  'Lot-1',
-  'Unit-1'
-];
 
 function isDemoRecord(item: any): boolean {
   if (!item || typeof item !== 'object') return false;
-  const str = JSON.stringify(item);
-  return DEMO_PATTERNS.some(pattern => str.includes(pattern));
+  // ONLY match records explicitly marked as simulated/mock seed test data.
+  // Never match on product codes, lot numbers, or standard user data fields.
+  if (
+    item._isDemo === true ||
+    item._isSimulation === true ||
+    item.isSimulationRecord === true ||
+    item._demoSeed === true
+  ) {
+    return true;
+  }
+  if (
+    typeof item.id === 'string' &&
+    (item.id.startsWith('mock-seed-') || item.id.startsWith('demo-simulation-'))
+  ) {
+    return true;
+  }
+  return false;
 }
 
 function cleanStorageKey(key: string): number {
@@ -63,7 +33,7 @@ function cleanStorageKey(key: string): number {
     const data = JSON.parse(raw);
     if (!Array.isArray(data)) return 0;
 
-    const filtered = data.filter(item => !isDemoRecord(item));
+    const filtered = data.filter((item) => !isDemoRecord(item));
     const removedCount = data.length - filtered.length;
     if (removedCount > 0) {
       localStorage.setItem(key, JSON.stringify(filtered));
@@ -103,7 +73,7 @@ export function purgeAllDemoSimulationData(): { totalRemoved: number; details: R
     totalRemoved += count;
   }
 
-  // Remove the seeded flags permanently
+  // Clear legacy mock seed flags
   localStorage.removeItem('qms_local_seeded');
   localStorage.removeItem('qms_comprehensive_seeded_v1');
 
