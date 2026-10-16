@@ -3660,7 +3660,7 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
       {/* ==================================================================== */}
       <div className="flex-1 relative flex overflow-hidden">
         {viewMode === '3d-webgl' ? (
-          <div className="flex-1 w-full h-full relative overflow-hidden bg-[#040711]">
+          <div className="flex-1 w-full h-full relative overflow-hidden bg-[#040711] isolate z-0">
             <ErrorBoundary
               fallback={
                 <div className="w-full h-full flex flex-col items-center justify-center bg-[#050811] text-amber-400 gap-4 p-6 text-center">
@@ -5615,7 +5615,7 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
         {/* 4. SLIDE-OVER SCADA COCKPIT DRAWER (INSPECTION, ACTIONS & SETTINGS)  */}
         {/* ==================================================================== */}
         {isDrawerOpen ? (
-          <aside className="w-80 md:w-96 flex-none bg-[#090f1d] border-r md:border-r-0 md:border-l border-white/10 flex flex-col z-20 shadow-2xl overflow-y-auto">
+          <aside className="w-80 md:w-96 flex-none bg-[#090f1d] border-r md:border-r-0 md:border-l border-white/10 flex flex-col z-30 shadow-2xl overflow-y-auto">
             {selectedEquipment ? (
               <>
                 {/* Drawer Header */}
@@ -7195,7 +7195,7 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
 
       {/* Delete Confirmation Modal */}
       {deleteConfirmId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
           <div className="bg-[#0f172a] border border-red-500/40 rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-center">
             <div className="w-12 h-12 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center mx-auto">
               <Trash2 className="w-6 h-6" />
@@ -7326,7 +7326,7 @@ function StationEditModal({ station, isNew, isAr, onSave, onDelete, onClose }: S
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 overflow-y-auto">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 overflow-y-auto">
       <div className="bg-[#0b1324] border-2 border-amber-500/50 rounded-3xl max-w-2xl w-full p-6 shadow-2xl space-y-5 text-white my-8" dir={isAr ? 'rtl' : 'ltr'}>
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-white/10">
@@ -7801,7 +7801,7 @@ function ConnectionManagerModal({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 overflow-y-auto">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 backdrop-blur-md p-4 overflow-y-auto">
       <div className="bg-[#080d19] border-2 border-cyan-500/50 rounded-3xl max-w-4xl w-full p-6 shadow-2xl space-y-5 text-white my-8 max-h-[90vh] flex flex-col" dir={isAr ? 'rtl' : 'ltr'}>
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-white/10 shrink-0">
@@ -8191,7 +8191,7 @@ function ConnectionManagerModal({
 
         {/* Delete Confirmation inside Connection Manager */}
         {deleteConfirmId && (
-          <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
             <div className="bg-[#0f172a] border border-red-500/40 rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-center">
               <div className="w-12 h-12 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center mx-auto">
                 <Trash2 className="w-6 h-6" />

@@ -846,94 +846,60 @@ function HolographicStationBillboard({
 
   return (
     <Html
-      position={[0, 2.2, 0]}
+      position={[0, 2.4, 0]}
       center
       distanceFactor={28}
       className="pointer-events-auto"
       style={{
-        transition: 'transform 0.15s ease',
-        transform: isSelected ? 'scale(1.08)' : 'scale(1.0)',
-        zIndex: isSelected ? 50 : 10
+        transition: 'all 0.15s ease',
+        transform: isSelected ? 'scale(1.12)' : 'scale(1.0)',
+        zIndex: isSelected ? 15 : 5
       }}
     >
-      {!isSelected ? (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onSelect();
-          }}
-          className="group relative flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-950/85 hover:bg-slate-900 border backdrop-blur-md shadow-lg transition-all hover:scale-110 active:scale-95"
-          style={{
-            borderColor: `${statusColor}50`,
-            boxShadow: `0 0 12px ${statusColor}30`
-          }}
-          title={isAr ? station.titleAr : station.titleEn}
-        >
-          <span 
-            className="w-2 h-2 rounded-full shrink-0 animate-ping"
-            style={{ backgroundColor: statusColor }}
-          />
-          <span 
-            className="w-2 h-2 rounded-full shrink-0 -ml-3.5"
-            style={{ backgroundColor: statusColor }}
-          />
-          <span className="text-[11px] font-mono font-black text-white">
-            {station.code}
-          </span>
-          <span className="text-[10px] text-slate-400 font-medium hidden group-hover:inline max-w-[90px] truncate">
-            {isAr ? station.titleAr : station.titleEn}
-          </span>
-          <span 
-            className="text-[10px] font-mono font-bold px-1 rounded"
-            style={{ 
-              backgroundColor: `${statusColor}20`,
-              color: statusColor 
-            }}
-          >
-            {oee}%
-          </span>
-        </button>
-      ) : (
-        <div 
-          onClick={(e) => {
-            e.stopPropagation();
-            onSelect();
-          }}
-          className="w-48 bg-slate-950/95 backdrop-blur-2xl border-2 rounded-xl p-2.5 shadow-2xl space-y-1.5 cursor-pointer text-right"
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onSelect();
+        }}
+        className={`group relative flex items-center gap-1.5 px-3 py-1.5 rounded-full backdrop-blur-md shadow-lg transition-all ${
+          isSelected 
+            ? 'bg-slate-900 border-2 ring-2 ring-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.6)]' 
+            : 'bg-slate-950/85 hover:bg-slate-900 border hover:scale-105 active:scale-95'
+        }`}
+        style={{
+          borderColor: isSelected ? '#38bdf8' : `${statusColor}60`,
+          boxShadow: isSelected 
+            ? `0 0 20px rgba(56,189,248,0.5), inset 0 0 10px rgba(56,189,248,0.2)` 
+            : `0 0 12px ${statusColor}30`,
+        }}
+        title={isAr ? station.titleAr : station.titleEn}
+      >
+        <span 
+          className="w-2 h-2 rounded-full shrink-0 animate-ping"
+          style={{ backgroundColor: statusColor }}
+        />
+        <span 
+          className="w-2 h-2 rounded-full shrink-0 -ml-3.5"
+          style={{ backgroundColor: statusColor }}
+        />
+        <span className="text-[11px] font-mono font-black text-white">
+          {station.code}
+        </span>
+        <span className={`text-[10px] font-medium max-w-[120px] truncate ${
+          isSelected ? 'text-cyan-200 inline' : 'text-slate-400 hidden group-hover:inline'
+        }`}>
+          {isAr ? station.titleAr : station.titleEn}
+        </span>
+        <span 
+          className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded"
           style={{ 
-            borderColor: statusColor,
-            boxShadow: `0 0 24px ${statusColor}40`
+            backgroundColor: `${statusColor}25`,
+            color: statusColor 
           }}
         >
-          <div className="flex items-center justify-between border-b border-white/10 pb-1.5">
-            <span 
-              className="text-[9px] font-black px-1.5 py-0.2 rounded font-mono uppercase"
-              style={{ backgroundColor: `${statusColor}25`, color: statusColor }}
-            >
-              {status}
-            </span>
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs font-black text-white font-mono">{station.code}</span>
-              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: statusColor }} />
-            </div>
-          </div>
-          <div className="text-[11px] font-bold text-slate-200 truncate">
-            {isAr ? station.titleAr : station.titleEn}
-          </div>
-          <div className="grid grid-cols-2 gap-1 pt-1 text-[10px] font-mono border-t border-white/5">
-            <div className="bg-white/5 p-1 rounded text-center">
-              <span className="text-slate-400 text-[9px] block">OEE</span>
-              <span className="font-bold text-white">{oee}%</span>
-            </div>
-            <div className="bg-white/5 p-1 rounded text-center">
-              <span className="text-slate-400 text-[9px] block">CT</span>
-              <span className="font-bold text-cyan-300">
-                {statusInfo?.realTimeMetrics?.cycleTimeSeconds || 42}s
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
+          {oee}%
+        </span>
+      </button>
     </Html>
   );
 }
@@ -1042,7 +1008,7 @@ export function EnterprisePlant3D({
   }, [equipmentList]);
 
   return (
-    <div className="relative w-full h-full bg-[#050811] overflow-hidden select-none">
+    <div className="relative w-full h-full bg-[#050811] overflow-hidden select-none isolate">
       {/* ==================================================================== */}
       {/* TOP CONTROLS & 10 REAL DEPARTMENTS NAVIGATOR HUD                     */}
       {/* ==================================================================== */}
