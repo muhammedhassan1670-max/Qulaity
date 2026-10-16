@@ -38,7 +38,7 @@ import {
 import { ErrorBoundary } from '../../components/ErrorBoundary';
 import EnterprisePlant3D from '../../components/3d/EnterprisePlant3D';
 
-export type StationZone = 'receiving' | 'assembly' | 'lab' | 'oqc' | 'shipping';
+export type StationZone = 'receiving' | 'assembly' | 'resolution' | 'oqc' | 'shipping' | 'lab' | 'setup';
 export type ViewMode = '3d-webgl' | 'scada-floorplan' | 'stations-grid' | 'customize-table';
 export type FilterStatus = 'all' | 'alerts-only' | 'normal-only';
 export type CameraPreset = 'iso-nw' | 'iso-ne' | 'elevation' | 'top-down';
@@ -79,343 +79,490 @@ export interface QualityControlTowerProps {
   className?: string;
 }
 
-const SCADA_STORAGE_KEY = 'qms_scada_equipment_config_v2';
-const SCADA_CONNECTIONS_KEY = 'qms_scada_connections_v2';
+const SCADA_STORAGE_KEY = 'qms_scada_equipment_config_v4';
+const SCADA_CONNECTIONS_KEY = 'qms_scada_connections_v4';
 
 export const DEFAULT_EQUIPMENT_PODS: ScadaEquipment[] = [
   // ------------------------------------------------------------------------
-  // BAY A: رصيف الاستلام وفحص المواد الخام (RECEIVING & RAW MATERIALS)
+  // STAGE 1: استلام الخامات والموردين (IQC) - مطابق تماماً للتبويبات بالقائمة الجانبية
   // ------------------------------------------------------------------------
   {
-    id: 'DOCK-RECEIVING-01',
-    code: 'DCK-01',
+    id: 'STATION-SUPPLIER-QUALITY',
+    code: 'SUP-01',
     zone: 'receiving',
-    zoneNameAr: 'عنبر الاستلام A',
-    zoneNameEn: 'Receiving Bay A',
-    titleAr: 'بوابة رصيف الاستلام 01',
-    titleEn: 'Infeed Dock Gate 01',
-    line: 'Receiving',
-    locationAr: 'مدخل المصنع الغربي',
-    locationEn: 'West Inbound Gate',
+    zoneNameAr: '1. استلام الخامات والموردين (IQC)',
+    zoneNameEn: '1. Incoming & Supplier Quality',
+    titleAr: 'جودة وتقييم الموردين',
+    titleEn: 'Supplier Quality & Rating',
+    line: 'Supplier QA',
+    locationAr: 'تقييم واعتماد الموردين وبوالص الشحن',
+    locationEn: 'Supplier Audits & Scorecards',
     iconType: 'truck',
-    moduleUrl: '/compliance/hub/inspection',
-    moduleLabelAr: 'فحص الشحنات (IQC)',
-    oeeEstimate: 96,
-    fpyEstimate: 99.1,
-    activeOperator: 'فني الاستلام المناوب',
-    vibrationMmS: 0.08,
+    moduleUrl: '/supplier-quality',
+    moduleLabelAr: 'جودة وتقييم الموردين',
+    oeeEstimate: 98,
+    fpyEstimate: 99.2,
+    activeOperator: 'مهندس جودة الموردين SQA',
+    vibrationMmS: 0.02,
     temperatureC: 22,
-    x: 35, y: 70, w: 235, h: 95
+    x: 40, y: 70, w: 220, h: 80
   },
   {
-    id: 'STATION-IQC-INSPECT',
+    id: 'STATION-INSPECTION-PLANS',
+    code: 'PLN-01',
+    zone: 'receiving',
+    zoneNameAr: '1. استلام الخامات والموردين (IQC)',
+    zoneNameEn: '1. Incoming & Supplier Quality',
+    titleAr: 'خطط فحص المواد الخام',
+    titleEn: 'Incoming Inspection Plans',
+    line: 'Inspection Setup',
+    locationAr: 'مواصفات ومعايير فحص الخامات الواردة',
+    locationEn: 'Raw Materials Quality Sampling Plans',
+    iconType: 'gauge',
+    moduleUrl: '/quality-inspection-plans',
+    moduleLabelAr: 'خطط فحص المواد الخام',
+    oeeEstimate: 96,
+    fpyEstimate: 98.9,
+    activeOperator: 'أخصائي خطط الفحص',
+    vibrationMmS: 0.01,
+    temperatureC: 22,
+    x: 40, y: 175, w: 220, h: 80
+  },
+  {
+    id: 'STATION-IQC-INSPECTION',
     code: 'IQC-01',
     zone: 'receiving',
-    zoneNameAr: 'عنبر الاستلام A',
-    zoneNameEn: 'Receiving Bay A',
-    titleAr: 'محطة فحص الاستلام (IQC)',
-    titleEn: 'Smart IQC Inspection Cell',
-    line: 'Receiving',
-    locationAr: 'منطقة الفحص الأولى',
-    locationEn: 'Primary Inspection Cell',
-    iconType: 'gauge',
+    zoneNameAr: '1. استلام الخامات والموردين (IQC)',
+    zoneNameEn: '1. Incoming & Supplier Quality',
+    titleAr: 'فحص الشحنات الواردة (IQC)',
+    titleEn: 'Incoming Inspection (IQC)',
+    line: 'Inbound Receiving',
+    locationAr: 'رصيف فحص الشحنات واستلام اللوطات',
+    locationEn: 'Inbound Inspection Dock & Lot Release',
+    iconType: 'pallet',
     moduleUrl: '/compliance/hub/inspection',
-    moduleLabelAr: 'فحص الاستلام (IQC)',
-    oeeEstimate: 94,
-    fpyEstimate: 98.4,
-    activeOperator: 'مهندس فحص الخامات',
-    vibrationMmS: 0.12,
+    moduleLabelAr: 'فحص الشحنات الواردة (IQC)',
+    oeeEstimate: 95,
+    fpyEstimate: 98.5,
+    activeOperator: 'مفتش جودة الاستلام IQC',
+    vibrationMmS: 0.05,
     temperatureC: 23,
-    x: 35, y: 185, w: 235, h: 95
-  },
-  {
-    id: 'QUARANTINE-CAGE',
-    code: 'QRN-01',
-    zone: 'receiving',
-    zoneNameAr: 'عنبر الاستلام A',
-    zoneNameEn: 'Receiving Bay A',
-    titleAr: 'قفص العزل للمواد المرفوضة',
-    titleEn: 'Quarantine & Rejection Hold',
-    line: 'Receiving',
-    locationAr: 'قفص العزل الأمني',
-    locationEn: 'Secure Hold Enclosure',
-    iconType: 'pallet',
-    moduleUrl: '/quality/records/ncr',
-    moduleLabelAr: 'تقارير عدم المطابقة (NCR)',
-    oeeEstimate: 100,
-    fpyEstimate: 100,
-    activeOperator: 'أمين العزل والحجر',
-    vibrationMmS: 0.02,
-    temperatureC: 21,
-    x: 35, y: 300, w: 112, h: 105
-  },
-  {
-    id: 'WAREHOUSE-RAW-STAGING',
-    code: 'BUF-01',
-    zone: 'receiving',
-    zoneNameAr: 'عنبر الاستلام A',
-    zoneNameEn: 'Receiving Bay A',
-    titleAr: 'مستودع الخامات المعتمدة',
-    titleEn: 'Approved Material Racks',
-    line: 'Receiving',
-    locationAr: 'مستودع الخامات المفحوصة',
-    locationEn: 'Approved Buffer Staging',
-    iconType: 'pallet',
-    moduleUrl: '/supplier-quality',
-    moduleLabelAr: 'جودة الموردين',
-    oeeEstimate: 98,
-    fpyEstimate: 99.8,
-    activeOperator: 'مشرف المستودع',
-    vibrationMmS: 0.04,
-    temperatureC: 21,
-    x: 158, y: 300, w: 112, h: 105
+    x: 40, y: 280, w: 220, h: 85
   },
 
   // ------------------------------------------------------------------------
-  // BAY B: صالة الإنتاج وخط التجميع الرئيسي (ASSEMBLY LINE 01 - CONVEYOR)
+  // STAGE 7 (PART A): تهيئة المصنع والبيانات - العمود الأيسر السفلي
   // ------------------------------------------------------------------------
   {
-    id: 'STATION-CNC-MILLING',
-    code: 'CNC-01',
+    id: 'STATION-MASTER-DATA',
+    code: 'MST-01',
+    zone: 'setup',
+    zoneNameAr: '7. تهيئة المصنع والبيانات',
+    zoneNameEn: '7. Factory Setup & Master Data',
+    titleAr: 'البيانات الرئيسية (قطع/موديلات)',
+    titleEn: 'Quality Master Data',
+    line: 'System Master',
+    locationAr: 'كتالوج الأجزاء والموديلات ومواصفات الجودة',
+    locationEn: 'Parts, Models & Quality Master Catalog',
+    iconType: 'machine',
+    moduleUrl: '/quality-master-data',
+    moduleLabelAr: 'البيانات الرئيسية',
+    oeeEstimate: 100,
+    fpyEstimate: 100,
+    activeOperator: 'مدير البيانات الرئيسية',
+    vibrationMmS: 0.0,
+    temperatureC: 21,
+    x: 40, y: 400, w: 220, h: 75
+  },
+  {
+    id: 'STATION-FORM-DESIGNER',
+    code: 'FRM-01',
+    zone: 'setup',
+    zoneNameAr: '7. تهيئة المصنع والبيانات',
+    zoneNameEn: '7. Factory Setup & Master Data',
+    titleAr: 'مصمم نماذج الفحص',
+    titleEn: 'Inspection Form Designer',
+    line: 'System Master',
+    locationAr: 'تصميم نماذج الشيك ليست وفحص الجودة',
+    locationEn: 'Inspection Checklist & Form Templates',
+    iconType: 'wrench',
+    moduleUrl: '/quality-form-designer',
+    moduleLabelAr: 'مصمم نماذج الفحص',
+    oeeEstimate: 99,
+    fpyEstimate: 100,
+    activeOperator: 'مهندس نمذجة الفحص',
+    vibrationMmS: 0.0,
+    temperatureC: 21,
+    x: 40, y: 500, w: 220, h: 75
+  },
+
+  // ------------------------------------------------------------------------
+  // STAGE 2: جودة التصنيع والعمليات (IPQC) - مطابق لتبويبات القائمة الجانبية
+  // ------------------------------------------------------------------------
+  {
+    id: 'STATION-SHOPFLOOR-ENTRY',
+    code: 'SHP-01',
     zone: 'assembly',
-    zoneNameAr: 'خط التجميع 01',
-    zoneNameEn: 'Assembly Line 01',
-    titleAr: 'محطة 1: التشغيل والخراطة CNC',
-    titleEn: '5-Axis CNC Machining Cell',
-    line: 'Line 1',
-    locationAr: 'بداية السير الناقل 01',
-    locationEn: 'Conveyor 01 Infeed',
+    zoneNameAr: '2. جودة التصنيع والعمليات (IPQC)',
+    zoneNameEn: '2. In-Process Quality (IPQC)',
+    titleAr: 'تسجيل سريع من الأرضية',
+    titleEn: 'Fast Shopfloor Entry',
+    line: 'Production Line',
+    locationAr: 'محطة التسجيل السريع للأندون والإنتاج',
+    locationEn: 'Fast Shopfloor & Andon Logging Station',
     iconType: 'machine',
     moduleUrl: '/quality-shopfloor',
     moduleLabelAr: 'تسجيل صالة الإنتاج',
-    oeeEstimate: 91,
-    fpyEstimate: 97.5,
-    activeOperator: 'مشغل CNC معتمد',
-    vibrationMmS: 0.28,
-    temperatureC: 44,
-    x: 330, y: 180, w: 155, h: 110
-  },
-  {
-    id: 'STATION-SUB-ASSEMBLY',
-    code: 'ASM-02',
-    zone: 'assembly',
-    zoneNameAr: 'خط التجميع 01',
-    zoneNameEn: 'Assembly Line 01',
-    titleAr: 'محطة 2: التجميع والتركيب الميكانيكي',
-    titleEn: 'Sub-Assembly & Fitting',
-    line: 'Line 1',
-    locationAr: 'المرحلة 02 على السير',
-    locationEn: 'Mid-Conveyor Station',
-    iconType: 'wrench',
-    moduleUrl: '/quality-shopfloor',
-    moduleLabelAr: 'تسجيل صالة الإنتاج',
-    oeeEstimate: 93,
-    fpyEstimate: 98.9,
-    activeOperator: 'فني تجميع ميكانيكي',
-    vibrationMmS: 0.14,
+    oeeEstimate: 92,
+    fpyEstimate: 97.8,
+    activeOperator: 'مشغل الخط وقائد الفريق',
+    vibrationMmS: 0.15,
     temperatureC: 28,
-    x: 505, y: 180, w: 155, h: 110
+    x: 310, y: 70, w: 225, h: 80
   },
   {
-    id: 'STATION-TORQUE-BENCH',
-    code: 'TRQ-03',
+    id: 'STATION-DEFECT-LOG',
+    code: 'DEF-01',
     zone: 'assembly',
-    zoneNameAr: 'خط التجميع 01',
-    zoneNameEn: 'Assembly Line 01',
-    titleAr: 'محطة 3: عزم الربط الذكي Poka-Yoke',
-    titleEn: 'Smart Torque & Fastening Bench',
-    line: 'Line 1',
-    locationAr: 'المرحلة 03 على السير',
-    locationEn: 'Poka-Yoke Fastening Gate',
+    zoneNameAr: '2. جودة التصنيع والعمليات (IPQC)',
+    zoneNameEn: '2. In-Process Quality (IPQC)',
+    titleAr: 'مسجل / قائمة العيوب اليومية',
+    titleEn: 'Daily Defect Recorder',
+    line: 'Production Line',
+    locationAr: 'سجل توثيق العيوب وباركود القطع المعيبة',
+    locationEn: 'Daily Shift Defect Logging & Pareto Track',
     iconType: 'wrench',
-    moduleUrl: '/spc',
-    moduleLabelAr: 'كارتات التحكم الإحصائي SPC',
-    oeeEstimate: 97,
-    fpyEstimate: 99.4,
-    activeOperator: 'فني ربط المعايرة',
-    vibrationMmS: 0.09,
-    temperatureC: 25,
-    x: 680, y: 180, w: 155, h: 110
+    moduleUrl: '/defect-log',
+    moduleLabelAr: 'مسجل العيوب اليومية',
+    oeeEstimate: 94,
+    fpyEstimate: 98.1,
+    activeOperator: 'مراقب جودة العمليات',
+    vibrationMmS: 0.10,
+    temperatureC: 26,
+    x: 310, y: 175, w: 225, h: 80
   },
   {
-    id: 'STATION-PRESSURE-TEST',
-    code: 'PRS-04',
+    id: 'STATION-SPC-CHARTS',
+    code: 'SPC-01',
     zone: 'assembly',
-    zoneNameAr: 'خط التجميع 01',
-    zoneNameEn: 'Assembly Line 01',
-    titleAr: 'محطة 4: كابينة اختبار الضغط والتسريب',
-    titleEn: 'Pressure & Leakage Test Cell',
-    line: 'Line 1',
-    locationAr: 'كابينة الاختبارات الهيدروليكية',
-    locationEn: 'Hydraulic Test Cell',
+    zoneNameAr: '2. جودة التصنيع والعمليات (IPQC)',
+    zoneNameEn: '2. In-Process Quality (IPQC)',
+    titleAr: 'كارتات التحكم الإحصائي SPC',
+    titleEn: 'SPC Control Charts (X̄-R / Cpk)',
+    line: 'Process Control',
+    locationAr: 'محطة التحليل الإحصائي وقدرة العمليات',
+    locationEn: 'Statistical Process Control & Capability Hub',
+    iconType: 'gauge',
+    moduleUrl: '/spc',
+    moduleLabelAr: 'كارتات التحكم SPC',
+    oeeEstimate: 96,
+    fpyEstimate: 99.0,
+    activeOperator: 'مهندس ضبط العمليات الإحصائي',
+    vibrationMmS: 0.08,
+    temperatureC: 24,
+    x: 310, y: 280, w: 225, h: 80
+  },
+  {
+    id: 'STATION-EXECUTION-BOARD',
+    code: 'EXC-01',
+    zone: 'assembly',
+    zoneNameAr: '2. جودة التصنيع والعمليات (IPQC)',
+    zoneNameEn: '2. In-Process Quality (IPQC)',
+    titleAr: 'متابعة تنفيذ محطات الفحص',
+    titleEn: 'Inspection Execution Board',
+    line: 'Quality Clearance',
+    locationAr: 'لوحة إفراج وتصريح محطات الفحص المرحلي',
+    locationEn: 'Station Clearance & Execution Tracking',
     iconType: 'gauge',
     moduleUrl: '/quality-execution-board',
     moduleLabelAr: 'متابعة محطات الفحص',
-    oeeEstimate: 89,
-    fpyEstimate: 96.2,
-    activeOperator: 'مهندس اختبارات هيدروليكية',
-    vibrationMmS: 0.32,
-    temperatureC: 38,
-    x: 415, y: 310, w: 200, h: 110
-  },
-  {
-    id: 'STATION-IPQC-GATE',
-    code: 'IPQC-05',
-    zone: 'assembly',
-    zoneNameAr: 'خط التجميع 01',
-    zoneNameEn: 'Assembly Line 01',
-    titleAr: 'محطة 5: بوابة الفحص المرحلي IPQC',
-    titleEn: 'In-Process Quality Clearance Gate',
-    line: 'Line 1',
-    locationAr: 'مخرج خط الإنتاج 01',
-    locationEn: 'Line 01 Quality Gate',
-    iconType: 'gauge',
-    moduleUrl: '/defect-log',
-    moduleLabelAr: 'مسجل العيوب اليومية',
     oeeEstimate: 95,
     fpyEstimate: 98.7,
-    activeOperator: 'مفتش جودة مرحلي IPQC',
-    vibrationMmS: 0.08,
-    temperatureC: 24,
-    x: 635, y: 310, w: 200, h: 110
+    activeOperator: 'مشرف الإفراج المرحلي',
+    vibrationMmS: 0.06,
+    temperatureC: 25,
+    x: 310, y: 385, w: 225, h: 80
+  },
+  {
+    id: 'STATION-KNOWLEDGE-BASE',
+    code: 'KB-01',
+    zone: 'setup',
+    zoneNameAr: '7. تهيئة المصنع والبيانات',
+    zoneNameEn: '7. Factory Setup & Master Data',
+    titleAr: 'قاعدة الدروس المستفادة',
+    titleEn: 'Lessons Learned Knowledge Base',
+    line: 'Continuous Improvement',
+    locationAr: 'مستودع المعرفة والحلول الجذرية المعتمدة',
+    locationEn: 'Knowledge Base & Lessons Learned Library',
+    iconType: 'lab',
+    moduleUrl: '/quality-knowledge-base',
+    moduleLabelAr: 'قاعدة الدروس المستفادة',
+    oeeEstimate: 99,
+    fpyEstimate: 100,
+    activeOperator: 'مدير المعرفة والتحسين المستمر',
+    vibrationMmS: 0.0,
+    temperatureC: 22,
+    x: 310, y: 495, w: 225, h: 80
   },
 
   // ------------------------------------------------------------------------
-  // BAY C: مركز الجودة والمعايرة (METROLOGY LAB & MRB WAR ROOM)
+  // STAGE 3: عدم المطابقة وحل المشكلات (NCR/8D) - مطابق لتبويبات القائمة الجانبية
   // ------------------------------------------------------------------------
   {
-    id: 'LAB-METROLOGY-CMM',
-    code: 'CMM-01',
-    zone: 'lab',
-    zoneNameAr: 'مركز الجودة C',
-    zoneNameEn: 'Quality Hub C',
-    titleAr: 'معمل القياس ثلاثي الأبعاد CMM',
-    titleEn: '3D CMM Metrology Lab',
-    line: 'Quality Lab',
-    locationAr: 'المعمل المركزي المكيف',
-    locationEn: 'Climate-Controlled Metrology Room',
-    iconType: 'lab',
-    moduleUrl: '/compliance/hub/calibration',
-    moduleLabelAr: 'المعايرة والأجهزة',
-    oeeEstimate: 98,
-    fpyEstimate: 99.6,
-    activeOperator: 'أخصائي قياسات CMM',
-    vibrationMmS: 0.01,
-    temperatureC: 20,
-    x: 330, y: 470, w: 245, h: 105
+    id: 'STATION-NCR-REPORTS',
+    code: 'NCR-01',
+    zone: 'resolution',
+    zoneNameAr: '3. عدم المطابقة وحل المشكلات (NCR/8D)',
+    zoneNameEn: '3. Problem Solving (NCR/8D)',
+    titleAr: 'تقارير عدم المطابقة NCR',
+    titleEn: 'Non-Conformance Reports (NCR)',
+    line: 'Quality Assurance',
+    locationAr: 'مركز تصعيد وحصر المنتجات غير المطابقة',
+    locationEn: 'Non-Conformance Tracking & Material Quarantine',
+    iconType: 'wrench',
+    moduleUrl: '/quality/records/ncr',
+    moduleLabelAr: 'تقارير عدم المطابقة (NCR)',
+    oeeEstimate: 90,
+    fpyEstimate: 94.5,
+    activeOperator: 'مهندس حصر وتصنيف عدم المطابقة',
+    vibrationMmS: 0.02,
+    temperatureC: 23,
+    x: 580, y: 70, w: 225, h: 80
   },
   {
-    id: 'ROOM-MRB-CAPA',
-    code: 'MRB-01',
-    zone: 'lab',
-    zoneNameAr: 'مركز الجودة C',
-    zoneNameEn: 'Quality Hub C',
-    titleAr: 'غرفة مراجعة المواد MRB و CAPA',
-    titleEn: 'MRB Review & Problem Solving Hub',
+    id: 'STATION-CAPA-ACTIONS',
+    code: 'CAP-01',
+    zone: 'resolution',
+    zoneNameAr: '3. عدم المطابقة وحل المشكلات (NCR/8D)',
+    zoneNameEn: '3. Problem Solving (NCR/8D)',
+    titleAr: 'الإجراءات التصحيحية CAPA',
+    titleEn: 'Corrective & Preventive Actions',
     line: 'Quality Assurance',
-    locationAr: 'قاعة مراجعة الجودة المركزية',
-    locationEn: 'Central QA War Room',
+    locationAr: 'متابعة خطط الإجراءات التصحيحية والوقائية',
+    locationEn: 'CAPA Closed-Loop Action Verification',
     iconType: 'lab',
     moduleUrl: '/quality/records/capa',
     moduleLabelAr: 'الإجراءات التصحيحية (CAPA)',
-    oeeEstimate: 92,
-    fpyEstimate: 95.0,
-    activeOperator: 'مدير توكيد الجودة QA',
+    oeeEstimate: 93,
+    fpyEstimate: 96.0,
+    activeOperator: 'مدير توكيد الجودة والإجراءات التصحيحية',
     vibrationMmS: 0.01,
     temperatureC: 22,
-    x: 590, y: 470, w: 245, h: 105
+    x: 580, y: 175, w: 225, h: 80
+  },
+  {
+    id: 'STATION-8D-SOLVING',
+    code: '8D-01',
+    zone: 'resolution',
+    zoneNameAr: '3. عدم المطابقة وحل المشكلات (NCR/8D)',
+    zoneNameEn: '3. Problem Solving (NCR/8D)',
+    titleAr: 'حل المشكلات المنهجي 8D',
+    titleEn: '8D Problem Solving Methodology',
+    line: 'Continuous Improvement',
+    locationAr: 'غرفة عمليات فرق العمل وتحليل الأسباب الجذرية',
+    locationEn: '8D Root Cause Analysis & Team Problem Solving',
+    iconType: 'lab',
+    moduleUrl: '/quality/records/8d',
+    moduleLabelAr: 'حل المشكلات المنهجي (8D)',
+    oeeEstimate: 94,
+    fpyEstimate: 97.2,
+    activeOperator: 'قائد فريق الـ 8D والتحسين',
+    vibrationMmS: 0.01,
+    temperatureC: 22,
+    x: 580, y: 280, w: 225, h: 80
+  },
+  {
+    id: 'STATION-DEVIATION-PERMITS',
+    code: 'DEV-01',
+    zone: 'resolution',
+    zoneNameAr: '3. عدم المطابقة وحل المشكلات (NCR/8D)',
+    zoneNameEn: '3. Problem Solving (NCR/8D)',
+    titleAr: 'الانحرافات وتصاريح الحيود',
+    titleEn: 'Deviations & Concessions',
+    line: 'Engineering Governance',
+    locationAr: 'إصدار وتصديق تصاريح التجاوز الهندسي المؤقت',
+    locationEn: 'Engineering Deviation & Concession Approvals',
+    iconType: 'gauge',
+    moduleUrl: '/quality/records/deviation',
+    moduleLabelAr: 'تصاريح الحيود',
+    oeeEstimate: 97,
+    fpyEstimate: 99.1,
+    activeOperator: 'مهندس الاعتماد والتصاريح',
+    vibrationMmS: 0.01,
+    temperatureC: 22,
+    x: 580, y: 385, w: 225, h: 80
+  },
+  {
+    id: 'STATION-CHANGE-CONTROL',
+    code: 'ECN-01',
+    zone: 'resolution',
+    zoneNameAr: '3. عدم المطابقة وحل المشكلات (NCR/8D)',
+    zoneNameEn: '3. Problem Solving (NCR/8D)',
+    titleAr: 'ضبط التغيير الهندسي',
+    titleEn: 'Engineering Change Control (ECN)',
+    line: 'Engineering Governance',
+    locationAr: 'إدارة وتوثيق طلبات التعديل والتغيير الهندسي',
+    locationEn: 'Engineering Change Notice & Validation',
+    iconType: 'wrench',
+    moduleUrl: '/quality/records/change-control',
+    moduleLabelAr: 'ضبط التغيير الهندسي',
+    oeeEstimate: 96,
+    fpyEstimate: 98.8,
+    activeOperator: 'مهندس التغيير الهندسي والتطوير',
+    vibrationMmS: 0.01,
+    temperatureC: 22,
+    x: 580, y: 495, w: 225, h: 80
   },
 
   // ------------------------------------------------------------------------
-  // BAY D: الفحص النهائي والتغليف (FINAL OQC & PACKAGING)
+  // STAGES 4, 5, 6: الفحص النهائي وشكاوى العملاء والمختبر الهندسي
   // ------------------------------------------------------------------------
   {
-    id: 'BENCH-OQC-RELEASE',
+    id: 'STATION-OUTGOING-OQC',
     code: 'OQC-01',
     zone: 'oqc',
-    zoneNameAr: 'عنبر الإفراج D',
-    zoneNameEn: 'OQC Bay D',
-    titleAr: 'منصة الفحص النهائي والإفراج OQC',
-    titleEn: 'Final OQC Clearance Bench',
-    line: 'Final Inspection',
-    locationAr: 'محطة فحص عينات الشحن',
-    locationEn: 'Outbound Sampling Bench',
+    zoneNameAr: '4. فحص وخروج المنتج (OQC)',
+    zoneNameEn: '4. Outgoing Quality (OQC)',
+    titleAr: 'فحص جودة الشحنات الصادرة',
+    titleEn: 'Pre-Shipment Inspection (OQC)',
+    line: 'Final Quality Release',
+    locationAr: 'منصة الفحص النهائي وسحب عينات AQL والإفراج',
+    locationEn: 'Final Product Inspection & Outbound Clearance',
     iconType: 'package',
     moduleUrl: '/outgoing-quality',
-    moduleLabelAr: 'فحص المنتج النهائي (OQC)',
-    oeeEstimate: 97,
-    fpyEstimate: 99.5,
-    activeOperator: 'مفتش الإفراج النهائي OQC',
-    vibrationMmS: 0.06,
+    moduleLabelAr: 'فحص الشحنات الصادرة (OQC)',
+    oeeEstimate: 98,
+    fpyEstimate: 99.6,
+    activeOperator: 'مفتش الجودة الصادرة النهائي OQC',
+    vibrationMmS: 0.04,
     temperatureC: 23,
-    x: 895, y: 70, w: 260, h: 100
+    x: 855, y: 70, w: 260, h: 80
   },
   {
-    id: 'STATION-PACKAGING',
-    code: 'PCK-02',
-    zone: 'oqc',
-    zoneNameAr: 'عنبر الإفراج D',
-    zoneNameEn: 'OQC Bay D',
-    titleAr: 'محطة التعبئة والتغليف والباليتات',
-    titleEn: 'Final Packing & Palletizing Cell',
-    line: 'Packaging',
-    locationAr: 'ساحة التغليف والشحن',
-    locationEn: 'Pallet Wrap Staging',
-    iconType: 'package',
-    moduleUrl: '/outgoing-quality',
-    moduleLabelAr: 'فحص المنتج النهائي (OQC)',
-    oeeEstimate: 94,
-    fpyEstimate: 98.8,
-    activeOperator: 'مشرف التعبئة والرص',
-    vibrationMmS: 0.18,
-    temperatureC: 26,
-    x: 895, y: 190, w: 260, h: 100
-  },
-
-  // ------------------------------------------------------------------------
-  // BAY E: رصيف الشحن والتسليم للعميل (OUTBOUND SHIPPING DOCK)
-  // ------------------------------------------------------------------------
-  {
-    id: 'DOCK-SHIPPING-03',
-    code: 'DCK-03',
+    id: 'STATION-CUSTOMER-COMPLAINTS',
+    code: 'CMP-01',
     zone: 'shipping',
-    zoneNameAr: 'عنبر الشحن E',
-    zoneNameEn: 'Shipping Bay E',
-    titleAr: 'بوابة رصيف الشحن والتوزيع 03',
-    titleEn: 'Shipping Dock Gate 03',
-    line: 'Shipping',
-    locationAr: 'المخرج اللوجستي الشرقي',
-    locationEn: 'East Logistics Bay',
+    zoneNameAr: '5. شكاوى العملاء والميدان',
+    zoneNameEn: '5. Customer & Field Quality',
+    titleAr: 'سجل شكاوى العملاء',
+    titleEn: 'Customer Complaints & Field RMA',
+    line: 'Customer Experience',
+    locationAr: 'سجل متابعة شكاوى العملاء والمرتجعات RMA',
+    locationEn: 'Customer Complaints, RMA Returns & Field Claims',
     iconType: 'truck',
-    moduleUrl: '/quality/records/complaints',
-    moduleLabelAr: 'شكاوى العملاء والميدان',
+    moduleUrl: '/quality/records/complaint',
+    moduleLabelAr: 'سجل شكاوى العملاء',
     oeeEstimate: 99,
     fpyEstimate: 100,
-    activeOperator: 'أمين رصيف الشحن',
-    vibrationMmS: 0.05,
-    temperatureC: 25,
-    x: 895, y: 315, w: 260, h: 100
+    activeOperator: 'مسؤول ضمان الجودة الميدانية وخدمة العملاء',
+    vibrationMmS: 0.01,
+    temperatureC: 22,
+    x: 855, y: 175, w: 260, h: 80
   },
   {
-    id: 'TRUCK-CUSTOMER-DELIVERY',
-    code: 'DSP-01',
-    zone: 'shipping',
-    zoneNameAr: 'عنبر الشحن E',
-    zoneNameEn: 'Shipping Bay E',
-    titleAr: 'ساحة تسليم الشحنات للعميل',
-    titleEn: 'Customer Dispatch & Logistics Staging',
-    line: 'Shipping',
-    locationAr: 'ساحة الشاحنات الخارجية',
-    locationEn: 'Outbound Truck Yard',
-    iconType: 'truck',
-    moduleUrl: '/quality/records/complaints',
-    moduleLabelAr: 'شكاوى العملاء والميدان',
+    id: 'STATION-CONTROL-PLAN',
+    code: 'CTL-01',
+    zone: 'lab',
+    zoneNameAr: '6. المختبر الهندسي والتدقيق',
+    zoneNameEn: '6. Engineering Lab & Audits',
+    titleAr: 'خطط التحكم Control Plan',
+    titleEn: 'Dynamic Control Plans',
+    line: 'Quality Engineering',
+    locationAr: 'مصفوفة نقاط الفحص ومعايير الرقابة التشغيلية',
+    locationEn: 'Process Control Plans & Inspection Matrix',
+    iconType: 'gauge',
+    moduleUrl: '/control-plan',
+    moduleLabelAr: 'خطط التحكم Control Plan',
+    oeeEstimate: 97,
+    fpyEstimate: 99.4,
+    activeOperator: 'مهندس خطط التحكم والجودة',
+    vibrationMmS: 0.01,
+    temperatureC: 21,
+    x: 855, y: 280, w: 260, h: 70
+  },
+  {
+    id: 'STATION-FMEA-RISK',
+    code: 'FMA-01',
+    zone: 'lab',
+    zoneNameAr: '6. المختبر الهندسي والتدقيق',
+    zoneNameEn: '6. Engineering Lab & Audits',
+    titleAr: 'تحليل المخاطر FMEA',
+    titleEn: 'FMEA Risk Analysis (AIAG-VDA)',
+    line: 'Quality Engineering',
+    locationAr: 'سجل تحليل أنماط الأعطال المحتملة وأولويات العمل AP',
+    locationEn: 'Failure Mode & Effects Analysis Register',
+    iconType: 'lab',
+    moduleUrl: '/fmea',
+    moduleLabelAr: 'تحليل المخاطر FMEA',
+    oeeEstimate: 95,
+    fpyEstimate: 98.9,
+    activeOperator: 'أخصائي تحليل المخاطر الهندسية',
+    vibrationMmS: 0.01,
+    temperatureC: 21,
+    x: 855, y: 365, w: 260, h: 70
+  },
+  {
+    id: 'STATION-CALIBRATION-MSA',
+    code: 'CAL-01',
+    zone: 'lab',
+    zoneNameAr: '6. المختبر الهندسي والتدقيق',
+    zoneNameEn: '6. Engineering Lab & Audits',
+    titleAr: 'معايرة الأجهزة والـ MSA',
+    titleEn: 'Equipment Calibration & MSA',
+    line: 'Metrology Lab',
+    locationAr: 'معمل معايرة الأجهزة ودراسات خطأ القياس GR&R',
+    locationEn: 'Calibration Lab & Measurement Systems Analysis',
+    iconType: 'gauge',
+    moduleUrl: '/compliance/hub/calibration',
+    moduleLabelAr: 'المعايرة وأجهزة القياس',
+    oeeEstimate: 98,
+    fpyEstimate: 99.8,
+    activeOperator: 'مسؤول معايرة أجهزة القياس والفحص',
+    vibrationMmS: 0.01,
+    temperatureC: 20,
+    x: 855, y: 450, w: 260, h: 70
+  },
+  {
+    id: 'STATION-LAYERED-AUDITS',
+    code: 'LPA-01',
+    zone: 'lab',
+    zoneNameAr: '6. المختبر الهندسي والتدقيق',
+    zoneNameEn: '6. Engineering Lab & Audits',
+    titleAr: 'مراجعات المشرف LPA',
+    titleEn: 'Layered Process Audits (LPA)',
+    line: 'Quality Audits',
+    locationAr: 'تدقيق طبقات المشرفين اليومي',
+    locationEn: 'Supervisor Layered Audits & Verification',
+    iconType: 'pallet',
+    moduleUrl: '/quality-audits',
+    moduleLabelAr: 'مراجعات المشرف LPA',
+    oeeEstimate: 96,
+    fpyEstimate: 99.0,
+    activeOperator: 'مدقق العمليات الميداني LPA',
+    vibrationMmS: 0.01,
+    temperatureC: 22,
+    x: 855, y: 535, w: 125, h: 65
+  },
+  {
+    id: 'STATION-INTERNAL-AUDIT',
+    code: 'AUD-01',
+    zone: 'lab',
+    zoneNameAr: '6. المختبر الهندسي والتدقيق',
+    zoneNameEn: '6. Engineering Lab & Audits',
+    titleAr: 'التدقيق الداخلي وإدارته',
+    titleEn: 'Internal Audits (ISO 9001/IATF)',
+    line: 'Quality Audits',
+    locationAr: 'جدول التدقيق الداخلي ومطابقة المواصفات',
+    locationEn: 'ISO/IATF Internal Audits & Compliance',
+    iconType: 'pallet',
+    moduleUrl: '/compliance/hub/audit',
+    moduleLabelAr: 'التدقيق الداخلي',
     oeeEstimate: 99,
-    fpyEstimate: 100,
-    activeOperator: 'سائق الشحن المعتمد',
-    vibrationMmS: 0.02,
-    temperatureC: 27,
-    x: 895, y: 435, w: 260, h: 100
+    fpyEstimate: 99.5,
+    activeOperator: 'كبير المدققين الداخليين المعتمد',
+    vibrationMmS: 0.01,
+    temperatureC: 22,
+    x: 990, y: 535, w: 125, h: 65
   }
 ];
 
@@ -437,222 +584,326 @@ export interface ScadaConnection {
 }
 
 export const FACTORY_CONNECTIONS: ScadaConnection[] = [
-  // BAY A: Inbound Logistics
+  // 1. Stage 1 (IQC): Supplier QA to Inspection Plans
   {
-    id: 'CONN-RCV-IQC',
-    fromId: 'DOCK-RECEIVING-01',
-    toId: 'STATION-IQC-INSPECT',
-    labelAr: 'سير رولمان استلام الفحص (Gravity Rollers)',
-    labelEn: 'Inbound Infeed Gravity Conveyor',
-    type: 'gravity-roller',
-    fromAnchor: 'bottom',
-    toAnchor: 'top',
-    velocityMs: 0.35,
-    motorKw: 0.55,
-    capacityUnits: 15,
-    currentWip: 6,
-    sensorType: 'Photoelectric Retroreflective',
-  },
-  {
-    id: 'CONN-IQC-BUF',
-    fromId: 'STATION-IQC-INSPECT',
-    toId: 'WAREHOUSE-RAW-STAGING',
-    labelAr: 'مسار الخامات المعتمدة (Approved Infeed)',
-    labelEn: 'Approved Material Transfer',
+    id: 'CONN-SUP-PLN',
+    fromId: 'STATION-SUPPLIER-QUALITY',
+    toId: 'STATION-INSPECTION-PLANS',
+    labelAr: 'مواصفات وخطط فحص شحنات المورد (Sampling Specs)',
+    labelEn: 'Supplier Inspection Plan Criteria',
     type: 'motor-roller',
     fromAnchor: 'bottom',
     toAnchor: 'top',
-    velocityMs: 0.48,
-    motorKw: 0.75,
-    capacityUnits: 20,
-    currentWip: 11,
-    sensorType: 'Optical Barcode Scanner',
+    velocityMs: 0.45,
+    motorKw: 0.55,
+    capacityUnits: 15,
+    currentWip: 4,
+    sensorType: 'Optical Document & Specification Scanner'
   },
+  // 2. Stage 1: Inspection Plans to IQC Inspection Execution
   {
-    id: 'CONN-IQC-QRN',
-    fromId: 'STATION-IQC-INSPECT',
-    toId: 'QUARANTINE-CAGE',
-    labelAr: 'مسار العزل والرفض (Quarantine Diverter Chute)',
-    labelEn: 'Reject Diverter Slide Chute',
-    type: 'chute',
+    id: 'CONN-PLN-IQC',
+    fromId: 'STATION-INSPECTION-PLANS',
+    toId: 'STATION-IQC-INSPECTION',
+    labelAr: 'تطبيق خطة الفحص على الشحنة الواردة (IQC Inspection)',
+    labelEn: 'Inbound Verification Execution',
+    type: 'motor-roller',
     fromAnchor: 'bottom',
     toAnchor: 'top',
+    velocityMs: 0.45,
+    motorKw: 0.75,
+    capacityUnits: 20,
+    currentWip: 7,
+    sensorType: 'Barcode & Lot Verification Scanner'
+  },
+  // 3. Stage 1 to Stage 2: Approved Raw Materials Released to Shopfloor
+  {
+    id: 'CONN-IQC-SHP',
+    fromId: 'STATION-IQC-INSPECTION',
+    toId: 'STATION-SHOPFLOOR-ENTRY',
+    labelAr: 'إفراج الخامات المقبولة لصالة الإنتاج (Material Release)',
+    labelEn: 'Accepted Materials Feed to Production',
+    type: 'bridge',
+    fromAnchor: 'right',
+    toAnchor: 'left',
+    velocityMs: 0.50,
+    motorKw: 1.10,
+    capacityUnits: 25,
+    currentWip: 12,
+    sensorType: 'RFID Lot Handover Gate'
+  },
+  // 4. Stage 1 to Stage 3: Rejected Inbound Escalated to NCR
+  {
+    id: 'CONN-IQC-NCR',
+    fromId: 'STATION-IQC-INSPECTION',
+    toId: 'STATION-NCR-REPORTS',
+    labelAr: 'تصعيد الشحنات المرفوضة لتقرير عدم مطابقة (Supplier NCR)',
+    labelEn: 'Inbound Rejection Escalated to NCR',
+    type: 'chute',
+    fromAnchor: 'right',
+    toAnchor: 'left',
     velocityMs: 0.60,
     motorKw: 0.37,
     capacityUnits: 10,
     currentWip: 2,
-    sensorType: 'Motorized Diverter Gate Blade',
+    sensorType: 'Quarantine Diverter Chute'
   },
-  // CROSSING AISLE: Bay A to Bay B
+  // 5. Stage 2 (IPQC): Shopfloor Entry to Defect Log
   {
-    id: 'CONN-BUF-CNC',
-    fromId: 'WAREHOUSE-RAW-STAGING',
-    toId: 'STATION-CNC-MILLING',
-    labelAr: 'جسر تغذية خط التشغيل الميكانيكي (Infeed Transfer Bridge)',
-    labelEn: 'CNC Infeed Transfer Bridge',
+    id: 'CONN-SHP-DEF',
+    fromId: 'STATION-SHOPFLOOR-ENTRY',
+    toId: 'STATION-DEFECT-LOG',
+    labelAr: 'تسجيل وتوثيق عيوب الوردية المكتشفة (Defect Logging)',
+    labelEn: 'Shift Defect Log Stream',
+    type: 'motor-roller',
+    fromAnchor: 'bottom',
+    toAnchor: 'top',
+    velocityMs: 0.50,
+    motorKw: 0.75,
+    capacityUnits: 20,
+    currentWip: 9,
+    sensorType: 'Andon Signal Pulse'
+  },
+  // 6. Stage 2: Defect Log to SPC Control Charts
+  {
+    id: 'CONN-DEF-SPC',
+    fromId: 'STATION-DEFECT-LOG',
+    toId: 'STATION-SPC-CHARTS',
+    labelAr: 'تغذية قياسات العينات لكارتات SPC (Statistical Control)',
+    labelEn: 'SPC Dimensional Feed',
+    type: 'motor-roller',
+    fromAnchor: 'bottom',
+    toAnchor: 'top',
+    velocityMs: 0.45,
+    motorKw: 0.75,
+    capacityUnits: 18,
+    currentWip: 6,
+    sensorType: 'Digital Micrometer & Gage Feed'
+  },
+  // 7. Stage 2: SPC to Execution Board
+  {
+    id: 'CONN-SPC-EXC',
+    fromId: 'STATION-SPC-CHARTS',
+    toId: 'STATION-EXECUTION-BOARD',
+    labelAr: 'إجازة محطة الفحص ومتابعة التنفيذ (Line Clearance)',
+    labelEn: 'Station Clearance & Execution',
+    type: 'motor-roller',
+    fromAnchor: 'bottom',
+    toAnchor: 'top',
+    velocityMs: 0.50,
+    motorKw: 0.75,
+    capacityUnits: 22,
+    currentWip: 8,
+    sensorType: 'Quality Clearance Gate Sensor'
+  },
+  // 8. Stage 2 to Stage 3: Shift Defect Escalated to NCR
+  {
+    id: 'CONN-DEF-NCR',
+    fromId: 'STATION-DEFECT-LOG',
+    toId: 'STATION-NCR-REPORTS',
+    labelAr: 'تصعيد العيوب المتكررة والحرجة إلى NCR (Process NCR)',
+    labelEn: 'Repetitive Defect NCR Escalation',
     type: 'bridge',
     fromAnchor: 'right',
     toAnchor: 'left',
-    velocityMs: 0.42,
+    velocityMs: 0.45,
     motorKw: 0.75,
-    capacityUnits: 16,
-    currentWip: 7,
-    sensorType: 'RFID Transponder Reader Gate',
+    capacityUnits: 15,
+    currentWip: 3,
+    sensorType: 'NCR Threshold Alarm Trigger'
   },
-  // BAY B: Assembly Line 01 Inter-Station Motorized Conveyors
+  // 9. Stage 3 (Resolution): NCR to CAPA Corrective Action
   {
-    id: 'CONN-CNC-ASM',
-    fromId: 'STATION-CNC-MILLING',
-    toId: 'STATION-SUB-ASSEMBLY',
-    labelAr: 'سير نقل المكونات المخرطة (Machined Parts Conveyor)',
-    labelEn: 'Machined Components Motorized Line',
+    id: 'CONN-NCR-CAP',
+    fromId: 'STATION-NCR-REPORTS',
+    toId: 'STATION-CAPA-ACTIONS',
+    labelAr: 'فتح إجراء تصحيحي وقائي لحالة عدم المطابقة (CAPA Assignment)',
+    labelEn: 'Corrective Action Escalation',
     type: 'motor-roller',
+    fromAnchor: 'bottom',
+    toAnchor: 'top',
+    velocityMs: 0.40,
+    motorKw: 0.55,
+    capacityUnits: 12,
+    currentWip: 4,
+    sensorType: 'Workflow State Machine Pulse'
+  },
+  // 10. Stage 3: CAPA to 8D Problem Solving
+  {
+    id: 'CONN-CAP-8D',
+    fromId: 'STATION-CAPA-ACTIONS',
+    toId: 'STATION-8D-SOLVING',
+    labelAr: 'تشكيل فريق حل المشكلات المنهجي 8D (8D Problem Solving)',
+    labelEn: '8D Root Cause Project Team',
+    type: 'motor-roller',
+    fromAnchor: 'bottom',
+    toAnchor: 'top',
+    velocityMs: 0.40,
+    motorKw: 0.55,
+    capacityUnits: 10,
+    currentWip: 2,
+    sensorType: 'Fishbone & 5-Why Analytical Bridge'
+  },
+  // 11. Stage 3: NCR to Deviation Permit
+  {
+    id: 'CONN-NCR-DEV',
+    fromId: 'STATION-NCR-REPORTS',
+    toId: 'STATION-DEVIATION-PERMITS',
+    labelAr: 'طلب تصريح حيود هندسي واستخدام بالحالة (Concession Request)',
+    labelEn: 'Engineering Deviation Permit',
+    type: 'motor-roller',
+    fromAnchor: 'bottom',
+    toAnchor: 'top',
+    velocityMs: 0.35,
+    motorKw: 0.37,
+    capacityUnits: 8,
+    currentWip: 1,
+    sensorType: 'Concession Review Signature Link'
+  },
+  // 12. Stage 3: 8D to Engineering Change Control (ECN)
+  {
+    id: 'CONN-8D-ECN',
+    fromId: 'STATION-8D-SOLVING',
+    toId: 'STATION-CHANGE-CONTROL',
+    labelAr: 'إجراء تعديل هندسي دائم لمنع التكرار (Engineering Change ECN)',
+    labelEn: 'Permanent Engineering Change Notice',
+    type: 'motor-roller',
+    fromAnchor: 'bottom',
+    toAnchor: 'top',
+    velocityMs: 0.35,
+    motorKw: 0.37,
+    capacityUnits: 8,
+    currentWip: 2,
+    sensorType: 'CAD / Drawing Revision Notifier'
+  },
+  // 13. Stage 2 to Stage 4: Execution Clearance to Final Outgoing OQC
+  {
+    id: 'CONN-EXC-OQC',
+    fromId: 'STATION-EXECUTION-BOARD',
+    toId: 'STATION-OUTGOING-OQC',
+    labelAr: 'تحويل المنتجات تامة الصنع للفحص النهائي الصادر (To OQC)',
+    labelEn: 'Finished Goods Transfer to Outgoing QA',
+    type: 'bridge',
     fromAnchor: 'right',
     toAnchor: 'left',
     velocityMs: 0.50,
     motorKw: 1.10,
     capacityUnits: 25,
     currentWip: 14,
-    sensorType: 'Laser Distance Sensor & Proximity',
+    sensorType: 'Automated Overhead Transfer Bed'
   },
+  // 14. Stage 4 to Stage 5: Outgoing OQC to Customer Dispatch
   {
-    id: 'CONN-ASM-TRQ',
-    fromId: 'STATION-SUB-ASSEMBLY',
-    toId: 'STATION-TORQUE-BENCH',
-    labelAr: 'سير محطة الربط والعزم الذكي (Torque Station Feed)',
-    labelEn: 'Smart Torque Indexing Conveyor',
-    type: 'motor-roller',
-    fromAnchor: 'right',
-    toAnchor: 'left',
-    velocityMs: 0.45,
-    motorKw: 0.75,
-    capacityUnits: 20,
-    currentWip: 9,
-    sensorType: 'Poka-Yoke Indexing Stop Gate',
-  },
-  {
-    id: 'CONN-TRQ-PRS',
-    fromId: 'STATION-TORQUE-BENCH',
-    toId: 'STATION-PRESSURE-TEST',
-    labelAr: 'منحنى دوران السير الهيدروليكي 90° (Turn-Table Loop)',
-    labelEn: '90° Powered Curve & Test Feed',
-    type: 'motor-roller',
-    fromAnchor: 'right',
-    toAnchor: 'right',
-    velocityMs: 0.38,
-    motorKw: 1.50,
-    capacityUnits: 18,
-    currentWip: 5,
-    sensorType: 'Heavy Friction Rollers & Safety Guide',
-  },
-  {
-    id: 'CONN-PRS-IPQC',
-    fromId: 'STATION-PRESSURE-TEST',
-    toId: 'STATION-IPQC-GATE',
-    labelAr: 'سير الفحص المرحلي IPQC (Quality Clearance Link)',
-    labelEn: 'IPQC Clearance Transfer Bed',
-    type: 'belt',
-    fromAnchor: 'right',
-    toAnchor: 'left',
-    velocityMs: 0.40,
-    motorKw: 0.75,
-    capacityUnits: 15,
-    currentWip: 8,
-    sensorType: 'Optical Vision Clearance Arch',
-  },
-  // BAY B to BAY C: Quality Lab Sampling
-  {
-    id: 'CONN-IPQC-CMM',
-    fromId: 'STATION-IPQC-GATE',
-    toId: 'LAB-METROLOGY-CMM',
-    labelAr: 'أنبوب عينات الجودة الهوائي (Pneumatic Sampling Tube)',
-    labelEn: 'Pneumatic Quality Sample Tube',
-    type: 'pneumatic',
-    fromAnchor: 'bottom',
-    toAnchor: 'top',
-    velocityMs: 2.80,
-    motorKw: 2.20,
-    capacityUnits: 5,
-    currentWip: 1,
-    sensorType: 'Vacuum Pressure Transducer',
-  },
-  {
-    id: 'CONN-IPQC-MRB',
-    fromId: 'STATION-IPQC-GATE',
-    toId: 'ROOM-MRB-CAPA',
-    labelAr: 'مسار العينات غير المطابقة إلى MRB (NCR Escalation Link)',
-    labelEn: 'MRB Review Escalation Link',
-    type: 'pneumatic',
-    fromAnchor: 'bottom',
-    toAnchor: 'top',
-    velocityMs: 2.50,
-    motorKw: 2.20,
-    capacityUnits: 5,
-    currentWip: 1,
-    sensorType: 'High-Speed Pneumatic Shuttle',
-  },
-  // BAY B to BAY D: Cross-Plant Elevated Bridge
-  {
-    id: 'CONN-IPQC-OQC',
-    fromId: 'STATION-IPQC-GATE',
-    toId: 'BENCH-OQC-RELEASE',
-    labelAr: 'جسر نقل علوي إلى عنبر الإفراج النهائي (Overhead Bridge Conveyor)',
-    labelEn: 'Overhead Plant Crossing Bridge',
-    type: 'bridge',
-    fromAnchor: 'right',
-    toAnchor: 'left',
-    velocityMs: 0.55,
-    motorKw: 1.10,
-    capacityUnits: 30,
-    currentWip: 18,
-    sensorType: 'Elevated Safety Net & Sensor Eye',
-  },
-  // BAY D & BAY E: Final Packaging & Shipping
-  {
-    id: 'CONN-OQC-PCK',
-    fromId: 'BENCH-OQC-RELEASE',
-    toId: 'STATION-PACKAGING',
-    labelAr: 'سير نقل للملاكمة والتغليف (Boxing Infeed)',
-    labelEn: 'Palletizing & Packaging Infeed',
-    type: 'gravity-roller',
-    fromAnchor: 'bottom',
-    toAnchor: 'top',
-    velocityMs: 0.40,
-    motorKw: 0.75,
-    capacityUnits: 20,
-    currentWip: 10,
-    sensorType: 'Pallet Centering Photo-Eyes',
-  },
-  {
-    id: 'CONN-PCK-SHP',
-    fromId: 'STATION-PACKAGING',
-    toId: 'DOCK-SHIPPING-03',
-    labelAr: 'سير خروج الباليتات الجاهزة (Finished Goods Outfeed)',
-    labelEn: 'Outbound Pallet Roller Bed',
+    id: 'CONN-OQC-CMP',
+    fromId: 'STATION-OUTGOING-OQC',
+    toId: 'STATION-CUSTOMER-COMPLAINTS',
+    labelAr: 'إفراج الشحنات والتسليم للعميل ومتابعة الضمان (Client Release)',
+    labelEn: 'Customer Dispatch & Warranty Tracking',
     type: 'motor-roller',
     fromAnchor: 'bottom',
     toAnchor: 'top',
     velocityMs: 0.35,
-    motorKw: 1.50,
-    capacityUnits: 15,
+    motorKw: 0.75,
+    capacityUnits: 20,
     currentWip: 5,
-    sensorType: 'Heavy Duty Pallet Scale & Scanner',
+    sensorType: 'Final COC Hologram & Dispatch Gate'
   },
+  // 15. Stage 5 to Stage 3: Customer Complaint Closed-Loop to 8D
   {
-    id: 'CONN-SHP-DSP',
-    fromId: 'DOCK-SHIPPING-03',
-    toId: 'TRUCK-CUSTOMER-DELIVERY',
-    labelAr: 'منحدر التحميل الهيدروليكي للشاحنة (Hydraulic Dock Leveler Ramp)',
-    labelEn: 'Hydraulic Truck Dock Leveler',
-    type: 'dock-ramp',
-    fromAnchor: 'bottom',
-    toAnchor: 'top',
-    velocityMs: 0.25,
-    motorKw: 2.20,
+    id: 'CONN-CMP-8D',
+    fromId: 'STATION-CUSTOMER-COMPLAINTS',
+    toId: 'STATION-8D-SOLVING',
+    labelAr: 'تحويل شكوى العميل إلى تحقيق 8D فوري (Customer 8D Investigation)',
+    labelEn: 'Customer RMA to 8D Resolution Loop',
+    type: 'chute',
+    fromAnchor: 'left',
+    toAnchor: 'right',
+    velocityMs: 0.60,
+    motorKw: 0.55,
     capacityUnits: 8,
-    currentWip: 3,
-    sensorType: 'Hydraulic Leveler Safety Sensor',
+    currentWip: 1,
+    sensorType: 'RMA Rapid Escalation Pipeline'
   },
+  // 16. Stage 6 (Compliance): Control Plan feeds Shopfloor
+  {
+    id: 'CONN-CTL-SHP',
+    fromId: 'STATION-CONTROL-PLAN',
+    toId: 'STATION-SHOPFLOOR-ENTRY',
+    labelAr: 'تغذية تعليمات الفحص من Control Plan إلى الصالة',
+    labelEn: 'Control Plan Directives to Shopfloor',
+    type: 'belt',
+    fromAnchor: 'left',
+    toAnchor: 'right',
+    velocityMs: 0.40,
+    motorKw: 0.55,
+    capacityUnits: 15,
+    currentWip: 4,
+    sensorType: 'Dynamic Inspection Standard Broadcast'
+  },
+  // 17. Stage 6: FMEA to Control Plan
+  {
+    id: 'CONN-FMA-CTL',
+    fromId: 'STATION-FMEA-RISK',
+    toId: 'STATION-CONTROL-PLAN',
+    labelAr: 'تحويل مخرجات FMEA والخصائص الحرجة إلى Control Plan',
+    labelEn: 'FMEA Critical Characteristics to Control Plan',
+    type: 'motor-roller',
+    fromAnchor: 'top',
+    toAnchor: 'bottom',
+    velocityMs: 0.35,
+    motorKw: 0.37,
+    capacityUnits: 10,
+    currentWip: 2,
+    sensorType: 'Action Priority (AP) Matrix Link'
+  },
+  // 18. Stage 6: Calibration Lab validates SPC instruments
+  {
+    id: 'CONN-CAL-SPC',
+    fromId: 'STATION-CALIBRATION-MSA',
+    toId: 'STATION-SPC-CHARTS',
+    labelAr: 'ضمان دقة ومعايرة أجهزة القياس المستخدمة في الـ SPC',
+    labelEn: 'Calibrated Gages Feeding SPC Dimensions',
+    type: 'pneumatic',
+    fromAnchor: 'left',
+    toAnchor: 'right',
+    velocityMs: 1.50,
+    motorKw: 1.10,
+    capacityUnits: 6,
+    currentWip: 1,
+    sensorType: 'Digital Gauge Calibration Certificate Link'
+  },
+  // 19. Stage 3 to Stage 7: Closed 8D archived to Knowledge Base
+  {
+    id: 'CONN-8D-KB',
+    fromId: 'STATION-8D-SOLVING',
+    toId: 'STATION-KNOWLEDGE-BASE',
+    labelAr: 'توثيق الحل الجذري في قاعدة الدروس المستفادة',
+    labelEn: 'Closed 8D Archived to Lessons Learned',
+    type: 'belt',
+    fromAnchor: 'left',
+    toAnchor: 'right',
+    velocityMs: 0.35,
+    motorKw: 0.37,
+    capacityUnits: 10,
+    currentWip: 2,
+    sensorType: 'Knowledge Vault Ingestion Pipeline'
+  },
+  // 20. Stage 7 to Stage 1: Master Parts feed Inspection Plans
+  {
+    id: 'CONN-MST-PLN',
+    fromId: 'STATION-MASTER-DATA',
+    toId: 'STATION-INSPECTION-PLANS',
+    labelAr: 'بيانات الأجزاء والمواصفات تغذي خطط الفحص',
+    labelEn: 'Master Parts Feed to Inspection Plans',
+    type: 'motor-roller',
+    fromAnchor: 'top',
+    toAnchor: 'bottom',
+    velocityMs: 0.40,
+    motorKw: 0.37,
+    capacityUnits: 12,
+    currentWip: 3,
+    sensorType: 'Part Revision Sync Stream'
+  }
 ];
 
 function calculateConnectionPath(
@@ -833,71 +1084,40 @@ function buildLayoutPresetData(
     };
   }
 
-  if (presetId === 'bays') {
-    // 1. Bays Layout: Left Bay A, Center-Top Bay B, Center-Bottom Hub C, Right-Top Bay D, Right-Bottom Bay E
-    const coords: Record<string, { x: number; y: number; w: number; h: number }> = {
-      'DOCK-RECEIVING-01': { x: 35, y: 65, w: 235, h: 90 },
-      'STATION-IQC-INSPECT': { x: 35, y: 180, w: 235, h: 90 },
-      'QUARANTINE-CAGE': { x: 35, y: 295, w: 110, h: 95 },
-      'WAREHOUSE-RAW-STAGING': { x: 160, y: 295, w: 110, h: 95 },
-      'STATION-CNC-MILLING': { x: 335, y: 65, w: 220, h: 90 },
-      'STATION-SUB-ASSEMBLY': { x: 335, y: 180, w: 220, h: 90 },
-      'STATION-TORQUE-BENCH': { x: 595, y: 65, w: 220, h: 90 },
-      'STATION-PRESSURE-TEST': { x: 595, y: 180, w: 220, h: 90 },
-      'STATION-IPQC-GATE': { x: 465, y: 295, w: 230, h: 95 },
-      'LAB-METROLOGY-CMM': { x: 335, y: 490, w: 220, h: 95 },
-      'ROOM-MRB-CAPA': { x: 595, y: 490, w: 220, h: 95 },
-      'BENCH-OQC-RELEASE': { x: 890, y: 65, w: 245, h: 90 },
-      'STATION-PACKAGING': { x: 890, y: 185, w: 245, h: 90 },
-      'DOCK-SHIPPING-03': { x: 890, y: 345, w: 245, h: 95 },
-      'TRUCK-CUSTOMER-DELIVERY': { x: 890, y: 470, w: 245, h: 95 }
+  if (presetId === 'bays' || presetId === 'default') {
+    return {
+      equipment: DEFAULT_EQUIPMENT_PODS,
+      connections: FACTORY_CONNECTIONS,
+      nameAr: 'العنابر الصناعية المتوازية (Bays Grid)',
+      nameEn: 'Industrial Bays Grid'
     };
-
-    const equipment = currentList.map(item => {
-      const c = coords[item.id];
-      if (c) return { ...item, ...c };
-      return item;
-    });
-
-    const connections: ScadaConnection[] = [
-      { id: 'CONN-BAYS-1', fromId: 'DOCK-RECEIVING-01', toId: 'STATION-IQC-INSPECT', fromAnchor: 'bottom', toAnchor: 'top', type: 'gravity-roller', labelAr: 'سير رولمان استلام الفحص', labelEn: 'Inbound Infeed Conveyor', velocityMs: 0.35, motorKw: 0.55, capacityUnits: 15, currentWip: 5 },
-      { id: 'CONN-BAYS-2', fromId: 'STATION-IQC-INSPECT', toId: 'WAREHOUSE-RAW-STAGING', fromAnchor: 'bottom', toAnchor: 'top', type: 'motor-roller', labelAr: 'مسار الخامات المعتمدة', labelEn: 'Approved Material Line', velocityMs: 0.48, motorKw: 0.75, capacityUnits: 20, currentWip: 8 },
-      { id: 'CONN-BAYS-3', fromId: 'STATION-IQC-INSPECT', toId: 'QUARANTINE-CAGE', fromAnchor: 'bottom', toAnchor: 'top', type: 'chute', labelAr: 'مزلقان عزل الشحنات المرفوضة', labelEn: 'Quarantine Diverter Chute', velocityMs: 0.6, motorKw: 0.37, capacityUnits: 10, currentWip: 1 },
-      { id: 'CONN-BAYS-4', fromId: 'WAREHOUSE-RAW-STAGING', toId: 'STATION-CNC-MILLING', fromAnchor: 'right', toAnchor: 'left', type: 'bridge', labelAr: 'جسر تغذية خط التشغيل الميكانيكي', labelEn: 'CNC Infeed Transfer Bridge', velocityMs: 0.45, motorKw: 0.75, capacityUnits: 16, currentWip: 6 },
-      { id: 'CONN-BAYS-5', fromId: 'STATION-CNC-MILLING', toId: 'STATION-SUB-ASSEMBLY', fromAnchor: 'bottom', toAnchor: 'top', type: 'motor-roller', labelAr: 'سير نقل المكونات المخرطة', labelEn: 'Machined Parts Conveyor', velocityMs: 0.5, motorKw: 1.1, capacityUnits: 25, currentWip: 12 },
-      { id: 'CONN-BAYS-6', fromId: 'STATION-CNC-MILLING', toId: 'STATION-TORQUE-BENCH', fromAnchor: 'right', toAnchor: 'left', type: 'belt', labelAr: 'سير التغذية المتقاطعة للربط', labelEn: 'Cross-Bay Torque Feed', velocityMs: 0.45, motorKw: 0.75, capacityUnits: 20, currentWip: 7 },
-      { id: 'CONN-BAYS-7', fromId: 'STATION-TORQUE-BENCH', toId: 'STATION-PRESSURE-TEST', fromAnchor: 'bottom', toAnchor: 'top', type: 'motor-roller', labelAr: 'سير محطة الضغط والهيدروليك', labelEn: 'Hydrostatic Pressure Line', velocityMs: 0.45, motorKw: 1.1, capacityUnits: 20, currentWip: 6 },
-      { id: 'CONN-BAYS-8', fromId: 'STATION-SUB-ASSEMBLY', toId: 'STATION-PRESSURE-TEST', fromAnchor: 'right', toAnchor: 'left', type: 'motor-roller', labelAr: 'سير التجميع لاختبار الضغط', labelEn: 'Assembly to Pressure Test', velocityMs: 0.4, motorKw: 0.75, capacityUnits: 18, currentWip: 4 },
-      { id: 'CONN-BAYS-9', fromId: 'STATION-PRESSURE-TEST', toId: 'STATION-IPQC-GATE', fromAnchor: 'bottom', toAnchor: 'top', type: 'motor-roller', labelAr: 'بوابة فحص الجودة أثناء التشغيل', labelEn: 'IPQC Release Conveyor', velocityMs: 0.5, motorKw: 0.75, capacityUnits: 22, currentWip: 9 },
-      { id: 'CONN-BAYS-10', fromId: 'STATION-IPQC-GATE', toId: 'LAB-METROLOGY-CMM', fromAnchor: 'bottom', toAnchor: 'top', type: 'pneumatic', labelAr: 'أنبوب هوائي سريع لعينات CMM', labelEn: 'Pneumatic CMM Sample Tube', velocityMs: 1.8, motorKw: 2.2, capacityUnits: 5, currentWip: 1 },
-      { id: 'CONN-BAYS-11', fromId: 'STATION-IPQC-GATE', toId: 'ROOM-MRB-CAPA', fromAnchor: 'bottom', toAnchor: 'top', type: 'chute', labelAr: 'مسار العزل الهندسي ولجنة MRB', labelEn: 'MRB Engineering Review Chute', velocityMs: 0.6, motorKw: 0.37, capacityUnits: 8, currentWip: 2 },
-      { id: 'CONN-BAYS-12', fromId: 'STATION-IPQC-GATE', toId: 'BENCH-OQC-RELEASE', fromAnchor: 'right', toAnchor: 'left', type: 'bridge', labelAr: 'جسر نقل الفحص النهائي OQC', labelEn: 'Final Release Transfer Bridge', velocityMs: 0.5, motorKw: 1.1, capacityUnits: 25, currentWip: 10 },
-      { id: 'CONN-BAYS-13', fromId: 'BENCH-OQC-RELEASE', toId: 'STATION-PACKAGING', fromAnchor: 'bottom', toAnchor: 'top', type: 'motor-roller', labelAr: 'سير محطة التعبئة والتغليف', labelEn: 'Final Packaging Conveyor', velocityMs: 0.45, motorKw: 0.75, capacityUnits: 20, currentWip: 8 },
-      { id: 'CONN-BAYS-14', fromId: 'STATION-PACKAGING', toId: 'DOCK-SHIPPING-03', fromAnchor: 'bottom', toAnchor: 'top', type: 'motor-roller', labelAr: 'سير رصيف الشحن والتصدير', labelEn: 'Outbound Shipping Conveyor', velocityMs: 0.45, motorKw: 0.75, capacityUnits: 24, currentWip: 6 },
-      { id: 'CONN-BAYS-15', fromId: 'DOCK-SHIPPING-03', toId: 'TRUCK-CUSTOMER-DELIVERY', fromAnchor: 'bottom', toAnchor: 'top', type: 'dock-ramp', labelAr: 'رامب تحميل شاحنات التوزيع', labelEn: 'Customer Dispatch Ramp', velocityMs: 0.3, motorKw: 0.55, capacityUnits: 30, currentWip: 15 }
-    ];
-
-    return { equipment, connections, nameAr: 'العنابر الصناعية المتوازية (Bays Grid)', nameEn: 'Industrial Bays Grid' };
   }
 
   if (presetId === 'u-cell') {
-    // 2. Continuous U-Shape Horseshoe Loop
+    // Continuous U-Shape Horseshoe Loop across 22 Real Modules
     const coords: Record<string, { x: number; y: number; w: number; h: number }> = {
-      'DOCK-RECEIVING-01': { x: 45, y: 65, w: 200, h: 90 },
-      'STATION-IQC-INSPECT': { x: 270, y: 65, w: 200, h: 90 },
-      'WAREHOUSE-RAW-STAGING': { x: 495, y: 65, w: 200, h: 90 },
-      'STATION-CNC-MILLING': { x: 720, y: 65, w: 200, h: 90 },
-      'STATION-SUB-ASSEMBLY': { x: 945, y: 65, w: 205, h: 90 },
-      'STATION-TORQUE-BENCH': { x: 945, y: 205, w: 205, h: 90 },
-      'STATION-PRESSURE-TEST': { x: 945, y: 345, w: 205, h: 90 },
-      'STATION-IPQC-GATE': { x: 945, y: 485, w: 205, h: 90 },
-      'LAB-METROLOGY-CMM': { x: 720, y: 485, w: 200, h: 90 },
-      'ROOM-MRB-CAPA': { x: 495, y: 485, w: 200, h: 90 },
-      'BENCH-OQC-RELEASE': { x: 270, y: 485, w: 200, h: 90 },
-      'STATION-PACKAGING': { x: 45, y: 485, w: 200, h: 90 },
-      'DOCK-SHIPPING-03': { x: 45, y: 345, w: 200, h: 90 },
-      'TRUCK-CUSTOMER-DELIVERY': { x: 45, y: 205, w: 200, h: 90 },
-      'QUARANTINE-CAGE': { x: 270, y: 205, w: 180, h: 90 }
+      'STATION-SUPPLIER-QUALITY': { x: 45, y: 65, w: 180, h: 80 },
+      'STATION-INSPECTION-PLANS': { x: 235, y: 65, w: 180, h: 80 },
+      'STATION-IQC-INSPECTION': { x: 425, y: 65, w: 180, h: 80 },
+      'STATION-SHOPFLOOR-ENTRY': { x: 615, y: 65, w: 180, h: 80 },
+      'STATION-DEFECT-LOG': { x: 805, y: 65, w: 180, h: 80 },
+      'STATION-SPC-CHARTS': { x: 995, y: 65, w: 180, h: 80 },
+      'STATION-EXECUTION-BOARD': { x: 995, y: 175, w: 180, h: 80 },
+      'STATION-NCR-REPORTS': { x: 995, y: 280, w: 180, h: 80 },
+      'STATION-CAPA-ACTIONS': { x: 995, y: 385, w: 180, h: 80 },
+      'STATION-8D-SOLVING': { x: 995, y: 495, w: 180, h: 80 },
+      'STATION-DEVIATION-PERMITS': { x: 805, y: 495, w: 180, h: 80 },
+      'STATION-CHANGE-CONTROL': { x: 615, y: 495, w: 180, h: 80 },
+      'STATION-OUTGOING-OQC': { x: 425, y: 495, w: 180, h: 80 },
+      'STATION-CUSTOMER-COMPLAINTS': { x: 235, y: 495, w: 180, h: 80 },
+      'STATION-CONTROL-PLAN': { x: 45, y: 495, w: 180, h: 80 },
+      'STATION-FMEA-RISK': { x: 45, y: 385, w: 180, h: 80 },
+      'STATION-CALIBRATION-MSA': { x: 45, y: 280, w: 180, h: 80 },
+      'STATION-LAYERED-AUDITS': { x: 45, y: 175, w: 180, h: 80 },
+      'STATION-INTERNAL-AUDIT': { x: 235, y: 175, w: 180, h: 80 },
+      'STATION-MASTER-DATA': { x: 425, y: 175, w: 180, h: 80 },
+      'STATION-FORM-DESIGNER': { x: 615, y: 175, w: 180, h: 80 },
+      'STATION-KNOWLEDGE-BASE': { x: 805, y: 175, w: 180, h: 80 }
     };
 
     const equipment = currentList.map(item => {
@@ -906,44 +1126,34 @@ function buildLayoutPresetData(
       return item;
     });
 
-    const connections: ScadaConnection[] = [
-      { id: 'CONN-U-1', fromId: 'DOCK-RECEIVING-01', toId: 'STATION-IQC-INSPECT', fromAnchor: 'right', toAnchor: 'left', type: 'motor-roller', labelAr: 'سير رولمان استلام IQC', labelEn: 'Dock to IQC Conveyor', velocityMs: 0.45, motorKw: 0.75, capacityUnits: 15, currentWip: 5 },
-      { id: 'CONN-U-2', fromId: 'STATION-IQC-INSPECT', toId: 'WAREHOUSE-RAW-STAGING', fromAnchor: 'right', toAnchor: 'left', type: 'motor-roller', labelAr: 'سير الخامات المفحوصة', labelEn: 'IQC to Raw Buffer', velocityMs: 0.5, motorKw: 0.75, capacityUnits: 20, currentWip: 8 },
-      { id: 'CONN-U-3', fromId: 'STATION-IQC-INSPECT', toId: 'QUARANTINE-CAGE', fromAnchor: 'bottom', toAnchor: 'top', type: 'chute', labelAr: 'مزلقان العزل والحجر', labelEn: 'Quarantine Diverter Chute', velocityMs: 0.6, motorKw: 0.37, capacityUnits: 10, currentWip: 1 },
-      { id: 'CONN-U-4', fromId: 'WAREHOUSE-RAW-STAGING', toId: 'STATION-CNC-MILLING', fromAnchor: 'right', toAnchor: 'left', type: 'motor-roller', labelAr: 'سير تغذية ماكينات CNC', labelEn: 'Buffer to CNC Infeed', velocityMs: 0.5, motorKw: 1.1, capacityUnits: 22, currentWip: 11 },
-      { id: 'CONN-U-5', fromId: 'STATION-CNC-MILLING', toId: 'STATION-SUB-ASSEMBLY', fromAnchor: 'right', toAnchor: 'left', type: 'motor-roller', labelAr: 'سير خط التجميع 01', labelEn: 'CNC to Assembly Line', velocityMs: 0.5, motorKw: 1.1, capacityUnits: 25, currentWip: 14 },
-      { id: 'CONN-U-6', fromId: 'STATION-SUB-ASSEMBLY', toId: 'STATION-TORQUE-BENCH', fromAnchor: 'bottom', toAnchor: 'top', type: 'motor-roller', labelAr: 'سير محطة الربط والعزم', labelEn: 'Assembly to Torque Cell', velocityMs: 0.45, motorKw: 0.75, capacityUnits: 18, currentWip: 7 },
-      { id: 'CONN-U-7', fromId: 'STATION-TORQUE-BENCH', toId: 'STATION-PRESSURE-TEST', fromAnchor: 'bottom', toAnchor: 'top', type: 'motor-roller', labelAr: 'سير كابينة اختبار الضغط', labelEn: 'Torque to Pressure Chamber', velocityMs: 0.45, motorKw: 1.1, capacityUnits: 20, currentWip: 6 },
-      { id: 'CONN-U-8', fromId: 'STATION-PRESSURE-TEST', toId: 'STATION-IPQC-GATE', fromAnchor: 'bottom', toAnchor: 'top', type: 'motor-roller', labelAr: 'سير بوابة فحص الصالة', labelEn: 'Pressure to IPQC Gate', velocityMs: 0.5, motorKw: 0.75, capacityUnits: 20, currentWip: 9 },
-      { id: 'CONN-U-9', fromId: 'STATION-IPQC-GATE', toId: 'LAB-METROLOGY-CMM', fromAnchor: 'left', toAnchor: 'right', type: 'pneumatic', labelAr: 'أنبوب هوائي سريع لغرفة CMM', labelEn: 'IPQC to CMM Metrology', velocityMs: 1.8, motorKw: 2.2, capacityUnits: 5, currentWip: 1 },
-      { id: 'CONN-U-10', fromId: 'LAB-METROLOGY-CMM', toId: 'ROOM-MRB-CAPA', fromAnchor: 'left', toAnchor: 'right', type: 'motor-roller', labelAr: 'مسار لجنة MRB والإجراءات', labelEn: 'CMM to MRB Hold', velocityMs: 0.45, motorKw: 0.55, capacityUnits: 12, currentWip: 3 },
-      { id: 'CONN-U-11', fromId: 'ROOM-MRB-CAPA', toId: 'BENCH-OQC-RELEASE', fromAnchor: 'left', toAnchor: 'right', type: 'motor-roller', labelAr: 'مسار الإفراج النهائي OQC', labelEn: 'MRB to OQC Release Bench', velocityMs: 0.5, motorKw: 0.75, capacityUnits: 20, currentWip: 8 },
-      { id: 'CONN-U-12', fromId: 'BENCH-OQC-RELEASE', toId: 'STATION-PACKAGING', fromAnchor: 'left', toAnchor: 'right', type: 'motor-roller', labelAr: 'سير التعبئة والتغليف الآلي', labelEn: 'OQC to Auto Packaging', velocityMs: 0.5, motorKw: 0.75, capacityUnits: 25, currentWip: 10 },
-      { id: 'CONN-U-13', fromId: 'STATION-PACKAGING', toId: 'DOCK-SHIPPING-03', fromAnchor: 'top', toAnchor: 'bottom', type: 'motor-roller', labelAr: 'سير رصيف الشحن والتصدير', labelEn: 'Packaging to Shipping Dock', velocityMs: 0.45, motorKw: 0.75, capacityUnits: 24, currentWip: 7 },
-      { id: 'CONN-U-14', fromId: 'DOCK-SHIPPING-03', toId: 'TRUCK-CUSTOMER-DELIVERY', fromAnchor: 'top', toAnchor: 'bottom', type: 'dock-ramp', labelAr: 'رامب شحن الشاحنات', labelEn: 'Dock to Truck Ramp', velocityMs: 0.35, motorKw: 0.55, capacityUnits: 30, currentWip: 14 }
-    ];
-
-    return { equipment, connections, nameAr: 'خلية تصنيع U الهندسية (Lean TPS U-Cell)', nameEn: 'Lean TPS U-Cell' };
+    return { equipment, connections: FACTORY_CONNECTIONS, nameAr: 'خلية تصنيع U الهندسية (Lean TPS U-Cell)', nameEn: 'Lean TPS U-Cell' };
   }
 
   if (presetId === 'linear') {
-    // 3. Dual Linear Cascade Lines (Upper Manufacturing, Lower Quality & Release)
+    // Linear Cascade Lines
     const coords: Record<string, { x: number; y: number; w: number; h: number }> = {
-      'DOCK-RECEIVING-01': { x: 35, y: 120, w: 175, h: 90 },
-      'STATION-IQC-INSPECT': { x: 230, y: 120, w: 175, h: 90 },
-      'WAREHOUSE-RAW-STAGING': { x: 425, y: 120, w: 175, h: 90 },
-      'STATION-CNC-MILLING': { x: 620, y: 120, w: 175, h: 90 },
-      'STATION-SUB-ASSEMBLY': { x: 815, y: 120, w: 175, h: 90 },
-      'STATION-TORQUE-BENCH': { x: 1010, y: 120, w: 160, h: 90 },
-      'STATION-PRESSURE-TEST': { x: 1010, y: 380, w: 160, h: 90 },
-      'STATION-IPQC-GATE': { x: 815, y: 380, w: 175, h: 90 },
-      'LAB-METROLOGY-CMM': { x: 620, y: 380, w: 175, h: 90 },
-      'BENCH-OQC-RELEASE': { x: 425, y: 380, w: 175, h: 90 },
-      'STATION-PACKAGING': { x: 230, y: 380, w: 175, h: 90 },
-      'DOCK-SHIPPING-03': { x: 35, y: 380, w: 175, h: 90 },
-      'TRUCK-CUSTOMER-DELIVERY': { x: 35, y: 505, w: 175, h: 90 },
-      'QUARANTINE-CAGE': { x: 230, y: 245, w: 175, h: 80 },
-      'ROOM-MRB-CAPA': { x: 620, y: 245, w: 175, h: 80 }
+      'STATION-SUPPLIER-QUALITY': { x: 35, y: 70, w: 180, h: 80 },
+      'STATION-INSPECTION-PLANS': { x: 225, y: 70, w: 180, h: 80 },
+      'STATION-IQC-INSPECTION': { x: 415, y: 70, w: 180, h: 80 },
+      'STATION-SHOPFLOOR-ENTRY': { x: 605, y: 70, w: 180, h: 80 },
+      'STATION-DEFECT-LOG': { x: 795, y: 70, w: 180, h: 80 },
+      'STATION-SPC-CHARTS': { x: 985, y: 70, w: 180, h: 80 },
+      'STATION-EXECUTION-BOARD': { x: 985, y: 230, w: 180, h: 80 },
+      'STATION-NCR-REPORTS': { x: 795, y: 230, w: 180, h: 80 },
+      'STATION-CAPA-ACTIONS': { x: 605, y: 230, w: 180, h: 80 },
+      'STATION-8D-SOLVING': { x: 415, y: 230, w: 180, h: 80 },
+      'STATION-DEVIATION-PERMITS': { x: 225, y: 230, w: 180, h: 80 },
+      'STATION-CHANGE-CONTROL': { x: 35, y: 230, w: 180, h: 80 },
+      'STATION-OUTGOING-OQC': { x: 35, y: 390, w: 180, h: 80 },
+      'STATION-CUSTOMER-COMPLAINTS': { x: 225, y: 390, w: 180, h: 80 },
+      'STATION-CONTROL-PLAN': { x: 415, y: 390, w: 180, h: 80 },
+      'STATION-FMEA-RISK': { x: 605, y: 390, w: 180, h: 80 },
+      'STATION-CALIBRATION-MSA': { x: 795, y: 390, w: 180, h: 80 },
+      'STATION-LAYERED-AUDITS': { x: 985, y: 390, w: 180, h: 80 },
+      'STATION-INTERNAL-AUDIT': { x: 985, y: 520, w: 180, h: 80 },
+      'STATION-MASTER-DATA': { x: 795, y: 520, w: 180, h: 80 },
+      'STATION-FORM-DESIGNER': { x: 605, y: 520, w: 180, h: 80 },
+      'STATION-KNOWLEDGE-BASE': { x: 415, y: 520, w: 180, h: 80 }
     };
 
     const equipment = currentList.map(item => {
@@ -952,42 +1162,33 @@ function buildLayoutPresetData(
       return item;
     });
 
-    const connections: ScadaConnection[] = [
-      { id: 'CONN-LIN-1', fromId: 'DOCK-RECEIVING-01', toId: 'STATION-IQC-INSPECT', fromAnchor: 'right', toAnchor: 'left', type: 'motor-roller', labelAr: 'سير رولمان استلام الشحنات', labelEn: 'Dock to IQC', velocityMs: 0.45, motorKw: 0.75, capacityUnits: 15, currentWip: 4 },
-      { id: 'CONN-LIN-2', fromId: 'STATION-IQC-INSPECT', toId: 'WAREHOUSE-RAW-STAGING', fromAnchor: 'right', toAnchor: 'left', type: 'motor-roller', labelAr: 'سير الخامات المفحوصة', labelEn: 'IQC to Raw Buffer', velocityMs: 0.5, motorKw: 0.75, capacityUnits: 20, currentWip: 8 },
-      { id: 'CONN-LIN-3', fromId: 'STATION-IQC-INSPECT', toId: 'QUARANTINE-CAGE', fromAnchor: 'bottom', toAnchor: 'top', type: 'chute', labelAr: 'مزلقان العزل والحجز', labelEn: 'Quarantine Chute', velocityMs: 0.6, motorKw: 0.37, capacityUnits: 8, currentWip: 1 },
-      { id: 'CONN-LIN-4', fromId: 'WAREHOUSE-RAW-STAGING', toId: 'STATION-CNC-MILLING', fromAnchor: 'right', toAnchor: 'left', type: 'motor-roller', labelAr: 'سير تغذية ماكينات CNC', labelEn: 'Buffer to CNC Milling', velocityMs: 0.5, motorKw: 1.1, capacityUnits: 22, currentWip: 11 },
-      { id: 'CONN-LIN-5', fromId: 'STATION-CNC-MILLING', toId: 'STATION-SUB-ASSEMBLY', fromAnchor: 'right', toAnchor: 'left', type: 'motor-roller', labelAr: 'سير خط التجميع 01', labelEn: 'CNC to Assembly', velocityMs: 0.5, motorKw: 1.1, capacityUnits: 25, currentWip: 13 },
-      { id: 'CONN-LIN-6', fromId: 'STATION-SUB-ASSEMBLY', toId: 'STATION-TORQUE-BENCH', fromAnchor: 'right', toAnchor: 'left', type: 'motor-roller', labelAr: 'سير محطة الربط والعزم', labelEn: 'Assembly to Torque', velocityMs: 0.45, motorKw: 0.75, capacityUnits: 18, currentWip: 7 },
-      { id: 'CONN-LIN-7', fromId: 'STATION-TORQUE-BENCH', toId: 'STATION-PRESSURE-TEST', fromAnchor: 'bottom', toAnchor: 'top', type: 'bridge', labelAr: 'جسر نقل الاختبارات الهيدروليكية', labelEn: 'Torque to Pressure Bridge', velocityMs: 0.45, motorKw: 1.1, capacityUnits: 20, currentWip: 6 },
-      { id: 'CONN-LIN-8', fromId: 'STATION-PRESSURE-TEST', toId: 'STATION-IPQC-GATE', fromAnchor: 'left', toAnchor: 'right', type: 'motor-roller', labelAr: 'سير بوابة فحص الصالة', labelEn: 'Pressure to IPQC', velocityMs: 0.5, motorKw: 0.75, capacityUnits: 20, currentWip: 8 },
-      { id: 'CONN-LIN-9', fromId: 'STATION-IPQC-GATE', toId: 'LAB-METROLOGY-CMM', fromAnchor: 'left', toAnchor: 'right', type: 'pneumatic', labelAr: 'أنبوب هوائي لغرفة القياس CMM', labelEn: 'IPQC to CMM Lab', velocityMs: 1.8, motorKw: 2.2, capacityUnits: 5, currentWip: 1 },
-      { id: 'CONN-LIN-10', fromId: 'LAB-METROLOGY-CMM', toId: 'BENCH-OQC-RELEASE', fromAnchor: 'left', toAnchor: 'right', type: 'motor-roller', labelAr: 'سير الإفراج والتحرير النهائي', labelEn: 'Metrology to OQC', velocityMs: 0.5, motorKw: 0.75, capacityUnits: 22, currentWip: 9 },
-      { id: 'CONN-LIN-11', fromId: 'BENCH-OQC-RELEASE', toId: 'STATION-PACKAGING', fromAnchor: 'left', toAnchor: 'right', type: 'motor-roller', labelAr: 'سير محطة التعبئة والتغليف', labelEn: 'OQC to Packaging', velocityMs: 0.5, motorKw: 0.75, capacityUnits: 25, currentWip: 12 },
-      { id: 'CONN-LIN-12', fromId: 'STATION-PACKAGING', toId: 'DOCK-SHIPPING-03', fromAnchor: 'left', toAnchor: 'right', type: 'motor-roller', labelAr: 'سير رصيف الشحن والتصدير', labelEn: 'Packaging to Shipping Dock', velocityMs: 0.45, motorKw: 0.75, capacityUnits: 24, currentWip: 7 },
-      { id: 'CONN-LIN-13', fromId: 'DOCK-SHIPPING-03', toId: 'TRUCK-CUSTOMER-DELIVERY', fromAnchor: 'bottom', toAnchor: 'top', type: 'dock-ramp', labelAr: 'رامب شحن الشاحنات', labelEn: 'Dock to Dispatch Ramp', velocityMs: 0.35, motorKw: 0.55, capacityUnits: 30, currentWip: 16 }
-    ];
-
-    return { equipment, connections, nameAr: 'خط الإنتاج التسلسلي المزدوج (Linear Cascade)', nameEn: 'Dual Linear Cascade' };
+    return { equipment, connections: FACTORY_CONNECTIONS, nameAr: 'خط الإنتاج التسلسلي (Linear Cascade)', nameEn: 'Dual Linear Cascade' };
   }
 
-  // 4. Serpentine S-Flow (Triple Tier)
+  // 4. Serpentine S-Flow
   const coords: Record<string, { x: number; y: number; w: number; h: number }> = {
-    'DOCK-RECEIVING-01': { x: 40, y: 70, w: 200, h: 85 },
-    'STATION-IQC-INSPECT': { x: 265, y: 70, w: 200, h: 85 },
-    'WAREHOUSE-RAW-STAGING': { x: 490, y: 70, w: 200, h: 85 },
-    'STATION-CNC-MILLING': { x: 715, y: 70, w: 200, h: 85 },
-    'STATION-SUB-ASSEMBLY': { x: 940, y: 70, w: 210, h: 85 },
-    'STATION-TORQUE-BENCH': { x: 940, y: 260, w: 210, h: 85 },
-    'STATION-PRESSURE-TEST': { x: 715, y: 260, w: 200, h: 85 },
-    'STATION-IPQC-GATE': { x: 490, y: 260, w: 200, h: 85 },
-    'LAB-METROLOGY-CMM': { x: 265, y: 260, w: 200, h: 85 },
-    'ROOM-MRB-CAPA': { x: 40, y: 260, w: 200, h: 85 },
-    'BENCH-OQC-RELEASE': { x: 40, y: 465, w: 200, h: 85 },
-    'STATION-PACKAGING': { x: 265, y: 465, w: 200, h: 85 },
-    'DOCK-SHIPPING-03': { x: 490, y: 465, w: 200, h: 85 },
-    'TRUCK-CUSTOMER-DELIVERY': { x: 715, y: 465, w: 200, h: 85 },
-    'QUARANTINE-CAGE': { x: 940, y: 465, w: 210, h: 85 }
+    'STATION-SUPPLIER-QUALITY': { x: 40, y: 70, w: 180, h: 80 },
+    'STATION-INSPECTION-PLANS': { x: 230, y: 70, w: 180, h: 80 },
+    'STATION-IQC-INSPECTION': { x: 420, y: 70, w: 180, h: 80 },
+    'STATION-SHOPFLOOR-ENTRY': { x: 610, y: 70, w: 180, h: 80 },
+    'STATION-DEFECT-LOG': { x: 800, y: 70, w: 180, h: 80 },
+    'STATION-SPC-CHARTS': { x: 990, y: 70, w: 180, h: 80 },
+    'STATION-EXECUTION-BOARD': { x: 990, y: 220, w: 180, h: 80 },
+    'STATION-NCR-REPORTS': { x: 800, y: 220, w: 180, h: 80 },
+    'STATION-CAPA-ACTIONS': { x: 610, y: 220, w: 180, h: 80 },
+    'STATION-8D-SOLVING': { x: 420, y: 220, w: 180, h: 80 },
+    'STATION-DEVIATION-PERMITS': { x: 230, y: 220, w: 180, h: 80 },
+    'STATION-CHANGE-CONTROL': { x: 40, y: 220, w: 180, h: 80 },
+    'STATION-OUTGOING-OQC': { x: 40, y: 370, w: 180, h: 80 },
+    'STATION-CUSTOMER-COMPLAINTS': { x: 230, y: 370, w: 180, h: 80 },
+    'STATION-CONTROL-PLAN': { x: 420, y: 370, w: 180, h: 80 },
+    'STATION-FMEA-RISK': { x: 610, y: 370, w: 180, h: 80 },
+    'STATION-CALIBRATION-MSA': { x: 800, y: 370, w: 180, h: 80 },
+    'STATION-LAYERED-AUDITS': { x: 990, y: 370, w: 180, h: 80 },
+    'STATION-INTERNAL-AUDIT': { x: 990, y: 510, w: 180, h: 80 },
+    'STATION-MASTER-DATA': { x: 800, y: 510, w: 180, h: 80 },
+    'STATION-FORM-DESIGNER': { x: 610, y: 510, w: 180, h: 80 },
+    'STATION-KNOWLEDGE-BASE': { x: 420, y: 510, w: 180, h: 80 }
   };
 
   const equipment = currentList.map(item => {
@@ -996,23 +1197,7 @@ function buildLayoutPresetData(
     return item;
   });
 
-  const connections: ScadaConnection[] = [
-    { id: 'CONN-S-1', fromId: 'DOCK-RECEIVING-01', toId: 'STATION-IQC-INSPECT', fromAnchor: 'right', toAnchor: 'left', type: 'motor-roller', labelAr: 'سير رولمان استلام الفحص', labelEn: 'Dock to IQC', velocityMs: 0.45, motorKw: 0.75, capacityUnits: 15, currentWip: 5 },
-    { id: 'CONN-S-2', fromId: 'STATION-IQC-INSPECT', toId: 'WAREHOUSE-RAW-STAGING', fromAnchor: 'right', toAnchor: 'left', type: 'motor-roller', labelAr: 'سير الخامات المفحوصة', labelEn: 'IQC to Buffer', velocityMs: 0.5, motorKw: 0.75, capacityUnits: 20, currentWip: 8 },
-    { id: 'CONN-S-3', fromId: 'WAREHOUSE-RAW-STAGING', toId: 'STATION-CNC-MILLING', fromAnchor: 'right', toAnchor: 'left', type: 'motor-roller', labelAr: 'سير تغذية ماكينات CNC', labelEn: 'Buffer to CNC', velocityMs: 0.5, motorKw: 1.1, capacityUnits: 22, currentWip: 11 },
-    { id: 'CONN-S-4', fromId: 'STATION-CNC-MILLING', toId: 'STATION-SUB-ASSEMBLY', fromAnchor: 'right', toAnchor: 'left', type: 'motor-roller', labelAr: 'سير خط التجميع 01', labelEn: 'CNC to Assembly', velocityMs: 0.5, motorKw: 1.1, capacityUnits: 25, currentWip: 14 },
-    { id: 'CONN-S-5', fromId: 'STATION-SUB-ASSEMBLY', toId: 'STATION-TORQUE-BENCH', fromAnchor: 'bottom', toAnchor: 'top', type: 'motor-roller', labelAr: 'منحنى دوران السير 180°', labelEn: 'Tier 1 Turnaround Loop', velocityMs: 0.45, motorKw: 1.1, capacityUnits: 18, currentWip: 7 },
-    { id: 'CONN-S-6', fromId: 'STATION-TORQUE-BENCH', toId: 'STATION-PRESSURE-TEST', fromAnchor: 'left', toAnchor: 'right', type: 'motor-roller', labelAr: 'سير اختبارات الضغط', labelEn: 'Torque to Pressure', velocityMs: 0.45, motorKw: 1.1, capacityUnits: 20, currentWip: 6 },
-    { id: 'CONN-S-7', fromId: 'STATION-PRESSURE-TEST', toId: 'STATION-IPQC-GATE', fromAnchor: 'left', toAnchor: 'right', type: 'motor-roller', labelAr: 'سير بوابة فحص الصالة', labelEn: 'Pressure to IPQC', velocityMs: 0.5, motorKw: 0.75, capacityUnits: 20, currentWip: 8 },
-    { id: 'CONN-S-8', fromId: 'STATION-IPQC-GATE', toId: 'LAB-METROLOGY-CMM', fromAnchor: 'left', toAnchor: 'right', type: 'pneumatic', labelAr: 'أنبوب هوائي سريع لغرفة CMM', labelEn: 'IPQC to CMM Metrology', velocityMs: 1.8, motorKw: 2.2, capacityUnits: 5, currentWip: 1 },
-    { id: 'CONN-S-9', fromId: 'LAB-METROLOGY-CMM', toId: 'ROOM-MRB-CAPA', fromAnchor: 'left', toAnchor: 'right', type: 'motor-roller', labelAr: 'مسار العزل الهندسي ولجنة MRB', labelEn: 'Metrology to MRB', velocityMs: 0.45, motorKw: 0.55, capacityUnits: 12, currentWip: 3 },
-    { id: 'CONN-S-10', fromId: 'ROOM-MRB-CAPA', toId: 'BENCH-OQC-RELEASE', fromAnchor: 'bottom', toAnchor: 'top', type: 'motor-roller', labelAr: 'منحنى دوران السير 180° للمرحلة الثالثة', labelEn: 'Tier 2 Turnaround Loop', velocityMs: 0.45, motorKw: 1.1, capacityUnits: 18, currentWip: 6 },
-    { id: 'CONN-S-11', fromId: 'BENCH-OQC-RELEASE', toId: 'STATION-PACKAGING', fromAnchor: 'right', toAnchor: 'left', type: 'motor-roller', labelAr: 'سير محطة التعبئة والتغليف', labelEn: 'OQC to Packaging', velocityMs: 0.5, motorKw: 0.75, capacityUnits: 22, currentWip: 9 },
-    { id: 'CONN-S-12', fromId: 'STATION-PACKAGING', toId: 'DOCK-SHIPPING-03', fromAnchor: 'right', toAnchor: 'left', type: 'motor-roller', labelAr: 'سير رصيف الشحن والتصدير', labelEn: 'Packaging to Shipping Dock', velocityMs: 0.45, motorKw: 0.75, capacityUnits: 24, currentWip: 7 },
-    { id: 'CONN-S-13', fromId: 'DOCK-SHIPPING-03', toId: 'TRUCK-CUSTOMER-DELIVERY', fromAnchor: 'right', toAnchor: 'left', type: 'dock-ramp', labelAr: 'رامب شحن الشاحنات', labelEn: 'Dock to Dispatch Ramp', velocityMs: 0.35, motorKw: 0.55, capacityUnits: 30, currentWip: 15 }
-  ];
-
-  return { equipment, connections, nameAr: 'الخط التموجي المتعرج (Serpentine S-Flow)', nameEn: 'Serpentine S-Flow' };
+  return { equipment, connections: FACTORY_CONNECTIONS, nameAr: 'الخط التموجي المتعرج (Serpentine S-Flow)', nameEn: 'Serpentine S-Flow' };
 }
 
 function loadSavedEquipment(): ScadaEquipment[] {
@@ -1607,11 +1792,13 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
   // Instant 1-Click Move to Factory Bay Preset
   const moveStationToBayPreset = (stationId: string, zone: StationZone) => {
     const bayCoordinates: Record<StationZone, { x: number; y: number; zoneNameAr: string; zoneNameEn: string }> = {
-      receiving: { x: 35, y: 185, zoneNameAr: 'عنبر الاستلام A', zoneNameEn: 'Receiving Bay A' },
-      assembly: { x: 320, y: 160, zoneNameAr: 'خط التجميع B', zoneNameEn: 'Assembly Line B' },
-      lab: { x: 480, y: 470, zoneNameAr: 'مركز الجودة C', zoneNameEn: 'Quality Hub C' },
-      oqc: { x: 895, y: 80, zoneNameAr: 'عنبر الإفراج D', zoneNameEn: 'OQC Bay D' },
-      shipping: { x: 895, y: 350, zoneNameAr: 'عنبر الشحن E', zoneNameEn: 'Shipping Bay E' },
+      receiving: { x: 40, y: 175, zoneNameAr: '1. استلام الخامات والموردين (IQC)', zoneNameEn: '1. Incoming & Supplier (IQC)' },
+      assembly: { x: 310, y: 175, zoneNameAr: '2. جودة التصنيع والعمليات (IPQC)', zoneNameEn: '2. In-Process Quality (IPQC)' },
+      resolution: { x: 580, y: 175, zoneNameAr: '3. عدم المطابقة وحل المشكلات (NCR/8D)', zoneNameEn: '3. Problem Solving (NCR/8D)' },
+      oqc: { x: 855, y: 70, zoneNameAr: '4. فحص وخروج المنتج (OQC)', zoneNameEn: '4. Outgoing Quality (OQC)' },
+      shipping: { x: 855, y: 175, zoneNameAr: '5. شكاوى العملاء والميدان', zoneNameEn: '5. Customer & Field Quality' },
+      lab: { x: 855, y: 365, zoneNameAr: '6. المختبر الهندسي والتدقيق', zoneNameEn: '6. Engineering Lab & Audits' },
+      setup: { x: 40, y: 400, zoneNameAr: '7. تهيئة المصنع والبيانات', zoneNameEn: '7. Factory Setup & Master Data' },
     };
 
     const target = bayCoordinates[zone];
@@ -3509,15 +3696,17 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
       <div className="flex-none px-4 py-1 bg-[#0a1020] border-b border-white/5 flex items-center justify-between gap-2 overflow-x-auto text-[11px] z-20">
         <div className="flex items-center gap-1.5 shrink-0">
           <span className="text-slate-500 font-bold text-[10px] uppercase tracking-wider hidden sm:inline">
-            {isAr ? 'عنابر المصنع:' : 'Plant Bays:'}
+            {isAr ? 'أقسام ومراحل المنصة:' : 'Platform Stages:'}
           </span>
           {[
-            { id: 'all', labelAr: '🏭 جميع العنابر', labelEn: '🏭 All Bays', count: equipmentList.length },
-            { id: 'receiving', labelAr: '📥 Bay A: الاستلام', labelEn: '📥 Bay A: Receiving', count: equipmentList.filter(e => e.zone === 'receiving').length },
-            { id: 'assembly', labelAr: '⚙️ Bay B: التجميع والتشغيل', labelEn: '⚙️ Bay B: Assembly', count: equipmentList.filter(e => e.zone === 'assembly').length },
-            { id: 'lab', labelAr: '🔬 Hub C: مختبر الجودة', labelEn: '🔬 Hub C: QA Lab', count: equipmentList.filter(e => e.zone === 'lab').length },
-            { id: 'oqc', labelAr: '✅ Bay D: الفحص النهائي', labelEn: '✅ Bay D: Final OQC', count: equipmentList.filter(e => e.zone === 'oqc').length },
-            { id: 'shipping', labelAr: '🚚 Bay E: الشحن والتسليم', labelEn: '🚚 Bay E: Shipping', count: equipmentList.filter(e => e.zone === 'shipping').length },
+            { id: 'all', labelAr: '🏭 كل المحطات', labelEn: '🏭 All Stations', count: equipmentList.length },
+            { id: 'receiving', labelAr: '📥 1. الاستلام (IQC)', labelEn: '📥 1. Inbound (IQC)', count: equipmentList.filter(e => e.zone === 'receiving').length },
+            { id: 'assembly', labelAr: '⚙️ 2. العمليات (IPQC)', labelEn: '⚙️ 2. In-Process (IPQC)', count: equipmentList.filter(e => e.zone === 'assembly').length },
+            { id: 'resolution', labelAr: '🔄 3. عدم المطابقة (NCR/8D)', labelEn: '🔄 3. Resolution (8D)', count: equipmentList.filter(e => e.zone === 'resolution').length },
+            { id: 'oqc', labelAr: '✅ 4. الفحص النهائي (OQC)', labelEn: '✅ 4. Outgoing (OQC)', count: equipmentList.filter(e => e.zone === 'oqc').length },
+            { id: 'shipping', labelAr: '🤝 5. شكاوى العملاء', labelEn: '🤝 5. Customer QA', count: equipmentList.filter(e => e.zone === 'shipping').length },
+            { id: 'lab', labelAr: '🔬 6. المختبر والتدقيق', labelEn: '🔬 6. Lab & Audits', count: equipmentList.filter(e => e.zone === 'lab').length },
+            { id: 'setup', labelAr: '⚙️ 7. البيانات الرئيسية', labelEn: '⚙️ 7. Master Data', count: equipmentList.filter(e => e.zone === 'setup').length },
           ].map(bay => (
             <button
               key={bay.id}
@@ -5945,18 +6134,20 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                       <span className="text-[9px] text-slate-500 font-mono">Shift = 2x</span>
                     </div>
 
-                    {/* Quick Move to Bay Buttons */}
+                    {/* Quick Move to Stage Buttons */}
                     <div className="space-y-1">
                       <span className="text-[10px] font-bold text-slate-400 block">
-                        {isAr ? 'نقل فوري إلى عنبر:' : 'Instant Transfer to Bay:'}
+                        {isAr ? 'نقل فوري إلى قسم:' : 'Instant Transfer to Stage:'}
                       </span>
-                      <div className="grid grid-cols-5 gap-1 text-[10px]">
+                      <div className="grid grid-cols-4 sm:grid-cols-7 gap-1 text-[10px]">
                         {[
-                          { zone: 'receiving', label: 'Bay A', title: isAr ? 'الاستلام' : 'Recv' },
-                          { zone: 'assembly', label: 'Bay B', title: isAr ? 'التجميع' : 'Asm' },
-                          { zone: 'lab', label: 'Hub C', title: isAr ? 'الجودة' : 'Lab' },
-                          { zone: 'oqc', label: 'Bay D', title: isAr ? 'الفحص' : 'OQC' },
-                          { zone: 'shipping', label: 'Bay E', title: isAr ? 'الشحن' : 'Ship' },
+                          { zone: 'receiving', label: '1. IQC', title: isAr ? 'الاستلام' : 'Recv' },
+                          { zone: 'assembly', label: '2. IPQC', title: isAr ? 'الإنتاج' : 'IPQC' },
+                          { zone: 'resolution', label: '3. 8D', title: isAr ? 'عدم المطابقة' : '8D' },
+                          { zone: 'oqc', label: '4. OQC', title: isAr ? 'الفحص' : 'OQC' },
+                          { zone: 'shipping', label: '5. RMA', title: isAr ? 'العملاء' : 'Customer' },
+                          { zone: 'lab', label: '6. Lab', title: isAr ? 'المختبر' : 'Lab' },
+                          { zone: 'setup', label: '7. Master', title: isAr ? 'البيانات' : 'Setup' },
                         ].map(b => (
                           <button
                             key={b.zone}
@@ -7262,55 +7453,77 @@ function StationEditModal({ station, isNew, isAr, onSave, onDelete, onClose }: S
         setFormData(prev => ({
           ...prev,
           zone: 'receiving',
-          zoneNameAr: 'عنبر الاستلام A',
-          zoneNameEn: 'Receiving Bay A',
-          line: 'Receiving',
-          x: 35,
-          y: 185
+          zoneNameAr: '1. استلام الخامات والموردين (IQC)',
+          zoneNameEn: '1. Incoming & Supplier (IQC)',
+          line: 'Supplier QA',
+          x: 40,
+          y: 175
         }));
         break;
       case 'assembly':
         setFormData(prev => ({
           ...prev,
           zone: 'assembly',
-          zoneNameAr: 'خط التجميع 01',
-          zoneNameEn: 'Assembly Line 01',
-          line: 'Line 1',
-          x: 480,
-          y: 180
+          zoneNameAr: '2. جودة التصنيع والعمليات (IPQC)',
+          zoneNameEn: '2. In-Process Quality (IPQC)',
+          line: 'Production Line',
+          x: 310,
+          y: 175
         }));
         break;
-      case 'lab':
+      case 'resolution':
         setFormData(prev => ({
           ...prev,
-          zone: 'lab',
-          zoneNameAr: 'مركز الجودة C',
-          zoneNameEn: 'Quality Hub C',
-          line: 'Quality Lab',
-          x: 450,
-          y: 470
+          zone: 'resolution',
+          zoneNameAr: '3. عدم المطابقة وحل المشكلات (NCR/8D)',
+          zoneNameEn: '3. Problem Solving (NCR/8D)',
+          line: 'Quality Assurance',
+          x: 580,
+          y: 175
         }));
         break;
       case 'oqc':
         setFormData(prev => ({
           ...prev,
           zone: 'oqc',
-          zoneNameAr: 'عنبر الإفراج D',
-          zoneNameEn: 'OQC Bay D',
+          zoneNameAr: '4. فحص وخروج المنتج (OQC)',
+          zoneNameEn: '4. Outgoing Quality (OQC)',
           line: 'Final Inspection',
-          x: 895,
-          y: 130
+          x: 855,
+          y: 70
         }));
         break;
       case 'shipping':
         setFormData(prev => ({
           ...prev,
           zone: 'shipping',
-          zoneNameAr: 'عنبر الشحن E',
-          zoneNameEn: 'Shipping Bay E',
-          line: 'Shipping',
-          x: 895,
-          y: 350
+          zoneNameAr: '5. شكاوى العملاء والميدان',
+          zoneNameEn: '5. Customer & Field Quality',
+          line: 'Customer Experience',
+          x: 855,
+          y: 175
+        }));
+        break;
+      case 'lab':
+        setFormData(prev => ({
+          ...prev,
+          zone: 'lab',
+          zoneNameAr: '6. المختبر الهندسي والتدقيق',
+          zoneNameEn: '6. Engineering Lab & Audits',
+          line: 'Quality Engineering',
+          x: 855,
+          y: 365
+        }));
+        break;
+      case 'setup':
+        setFormData(prev => ({
+          ...prev,
+          zone: 'setup',
+          zoneNameAr: '7. تهيئة المصنع والبيانات',
+          zoneNameEn: '7. Factory Setup & Master Data',
+          line: 'System Master',
+          x: 40,
+          y: 400
         }));
         break;
     }
@@ -7416,15 +7629,17 @@ function StationEditModal({ station, isNew, isAr, onSave, onDelete, onClose }: S
             {/* Zone Assignment */}
             <div className="md:col-span-2">
               <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                {isAr ? 'العنبر / الجناح المصنعي (Bay / Zone):' : 'Bay / Industrial Zone:'}
+                {isAr ? 'القسم / المرحلة المصنعية (Stage / Zone):' : 'Stage / Platform Zone:'}
               </label>
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {[
-                  { id: 'receiving', labelAr: 'Bay A: الاستلام', labelEn: 'Bay A: Receiving' },
-                  { id: 'assembly', labelAr: 'Bay B: الإنتاج والتجميع', labelEn: 'Bay B: Assembly' },
-                  { id: 'lab', labelAr: 'Hub C: المختبر و MRB', labelEn: 'Hub C: QA Lab' },
-                  { id: 'oqc', labelAr: 'Bay D: الفحص النهائي', labelEn: 'Bay D: Final OQC' },
-                  { id: 'shipping', labelAr: 'Bay E: الشحن واللوجستيات', labelEn: 'Bay E: Shipping' },
+                  { id: 'receiving', labelAr: '1. الاستلام (IQC)', labelEn: '1. Inbound (IQC)' },
+                  { id: 'assembly', labelAr: '2. العمليات (IPQC)', labelEn: '2. In-Process (IPQC)' },
+                  { id: 'resolution', labelAr: '3. عدم المطابقة (8D)', labelEn: '3. Problem Solving (8D)' },
+                  { id: 'oqc', labelAr: '4. الفحص النهائي (OQC)', labelEn: '4. Outgoing (OQC)' },
+                  { id: 'shipping', labelAr: '5. شكاوى العملاء', labelEn: '5. Customer Complaints' },
+                  { id: 'lab', labelAr: '6. المختبر والتدقيق', labelEn: '6. Lab & Audits' },
+                  { id: 'setup', labelAr: '7. تهيئة البيانات', labelEn: '7. Setup & Master Data' },
                 ].map(z => (
                   <button
                     type="button"

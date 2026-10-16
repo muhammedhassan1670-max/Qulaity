@@ -1,6 +1,8 @@
-// QMS Enterprise 4.0 - Comprehensive Plant Departments & End-to-End Enterprise Flow Engine
-// Bridges all physical SCADA stations and 3D digital twin zones with the 10 real enterprise departments
-// Linking raw material arrival at dock all the way to customer delivery and field warranty feedback.
+// QMS Enterprise 4.0 - Comprehensive Plant Departments & Real Platform Modules Engine
+// Bridges all physical SCADA stations and 3D digital twin zones strictly with the REAL platform stages
+// Defined directly in the sidebar tabs: from Inbound IQC to Shopfloor, Resolution, Outgoing, Customer, Lab & Setup.
+
+export type DepartmentZone = 'receiving' | 'assembly' | 'resolution' | 'oqc' | 'shipping' | 'lab' | 'setup';
 
 export interface PlantDepartment {
   id: string;
@@ -19,7 +21,7 @@ export interface PlantDepartment {
   borderClass: string;
   bgGradient: string;
   iconName: string;
-  zone: 'receiving' | 'assembly' | 'lab' | 'oqc' | 'shipping';
+  zone: DepartmentZone;
   physicalLocationAr: string;
   physicalLocationEn: string;
 
@@ -31,7 +33,7 @@ export interface PlantDepartment {
   outputDescriptionAr: string;
   outputDescriptionEn: string;
 
-  // Physical equipment pods on factory floorplan
+  // Physical equipment pods on factory floorplan (Strictly 1:1 with real sidebar tabs)
   stationIds: string[];
 
   // Linked QMS Modules across entire platform
@@ -53,19 +55,19 @@ export interface PlantDepartment {
 
 export const ENTERPRISE_DEPARTMENTS: PlantDepartment[] = [
   // --------------------------------------------------------------------------
-  // 1. إدارة سلاسل الإمداد ومراقبة جودة الموردين
+  // 1. استلام الخامات والموردين (IQC) - المرحلة الأولى في القائمة الجانبية
   // --------------------------------------------------------------------------
   {
-    id: 'DEPT-SUPPLY-CHAIN',
-    code: 'SQA-01',
+    id: 'DEPT-STAGE-INCOMING',
+    code: 'STAGE-01',
     number: 1,
-    nameAr: 'إدارة سلاسل الإمداد وجودة الموردين',
-    nameEn: 'Supply Chain & Supplier Quality (SQA)',
-    shortNameAr: 'جودة الموردين والاستلام',
-    shortNameEn: 'Supplier QA & Inbound',
+    nameAr: '1. استلام الخامات والموردين (IQC)',
+    nameEn: '1. Incoming & Supplier Quality (IQC)',
+    shortNameAr: 'استلام الخامات (IQC)',
+    shortNameEn: 'Incoming & Supplier',
     headOfDeptAr: 'م. طارق العوضي',
     headOfDeptEn: 'Eng. Tarek El-Awady',
-    headTitleAr: 'مدير توكيد جودة سلاسل الإمداد والموردين',
+    headTitleAr: 'مدير توكيد جودة سلاسل الإمداد وفحص الاستلام',
     headTitleEn: 'Supplier Quality Assurance Manager',
     colorName: 'amber',
     accentHex: '#f59e0b',
@@ -73,19 +75,18 @@ export const ENTERPRISE_DEPARTMENTS: PlantDepartment[] = [
     bgGradient: 'from-amber-500/20 via-orange-500/10 to-transparent',
     iconName: 'truck',
     zone: 'receiving',
-    physicalLocationAr: 'رصيف الشاحنات الغربي A + بوابة الفحص IQC-01',
-    physicalLocationEn: 'West Inbound Gate A & IQC Inspection Port',
-    downstreamDeptId: 'DEPT-WAREHOUSE-INVENTORY',
+    physicalLocationAr: 'رصيف استلام الخامات ومحطة فحص الوارد IQC',
+    physicalLocationEn: 'Inbound Receiving Dock & IQC Inspection Port',
+    downstreamDeptId: 'DEPT-STAGE-INPROCESS',
     inputDescriptionAr: 'شحنات المواد الخام، بوالص الشحن، وشهادات التحليل المخبرية COA من الموردين',
     inputDescriptionEn: 'Raw materials, bill of lading & supplier Certificate of Analysis (COA)',
-    outputDescriptionAr: 'خامات مفحوصة ومطابقة 100% أو عزل الشحنات المخالفة في قفص الحجر',
+    outputDescriptionAr: 'خامات مفحوصة ومطابقة 100% أو عزل الشحنات المخالفة لتقرير عدم مطابقة',
     outputDescriptionEn: '100% verified compliant raw lots or quarantined defect batches',
-    stationIds: ['DOCK-RECEIVING-01', 'STATION-IQC-INSPECT', 'QUARANTINE-CAGE'],
+    stationIds: ['STATION-SUPPLIER-QUALITY', 'STATION-INSPECTION-PLANS', 'STATION-IQC-INSPECTION'],
     linkedModules: [
-      { id: 'supplier-quality', labelAr: 'ملفات وتقييم الموردين', labelEn: 'Supplier Quality Audits', path: '/supplier-quality', icon: 'Truck' },
-      { id: 'iqc-plans', labelAr: 'خطط فحص المواد الخام', labelEn: 'Incoming Inspection Plans', path: '/quality-inspection-plans', icon: 'ClipboardList' },
-      { id: 'iqc-inspect', labelAr: 'تسجيل فحص الاستلام IQC', labelEn: 'Log Inbound Inspection', path: '/compliance/hub/inspection', icon: 'CheckSquare', badgeCountKey: 'inspection' },
-      { id: 'quarantine-ncr', labelAr: 'تقارير عزل الموردين (NCR)', labelEn: 'Supplier NCRs & Holds', path: '/quality/records/ncr', icon: 'AlertTriangle', badgeCountKey: 'ncr' },
+      { id: 'quality-supplier', labelAr: 'جودة وتقييم الموردين', labelEn: 'Supplier Quality & Rating', path: '/supplier-quality', icon: 'Truck' },
+      { id: 'quality-inspection-plans', labelAr: 'خطط فحص المواد الخام', labelEn: 'Incoming Inspection Plans', path: '/quality-inspection-plans', icon: 'FileText' },
+      { id: 'quality-inspection', labelAr: 'فحص الشحنات الواردة (IQC)', labelEn: 'Incoming Inspection (IQC)', path: '/compliance/hub/inspection', icon: 'ClipboardCheck', badgeCountKey: 'inspection' },
     ],
     primaryKpiAr: 'نسبة قبول شحنات الموردين من أول مرة (SAR)',
     primaryKpiEn: 'Supplier Acceptance Rate (SAR)',
@@ -94,123 +95,40 @@ export const ENTERPRISE_DEPARTMENTS: PlantDepartment[] = [
   },
 
   // --------------------------------------------------------------------------
-  // 2. إدارة المستودعات ومراقبة المخزون والخامات
+  // 2. جودة التصنيع والعمليات (IPQC) - المرحلة الثانية في القائمة الجانبية
   // --------------------------------------------------------------------------
   {
-    id: 'DEPT-WAREHOUSE-INVENTORY',
-    code: 'WMS-02',
+    id: 'DEPT-STAGE-INPROCESS',
+    code: 'STAGE-02',
     number: 2,
-    nameAr: 'إدارة المستودعات ومراقبة المخزون وتتبع اللوطات',
-    nameEn: 'Warehouse & Raw Materials Inventory (WMS)',
-    shortNameAr: 'المستودعات والخامات',
-    shortNameEn: 'Warehouse & Staging',
-    headOfDeptAr: 'أ. محمود عبد الرحمن',
-    headOfDeptEn: 'Mahmoud Abdelrahman',
-    headTitleAr: 'رئيس قسم تخطيط ومراقبة المخزون',
-    headTitleEn: 'Inventory & Materials Staging Head',
-    colorName: 'blue',
-    accentHex: '#3b82f6',
-    borderClass: 'border-blue-500/40',
-    bgGradient: 'from-blue-500/20 via-sky-500/10 to-transparent',
-    iconName: 'pallet',
-    zone: 'receiving',
-    physicalLocationAr: 'مستودع الخامات المركزي وعنابر الباليتات BUF-01',
-    physicalLocationEn: 'Raw Material High-Bay Storage BUF-01',
-    upstreamDeptId: 'DEPT-SUPPLY-CHAIN',
-    downstreamDeptId: 'DEPT-PRODUCTION-OPERATIONS',
-    inputDescriptionAr: 'شحنات معتمدة مختومة بباركود الفحص من إدارة فحص الاستلام',
-    inputDescriptionEn: 'Approved raw materials passed by Inbound QA with verified barcodes',
-    outputDescriptionAr: 'إمداد خطوط الإنتاج بالخامات وفق نظام FIFO ورقم التشغيلة Lot No',
-    outputDescriptionEn: 'FIFO-controlled material feed to production lines with Lot Traceability',
-    stationIds: ['WAREHOUSE-RAW-STAGING'],
-    linkedModules: [
-      { id: 'master-data', labelAr: 'البيانات الأساسية للمنتجات والخامات', labelEn: 'Master Parts & Materials', path: '/quality-master-data', icon: 'Layers' },
-      { id: 'barcode-trace', labelAr: 'تتبع باركود الشحنات واللوطات', labelEn: 'Barcode & Lot Traceability', path: '/quality-search', icon: 'Search' },
-      { id: 'sync-manager', labelAr: 'مزامنة أذونات التخزين والمخزون', labelEn: 'Offline Warehouse Sync', path: '/quality-sync-manager', icon: 'RefreshCw' },
-    ],
-    primaryKpiAr: 'دقة تتبع اللوطات وصرف المخزون FIFO',
-    primaryKpiEn: 'Lot Traceability & FIFO Compliance',
-    targetKpiValue: '100%',
-    slaHours: 2
-  },
-
-  // --------------------------------------------------------------------------
-  // 3. إدارة العمليات والإنتاج والتشغيل الميداني
-  // --------------------------------------------------------------------------
-  {
-    id: 'DEPT-PRODUCTION-OPERATIONS',
-    code: 'PRD-03',
-    number: 3,
-    nameAr: 'إدارة العمليات والإنتاج والتشغيل الميداني',
-    nameEn: 'Manufacturing & Shopfloor Production Operations',
-    shortNameAr: 'الإنتاج والتشغيل',
-    shortNameEn: 'Shopfloor Production',
-    headOfDeptAr: 'م. حسام الدين نبيل',
-    headOfDeptEn: 'Eng. Hossam Nabil',
-    headTitleAr: 'مدير عمليات التصنيع والإنتاج',
-    headTitleEn: 'Production Operations Director',
+    nameAr: '2. جودة التصنيع والعمليات (IPQC)',
+    nameEn: '2. In-Process Quality (IPQC)',
+    shortNameAr: 'جودة التصنيع (IPQC)',
+    shortNameEn: 'In-Process QA',
+    headOfDeptAr: 'م. دينا الشربيني',
+    headOfDeptEn: 'Eng. Dina El-Sherbini',
+    headTitleAr: 'رئيس قسم هندسة الجودة والـ SPC والرقابة أثناء التشغيل',
+    headTitleEn: 'Lead In-Process Quality & SPC Engineer',
     colorName: 'cyan',
     accentHex: '#06b6d4',
     borderClass: 'border-cyan-500/40',
     bgGradient: 'from-cyan-500/20 via-blue-500/10 to-transparent',
-    iconName: 'machine',
+    iconName: 'smartphone',
     zone: 'assembly',
-    physicalLocationAr: 'صالة الإنتاج والتجميع الآلي Bay B (ماكينات CNC وخط التجميع 01)',
-    physicalLocationEn: 'Bay B Automated Machining & Assembly Line 01',
-    upstreamDeptId: 'DEPT-WAREHOUSE-INVENTORY',
-    downstreamDeptId: 'DEPT-IPQC-QUALITY-ENG',
-    inputDescriptionAr: 'الخامات المصروفة من المستودع وأوامر العمل ERP وفق جدول الوردية',
-    inputDescriptionEn: 'Raw materials from warehouse staging & ERP shift production orders',
-    outputDescriptionAr: 'منتجات نصف مصنعة WIP مخرطة ومجمعة وفق زمن الدورة التاكت',
-    outputDescriptionEn: 'Machined and fitted WIP assemblies synchronized with Takt cycle time',
-    stationIds: ['STATION-CNC-MILLING', 'STATION-SUB-ASSEMBLY'],
+    physicalLocationAr: 'صالة الإنتاج والتشغيل وبوابات الفحص المرحلي وكارتات التحكم',
+    physicalLocationEn: 'Production Shopfloor, Quality Clearance Gates & SPC Stations',
+    upstreamDeptId: 'DEPT-STAGE-INCOMING',
+    downstreamDeptId: 'DEPT-STAGE-RESOLUTION',
+    inputDescriptionAr: 'الخامات المعتمدة من الاستلام وتعليمات الفحص من خطة التحكم Control Plan',
+    inputDescriptionEn: 'Approved raw materials & inspection specs from Control Plan',
+    outputDescriptionAr: 'منتجات مرحلية مفحوصة ومطابقة مع كارتات ضبط إحصائي أو رصد عيوب',
+    outputDescriptionEn: 'Cleared in-process batches with verified SPC charts or defect logs',
+    stationIds: ['STATION-SHOPFLOOR-ENTRY', 'STATION-DEFECT-LOG', 'STATION-SPC-CHARTS', 'STATION-EXECUTION-BOARD'],
     linkedModules: [
-      { id: 'shopfloor-entry', labelAr: 'تسجيل العيوب والأندون الميداني', labelEn: 'Shopfloor Defect & Andon Entry', path: '/quality-shopfloor', icon: 'Zap', badgeCountKey: 'defect' },
-      { id: 'daily-defects', labelAr: 'سجل عيوب الوردية اليومي', labelEn: 'Shift Defect Logbook', path: '/defect-log', icon: 'ClipboardList' },
-      { id: 'execution-board', labelAr: 'لوحة قيادة الخطوط والمشغلين', labelEn: 'Line Clearance & Execution Board', path: '/quality-execution-board', icon: 'Activity' },
-      { id: 'spc-charts', labelAr: 'مراقبة أبعاد التشغيل الميداني', labelEn: 'Process Measurements View', path: '/spc', icon: 'BarChart3' },
-    ],
-    primaryKpiAr: 'كفاءة المعدات الشاملة (OEE)',
-    primaryKpiEn: 'Overall Equipment Effectiveness (OEE)',
-    targetKpiValue: '≥ 88.5%',
-    slaHours: 1
-  },
-
-  // --------------------------------------------------------------------------
-  // 4. إدارة هندسة الجودة والرقابة أثناء التشغيل (IPQC)
-  // --------------------------------------------------------------------------
-  {
-    id: 'DEPT-IPQC-QUALITY-ENG',
-    code: 'IPQC-04',
-    number: 4,
-    nameAr: 'إدارة هندسة الجودة والرقابة أثناء التشغيل والـ SPC',
-    nameEn: 'In-Process Quality Control & Quality Engineering (IPQC)',
-    shortNameAr: 'الجودة أثناء التشغيل',
-    shortNameEn: 'In-Process QA (IPQC)',
-    headOfDeptAr: 'م. دينا الشربيني',
-    headOfDeptEn: 'Eng. Dina El-Sherbini',
-    headTitleAr: 'رئيس قسم هندسة الجودة والـ SPC',
-    headTitleEn: 'Lead Quality & Statistical Process Engineer',
-    colorName: 'emerald',
-    accentHex: '#10b981',
-    borderClass: 'border-emerald-500/40',
-    bgGradient: 'from-emerald-500/20 via-teal-500/10 to-transparent',
-    iconName: 'wrench',
-    zone: 'assembly',
-    physicalLocationAr: 'بوابات فحص العزم والضغط وبوابة الإفراج المرحلي IPQC-GATE',
-    physicalLocationEn: 'Torque, Pressure & In-Line Quality Gates TRQ/PRS/IPQC',
-    upstreamDeptId: 'DEPT-PRODUCTION-OPERATIONS',
-    downstreamDeptId: 'DEPT-METROLOGY-LAB',
-    inputDescriptionAr: 'منتجات التجميع الميكانيكي للخضوع لاختبارات العزم Poka-Yoke وضغط الهيدروليك',
-    inputDescriptionEn: 'Assembled components for torque validation, leakage & pressure testing',
-    outputDescriptionAr: 'منتجات مجازة مرحلياً مع كارتات ضبط إحصائي SPC أو تحويل عدم المطابقة',
-    outputDescriptionEn: 'Passed intermediate parts with verified SPC charts or routed NCRs',
-    stationIds: ['STATION-TORQUE-BENCH', 'STATION-PRESSURE-TEST', 'STATION-IPQC-GATE'],
-    linkedModules: [
-      { id: 'spc-system', labelAr: 'التحكم الإحصائي في العمليات (SPC)', labelEn: 'SPC Control Charts (X-bar, R, Cpk)', path: '/spc', icon: 'Activity', badgeCountKey: 'spc' },
-      { id: 'control-plan', labelAr: 'خطط المراقبة الهندسية (Control Plans)', labelEn: 'Dynamic Control Plans', path: '/control-plan', icon: 'CheckSquare' },
-      { id: 'ncr-create', labelAr: 'إصدار تقرير عدم مطابقة (NCR)', labelEn: 'Raise Process Non-Conformance', path: '/quality/records/ncr', icon: 'AlertTriangle', badgeCountKey: 'ncr' },
-      { id: 'process-ppm', labelAr: 'معدل العيوب بالمليون (Process PPM)', labelEn: 'Defect Rate (PPM Metric)', path: '/process-ppm', icon: 'BarChart3' },
+      { id: 'quality-shopfloor', labelAr: 'تسجيل سريع من الأرضية', labelEn: 'Fast Shopfloor Entry', path: '/quality-shopfloor', icon: 'Smartphone', badgeCountKey: 'defect' },
+      { id: 'quality-defect-log', labelAr: 'مسجل / قائمة العيوب اليومية', labelEn: 'Daily Defect Recorder', path: '/defect-log', icon: 'AlertCircle' },
+      { id: 'quality-spc', labelAr: 'كارتات التحكم الإحصائي SPC', labelEn: 'SPC Control Charts', path: '/spc', icon: 'Activity', badgeCountKey: 'spc' },
+      { id: 'quality-execution-board', labelAr: 'متابعة تنفيذ محطات الفحص', labelEn: 'Inspection Execution Board', path: '/quality-execution-board', icon: 'BarChart3' },
     ],
     primaryKpiAr: 'مؤشر قدرة العمليات الهندسية (Cpk)',
     primaryKpiEn: 'Process Capability Index (Cpk)',
@@ -219,124 +137,41 @@ export const ENTERPRISE_DEPARTMENTS: PlantDepartment[] = [
   },
 
   // --------------------------------------------------------------------------
-  // 5. إدارة المختبرات المترولوجية والمعايرة الدقيقة
+  // 3. عدم المطابقة وحل المشكلات (NCR/8D) - المرحلة الثالثة في القائمة الجانبية
   // --------------------------------------------------------------------------
   {
-    id: 'DEPT-METROLOGY-LAB',
-    code: 'MET-05',
-    number: 5,
-    nameAr: 'إدارة المختبرات المترولوجية والقياس الدقيق CMM والمعايرة',
-    nameEn: 'Metrology Lab, CMM Testing & Calibration',
-    shortNameAr: 'مختبر المترولوجيا CMM',
-    shortNameEn: 'Metrology & Testing Lab',
-    headOfDeptAr: 'د. أيمن فؤاد',
-    headOfDeptEn: 'Dr. Ayman Fouad',
-    headTitleAr: 'مدير المختبر المركزي ومعايرة أجهزة القياس',
-    headTitleEn: 'Metrology Lab & Calibration Director',
-    colorName: 'purple',
-    accentHex: '#a855f7',
-    borderClass: 'border-purple-500/40',
-    bgGradient: 'from-purple-500/20 via-pink-500/10 to-transparent',
-    iconName: 'lab',
-    zone: 'lab',
-    physicalLocationAr: 'مختبر الغرف النظيفة CMM Cleanroom Hub C',
-    physicalLocationEn: 'Hub C High-Precision Cleanroom Metrology Lab',
-    upstreamDeptId: 'DEPT-IPQC-QUALITY-ENG',
-    downstreamDeptId: 'DEPT-QA-MRB-GOVERNANCE',
-    inputDescriptionAr: 'عينات فحص هندسية دقيقة منقولة عبر أنبوب الكبسولة الهوائي السريع',
-    inputDescriptionEn: 'Sample parts transferred via High-Speed Pneumatic Sample Shuttle Tube',
-    outputDescriptionAr: 'تقارير أبعاد ثلاثية الأبعاد CMM معتمدة وشهادات معايرة دولية',
-    outputDescriptionEn: 'Certified 3D CMM metrology inspection reports & calibration certs',
-    stationIds: ['LAB-METROLOGY-CMM'],
-    linkedModules: [
-      { id: 'calibration', labelAr: 'سجل معايرة أجهزة القياس والفحص', labelEn: 'Calibration Management & MSA', path: '/calibration', icon: 'Gauge' },
-      { id: 'lab-inspection', labelAr: 'فحص العينات المخبرية الدقيقة', labelEn: 'Metrology Lab Inspections', path: '/compliance/hub/inspection', icon: 'CheckSquare' },
-      { id: 'quality-library', labelAr: 'مكتبة المواصفات والرسومات الهندسية', labelEn: 'CAD Specs & Blueprints Library', path: '/quality-library', icon: 'FileText' },
-    ],
-    primaryKpiAr: 'مطابقة خطة معايرة الأجهزة السنوية',
-    primaryKpiEn: 'Gage Calibration Compliance Rate',
-    targetKpiValue: '100%',
-    slaHours: 2
-  },
-
-  // --------------------------------------------------------------------------
-  // 6. إدارة هندسة الصيانة والاعتمادية ومجسات IoT
-  // --------------------------------------------------------------------------
-  {
-    id: 'DEPT-MAINTENANCE-IOT',
-    code: 'MNT-06',
-    number: 6,
-    nameAr: 'إدارة هندسة الصيانة والاعتمادية ومجسات IoT',
-    nameEn: 'Maintenance, Reliability & Industrial IoT Engineering',
-    shortNameAr: 'الصيانة والـ IoT',
-    shortNameEn: 'Maintenance & Reliability',
-    headOfDeptAr: 'م. كريم بدر الدين',
-    headOfDeptEn: 'Eng. Karim Badr',
-    headTitleAr: 'رئيس قسم الصيانة الوقائية والاعتمادية',
-    headTitleEn: 'Plant Maintenance & Reliability Lead',
-    colorName: 'yellow',
-    accentHex: '#eab308',
-    borderClass: 'border-yellow-500/40',
-    bgGradient: 'from-yellow-500/20 via-amber-500/10 to-transparent',
-    iconName: 'wrench',
-    zone: 'assembly',
-    physicalLocationAr: 'ورشة الصيانة الميكانيكية ووحدات التحكم الهيدروليكي والمحركات',
-    physicalLocationEn: 'Central Machine Maintenance Shop & Motor VFD Panels',
-    upstreamDeptId: 'DEPT-PRODUCTION-OPERATIONS',
-    downstreamDeptId: 'DEPT-PRODUCTION-OPERATIONS',
-    inputDescriptionAr: 'إشارات مجسات الاهتزاز والحرارة وقراءات تذبذب المحركات والـ VFD',
-    inputDescriptionEn: 'Telemetry streams from vibration, thermographic & current IoT probes',
-    outputDescriptionAr: 'ماكينات معايرة وجاهزة للعمل بأعلى اعتمادية وصفر توقفات حرجة',
-    outputDescriptionEn: 'Zero-downtime tuned machinery with predictive maintenance clearance',
-    stationIds: ['STATION-CNC-MILLING', 'STATION-PRESSURE-TEST'],
-    linkedModules: [
-      { id: 'iot-telemetry', labelAr: 'مراقبة مجسات وإنترنت الأشياء (IoT)', labelEn: 'Live IoT Sensor Oscilloscope', path: '/iot', icon: 'Cpu' },
-      { id: 'equipment-config', labelAr: 'تكوين وضبط الماكينات والمحطات', labelEn: 'SCADA Machine Specifications', path: '/quality-master-data', icon: 'Settings' },
-      { id: 'twin-diagnostics', labelAr: 'التشخيص الحي للماكينات', labelEn: '3D Plant Diagnostics', path: '/digital-twin', icon: 'Activity' },
-    ],
-    primaryKpiAr: 'متوسط الوقت بين الأعطال (MTBF)',
-    primaryKpiEn: 'Mean Time Between Failures (MTBF)',
-    targetKpiValue: '≥ 720 Hours',
-    slaHours: 0.5
-  },
-
-  // --------------------------------------------------------------------------
-  // 7. إدارة توكيد الجودة والحوكمة ولجنة MRB
-  // --------------------------------------------------------------------------
-  {
-    id: 'DEPT-QA-MRB-GOVERNANCE',
-    code: 'QAG-07',
-    number: 7,
-    nameAr: 'إدارة توكيد الجودة والحوكمة ولجنة المواد المعزولة MRB',
-    nameEn: 'Quality Assurance, MRB Governance & Continual Improvement',
-    shortNameAr: 'توكيد الجودة و MRB',
-    shortNameEn: 'QA, MRB & CAPA Governance',
+    id: 'DEPT-STAGE-RESOLUTION',
+    code: 'STAGE-03',
+    number: 3,
+    nameAr: '3. عدم المطابقة وحل المشكلات (NCR/8D)',
+    nameEn: '3. Problem Solving (NCR/8D)',
+    shortNameAr: 'عدم المطابقة والتحسين',
+    shortNameEn: 'NCR & Problem Solving',
     headOfDeptAr: 'د. سارة المنشاوي',
     headOfDeptEn: 'Dr. Sarah El-Menshawy',
-    headTitleAr: 'مدير عام توكيد الجودة والحوكمة المؤسسية',
-    headTitleEn: 'Global QA & Governance Director',
+    headTitleAr: 'مدير عام توكيد الجودة والحوكمة ولجنة حل المشكلات',
+    headTitleEn: 'QA, Governance & Problem Solving Director',
     colorName: 'rose',
     accentHex: '#f43f5e',
     borderClass: 'border-rose-500/40',
     bgGradient: 'from-rose-500/20 via-pink-500/10 to-transparent',
-    iconName: 'gauge',
-    zone: 'lab',
-    physicalLocationAr: 'قاعة لجنة مراجعة المواد MRB ومكتب استراتيجية الجودة Hub C',
-    physicalLocationEn: 'Hub C Material Review Board (MRB) Command Chamber',
-    upstreamDeptId: 'DEPT-METROLOGY-LAB',
-    downstreamDeptId: 'DEPT-FINAL-OQC-PACKAGING',
-    inputDescriptionAr: 'تقارير عدم المطابقة المرفوعة، حالات الحيود، ونتائج التدقيق الداخلي',
-    inputDescriptionEn: 'Escalated process NCRs, deviation requests & internal audit non-conformances',
-    outputDescriptionAr: 'قرارات لجنة MRB (إصلاح / خردة / استخدام كما هو)، مشاريع 8D، وإجراءات CAPA',
-    outputDescriptionEn: 'MRB Dispositions (Scrap/Rework/UAI), closed 8D actions & verified CAPAs',
-    stationIds: ['ROOM-MRB-CAPA'],
+    iconName: 'workflow',
+    zone: 'resolution',
+    physicalLocationAr: 'غرفة عمليات معالجة عدم المطابقة وتحقيقات الـ 8D والحيود',
+    physicalLocationEn: 'NCR War Room, 8D Investigation Hub & Concession Center',
+    upstreamDeptId: 'DEPT-STAGE-INPROCESS',
+    downstreamDeptId: 'DEPT-STAGE-OUTGOING',
+    inputDescriptionAr: 'تقارير العيوب الميدانية، حالات عدم المطابقة المحصورة، والانحرافات',
+    inputDescriptionEn: 'Logged shift defects, escalated non-conformances & deviations',
+    outputDescriptionAr: 'إجراءات تصحيحية مغلقة CAPA، مشاريع 8D مكتملة، وتعديلات هندسية ECN',
+    outputDescriptionEn: 'Verified closed CAPAs, solved 8D projects & authorized ECN changes',
+    stationIds: ['STATION-NCR-REPORTS', 'STATION-CAPA-ACTIONS', 'STATION-8D-SOLVING', 'STATION-DEVIATION-PERMITS', 'STATION-CHANGE-CONTROL'],
     linkedModules: [
-      { id: 'mrb-ncr', labelAr: 'إدارة حالات عدم المطابقة ولجنة MRB', labelEn: 'NCR & Material Review Board', path: '/quality/records/ncr', icon: 'AlertTriangle', badgeCountKey: 'ncr' },
-      { id: 'capa-hub', labelAr: 'الإجراءات التصحيحية والوقائية (CAPA)', labelEn: 'CAPA Closed-Loop Actions', path: '/capa', icon: 'CheckSquare', badgeCountKey: 'capa' },
-      { id: 'eight-d', labelAr: 'منهجية حل المشكلات بفرق العمل (8D)', labelEn: '8D Root Cause Problem Solving', path: '/8d', icon: 'HelpCircle' },
-      { id: 'deviations', labelAr: 'إدارة تصاريح الحيود الهندسي', labelEn: 'Engineering Deviations', path: '/deviation', icon: 'GitFork' },
-      { id: 'change-control', labelAr: 'إدارة وتوثيق التغيير الهندسي (ECN)', labelEn: 'Engineering Change Control', path: '/change-control', icon: 'Workflow' },
-      { id: 'layered-audits', labelAr: 'التدقيق الطبقي الدوري (LPA Audits)', labelEn: 'Layered Process Audits (LPA)', path: '/quality-audits', icon: 'ClipboardList', badgeCountKey: 'audit' },
+      { id: 'quality-ncr', labelAr: 'تقارير عدم المطابقة NCR', labelEn: 'NCR Non-Conformance', path: '/quality/records/ncr', icon: 'AlertCircle', badgeCountKey: 'ncr' },
+      { id: 'quality-capa', labelAr: 'الإجراءات التصحيحية CAPA', labelEn: 'CAPA Corrective Actions', path: '/quality/records/capa', icon: 'ClipboardCheck', badgeCountKey: 'capa' },
+      { id: 'quality-8d', labelAr: 'حل المشكلات المنهجي 8D', labelEn: '8D Problem Solving', path: '/quality/records/8d', icon: 'FileText' },
+      { id: 'quality-deviation', labelAr: 'الانحرافات وتصاريح الحيود', labelEn: 'Deviations & Concessions', path: '/quality/records/deviation', icon: 'TrendingUp' },
+      { id: 'quality-change', labelAr: 'ضبط التغيير الهندسي', labelEn: 'Engineering Change Control', path: '/quality/records/change-control', icon: 'Workflow' },
     ],
     primaryKpiAr: 'نسبة إغلاق الإجراءات التصحيحية CAPA في موعدها',
     primaryKpiEn: 'On-Time CAPA Closure Rate',
@@ -345,100 +180,58 @@ export const ENTERPRISE_DEPARTMENTS: PlantDepartment[] = [
   },
 
   // --------------------------------------------------------------------------
-  // 8. إدارة الفحص النهائي وضمان الجودة الصادرة
+  // 4. فحص وخروج المنتج (OQC) - المرحلة الرابعة في القائمة الجانبية
   // --------------------------------------------------------------------------
   {
-    id: 'DEPT-FINAL-OQC-PACKAGING',
-    code: 'OQC-08',
-    number: 8,
-    nameAr: 'إدارة الفحص النهائي والتعبئة وضمان الجودة الصادرة (OQC)',
-    nameEn: 'Outgoing Quality Control & Final Packaging Assurance (OQC)',
-    shortNameAr: 'الفحص النهائي والتعبئة',
-    shortNameEn: 'Final OQC & Packaging',
+    id: 'DEPT-STAGE-OUTGOING',
+    code: 'STAGE-04',
+    number: 4,
+    nameAr: '4. فحص وخروج المنتج (OQC)',
+    nameEn: '4. Outgoing Quality (OQC)',
+    shortNameAr: 'فحص الشحن (OQC)',
+    shortNameEn: 'Outgoing Quality',
     headOfDeptAr: 'م. هيثم عبد السلام',
     headOfDeptEn: 'Eng. Haitham Abdelsalam',
-    headTitleAr: 'رئيس قسم الفحص النهائي وضمان المنتج التام',
-    headTitleEn: 'Final Release & Outgoing QA Manager',
+    headTitleAr: 'رئيس قسم الفحص النهائي وضمان جودة الشحن والتصدير',
+    headTitleEn: 'Outgoing QA & Final Release Lead',
     colorName: 'emerald',
-    accentHex: '#059669',
-    borderClass: 'border-emerald-600/40',
-    bgGradient: 'from-emerald-600/20 via-teal-600/10 to-transparent',
+    accentHex: '#10b981',
+    borderClass: 'border-emerald-500/40',
+    bgGradient: 'from-emerald-500/20 via-teal-500/10 to-transparent',
     iconName: 'package',
     zone: 'oqc',
-    physicalLocationAr: 'عنبر الفحص النهائي وإفراج الجودة ومحطة التعبئة Bay D',
-    physicalLocationEn: 'Bay D Final OQC Inspection & Pallet Boxing Cells',
-    upstreamDeptId: 'DEPT-QA-MRB-GOVERNANCE',
-    downstreamDeptId: 'DEPT-SHIPPING-LOGISTICS',
-    inputDescriptionAr: 'المنتجات تامة الصنع المنقولة عبر جسر النقل العلوي من صالة الإنتاج',
-    inputDescriptionEn: 'Fully finished valves & parts via Overhead Plant Bridge Conveyor',
-    outputDescriptionAr: 'باليتات معتمدة ومختومة بباركود الإفراج النهائي وشهادة الجودة COC',
-    outputDescriptionEn: 'Certified wrapped pallets with final Certificate of Conformance (COC)',
-    stationIds: ['BENCH-OQC-RELEASE', 'STATION-PACKAGING'],
+    physicalLocationAr: 'محطة الفحص النهائي وسحب عينات القبول AQL والإفراج',
+    physicalLocationEn: 'Final OQC Inspection Station & AQL Acceptance Gate',
+    upstreamDeptId: 'DEPT-STAGE-RESOLUTION',
+    downstreamDeptId: 'DEPT-STAGE-CUSTOMER',
+    inputDescriptionAr: 'المنتجات تامة الصنع الصادرة من خطوط الإنتاج بعد الإجازة المرحلية',
+    inputDescriptionEn: 'Finished goods lots cleared from production stages',
+    outputDescriptionAr: 'لوطات معتمدة مختومة بباركود الإفراج النهائي وشهادة المطابقة COC',
+    outputDescriptionEn: 'Approved release pallets with final Certificate of Conformance',
+    stationIds: ['STATION-OUTGOING-OQC'],
     linkedModules: [
-      { id: 'outgoing-qa', labelAr: 'فحص عينات القبول النهائي (AQL / OQC)', labelEn: 'Final Outgoing QA & AQL Sampling', path: '/outgoing-quality', icon: 'CheckSquare', badgeCountKey: 'inspection' },
-      { id: 'release-board', labelAr: 'شهادات الإفراج النهائي للمنتجات', labelEn: 'Final Product Release Certificates', path: '/compliance/hub/inspection', icon: 'FileText' },
-      { id: 'defect-cost', labelAr: 'متابعة تكلفة الجودة الرديئة (COPQ)', labelEn: 'Cost of Poor Quality (COPQ)', path: '/defect-cost', icon: 'BarChart3' },
+      { id: 'quality-outgoing', labelAr: 'فحص جودة الشحنات الصادرة (OQC)', labelEn: 'Pre-Shipment Inspection (OQC)', path: '/outgoing-quality', icon: 'Truck', badgeCountKey: 'inspection' },
     ],
-    primaryKpiAr: 'نسبة الإفراج من أول مرة (First Pass Yield - FPY)',
+    primaryKpiAr: 'نسبة اجتياز الفحص النهائي من أول مرة (FPY)',
     primaryKpiEn: 'First Pass Yield (FPY)',
     targetKpiValue: '≥ 99.4%',
     slaHours: 2
   },
 
   // --------------------------------------------------------------------------
-  // 9. إدارة اللوجستيات والشحن والتوزيع
+  // 5. شكاوى العملاء والميدان - المرحلة الخامسة في القائمة الجانبية
   // --------------------------------------------------------------------------
   {
-    id: 'DEPT-SHIPPING-LOGISTICS',
-    code: 'LOG-09',
-    number: 9,
-    nameAr: 'إدارة اللوجستيات والشحن والتوزيع وأسطول النقل',
-    nameEn: 'Shipping, Fleet Logistics & Dispatch Operations',
-    shortNameAr: 'الشحن والتوزيع',
-    shortNameEn: 'Shipping & Logistics',
-    headOfDeptAr: 'أ. علاء الزيات',
-    headOfDeptEn: 'Alaa El-Zayat',
-    headTitleAr: 'مدير عمليات اللوجستيات والشحن والتصدير',
-    headTitleEn: 'Outbound Logistics & Dispatch Director',
-    colorName: 'sky',
-    accentHex: '#0284c7',
-    borderClass: 'border-sky-500/40',
-    bgGradient: 'from-sky-500/20 via-blue-500/10 to-transparent',
-    iconName: 'truck',
-    zone: 'shipping',
-    physicalLocationAr: 'رصيف الشحن الشرقي Gate 03 وموازين الباليتات ورامب الشاحنات',
-    physicalLocationEn: 'East Freight Dock Gate 03 & Hydraulic Loading Ramps',
-    upstreamDeptId: 'DEPT-FINAL-OQC-PACKAGING',
-    downstreamDeptId: 'DEPT-CUSTOMER-EXPERIENCE',
-    inputDescriptionAr: 'الباليتات المفحوصة والمجتازة للفحص النهائي مع أوامر الشحن المعتمدة',
-    inputDescriptionEn: 'Quality-cleared pallets from Bay D with approved sales delivery orders',
-    outputDescriptionAr: 'شاحنات محملة وموزونة في طريقها للعملاء والموزعين مع وثائق التتبع',
-    outputDescriptionEn: 'Dispatched delivery trucks en route to clients with live tracking bills',
-    stationIds: ['DOCK-SHIPPING-03', 'TRUCK-CUSTOMER-DELIVERY'],
-    linkedModules: [
-      { id: 'dispatch-logistics', labelAr: 'سجل شاحنات الشحن وتتبع الحمولة', labelEn: 'Live Freight Dispatch & Staging', path: '/outgoing-quality', icon: 'Truck' },
-      { id: 'search-trace', labelAr: 'تتبع باركود الباليتات والشاحنات', labelEn: 'Pallet & Consignment Search', path: '/quality-search', icon: 'Search' },
-    ],
-    primaryKpiAr: 'التسليم الكامل في الوقت المحدد (OTIF)',
-    primaryKpiEn: 'On-Time In-Full Delivery (OTIF)',
-    targetKpiValue: '≥ 98.2%',
-    slaHours: 3
-  },
-
-  // --------------------------------------------------------------------------
-  // 10. إدارة خدمة العملاء وضمان الجودة الخارجية (Field Quality & RMA)
-  // --------------------------------------------------------------------------
-  {
-    id: 'DEPT-CUSTOMER-EXPERIENCE',
-    code: 'CSQ-10',
-    number: 10,
-    nameAr: 'إدارة خدمة العملاء والجودة الخارجية ومرتجعات RMA',
-    nameEn: 'Customer Experience, Field Quality & RMA Returns',
-    shortNameAr: 'خدمة العملاء والجودة الخارجية',
-    shortNameEn: 'Customer Care & RMA',
+    id: 'DEPT-STAGE-CUSTOMER',
+    code: 'STAGE-05',
+    number: 5,
+    nameAr: '5. شكاوى العملاء والميدان',
+    nameEn: '5. Customer & Field Quality',
+    shortNameAr: 'شكاوى العملاء',
+    shortNameEn: 'Customer Complaints',
     headOfDeptAr: 'أ. ريم الشاذلي',
     headOfDeptEn: 'Reem El-Shazly',
-    headTitleAr: 'رئيس قسم علاقات العملاء وضمان الجودة الميدانية',
+    headTitleAr: 'رئيس قسم علاقات العملاء والجودة الميدانية ومرتجعات RMA',
     headTitleEn: 'Customer Complaints & Field QA Lead',
     colorName: 'indigo',
     accentHex: '#6366f1',
@@ -446,25 +239,106 @@ export const ENTERPRISE_DEPARTMENTS: PlantDepartment[] = [
     bgGradient: 'from-indigo-500/20 via-purple-500/10 to-transparent',
     iconName: 'user',
     zone: 'shipping',
-    physicalLocationAr: 'مركز قيادة العمليات الرقمي وغرفة اتصالات ما بعد البيع',
-    physicalLocationEn: 'Central Digital Quality Operations & Field Support Hub',
-    upstreamDeptId: 'DEPT-SHIPPING-LOGISTICS',
-    downstreamDeptId: 'DEPT-SUPPLY-CHAIN', // Completes the full circular loop!
-    inputDescriptionAr: 'استفسارات وملاحظات العملاء، مطالبات الضمان، وبلاغات الحيود الميداني',
-    inputDescriptionEn: 'Field warranty claims, customer complaints & client audit feedback',
-    outputDescriptionAr: 'حلول فورية للعملاء، تصاريح مرتجعات RMA، وإغلاق الحلقة مع الهندسة والإنتاج',
-    outputDescriptionEn: 'RMA return authorizations, warranty settlements & closed-loop FMEA updates',
-    stationIds: ['TRUCK-CUSTOMER-DELIVERY'],
+    physicalLocationAr: 'مركز متابعة شكاوى العملاء واستقبال بلاغات الجودة الميدانية',
+    physicalLocationEn: 'Customer Complaints Command Center & Field Support Desk',
+    upstreamDeptId: 'DEPT-STAGE-OUTGOING',
+    downstreamDeptId: 'DEPT-STAGE-INCOMING', // Completes the closed feedback loop
+    inputDescriptionAr: 'استفسارات وملاحظات العملاء، مطالبات الضمان، ومرتجعات RMA الميدانية',
+    inputDescriptionEn: 'Customer feedback, warranty claims & RMA return logs',
+    outputDescriptionAr: 'إغلاق شكاوى العملاء وتحويل الخلل المتكرر لمشاريع 8D وإجراءات وقائية',
+    outputDescriptionEn: 'Customer claim settlements & closed-loop 8D escalation',
+    stationIds: ['STATION-CUSTOMER-COMPLAINTS'],
     linkedModules: [
-      { id: 'complaints-board', labelAr: 'لوحة قيادة شكاوى ومطالبات العملاء', labelEn: 'Customer Complaints Dashboard', path: '/complaints-dashboard', icon: 'BarChart3', badgeCountKey: 'complaint' },
-      { id: 'log-complaint', labelAr: 'تسجيل وبحث شكاوى العملاء (RMA)', labelEn: 'Customer Complaint & RMA Hub', path: '/complaints', icon: 'AlertTriangle', badgeCountKey: 'complaint' },
-      { id: 'copq-external', labelAr: 'حساب تكلفة الجودة الرديئة الخارجية', labelEn: 'External Quality Loss (COPQ)', path: '/defect-cost', icon: 'Layers' },
-      { id: 'capa-link', labelAr: 'ربط شكوى العميل بإجراء تصحيحي (CAPA)', labelEn: 'Link Complaint to 8D / CAPA', path: '/capa', icon: 'Workflow' },
+      { id: 'quality-complaint', labelAr: 'سجل شكاوى العملاء', labelEn: 'Customer Complaints Log', path: '/quality/records/complaint', icon: 'AlertCircle', badgeCountKey: 'complaint' },
     ],
     primaryKpiAr: 'معدل شكاوى العملاء بالمليون (Customer PPM)',
     primaryKpiEn: 'Customer Complaints Rate (PPM)',
-    targetKpiValue: '< 45 PPM',
+    targetKpiValue: '< 30 PPM',
     slaHours: 8
+  },
+
+  // --------------------------------------------------------------------------
+  // 6. المختبر الهندسي والتدقيق - المرحلة السادسة في القائمة الجانبية
+  // --------------------------------------------------------------------------
+  {
+    id: 'DEPT-STAGE-COMPLIANCE',
+    code: 'STAGE-06',
+    number: 6,
+    nameAr: '6. المختبر الهندسي والتدقيق',
+    nameEn: '6. Engineering Lab & Audits',
+    shortNameAr: 'المختبر والتدقيق',
+    shortNameEn: 'Lab & Compliance',
+    headOfDeptAr: 'د. أيمن فؤاد',
+    headOfDeptEn: 'Dr. Ayman Fouad',
+    headTitleAr: 'مدير المختبر المركزي وتوكيد الامتثال ومعايرة أجهزة القياس',
+    headTitleEn: 'Metrology Lab, Audits & Calibration Director',
+    colorName: 'purple',
+    accentHex: '#a855f7',
+    borderClass: 'border-purple-500/40',
+    bgGradient: 'from-purple-500/20 via-pink-500/10 to-transparent',
+    iconName: 'shield',
+    zone: 'lab',
+    physicalLocationAr: 'مختبر المعايرة الدقيقة وقاعة تخطيط التدقيق وخطط المراقبة',
+    physicalLocationEn: 'Precision Calibration Lab, Control Plan Center & Audit Hub',
+    upstreamDeptId: 'DEPT-STAGE-SETUP',
+    downstreamDeptId: 'DEPT-STAGE-INPROCESS',
+    inputDescriptionAr: 'مواصفات المنتجات، شهادات معايرة الأجهزة، وسجلات التدقيق الداخلي',
+    inputDescriptionEn: 'Product specs, gage calibration master data & audit schedules',
+    outputDescriptionAr: 'خطط تحكم معتمدة، تحليل مخاطر FMEA، أجهزة قياس معايرة، ومراجعات LPA',
+    outputDescriptionEn: 'Approved Control Plans, validated FMEAs, calibrated gages & LPA reports',
+    stationIds: ['STATION-CONTROL-PLAN', 'STATION-FMEA-RISK', 'STATION-CALIBRATION-MSA', 'STATION-LAYERED-AUDITS', 'STATION-INTERNAL-AUDIT'],
+    linkedModules: [
+      { id: 'quality-control-plan', labelAr: 'خطط التحكم Control Plan', labelEn: 'Control Plan', path: '/control-plan', icon: 'Barcode' },
+      { id: 'quality-fmea', labelAr: 'تحليل المخاطر FMEA', labelEn: 'FMEA Risk Analysis', path: '/fmea', icon: 'Brain' },
+      { id: 'quality-calibration', labelAr: 'معايرة الأجهزة والـ MSA', labelEn: 'Equipment Calibration & MSA', path: '/compliance/hub/calibration', icon: 'Activity' },
+      { id: 'quality-layered-audits', labelAr: 'مراجعات المشرف LPA', labelEn: 'Layered Process Audits (LPA)', path: '/quality-audits', icon: 'ShieldCheck', badgeCountKey: 'audit' },
+      { id: 'quality-audit', labelAr: 'التدقيق الداخلي وإدارته', labelEn: 'Internal Audits (ISO)', path: '/compliance/hub/audit', icon: 'ClipboardCheck' },
+    ],
+    primaryKpiAr: 'التوافق مع متطلبات خطة المعايرة والتدقيق',
+    primaryKpiEn: 'Calibration & Audit Compliance Rate',
+    targetKpiValue: '100%',
+    slaHours: 2
+  },
+
+  // --------------------------------------------------------------------------
+  // 7. تهيئة المصنع والبيانات - المرحلة الثامنة في القائمة الجانبية
+  // --------------------------------------------------------------------------
+  {
+    id: 'DEPT-STAGE-SETUP',
+    code: 'STAGE-07',
+    number: 7,
+    nameAr: '7. تهيئة المصنع والبيانات',
+    nameEn: '7. Factory Setup & Master Data',
+    shortNameAr: 'البيانات والتهيئة',
+    shortNameEn: 'Setup & Master Data',
+    headOfDeptAr: 'أ. محمود عبد الرحمن',
+    headOfDeptEn: 'Mahmoud Abdelrahman',
+    headTitleAr: 'رئيس قسم إدارة البيانات الرئيسية ومصمم النماذج والدروس المستفادة',
+    headTitleEn: 'Quality Master Data & Configuration Lead',
+    colorName: 'blue',
+    accentHex: '#3b82f6',
+    borderClass: 'border-blue-500/40',
+    bgGradient: 'from-blue-500/20 via-sky-500/10 to-transparent',
+    iconName: 'settings',
+    zone: 'setup',
+    physicalLocationAr: 'مركز إدارة تهيئة النظام وقواعد البيانات ونماذج الفحص',
+    physicalLocationEn: 'System Configuration, Forms & Knowledge Repository',
+    upstreamDeptId: 'DEPT-STAGE-CUSTOMER',
+    downstreamDeptId: 'DEPT-STAGE-COMPLIANCE',
+    inputDescriptionAr: 'بيانات القطع والموديلات، متطلبات التفتيش، والدروس المستفادة من حل المشكلات',
+    inputDescriptionEn: 'Parts/models catalog, inspection requirements & 8D lessons learned',
+    outputDescriptionAr: 'كتالوج بيانات موحد، قوالب شيك ليست ديناميكية، وقاعدة معرفة محدثة',
+    outputDescriptionEn: 'Unified master data, dynamic inspection forms & active lessons learned',
+    stationIds: ['STATION-MASTER-DATA', 'STATION-FORM-DESIGNER', 'STATION-KNOWLEDGE-BASE'],
+    linkedModules: [
+      { id: 'quality-master-data', labelAr: 'البيانات الرئيسية (قطع/موديلات)', labelEn: 'Quality Master Data', path: '/quality-master-data', icon: 'Database' },
+      { id: 'quality-form-designer', labelAr: 'مصمم نماذج الفحص', labelEn: 'Inspection Form Designer', path: '/quality-form-designer', icon: 'Blocks' },
+      { id: 'quality-knowledge-base', labelAr: 'قاعدة الدروس المستفادة', labelEn: 'Lessons Learned Knowledge Base', path: '/quality-knowledge-base', icon: 'Library' },
+    ],
+    primaryKpiAr: 'اكتمال وحداثة البيانات الرئيسية وقوالب الفحص',
+    primaryKpiEn: 'Master Data & Form Templates Readiness',
+    targetKpiValue: '100%',
+    slaHours: 1
   }
 ];
 
