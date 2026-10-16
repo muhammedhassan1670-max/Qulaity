@@ -67,7 +67,7 @@ export interface ScadaEquipment {
   criticalParameterAr?: string;
   criticalParameterEn?: string;
   targetSpec?: string;
-  // Floorplan Coordinate System (1200 x 640)
+  // Floorplan Coordinate System (1360 x 780)
   x: number;
   y: number;
   w: number;
@@ -79,12 +79,12 @@ export interface QualityControlTowerProps {
   className?: string;
 }
 
-const SCADA_STORAGE_KEY = 'qms_scada_equipment_config_v4';
-const SCADA_CONNECTIONS_KEY = 'qms_scada_connections_v4';
+const SCADA_STORAGE_KEY = 'qms_scada_equipment_config_v6';
+const SCADA_CONNECTIONS_KEY = 'qms_scada_connections_v6';
 
 export const DEFAULT_EQUIPMENT_PODS: ScadaEquipment[] = [
   // ------------------------------------------------------------------------
-  // STAGE 1: استلام الخامات والموردين (IQC) - مطابق تماماً للتبويبات بالقائمة الجانبية
+  // STAGE 1: استلام الخامات والموردين (IQC) - الجناح العلوي الأيسر
   // ------------------------------------------------------------------------
   {
     id: 'STATION-SUPPLIER-QUALITY',
@@ -105,7 +105,7 @@ export const DEFAULT_EQUIPMENT_PODS: ScadaEquipment[] = [
     activeOperator: 'مهندس جودة الموردين SQA',
     vibrationMmS: 0.02,
     temperatureC: 22,
-    x: 40, y: 70, w: 220, h: 80
+    x: 40, y: 65, w: 260, h: 74
   },
   {
     id: 'STATION-INSPECTION-PLANS',
@@ -126,7 +126,7 @@ export const DEFAULT_EQUIPMENT_PODS: ScadaEquipment[] = [
     activeOperator: 'أخصائي خطط الفحص',
     vibrationMmS: 0.01,
     temperatureC: 22,
-    x: 40, y: 175, w: 220, h: 80
+    x: 40, y: 155, w: 260, h: 74
   },
   {
     id: 'STATION-IQC-INSPECTION',
@@ -147,11 +147,11 @@ export const DEFAULT_EQUIPMENT_PODS: ScadaEquipment[] = [
     activeOperator: 'مفتش جودة الاستلام IQC',
     vibrationMmS: 0.05,
     temperatureC: 23,
-    x: 40, y: 280, w: 220, h: 85
+    x: 40, y: 245, w: 260, h: 80
   },
 
   // ------------------------------------------------------------------------
-  // STAGE 7 (PART A): تهيئة المصنع والبيانات - العمود الأيسر السفلي
+  // STAGE 7: تهيئة المصنع والبيانات - الجناح السفلي الأيسر
   // ------------------------------------------------------------------------
   {
     id: 'STATION-MASTER-DATA',
@@ -172,7 +172,7 @@ export const DEFAULT_EQUIPMENT_PODS: ScadaEquipment[] = [
     activeOperator: 'مدير البيانات الرئيسية',
     vibrationMmS: 0.0,
     temperatureC: 21,
-    x: 40, y: 400, w: 220, h: 75
+    x: 40, y: 435, w: 260, h: 74
   },
   {
     id: 'STATION-FORM-DESIGNER',
@@ -193,11 +193,33 @@ export const DEFAULT_EQUIPMENT_PODS: ScadaEquipment[] = [
     activeOperator: 'مهندس نمذجة الفحص',
     vibrationMmS: 0.0,
     temperatureC: 21,
-    x: 40, y: 500, w: 220, h: 75
+    x: 40, y: 525, w: 260, h: 74
+  },
+
+  {
+    id: 'STATION-KNOWLEDGE-BASE',
+    code: 'KB-01',
+    zone: 'setup',
+    zoneNameAr: '7. تهيئة المصنع والبيانات',
+    zoneNameEn: '7. Factory Setup & Master Data',
+    titleAr: 'قاعدة الدروس المستفادة',
+    titleEn: 'Lessons Learned Knowledge Base',
+    line: 'Continuous Improvement',
+    locationAr: 'مستودع المعرفة والحلول الجذرية المعتمدة',
+    locationEn: 'Knowledge Base & Lessons Learned Library',
+    iconType: 'lab',
+    moduleUrl: '/quality-knowledge-base',
+    moduleLabelAr: 'قاعدة الدروس المستفادة',
+    oeeEstimate: 99,
+    fpyEstimate: 100,
+    activeOperator: 'مدير المعرفة والتحسين المستمر',
+    vibrationMmS: 0.0,
+    temperatureC: 22,
+    x: 40, y: 615, w: 260, h: 74
   },
 
   // ------------------------------------------------------------------------
-  // STAGE 2: جودة التصنيع والعمليات (IPQC) - مطابق لتبويبات القائمة الجانبية
+  // STAGE 2: جودة التصنيع والعمليات (IPQC) - الجناح الأوسط الأيسر
   // ------------------------------------------------------------------------
   {
     id: 'STATION-SHOPFLOOR-ENTRY',
@@ -218,7 +240,7 @@ export const DEFAULT_EQUIPMENT_PODS: ScadaEquipment[] = [
     activeOperator: 'مشغل الخط وقائد الفريق',
     vibrationMmS: 0.15,
     temperatureC: 28,
-    x: 310, y: 70, w: 225, h: 80
+    x: 350, y: 65, w: 265, h: 74
   },
   {
     id: 'STATION-DEFECT-LOG',
@@ -239,7 +261,7 @@ export const DEFAULT_EQUIPMENT_PODS: ScadaEquipment[] = [
     activeOperator: 'مراقب جودة العمليات',
     vibrationMmS: 0.10,
     temperatureC: 26,
-    x: 310, y: 175, w: 225, h: 80
+    x: 350, y: 155, w: 265, h: 74
   },
   {
     id: 'STATION-SPC-CHARTS',
@@ -260,7 +282,7 @@ export const DEFAULT_EQUIPMENT_PODS: ScadaEquipment[] = [
     activeOperator: 'مهندس ضبط العمليات الإحصائي',
     vibrationMmS: 0.08,
     temperatureC: 24,
-    x: 310, y: 280, w: 225, h: 80
+    x: 350, y: 245, w: 265, h: 74
   },
   {
     id: 'STATION-EXECUTION-BOARD',
@@ -281,32 +303,11 @@ export const DEFAULT_EQUIPMENT_PODS: ScadaEquipment[] = [
     activeOperator: 'مشرف الإفراج المرحلي',
     vibrationMmS: 0.06,
     temperatureC: 25,
-    x: 310, y: 385, w: 225, h: 80
-  },
-  {
-    id: 'STATION-KNOWLEDGE-BASE',
-    code: 'KB-01',
-    zone: 'setup',
-    zoneNameAr: '7. تهيئة المصنع والبيانات',
-    zoneNameEn: '7. Factory Setup & Master Data',
-    titleAr: 'قاعدة الدروس المستفادة',
-    titleEn: 'Lessons Learned Knowledge Base',
-    line: 'Continuous Improvement',
-    locationAr: 'مستودع المعرفة والحلول الجذرية المعتمدة',
-    locationEn: 'Knowledge Base & Lessons Learned Library',
-    iconType: 'lab',
-    moduleUrl: '/quality-knowledge-base',
-    moduleLabelAr: 'قاعدة الدروس المستفادة',
-    oeeEstimate: 99,
-    fpyEstimate: 100,
-    activeOperator: 'مدير المعرفة والتحسين المستمر',
-    vibrationMmS: 0.0,
-    temperatureC: 22,
-    x: 310, y: 495, w: 225, h: 80
+    x: 350, y: 335, w: 265, h: 74
   },
 
   // ------------------------------------------------------------------------
-  // STAGE 3: عدم المطابقة وحل المشكلات (NCR/8D) - مطابق لتبويبات القائمة الجانبية
+  // STAGE 3: عدم المطابقة وحل المشكلات (NCR/8D) - الجناح الأوسط الأيمن
   // ------------------------------------------------------------------------
   {
     id: 'STATION-NCR-REPORTS',
@@ -327,7 +328,7 @@ export const DEFAULT_EQUIPMENT_PODS: ScadaEquipment[] = [
     activeOperator: 'مهندس حصر وتصنيف عدم المطابقة',
     vibrationMmS: 0.02,
     temperatureC: 23,
-    x: 580, y: 70, w: 225, h: 80
+    x: 665, y: 65, w: 265, h: 74
   },
   {
     id: 'STATION-CAPA-ACTIONS',
@@ -348,7 +349,7 @@ export const DEFAULT_EQUIPMENT_PODS: ScadaEquipment[] = [
     activeOperator: 'مدير توكيد الجودة والإجراءات التصحيحية',
     vibrationMmS: 0.01,
     temperatureC: 22,
-    x: 580, y: 175, w: 225, h: 80
+    x: 665, y: 147, w: 265, h: 72
   },
   {
     id: 'STATION-8D-SOLVING',
@@ -369,7 +370,7 @@ export const DEFAULT_EQUIPMENT_PODS: ScadaEquipment[] = [
     activeOperator: 'قائد فريق الـ 8D والتحسين',
     vibrationMmS: 0.01,
     temperatureC: 22,
-    x: 580, y: 280, w: 225, h: 80
+    x: 665, y: 229, w: 265, h: 72
   },
   {
     id: 'STATION-DEVIATION-PERMITS',
@@ -383,18 +384,18 @@ export const DEFAULT_EQUIPMENT_PODS: ScadaEquipment[] = [
     locationAr: 'إصدار وتصديق تصاريح التجاوز الهندسي المؤقت',
     locationEn: 'Engineering Deviation & Concession Approvals',
     iconType: 'gauge',
-    moduleUrl: '/quality/records/deviation',
+    moduleUrl: '/deviation',
     moduleLabelAr: 'تصاريح الحيود',
     oeeEstimate: 97,
     fpyEstimate: 99.1,
     activeOperator: 'مهندس الاعتماد والتصاريح',
     vibrationMmS: 0.01,
-    temperatureC: 22,
-    x: 580, y: 385, w: 225, h: 80
+    temperatureC: 21,
+    x: 665, y: 311, w: 265, h: 72
   },
   {
     id: 'STATION-CHANGE-CONTROL',
-    code: 'ECN-01',
+    code: 'CHG-01',
     zone: 'resolution',
     zoneNameAr: '3. عدم المطابقة وحل المشكلات (NCR/8D)',
     zoneNameEn: '3. Problem Solving (NCR/8D)',
@@ -404,25 +405,25 @@ export const DEFAULT_EQUIPMENT_PODS: ScadaEquipment[] = [
     locationAr: 'إدارة وتوثيق طلبات التعديل والتغيير الهندسي',
     locationEn: 'Engineering Change Notice & Validation',
     iconType: 'wrench',
-    moduleUrl: '/quality/records/change-control',
+    moduleUrl: '/change-control',
     moduleLabelAr: 'ضبط التغيير الهندسي',
     oeeEstimate: 96,
     fpyEstimate: 98.8,
     activeOperator: 'مهندس التغيير الهندسي والتطوير',
     vibrationMmS: 0.01,
     temperatureC: 22,
-    x: 580, y: 495, w: 225, h: 80
+    x: 665, y: 393, w: 265, h: 72
   },
 
   // ------------------------------------------------------------------------
-  // STAGES 4, 5, 6: الفحص النهائي وشكاوى العملاء والمختبر الهندسي
+  // STAGE 4: فحص وخروج المنتج (OQC) - الجناح الأيمن العلوي
   // ------------------------------------------------------------------------
   {
     id: 'STATION-OUTGOING-OQC',
     code: 'OQC-01',
     zone: 'oqc',
     zoneNameAr: '4. فحص وخروج المنتج (OQC)',
-    zoneNameEn: '4. Outgoing Quality (OQC)',
+    zoneNameEn: '4. Outgoing Quality & Release (OQC)',
     titleAr: 'فحص جودة الشحنات الصادرة',
     titleEn: 'Pre-Shipment Inspection (OQC)',
     line: 'Final Quality Release',
@@ -436,8 +437,12 @@ export const DEFAULT_EQUIPMENT_PODS: ScadaEquipment[] = [
     activeOperator: 'مفتش الجودة الصادرة النهائي OQC',
     vibrationMmS: 0.04,
     temperatureC: 23,
-    x: 855, y: 70, w: 260, h: 80
+    x: 980, y: 65, w: 340, h: 80
   },
+
+  // ------------------------------------------------------------------------
+  // STAGE 5: شكاوى العملاء والميدان - الجناح الأيمن الأوسط
+  // ------------------------------------------------------------------------
   {
     id: 'STATION-CUSTOMER-COMPLAINTS',
     code: 'CMP-01',
@@ -450,15 +455,19 @@ export const DEFAULT_EQUIPMENT_PODS: ScadaEquipment[] = [
     locationAr: 'سجل متابعة شكاوى العملاء والمرتجعات RMA',
     locationEn: 'Customer Complaints, RMA Returns & Field Claims',
     iconType: 'truck',
-    moduleUrl: '/quality/records/complaint',
+    moduleUrl: '/complaints',
     moduleLabelAr: 'سجل شكاوى العملاء',
     oeeEstimate: 99,
     fpyEstimate: 100,
     activeOperator: 'مسؤول ضمان الجودة الميدانية وخدمة العملاء',
     vibrationMmS: 0.01,
     temperatureC: 22,
-    x: 855, y: 175, w: 260, h: 80
+    x: 980, y: 235, w: 340, h: 80
   },
+
+  // ------------------------------------------------------------------------
+  // STAGE 6: المختبر الهندسي والتدقيق - الجناح الأوسط السفلي (Compliance & Lab)
+  // ------------------------------------------------------------------------
   {
     id: 'STATION-CONTROL-PLAN',
     code: 'CTL-01',
@@ -478,7 +487,7 @@ export const DEFAULT_EQUIPMENT_PODS: ScadaEquipment[] = [
     activeOperator: 'مهندس خطط التحكم والجودة',
     vibrationMmS: 0.01,
     temperatureC: 21,
-    x: 855, y: 280, w: 260, h: 70
+    x: 350, y: 515, w: 280, h: 72
   },
   {
     id: 'STATION-FMEA-RISK',
@@ -499,7 +508,7 @@ export const DEFAULT_EQUIPMENT_PODS: ScadaEquipment[] = [
     activeOperator: 'أخصائي تحليل المخاطر الهندسية',
     vibrationMmS: 0.01,
     temperatureC: 21,
-    x: 855, y: 365, w: 260, h: 70
+    x: 650, y: 515, w: 280, h: 72
   },
   {
     id: 'STATION-CALIBRATION-MSA',
@@ -513,14 +522,14 @@ export const DEFAULT_EQUIPMENT_PODS: ScadaEquipment[] = [
     locationAr: 'معمل معايرة الأجهزة ودراسات خطأ القياس GR&R',
     locationEn: 'Calibration Lab & Measurement Systems Analysis',
     iconType: 'gauge',
-    moduleUrl: '/compliance/hub/calibration',
+    moduleUrl: '/calibration',
     moduleLabelAr: 'المعايرة وأجهزة القياس',
     oeeEstimate: 98,
     fpyEstimate: 99.8,
     activeOperator: 'مسؤول معايرة أجهزة القياس والفحص',
     vibrationMmS: 0.01,
     temperatureC: 20,
-    x: 855, y: 450, w: 260, h: 70
+    x: 350, y: 600, w: 280, h: 72
   },
   {
     id: 'STATION-LAYERED-AUDITS',
@@ -541,7 +550,7 @@ export const DEFAULT_EQUIPMENT_PODS: ScadaEquipment[] = [
     activeOperator: 'مدقق العمليات الميداني LPA',
     vibrationMmS: 0.01,
     temperatureC: 22,
-    x: 855, y: 535, w: 125, h: 65
+    x: 650, y: 600, w: 280, h: 72
   },
   {
     id: 'STATION-INTERNAL-AUDIT',
@@ -549,20 +558,20 @@ export const DEFAULT_EQUIPMENT_PODS: ScadaEquipment[] = [
     zone: 'lab',
     zoneNameAr: '6. المختبر الهندسي والتدقيق',
     zoneNameEn: '6. Engineering Lab & Audits',
-    titleAr: 'التدقيق الداخلي وإدارته',
+    titleAr: 'التدقيق الداخلي وإدارته (ISO 9001 / IATF)',
     titleEn: 'Internal Audits (ISO 9001/IATF)',
     line: 'Quality Audits',
     locationAr: 'جدول التدقيق الداخلي ومطابقة المواصفات',
     locationEn: 'ISO/IATF Internal Audits & Compliance',
     iconType: 'pallet',
-    moduleUrl: '/compliance/hub/audit',
+    moduleUrl: '/audit',
     moduleLabelAr: 'التدقيق الداخلي',
     oeeEstimate: 99,
     fpyEstimate: 99.5,
     activeOperator: 'كبير المدققين الداخليين المعتمد',
     vibrationMmS: 0.01,
     temperatureC: 22,
-    x: 990, y: 535, w: 125, h: 65
+    x: 350, y: 685, w: 580, h: 65
   }
 ];
 
@@ -1202,10 +1211,19 @@ function buildLayoutPresetData(
 
 function loadSavedEquipment(): ScadaEquipment[] {
   try {
+    ['qms_scada_equipment_config', 'qms_scada_equipment_config_v2', 'qms_scada_equipment_config_v3', 'qms_scada_equipment_config_v4', 'qms_scada_equipment_config_v5'].forEach(k => {
+      localStorage.removeItem(k);
+    });
     const raw = localStorage.getItem(SCADA_STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) {
+      const validIds = new Set(DEFAULT_EQUIPMENT_PODS.map(p => p.id));
+      if (
+        Array.isArray(parsed) && 
+        parsed.length === DEFAULT_EQUIPMENT_PODS.length && 
+        parsed.every(p => validIds.has(p.id)) &&
+        !parsed.some(p => p.code?.includes('CNC') || p.code?.includes('PRS') || p.id?.includes('CNC') || p.id?.includes('PRESS'))
+      ) {
         return parsed;
       }
     }
@@ -1310,7 +1328,7 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
   const [filterZone, setFilterZone] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [selectedStationId, setSelectedStationId] = useState<string | null>('STATION-PRESSURE-TEST');
+  const [selectedStationId, setSelectedStationId] = useState<string | null>('STATION-IQC-INSPECTION');
   const [selectedConveyorId, setSelectedConveyorId] = useState<string | null>(null);
   const [eStopConveyors, setEStopConveyors] = useState<Record<string, boolean>>({});
   const [zoomLevel, setZoomLevel] = useState(1);
@@ -1322,10 +1340,16 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
   // Dynamic Connection Network State (localStorage persistence)
   const [connectionsList, setConnectionsList] = useState<ScadaConnection[]>(() => {
     try {
+      ['qms_scada_connections', 'qms_scada_connections_v2', 'qms_scada_connections_v3', 'qms_scada_connections_v4'].forEach(k => {
+        localStorage.removeItem(k);
+      });
       const saved = localStorage.getItem(SCADA_CONNECTIONS_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        const validIds = new Set(DEFAULT_EQUIPMENT_PODS.map(p => p.id));
+        if (Array.isArray(parsed) && parsed.length > 0 && parsed.every(c => validIds.has(c.fromId) && validIds.has(c.toId))) {
+          return parsed;
+        }
       }
     } catch {}
     return FACTORY_CONNECTIONS;
@@ -1936,16 +1960,16 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
     }
   };
 
-  // Helper to get exact SCADA 1200x640 floor coordinates from screen pointer event
+  // Helper to get exact SCADA 1360x780 floor coordinates from screen pointer event
   const getFloorCoords = (e: React.PointerEvent | MouseEvent) => {
     const floorBoard = canvasRef.current?.querySelector('.scada-floor-board') as HTMLElement;
     if (!floorBoard) return { x: 0, y: 0 };
     const rect = floorBoard.getBoundingClientRect();
-    const rawX = (e.clientX - rect.left) / (rect.width / 1200);
-    const rawY = (e.clientY - rect.top) / (rect.height / 640);
+    const rawX = (e.clientX - rect.left) / (rect.width / 1360);
+    const rawY = (e.clientY - rect.top) / (rect.height / 780);
     return {
-      x: Math.max(10, Math.min(1190, Math.round(rawX))),
-      y: Math.max(10, Math.min(630, Math.round(rawY)))
+      x: Math.max(10, Math.min(1350, Math.round(rawX))),
+      y: Math.max(10, Math.min(770, Math.round(rawY)))
     };
   };
 
@@ -2135,7 +2159,7 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
       target === canvasRef.current || 
       target.classList.contains('scada-floor-board') || 
       target.tagName?.toLowerCase() === 'svg' || 
-      (target.tagName?.toLowerCase() === 'rect' && target.getAttribute('width') === '1200')
+      (target.tagName?.toLowerCase() === 'rect' && target.getAttribute('width') === '1360')
     ) {
       setIsPanning(true);
       setPanStart({
@@ -2869,151 +2893,128 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
     }
   };
 
-  // Machine SVG Blueprint Watermark Selector for high-fidelity industrial cards
+  // QMS Blueprint Watermark Selector for platform governance cards
   const renderMachineWatermark = (code: string) => {
-    if (code.startsWith('CNC')) {
-      return (
-        <svg viewBox="0 0 80 80" className="absolute -right-3 -bottom-3 w-24 h-24 opacity-10 pointer-events-none text-cyan-400 stroke-current fill-none">
-          <circle cx="40" cy="40" r="28" strokeWidth="2" strokeDasharray="4,4" />
-          <circle cx="40" cy="40" r="14" strokeWidth="2" />
-          <path d="M 40 10 L 40 70 M 10 40 L 70 40" strokeWidth="1.5" />
-          <rect x="36" y="2" width="8" height="12" fill="currentColor" />
-        </svg>
-      );
-    }
-    if (code.startsWith('ASM')) {
-      return (
-        <svg viewBox="0 0 80 80" className="absolute -right-3 -bottom-3 w-24 h-24 opacity-10 pointer-events-none text-cyan-400 stroke-current fill-none">
-          <rect x="25" y="55" width="30" height="15" rx="3" strokeWidth="2" />
-          <path d="M 40 55 L 40 35 L 55 20" strokeWidth="3" strokeLinecap="round" />
-          <circle cx="55" cy="20" r="4" fill="currentColor" />
-          <path d="M 55 16 L 65 12 M 55 24 L 65 28" strokeWidth="2" strokeLinecap="round" />
-        </svg>
-      );
-    }
-    if (code.startsWith('TRQ')) {
+    if (code.startsWith('IQC') || code.startsWith('SUP') || code.startsWith('PLN')) {
       return (
         <svg viewBox="0 0 80 80" className="absolute -right-3 -bottom-3 w-24 h-24 opacity-10 pointer-events-none text-amber-400 stroke-current fill-none">
-          <circle cx="40" cy="40" r="25" strokeWidth="2" />
-          <path d="M 40 40 L 55 30" strokeWidth="3" strokeLinecap="round" />
-          <circle cx="40" cy="40" r="4" fill="currentColor" />
-          <path d="M 22 40 A 18 18 0 0 1 58 40" strokeWidth="1.5" strokeDasharray="3,3" />
+          <rect x="15" y="15" width="50" height="50" rx="8" strokeWidth="2" strokeDasharray="4,3" />
+          <path d="M 25 40 L 35 50 L 55 30" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       );
     }
-    if (code.startsWith('PRS')) {
+    if (code.startsWith('SPC')) {
       return (
-        <svg viewBox="0 0 80 80" className="absolute -right-3 -bottom-3 w-24 h-24 opacity-10 pointer-events-none text-red-400 stroke-current fill-none">
-          <rect x="20" y="20" width="40" height="40" rx="6" strokeWidth="2" />
-          <circle cx="40" cy="40" r="14" strokeWidth="1.5" />
-          <path d="M 40 40 L 48 34" strokeWidth="2" />
-          <path d="M 20 40 L 10 40 M 60 40 L 70 40" strokeWidth="2" />
+        <svg viewBox="0 0 80 80" className="absolute -right-3 -bottom-3 w-24 h-24 opacity-10 pointer-events-none text-cyan-400 stroke-current fill-none">
+          <path d="M 10 65 Q 40 10 70 65" strokeWidth="2.5" />
+          <line x1="40" y1="10" x2="40" y2="70" strokeWidth="1.5" strokeDasharray="3,3" />
+          <line x1="10" y1="65" x2="70" y2="65" strokeWidth="2" />
         </svg>
       );
     }
-    if (code.startsWith('IPQC') || code.startsWith('OQC') || code.startsWith('IQC')) {
+    if (code.startsWith('NCR') || code.startsWith('8D')) {
+      return (
+        <svg viewBox="0 0 80 80" className="absolute -right-3 -bottom-3 w-24 h-24 opacity-10 pointer-events-none text-rose-400 stroke-current fill-none">
+          <path d="M 40 12 L 68 62 L 12 62 Z" strokeWidth="2.5" strokeLinejoin="round" />
+          <line x1="40" y1="30" x2="40" y2="45" strokeWidth="3" strokeLinecap="round" />
+          <circle cx="40" cy="54" r="2" fill="currentColor" />
+        </svg>
+      );
+    }
+    if (code.startsWith('CAP') || code.startsWith('DEV') || code.startsWith('CHG') || code.startsWith('ECN')) {
+      return (
+        <svg viewBox="0 0 80 80" className="absolute -right-3 -bottom-3 w-24 h-24 opacity-10 pointer-events-none text-purple-400 stroke-current fill-none">
+          <circle cx="40" cy="40" r="26" strokeWidth="2" strokeDasharray="6,4" />
+          <path d="M 40 22 L 40 40 L 52 46" strokeWidth="2.5" strokeLinecap="round" />
+        </svg>
+      );
+    }
+    if (code.startsWith('OQC') || code.startsWith('CMP')) {
       return (
         <svg viewBox="0 0 80 80" className="absolute -right-3 -bottom-3 w-24 h-24 opacity-10 pointer-events-none text-emerald-400 stroke-current fill-none">
           <circle cx="40" cy="40" r="24" strokeWidth="2" />
-          <circle cx="40" cy="40" r="16" strokeWidth="1" strokeDasharray="4,2" />
-          <path d="M 40 12 L 40 20 M 40 60 L 40 68 M 12 40 L 20 40 M 60 40 L 68 40" strokeWidth="2" />
-          <circle cx="40" cy="40" r="3" fill="currentColor" />
+          <path d="M 28 40 L 36 48 L 54 30" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       );
     }
-    if (code.startsWith('CMM')) {
-      return (
-        <svg viewBox="0 0 80 80" className="absolute -right-3 -bottom-3 w-24 h-24 opacity-10 pointer-events-none text-purple-400 stroke-current fill-none">
-          <rect x="15" y="55" width="50" height="15" rx="2" strokeWidth="2" />
-          <path d="M 25 55 L 25 20 L 55 20 L 55 55" strokeWidth="2.5" />
-          <path d="M 40 20 L 40 38" strokeWidth="2" />
-          <circle cx="40" cy="41" r="3" fill="#ec4899" />
-        </svg>
-      );
-    }
-    return null;
+    return (
+      <svg viewBox="0 0 80 80" className="absolute -right-3 -bottom-3 w-24 h-24 opacity-10 pointer-events-none text-blue-400 stroke-current fill-none">
+        <rect x="20" y="20" width="40" height="40" rx="6" strokeWidth="2" />
+        <line x1="28" y1="32" x2="52" y2="32" strokeWidth="2" />
+        <line x1="28" y1="40" x2="46" y2="40" strokeWidth="2" />
+        <line x1="28" y1="48" x2="52" y2="48" strokeWidth="2" />
+      </svg>
+    );
   };
 
-  // Interactive Live Animated Machine Cockpit Mechanisms
+  // Interactive Live Animated Quality Governance Status Mechanisms
   const renderMachineCockpit = (code: string, isAlert: boolean, isAndonActive: boolean) => {
-    if (code.startsWith('CNC')) {
-      return (
-        <div className="flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg bg-black/40 border border-cyan-500/20 my-0.5 z-10">
-          <div className="relative w-4 h-4 flex items-center justify-center shrink-0">
-            <div className={`w-3.5 h-3.5 rounded-full border-2 border-dashed border-cyan-400 ${isAndonActive ? '' : 'animate-[spin_1.2s_linear_infinite]'}`} />
-            <div className="w-1 h-1 rounded-full bg-amber-400" />
-          </div>
-          <div className="flex-1 flex justify-between items-center text-[8px] font-mono">
-            <span className="text-slate-400">SPINDLE</span>
-            <span className={`font-bold ${isAndonActive ? 'text-red-400' : 'text-cyan-300'}`}>
-              {isAndonActive ? '0 RPM' : '12,500 RPM'}
-            </span>
-          </div>
-        </div>
-      );
-    }
-    if (code.startsWith('PRS')) {
-      return (
-        <div className="flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg bg-black/40 border border-red-500/20 my-0.5 z-10">
-          <div className="relative w-4 h-4 flex items-center justify-center shrink-0">
-            <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-red-400">
-              <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="14,4" />
-              <line x1="12" y1="12" x2="16" y2="7" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" className={isAndonActive ? '' : 'animate-pulse'} />
-            </svg>
-          </div>
-          <div className="flex-1 flex justify-between items-center text-[8px] font-mono">
-            <span className="text-slate-400">PRESS.</span>
-            <span className={`font-bold ${isAlert ? 'text-red-400' : 'text-emerald-400'}`}>
-              6.12 BAR
-            </span>
-          </div>
-        </div>
-      );
-    }
-    if (code.startsWith('TRQ')) {
+    if (code.startsWith('IQC') || code.startsWith('SUP') || code.startsWith('PLN')) {
       return (
         <div className="flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg bg-black/40 border border-amber-500/20 my-0.5 z-10">
           <div className="relative w-4 h-4 flex items-center justify-center shrink-0">
-            <div className={`w-3 h-3 border-2 border-amber-400 rounded-sm ${isAndonActive ? '' : 'animate-bounce'}`} />
+            <div className={`w-3 h-3 rounded-full border-2 ${isAndonActive ? 'border-red-400 animate-ping' : 'border-amber-400'}`} />
           </div>
           <div className="flex-1 flex justify-between items-center text-[8px] font-mono">
-            <span className="text-slate-400">TORQUE</span>
-            <span className="font-bold text-amber-300">42.5 N·m</span>
+            <span className="text-slate-400">IQC SAMPLING</span>
+            <span className={`font-bold ${isAndonActive ? 'text-red-400' : 'text-amber-300'}`}>
+              {isAndonActive ? 'LOT HOLD' : 'AQL 1.0 PASS'}
+            </span>
           </div>
         </div>
       );
     }
-    if (code.startsWith('IPQC') || code.startsWith('OQC')) {
+    if (code.startsWith('SPC')) {
+      return (
+        <div className="flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg bg-black/40 border border-cyan-500/20 my-0.5 z-10">
+          <div className="relative w-4 h-4 flex items-center justify-center shrink-0">
+            <div className={`w-3.5 h-3.5 rounded-full border-2 border-dashed border-cyan-400 ${isAndonActive ? '' : 'animate-[spin_4s_linear_infinite]'}`} />
+          </div>
+          <div className="flex-1 flex justify-between items-center text-[8px] font-mono">
+            <span className="text-slate-400">SPC CAPABILITY</span>
+            <span className={`font-bold ${isAlert ? 'text-red-400' : 'text-cyan-300'}`}>
+              Cpk: 1.48
+            </span>
+          </div>
+        </div>
+      );
+    }
+    if (code.startsWith('NCR') || code.startsWith('8D')) {
+      return (
+        <div className="flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg bg-black/40 border border-rose-500/20 my-0.5 z-10">
+          <div className="relative w-4 h-4 flex items-center justify-center shrink-0">
+            <span className="w-2 h-2 rounded-full bg-rose-400 animate-ping" />
+          </div>
+          <div className="flex-1 flex justify-between items-center text-[8px] font-mono">
+            <span className="text-slate-400">GOVERNANCE</span>
+            <span className={`font-bold ${isAlert ? 'text-red-400' : 'text-rose-300'}`}>
+              {code.startsWith('8D') ? '8D DISCIPLINE' : 'NCR TRACKING'}
+            </span>
+          </div>
+        </div>
+      );
+    }
+    if (code.startsWith('OQC') || code.startsWith('CMP')) {
       return (
         <div className="relative overflow-hidden px-1.5 py-0.5 rounded-lg bg-black/40 border border-emerald-500/20 my-0.5 z-10">
-          {!isAndonActive && (
-            <div className="absolute inset-y-0 w-8 bg-gradient-to-r from-transparent via-emerald-400/30 to-transparent animate-[dash_2s_linear_infinite]" />
-          )}
           <div className="flex justify-between items-center text-[8px] font-mono relative z-10">
             <span className="text-slate-400 flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-              VISION AI
+              {code.startsWith('CMP') ? 'CUSTOMER QA' : 'FINAL OQC'}
             </span>
-            <span className="font-bold text-emerald-300">100% SCAN</span>
+            <span className="font-bold text-emerald-300">100% CLEAR</span>
           </div>
         </div>
       );
     }
-    if (code.startsWith('CMM')) {
-      return (
-        <div className="flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg bg-black/40 border border-purple-500/20 my-0.5 z-10">
-          <div className="relative w-4 h-4 flex items-center justify-center shrink-0">
-            <div className="w-2 h-2 rounded-full bg-pink-500/80 animate-ping" />
-            <div className="absolute w-1 h-1 rounded-full bg-white" />
-          </div>
-          <div className="flex-1 flex justify-between items-center text-[8px] font-mono">
-            <span className="text-slate-400">PROBE</span>
-            <span className="font-bold text-purple-300">±0.002 mm</span>
-          </div>
+    return (
+      <div className="flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg bg-black/40 border border-blue-500/20 my-0.5 z-10">
+        <div className="flex-1 flex justify-between items-center text-[8px] font-mono">
+          <span className="text-slate-400">QMS STATUS</span>
+          <span className="font-bold text-blue-300">COMPLIANT</span>
         </div>
-      );
-    }
-    return null;
+      </div>
+    );
   };
 
   const handleAddNewTemplate = (preferredZone: StationZone = 'assembly') => {
@@ -3022,8 +3023,8 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
       id: `STATION-CUSTOM-${Date.now().toString().slice(-4)}`,
       code: `EQ-0${equipmentList.length + 1}`,
       zone: preferredZone,
-      zoneNameAr: preferredZone === 'receiving' ? 'عنبر الاستلام A' : preferredZone === 'lab' ? 'مركز الجودة C' : preferredZone === 'oqc' ? 'عنبر الإفراج D' : preferredZone === 'shipping' ? 'عنبر الشحن E' : 'خط التجميع 01',
-      zoneNameEn: preferredZone === 'receiving' ? 'Receiving Bay A' : preferredZone === 'lab' ? 'Quality Hub C' : preferredZone === 'oqc' ? 'OQC Bay D' : preferredZone === 'shipping' ? 'Shipping Bay E' : 'Assembly Line 01',
+      zoneNameAr: preferredZone === 'receiving' ? '1. استلام الخامات والموردين (IQC)' : preferredZone === 'assembly' ? '2. جودة التصنيع والعمليات (IPQC)' : preferredZone === 'resolution' ? '3. عدم المطابقة وحل المشكلات (NCR/8D)' : preferredZone === 'oqc' ? '4. فحص وخروج المنتج (OQC)' : preferredZone === 'shipping' ? '5. شكاوى العملاء والميدان' : preferredZone === 'lab' ? '6. المختبر الهندسي والتدقيق' : '7. تهيئة المصنع والبيانات',
+      zoneNameEn: preferredZone === 'receiving' ? '1. Incoming & Supplier (IQC)' : preferredZone === 'assembly' ? '2. In-Process Quality (IPQC)' : preferredZone === 'resolution' ? '3. Problem Solving (NCR/8D)' : preferredZone === 'oqc' ? '4. Outgoing Quality (OQC)' : preferredZone === 'shipping' ? '5. Customer & Field Quality' : preferredZone === 'lab' ? '6. Engineering Lab & Audits' : '7. Factory Setup & Master Data',
       titleAr: `محطة جديدة ${equipmentList.length + 1}`,
       titleEn: `New Workstation ${equipmentList.length + 1}`,
       line: 'Line 1',
@@ -3905,11 +3906,11 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                 const floorBoard = canvasRef.current?.querySelector('.scada-floor-board') as HTMLElement;
                 if (floorBoard) {
                   const rect = floorBoard.getBoundingClientRect();
-                  const rawX = (e.clientX - rect.left) / (rect.width / 1200);
-                  const rawY = (e.clientY - rect.top) / (rect.height / 640);
+                  const rawX = (e.clientX - rect.left) / (rect.width / 1360);
+                  const rawY = (e.clientY - rect.top) / (rect.height / 780);
                   setMouseCanvasPos({ 
-                    x: Math.max(10, Math.min(1190, Math.round(rawX))), 
-                    y: Math.max(10, Math.min(630, Math.round(rawY))) 
+                    x: Math.max(10, Math.min(1350, Math.round(rawX))), 
+                    y: Math.max(10, Math.min(770, Math.round(rawY))) 
                   });
                 }
               }
@@ -3934,7 +3935,7 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                 transformStyle: is3D ? 'preserve-3d' : 'flat',
                 transition: (draggingId || isPanning || draggingWaypoint) ? 'none' : 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)'
               }}
-              className={`scada-floor-board relative w-[1200px] h-[640px] shrink-0 rounded-3xl border-2 transition-all duration-500 ${
+              className={`scada-floor-board relative w-[1360px] h-[780px] shrink-0 rounded-3xl border-2 transition-all duration-500 ${
                 ambientTheme === 'cleanroom'
                   ? 'bg-[#f8fafc] border-slate-300 shadow-[0_30px_60px_rgba(0,0,0,0.15)] ring-2 ring-sky-500/20 text-slate-900'
                   : ambientTheme === 'night-shift'
@@ -3946,7 +3947,7 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
             >
               {/* SVG ARCHITECTURAL INDUSTRIAL BACKGROUND & CONVEYOR NETWORK */}
               <svg 
-                viewBox="0 0 1200 640" 
+                viewBox="0 0 1360 780" 
                 className="absolute inset-0 w-full h-full pointer-events-none"
               >
                 <defs>
@@ -4005,17 +4006,17 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                 </defs>
 
                 {/* Grid Floor */}
-                <rect width="1200" height="640" fill="url(#scada-grid)" />
+                <rect width="1360" height="780" fill="url(#scada-grid)" />
 
                 {/* ROTATING EMERGENCY SIREN SWEEP LIGHT (TRIGGERED ON ANDON / CRITICAL ALERTS) */}
                 {(summaryMetrics.andonCount > 0 || summaryMetrics.alertCount > 0) && (
                   <g className="pointer-events-none mix-blend-screen">
-                    <circle cx="600" cy="320" r="660" fill="url(#scada-emergency-siren)" className="animate-pulse" />
-                    <g transform="translate(600, 320)">
-                      <polygon points="0,0 -700,-180 -700,180" fill="url(#scada-siren-beam)" opacity="0.65">
+                    <circle cx="680" cy="390" r="780" fill="url(#scada-emergency-siren)" className="animate-pulse" />
+                    <g transform="translate(680, 390)">
+                      <polygon points="0,0 -800,-200 -800,200" fill="url(#scada-siren-beam)" opacity="0.65">
                         <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="4s" repeatCount="indefinite" />
                       </polygon>
-                      <polygon points="0,0 700,-180 700,180" fill="url(#scada-siren-beam)" opacity="0.65">
+                      <polygon points="0,0 800,-200 800,200" fill="url(#scada-siren-beam)" opacity="0.65">
                         <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="4s" repeatCount="indefinite" />
                       </polygon>
                     </g>
@@ -4023,139 +4024,137 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                 )}
 
                 {/* Outer Plant Wall with Metallic Industrial Bevel */}
-                <rect x="12" y="12" width="1176" height="616" fill="none" stroke={ambientTheme === 'cleanroom' ? '#94a3b8' : '#1e293b'} strokeWidth="4" rx="18" />
-                <rect x="16" y="16" width="1168" height="608" fill="none" stroke={ambientTheme === 'cleanroom' ? '#cbd5e1' : '#0f172a'} strokeWidth="1.5" rx="16" />
+                <rect x="12" y="12" width="1336" height="756" fill="none" stroke={ambientTheme === 'cleanroom' ? '#94a3b8' : '#1e293b'} strokeWidth="4" rx="18" />
+                <rect x="16" y="16" width="1328" height="748" fill="none" stroke={ambientTheme === 'cleanroom' ? '#cbd5e1' : '#0f172a'} strokeWidth="1.5" rx="16" />
 
-                {/* STRUCTURAL BAY FLOORS WITH DISTINCT EPOXY FINISHES */}
-                {/* Bay A: Receiving & Raw Buffer Floor */}
-                <rect x="20" y="20" width="265" height="600" fill={ambientTheme === 'cleanroom' ? '#f1f5f9' : '#070d1a'} rx="12" opacity="0.6" />
+                {/* ========================================================== */}
+                {/* THE 7 OFFICIAL PLATFORM STAGE WINGS (EPOXY INDUSTRIAL FLOORS) */}
+                {/* ========================================================== */}
+
+                {/* 1. Wing 1: Incoming & Supplier Quality (IQC) */}
+                <rect x="24" y="24" width="292" height="345" fill={ambientTheme === 'cleanroom' ? '#f8fafc' : '#08101e'} stroke="#f59e0b" strokeWidth="1.5" strokeOpacity="0.4" rx="14" />
                 
-                {/* Bay B: Machining & Assembly Floor */}
-                <rect x="315" y="20" width="545" height="415" fill={ambientTheme === 'cleanroom' ? '#ffffff' : '#091122'} rx="12" opacity="0.7" />
-                
-                {/* Hub C: Metrology Cleanroom & MRB Floor */}
-                <rect x="315" y="445" width="545" height="175" fill={ambientTheme === 'cleanroom' ? '#f8fafc' : '#0d1326'} rx="12" opacity="0.8" />
-                <rect x="315" y="445" width="545" height="175" fill="none" stroke="#a855f7" strokeWidth="1" strokeDasharray="6,6" opacity="0.3" rx="12" />
+                {/* 7. Wing 7: Factory Setup & Master Data */}
+                <rect x="24" y="395" width="292" height="360" fill={ambientTheme === 'cleanroom' ? '#f1f5f9' : '#060a14'} stroke="#64748b" strokeWidth="1.5" strokeOpacity="0.35" rx="14" />
 
-                {/* Bay D: Final OQC & Packaging Floor */}
-                <rect x="885" y="20" width="295" height="280" fill={ambientTheme === 'cleanroom' ? '#f1f5f9' : '#081322'} rx="12" opacity="0.6" />
+                {/* 2. Wing 2: In-Process Quality (IPQC) */}
+                <rect x="334" y="24" width="298" height="460" fill={ambientTheme === 'cleanroom' ? '#f0fdf4' : '#071224'} stroke="#0284c7" strokeWidth="1.5" strokeOpacity="0.4" rx="14" />
 
-                {/* Bay E: Shipping Logistics Yard */}
-                <rect x="885" y="305" width="295" height="315" fill={ambientTheme === 'cleanroom' ? '#f8fafc' : '#060a14'} rx="12" opacity="0.7" />
+                {/* 3. Wing 3: Non-Conformance & Problem Solving (NCR/8D) */}
+                <rect x="648" y="24" width="300" height="460" fill={ambientTheme === 'cleanroom' ? '#fdf4ff' : '#0f0c22'} stroke="#8b5cf6" strokeWidth="1.5" strokeOpacity="0.4" rx="14" />
 
-                {/* STRUCTURAL BAY BOUNDARIES (DASHLINES) */}
-                <line x1="290" y1="15" x2="290" y2="625" stroke={ambientTheme === 'cleanroom' ? '#cbd5e1' : '#1e293b'} strokeWidth="2" strokeDasharray="10,6" />
-                <line x1="290" y1="440" x2="875" y2="440" stroke={ambientTheme === 'cleanroom' ? '#cbd5e1' : '#1e293b'} strokeWidth="2" strokeDasharray="10,6" />
-                <line x1="875" y1="15" x2="875" y2="625" stroke={ambientTheme === 'cleanroom' ? '#cbd5e1' : '#1e293b'} strokeWidth="2" strokeDasharray="10,6" />
-                <line x1="875" y1="300" x2="1185" y2="300" stroke={ambientTheme === 'cleanroom' ? '#cbd5e1' : '#1e293b'} strokeWidth="1.5" strokeDasharray="8,5" />
+                {/* 6. Wing 6: Metrology Lab & Audits */}
+                <rect x="334" y="495" width="614" height="260" fill={ambientTheme === 'cleanroom' ? '#f0fdfa' : '#06161c'} stroke="#10b981" strokeWidth="1.5" strokeOpacity="0.4" rx="14" />
+
+                {/* 4. Wing 4: Outgoing Quality Release (OQC) */}
+                <rect x="964" y="24" width="372" height="175" fill={ambientTheme === 'cleanroom' ? '#ecfdf5' : '#051814'} stroke="#059669" strokeWidth="1.5" strokeOpacity="0.4" rx="14" />
+
+                {/* 5. Wing 5: Customer & Field Quality */}
+                <rect x="964" y="215" width="372" height="540" fill={ambientTheme === 'cleanroom' ? '#eff6ff' : '#081226'} stroke="#3b82f6" strokeWidth="1.5" strokeOpacity="0.4" rx="14" />
 
                 {/* SAFETY PEDESTRIAN AISLES */}
-                <rect x="293" y="15" width="22" height="610" fill="url(#scada-safety-walkway)" stroke="#F59E0B" strokeWidth="0.8" opacity="0.65" />
-                <rect x="863" y="15" width="20" height="610" fill="url(#scada-safety-walkway)" stroke="#F59E0B" strokeWidth="0.8" opacity="0.65" />
+                <rect x="318" y="20" width="14" height="735" fill="url(#scada-safety-walkway)" stroke="#f59e0b" strokeWidth="0.8" opacity="0.5" />
+                <rect x="950" y="20" width="12" height="735" fill="url(#scada-safety-walkway)" stroke="#f59e0b" strokeWidth="0.8" opacity="0.5" />
 
                 {/* PEDESTRIAN ZEBRA CROSSWALKS ACROSS AISLES */}
                 <g fill="#ffffff" opacity={ambientTheme === 'cleanroom' ? '0.6' : '0.25'}>
-                  {/* West Aisle Crosswalk at y=230 */}
-                  <rect x="293" y="226" width="22" height="4" />
-                  <rect x="293" y="234" width="22" height="4" />
-                  <rect x="293" y="242" width="22" height="4" />
-                  {/* East Aisle Crosswalk at y=230 */}
-                  <rect x="863" y="226" width="20" height="4" />
-                  <rect x="863" y="234" width="20" height="4" />
-                  <rect x="863" y="242" width="20" height="4" />
-                  {/* East Aisle Crosswalk at y=360 */}
-                  <rect x="863" y="356" width="20" height="4" />
-                  <rect x="863" y="364" width="20" height="4" />
-                  <rect x="863" y="372" width="20" height="4" />
+                  <rect x="318" y="195" width="14" height="3" />
+                  <rect x="318" y="202" width="14" height="3" />
+                  <rect x="318" y="209" width="14" height="3" />
+
+                  <rect x="318" y="475" width="14" height="3" />
+                  <rect x="318" y="482" width="14" height="3" />
+                  <rect x="318" y="489" width="14" height="3" />
+
+                  <rect x="950" y="195" width="12" height="3" />
+                  <rect x="950" y="202" width="12" height="3" />
+                  <rect x="950" y="209" width="12" height="3" />
+
+                  <rect x="950" y="475" width="12" height="3" />
+                  <rect x="950" y="482" width="12" height="3" />
+                  <rect x="950" y="489" width="12" height="3" />
                 </g>
 
-                {/* STENCILED FACTORY FLOOR LETTERING & PROMINENT BILINGUAL BAY HEADERS */}
+                {/* STENCILED FACTORY FLOOR HEADERS FOR 7 REAL PLATFORM STAGES */}
                 <g className="select-none pointer-events-none">
-                  {/* Bay A: Inbound */}
-                  <rect x="30" y="28" width="245" height="26" rx="6" fill="#f59e0b" fillOpacity="0.18" stroke="#f59e0b" strokeWidth="1.2" />
-                  <text x="40" y="46" fill="#f59e0b" fontSize="11" fontWeight="900" fontFamily="sans-serif">
-                    {isAr ? '🚚 عنبر 1: رصيف الاستلام وفحص التوريد IQC' : '🚚 BAY A: INBOUND RECEIVING & IQC'}
+                  {/* Wing 1: Inbound & Supplier (IQC) */}
+                  <rect x="34" y="32" width="272" height="24" rx="6" fill="#f59e0b" fillOpacity="0.15" stroke="#f59e0b" strokeWidth="1" />
+                  <text x="44" y="48" fill="#f59e0b" fontSize="10.5" fontWeight="900" fontFamily="sans-serif">
+                    {isAr ? '📥 1. استلام الخامات والموردين (IQC)' : '📥 1. INBOUND & SUPPLIER QA (IQC)'}
                   </text>
 
-                  {/* Bay B: Machining & Assembly */}
-                  <rect x="325" y="28" width="340" height="26" rx="6" fill="#0284c7" fillOpacity="0.18" stroke="#0284c7" strokeWidth="1.2" />
-                  <text x="335" y="46" fill="#38bdf8" fontSize="11" fontWeight="900" fontFamily="sans-serif">
-                    {isAr ? '⚙️ عنبر 2: التشكيل والمكابس والتشغيل CNC' : '⚙️ BAY B: HEAVY FABRICATION & CNC'}
+                  {/* Wing 7: Factory Setup & Master Data */}
+                  <rect x="34" y="403" width="272" height="24" rx="6" fill="#64748b" fillOpacity="0.2" stroke="#64748b" strokeWidth="1" />
+                  <text x="44" y="419" fill="#94a3b8" fontSize="10.5" fontWeight="900" fontFamily="sans-serif">
+                    {isAr ? '⚙️ 7. تهيئة المصنع والبيانات الرئيسية' : '⚙️ 7. FACTORY SETUP & MASTER DATA'}
                   </text>
 
-                  {/* Hub C: Metrology Cleanroom & MRB */}
-                  <rect x="325" y="452" width="340" height="26" rx="6" fill="#10b981" fillOpacity="0.18" stroke="#10b981" strokeWidth="1.2" />
-                  <text x="335" y="470" fill="#34d399" fontSize="11" fontWeight="900" fontFamily="sans-serif">
-                    {isAr ? '🔬 عنبر 3: معمل الجودة والمترولوجيا CMM' : '🔬 HUB C: CLEANROOM METROLOGY & QA'}
+                  {/* Wing 2: In-Process Quality (IPQC) */}
+                  <rect x="344" y="32" width="278" height="24" rx="6" fill="#0284c7" fillOpacity="0.15" stroke="#0284c7" strokeWidth="1" />
+                  <text x="354" y="48" fill="#38bdf8" fontSize="10.5" fontWeight="900" fontFamily="sans-serif">
+                    {isAr ? '⚙️ 2. جودة التصنيع والعمليات (IPQC)' : '⚙️ 2. IN-PROCESS QUALITY (IPQC)'}
                   </text>
 
-                  {/* Bay D: Final OQC & Packaging */}
-                  <rect x="895" y="28" width="275" height="26" rx="6" fill="#8b5cf6" fillOpacity="0.18" stroke="#8b5cf6" strokeWidth="1.2" />
-                  <text x="905" y="46" fill="#c084fc" fontSize="11" fontWeight="900" fontFamily="sans-serif">
-                    {isAr ? '📦 عنبر 4: خطوط التعبئة والتغليف والفحص OQC' : '📦 BAY D: PACKAGING & FINAL OQC'}
+                  {/* Wing 3: Non-Conformance & Problem Solving (NCR/8D) */}
+                  <rect x="658" y="32" width="280" height="24" rx="6" fill="#8b5cf6" fillOpacity="0.15" stroke="#8b5cf6" strokeWidth="1" />
+                  <text x="668" y="48" fill="#c084fc" fontSize="10.5" fontWeight="900" fontFamily="sans-serif">
+                    {isAr ? '🔄 3. عدم المطابقة وحل المشكلات (NCR/8D)' : '🔄 3. PROBLEM SOLVING & NCR/8D'}
                   </text>
 
-                  {/* Bay E: Shipping Logistics Yard */}
-                  <rect x="895" y="315" width="275" height="26" rx="6" fill="#22c55e" fillOpacity="0.18" stroke="#22c55e" strokeWidth="1.2" />
-                  <text x="905" y="333" fill="#4ade80" fontSize="11" fontWeight="900" fontFamily="sans-serif">
-                    {isAr ? '🚛 عنبر 5: مستودع البضائع ورصيف الشحن' : '🚛 BAY E: FINISHED GOODS & DISPATCH'}
+                  {/* Wing 6: Metrology Lab & Audits */}
+                  <rect x="344" y="503" width="594" height="22" rx="6" fill="#10b981" fillOpacity="0.15" stroke="#10b981" strokeWidth="1" />
+                  <text x="354" y="518" fill="#34d399" fontSize="10.5" fontWeight="900" fontFamily="sans-serif">
+                    {isAr ? '🔬 6. المختبر الهندسي والتدقيق (Engineering Lab & Audits)' : '🔬 6. METROLOGY LAB & AUDITS'}
+                  </text>
+
+                  {/* Wing 4: Outgoing Quality Release (OQC) */}
+                  <rect x="974" y="32" width="352" height="24" rx="6" fill="#059669" fillOpacity="0.15" stroke="#059669" strokeWidth="1" />
+                  <text x="984" y="48" fill="#34d399" fontSize="10.5" fontWeight="900" fontFamily="sans-serif">
+                    {isAr ? '✅ 4. فحص وخروج المنتج النهائي (OQC)' : '✅ 4. OUTGOING QUALITY & RELEASE (OQC)'}
+                  </text>
+
+                  {/* Wing 5: Customer & Field Quality */}
+                  <rect x="974" y="223" width="352" height="24" rx="6" fill="#3b82f6" fillOpacity="0.15" stroke="#3b82f6" strokeWidth="1" />
+                  <text x="984" y="239" fill="#60a5fa" fontSize="10.5" fontWeight="900" fontFamily="sans-serif">
+                    {isAr ? '🤝 5. شكاوى العملاء وجودة الميدان' : '🤝 5. CUSTOMER & FIELD QUALITY'}
                   </text>
                 </g>
 
                 {/* STRUCTURAL H-BEAM STEEL COLUMNS WITH HAZARD BASES */}
                 {[
-                  { cx: 290, cy: 110 },
-                  { cx: 290, cy: 440 },
-                  { cx: 290, cy: 560 },
-                  { cx: 875, cy: 180 },
-                  { cx: 875, cy: 440 },
-                  { cx: 875, cy: 560 }
+                  { cx: 325, cy: 110 },
+                  { cx: 325, cy: 370 },
+                  { cx: 325, cy: 650 },
+                  { cx: 956, cy: 110 },
+                  { cx: 956, cy: 370 },
+                  { cx: 956, cy: 650 }
                 ].map((col, idx) => (
                   <g key={`col-${idx}`}>
-                    {/* Yellow/Black hazard boundary circle */}
-                    <circle cx={col.cx} cy={col.cy} r="10" fill="url(#scada-hazard-stripes)" stroke="#f59e0b" strokeWidth="1" />
-                    {/* Concrete pedestal */}
-                    <circle cx={col.cx} cy={col.cy} r="6" fill="#334155" stroke="#475569" strokeWidth="1" />
-                    {/* Steel H-Beam profile */}
-                    <rect x={col.cx - 3.5} y={col.cy - 3.5} width="7" height="7" fill="#0f172a" />
-                    <path d={`M ${col.cx - 3} ${col.cy - 3} L ${col.cx + 3} ${col.cy - 3} M ${col.cx} ${col.cy - 3} L ${col.cx} ${col.cy + 3} M ${col.cx - 3} ${col.cy + 3} L ${col.cx + 3} ${col.cy + 3}`} stroke="#94a3b8" strokeWidth="1.5" />
+                    <circle cx={col.cx} cy={col.cy} r="8" fill="url(#scada-hazard-stripes)" stroke="#f59e0b" strokeWidth="0.8" />
+                    <circle cx={col.cx} cy={col.cy} r="5" fill="#334155" stroke="#475569" strokeWidth="1" />
+                    <rect x={col.cx - 2.5} y={col.cy - 2.5} width="5" height="5" fill="#0f172a" />
                   </g>
                 ))}
 
-                {/* OVERHEAD GANTRY CRANE SPANNING BAY B */}
-                <g opacity="0.75">
-                  {/* Runway rails */}
-                  <line x1="318" y1="62" x2="860" y2="62" stroke="#475569" strokeWidth="3" />
-                  <line x1="318" y1="62" x2="860" y2="62" stroke="#f59e0b" strokeWidth="1" strokeDasharray="8,6" />
-                  {/* Crane Bridge Girder (Yellow steel truss) */}
-                  <rect x="540" y="52" width="70" height="20" rx="3" fill="#f59e0b" stroke="#78350f" strokeWidth="1" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.6))" />
-                  <text x="575" y="66" textAnchor="middle" fill="#000000" fontSize="8" fontWeight="900" fontFamily="sans-serif">
-                    CRANE 5T
-                  </text>
-                </g>
-
-                {/* RED QUARANTINE HAZARD FLOOR */}
-                <rect x="35" y="300" width="112" height="105" fill="url(#scada-quarantine-hatch)" stroke="#EF4444" strokeWidth="1.5" rx="10" />
-
                 {/* INDUSTRIAL ROLL-UP DOCK DOORS */}
-                {/* Gate 01: Inbound Receiving Door */}
+                {/* Gate 01: Inbound Receiving Dock */}
                 <g>
-                  <rect x="14" y="80" width="8" height="75" fill="#f59e0b" rx="2" />
-                  <line x1="14" y1="95" x2="22" y2="95" stroke="#78350f" strokeWidth="1.5" />
-                  <line x1="14" y1="110" x2="22" y2="110" stroke="#78350f" strokeWidth="1.5" />
-                  <line x1="14" y1="125" x2="22" y2="125" stroke="#78350f" strokeWidth="1.5" />
-                  <line x1="14" y1="140" x2="22" y2="140" stroke="#78350f" strokeWidth="1.5" />
-                  <text x="26" y="74" fill="#f59e0b" fontSize="10" fontWeight="900">Gate 01 [IN]</text>
+                  <rect x="14" y="70" width="8" height="70" fill="#f59e0b" rx="2" />
+                  <line x1="14" y1="85" x2="22" y2="85" stroke="#78350f" strokeWidth="1.5" />
+                  <line x1="14" y1="100" x2="22" y2="100" stroke="#78350f" strokeWidth="1.5" />
+                  <line x1="14" y1="115" x2="22" y2="115" stroke="#78350f" strokeWidth="1.5" />
+                  <line x1="14" y1="130" x2="22" y2="130" stroke="#78350f" strokeWidth="1.5" />
+                  <text x="26" y="65" fill="#f59e0b" fontSize="9" fontWeight="900">Gate 01 [IQC IN]</text>
                 </g>
 
-                {/* Gate 03: Outbound Logistics Door */}
+                {/* Gate 02: Outbound Shipping Dock */}
                 <g>
-                  <rect x="1178" y="325" width="8" height="80" fill="#10b981" rx="2" />
-                  <line x1="1178" y1="340" x2="1186" y2="340" stroke="#064e3b" strokeWidth="1.5" />
-                  <line x1="1178" y1="355" x2="1186" y2="355" stroke="#064e3b" strokeWidth="1.5" />
-                  <line x1="1178" y1="370" x2="1186" y2="370" stroke="#064e3b" strokeWidth="1.5" />
-                  <line x1="1178" y1="385" x2="1186" y2="385" stroke="#064e3b" strokeWidth="1.5" />
-                  <text x="1174" y="318" fill="#10b981" fontSize="10" fontWeight="900" textAnchor="end">Gate 03 [OUT]</text>
+                  <rect x="1338" y="70" width="8" height="70" fill="#10b981" rx="2" />
+                  <line x1="1338" y1="85" x2="1346" y2="85" stroke="#064e3b" strokeWidth="1.5" />
+                  <line x1="1338" y1="100" x2="1346" y2="100" stroke="#064e3b" strokeWidth="1.5" />
+                  <line x1="1338" y1="115" x2="1346" y2="115" stroke="#064e3b" strokeWidth="1.5" />
+                  <line x1="1338" y1="130" x2="1346" y2="130" stroke="#064e3b" strokeWidth="1.5" />
+                  <text x="1334" y="65" fill="#10b981" fontSize="9" fontWeight="900" textAnchor="end">Gate 02 [OQC OUT]</text>
                 </g>
 
                 {/* ========================================================== */}
@@ -4582,190 +4581,37 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                   );
                 })()}
 
-                {/* ========================================================== */}
-                {/* DIVERTER GATES: D-01 REJECT GATE & D-02 QC LAB SHUTTLE     */}
-                {/* ========================================================== */}
-                {/* DIVERTER D-01: IQC Material Split Gate */}
-                {(() => {
-                  const iqcStatus = stationStatuses['STATION-IQC'];
-                  const isIqcReject = Boolean(iqcStatus && (iqcStatus.status === 'alert' || iqcStatus.isAndonActive || iqcStatus.defectCount > 0));
-                  return (
-                    <g 
-                      transform="translate(152, 225)" 
-                      className="pointer-events-auto cursor-pointer group" 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedStationId('STATION-QUARANTINE');
-                      }}
-                    >
-                      <rect x="-14" y="-12" width="28" height="24" rx="4" fill="#0f172a" stroke={isIqcReject ? "#ef4444" : "#10b981"} strokeWidth="1.5" filter="drop-shadow(0 2px 5px rgba(0,0,0,0.8))" />
-                      {/* Diverter Internal Flap Blade */}
-                      <line 
-                        x1="0" 
-                        y1="8" 
-                        x2={isIqcReject ? "-9" : "0"} 
-                        y2={isIqcReject ? "-8" : "-8"} 
-                        stroke={isIqcReject ? "#ef4444" : "#10b981"} 
-                        strokeWidth="3.5" 
-                        strokeLinecap="round" 
-                        className="transition-all duration-500"
-                      />
-                      <circle cx="0" cy="8" r="3" fill="#cbd5e1" stroke="#475569" strokeWidth="1" />
-                      <circle cx="9" cy="-7" r="2" fill={isIqcReject ? "#ef4444" : "#10b981"} className={isIqcReject ? "animate-ping" : ""} />
-                      <text x="18" y="2" fill={isIqcReject ? "#ef4444" : "#38bdf8"} fontSize="7" fontWeight="bold" fontFamily="monospace">
-                        {isIqcReject ? "DIVERT ▶ REJECT" : "PASS ▶ BUFFER"}
-                      </text>
-                    </g>
-                  );
-                })()}
-
-                {/* DIVERTER D-02: IPQC to Bay C Pneumatic Lab Shuttle */}
-                {(() => {
-                  const ipqcStatus = stationStatuses['STATION-IPQC'];
-                  const hasLabSample = Boolean(ipqcStatus && ipqcStatus.status !== 'pass');
-                  return (
-                    <g 
-                      transform="translate(735, 410)" 
-                      className="pointer-events-auto cursor-pointer group" 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedStationId('STATION-CMM');
-                      }}
-                    >
-                      <rect x="-12" y="-12" width="24" height="24" rx="4" fill="#0f172a" stroke="#a855f7" strokeWidth="1.5" filter="drop-shadow(0 2px 5px rgba(0,0,0,0.8))" />
-                      <line 
-                        x1="0" 
-                        y1="-8" 
-                        x2={hasLabSample ? "0" : "8"} 
-                        y2={hasLabSample ? "8" : "0"} 
-                        stroke="#c084fc" 
-                        strokeWidth="3" 
-                        strokeLinecap="round" 
-                        className="transition-all duration-300"
-                      />
-                      <circle cx="0" cy="0" r="2.5" fill="#a855f7" className="animate-pulse" />
-                      <text x="-16" y="2" textAnchor="end" fill="#c084fc" fontSize="7" fontWeight="bold" fontFamily="monospace">
-                        QA LAB SHUTTLE
-                      </text>
-                    </g>
-                  );
-                })()}
-
-                {/* AUTONOMOUS AGV ROBOTS */}
+                {/* AUTONOMOUS AGV ROBOTS ALONG SAFETY AISLES */}
                 {isAgvActive && (
                   <g>
-                    {/* AGV 01: Raw Inbound Materials Aisle Transport */}
+                    {/* AGV 01: Inbound & Process Aisle Transport (West Aisle x=325) */}
                     <g>
-                      <rect width="30" height="18" rx="4" fill="#0f172a" stroke="#f59e0b" strokeWidth="1.5" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.7))">
-                        <animateMotion path="M 120 120 L 305 120 L 305 390 L 120 390 Z" dur="18s" repeatCount="indefinite" />
+                      <rect width="28" height="16" rx="4" fill="#0f172a" stroke="#f59e0b" strokeWidth="1.5" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.7))">
+                        <animateMotion path="M 319 80 L 319 700 L 319 80 Z" dur="24s" repeatCount="indefinite" />
                       </rect>
-                      {/* Forward scanning lidar light cone */}
-                      <polygon points="30,9 45,2 45,16" fill="#f59e0b" opacity="0.35">
-                        <animateMotion path="M 120 120 L 305 120 L 305 390 L 120 390 Z" dur="18s" repeatCount="indefinite" />
+                      <polygon points="28,8 40,2 40,14" fill="#f59e0b" opacity="0.35">
+                        <animateMotion path="M 319 80 L 319 700 L 319 80 Z" dur="24s" repeatCount="indefinite" />
                       </polygon>
-                      <circle cx="15" cy="9" r="3.5" fill="#f59e0b" className="animate-ping">
-                        <animateMotion path="M 120 120 L 305 120 L 305 390 L 120 390 Z" dur="18s" repeatCount="indefinite" />
+                      <circle cx="14" cy="8" r="3" fill="#f59e0b" className="animate-ping">
+                        <animateMotion path="M 319 80 L 319 700 L 319 80 Z" dur="24s" repeatCount="indefinite" />
                       </circle>
                     </g>
 
-                    {/* AGV 02: Central Quality Transfer to Metrology Lab */}
+                    {/* AGV 02: Outbound & Quality Transfer (East Aisle x=956) */}
                     <g>
-                      <rect width="30" height="18" rx="4" fill="#0f172a" stroke="#06b6d4" strokeWidth="1.5" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.7))">
-                        <animateMotion path="M 875 220 L 875 520 L 450 520 L 450 220 Z" dur="22s" repeatCount="indefinite" />
+                      <rect width="28" height="16" rx="4" fill="#0f172a" stroke="#06b6d4" strokeWidth="1.5" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.7))">
+                        <animateMotion path="M 950 80 L 950 700 L 950 80 Z" dur="22s" repeatCount="indefinite" />
                       </rect>
-                      <polygon points="30,9 45,2 45,16" fill="#06b6d4" opacity="0.35">
-                        <animateMotion path="M 875 220 L 875 520 L 450 520 L 450 220 Z" dur="22s" repeatCount="indefinite" />
+                      <polygon points="28,8 40,2 40,14" fill="#06b6d4" opacity="0.35">
+                        <animateMotion path="M 950 80 L 950 700 L 950 80 Z" dur="22s" repeatCount="indefinite" />
                       </polygon>
-                      <circle cx="15" cy="9" r="3.5" fill="#06b6d4" className="animate-ping">
-                        <animateMotion path="M 875 220 L 875 520 L 450 520 L 450 220 Z" dur="22s" repeatCount="indefinite" />
+                      <circle cx="14" cy="8" r="3" fill="#06b6d4" className="animate-ping">
+                        <animateMotion path="M 950 80 L 950 700 L 950 80 Z" dur="22s" repeatCount="indefinite" />
                       </circle>
-                    </g>
-                  </g>
-                )}
-
-                {/* LIVE GLIDING WIP WORKPIECES / MATERIAL STREAM ANIMATION */}
-                {isMaterialFlowActive && (
-                  <g>
-                    {/* Workpiece 1: Raw Inbound Castings Crate from Gate 01 into IQC and Buffer */}
-                    <g>
-                      <rect width="18" height="14" rx="2" fill="#d97706" stroke="#78350f" strokeWidth="1" filter="drop-shadow(0 2px 3px rgba(0,0,0,0.6))">
-                        <animateMotion path="M 152 165 L 152 280 L 214 280 L 214 300" dur="8s" repeatCount="indefinite" />
-                      </rect>
-                      <circle cx="9" cy="7" r="2.5" fill="#fef3c7">
-                        <animateMotion path="M 152 165 L 152 280 L 214 280 L 214 300" dur="8s" repeatCount="indefinite" />
-                      </circle>
-                    </g>
-
-                    {/* Workpiece 2: Aluminum Machined Billet Tote moving through Machining Line */}
-                    <g>
-                      <rect width="16" height="12" rx="2" fill="#0ea5e9" stroke="#0369a1" strokeWidth="1" filter="drop-shadow(0 2px 3px rgba(0,0,0,0.6))">
-                        <animateMotion path="M 330 235 L 485 235 L 505 235 L 660 235 L 680 235 L 835 235 L 865 235 L 865 365 L 615 365" dur="14s" repeatCount="indefinite" />
-                      </rect>
-                      <rect x="4" y="3" width="8" height="6" rx="1" fill="#e0f2fe">
-                        <animateMotion path="M 330 235 L 485 235 L 505 235 L 660 235 L 680 235 L 835 235 L 865 235 L 865 365 L 615 365" dur="14s" repeatCount="indefinite" />
-                      </rect>
-                    </g>
-
-                    {/* Workpiece 3: Pneumatic Quality Sample Capsule shooting to Metrology Lab */}
-                    <g>
-                      <rect width="12" height="6" rx="3" fill="#a855f7" stroke="#ffffff" strokeWidth="1" filter="drop-shadow(0 0 8px #c084fc)">
-                        <animateMotion path="M 735 420 L 735 445 L 452 445 L 452 470" dur="3.5s" repeatCount="indefinite" />
-                      </rect>
-                    </g>
-
-                    {/* Workpiece 4: Tested Valve Assemblies Transfer to Bay D Final OQC */}
-                    <g>
-                      <rect width="18" height="14" rx="3" fill="#06b6d4" stroke="#164e63" strokeWidth="1" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.6))">
-                        <animateMotion path="M 635 365 L 835 365 L 865 365 L 865 120 L 895 120" dur="10s" repeatCount="indefinite" />
-                      </rect>
-                      <circle cx="9" cy="7" r="2.5" fill="#ffffff" opacity="0.9">
-                        <animateMotion path="M 635 365 L 835 365 L 865 365 L 865 120 L 895 120" dur="10s" repeatCount="indefinite" />
-                      </circle>
-                    </g>
-
-                    {/* Workpiece 5: Finished Goods Carton Pallet loaded into Gate 03 Truck */}
-                    <g>
-                      <rect width="20" height="16" rx="3" fill="#10b981" stroke="#064e3b" strokeWidth="1" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.6))">
-                        <animateMotion path="M 1025 170 L 1025 190 L 1025 290 L 1025 315 L 1025 415 L 1025 440" dur="11s" repeatCount="indefinite" />
-                      </rect>
-                      <rect x="4" y="3" width="12" height="10" rx="1" fill="#fef08a" stroke="#ca8a04" strokeWidth="0.8">
-                        <animateMotion path="M 1025 170 L 1025 190 L 1025 290 L 1025 315 L 1025 415 L 1025 440" dur="11s" repeatCount="indefinite" />
-                      </rect>
                     </g>
                   </g>
                 )}
               </svg>
-
-              {/* INDUSTRIAL BAY OVERLAY BADGES (ALL 5 BAYS) */}
-              <div className="absolute top-4 left-8 pointer-events-none z-10 flex items-center gap-1.5 bg-[#0b1324]/90 border border-slate-700/80 px-2.5 py-1 rounded-xl shadow-md">
-                <Truck className="w-3.5 h-3.5 text-amber-400" />
-                <span className="text-[10px] font-black text-amber-400 uppercase tracking-wider">Bay A: الاستلام والخامات</span>
-              </div>
-
-              <div className="absolute top-4 left-[330px] pointer-events-none z-10 flex items-center gap-1.5 bg-[#0b1324]/90 border border-slate-700/80 px-2.5 py-1 rounded-xl shadow-md">
-                <Cpu className="w-3.5 h-3.5 text-cyan-400" />
-                <span className="text-[10px] font-black text-cyan-400 uppercase tracking-wider">Bay B: صالة الإنتاج والتجميع 01</span>
-                {isMaterialFlowActive && (
-                  <span className="text-[9px] font-mono text-cyan-300 bg-cyan-950/60 px-1.5 py-0.2 rounded border border-cyan-500/40 ml-2 animate-pulse">
-                    FLOW ACTIVE
-                  </span>
-                )}
-              </div>
-
-              <div className="absolute top-[448px] left-[330px] pointer-events-none z-10 flex items-center gap-1.5 bg-[#0b1324]/90 border border-slate-700/80 px-2.5 py-1 rounded-xl shadow-md">
-                <Activity className="w-3.5 h-3.5 text-purple-400" />
-                <span className="text-[10px] font-black text-purple-400 uppercase tracking-wider">Hub C: مختبر الجودة و MRB</span>
-              </div>
-
-              <div className="absolute top-4 left-[895px] pointer-events-none z-10 flex items-center gap-1.5 bg-[#0b1324]/90 border border-slate-700/80 px-2.5 py-1 rounded-xl shadow-md">
-                <PackageCheck className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="text-[10px] font-black text-emerald-400 uppercase tracking-wider">Bay D: الفحص النهائي والتغليف</span>
-              </div>
-
-              <div className="absolute top-[288px] left-[895px] pointer-events-none z-10 flex items-center gap-1.5 bg-[#0b1324]/90 border border-slate-700/80 px-2.5 py-1 rounded-xl shadow-md">
-                <Truck className="w-3.5 h-3.5 text-sky-400" />
-                <span className="text-[10px] font-black text-sky-400 uppercase tracking-wider">Bay E: رصيف الشحن واللوجستيات</span>
-              </div>
 
               {/* SCADA EQUIPMENT PODS WITH 3D EXTRUSION, DOCKING PORTS & LASER BEACONS */}
               {filteredEquipment.map(eq => {
@@ -7031,8 +6877,8 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                     </div>
                     <p className="text-[10px] text-slate-300">
                       {isAr 
-                        ? 'إضافة محطة تجميع، تشغيل CNC، محطة ربط عزم، أو محطة فحص جودة' 
-                        : 'Add assembly, CNC machining, torque station, or quality inspection point'}
+                        ? 'إضافة محطة فحص جودة، محطة ضبط عمليات، أو نقطة تسجيل تابعة للمنصة' 
+                        : 'Add quality inspection workstation, process control point, or platform governance tab'}
                     </p>
                     <button
                       onClick={() => handleAddNewTemplate('assembly')}
@@ -7133,8 +6979,8 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                         onClick={() => handleApplyLayoutPreset('bays')}
                         className="p-2 rounded-xl bg-black/40 hover:bg-cyan-950/60 border border-white/5 hover:border-cyan-500/40 text-start transition-all"
                       >
-                        <span className="font-bold text-white block text-[11px]">🏭 {isAr ? 'العنابر المتوازية' : 'Bays Grid'}</span>
-                        <span className="text-[9px] text-slate-400">Bay A, B, C, D, E</span>
+                        <span className="font-bold text-white block text-[11px]">🏭 {isAr ? 'أجنحة المراحل الـ 7' : '7 Platform Wings'}</span>
+                        <span className="text-[9px] text-slate-400">{isAr ? 'توزيع الأقسام المعيارية' : 'Platform Stages Layout'}</span>
                       </button>
 
                       <button
@@ -7577,7 +7423,7 @@ function StationEditModal({ station, isNew, isAr, onSave, onDelete, onClose }: S
                 required
                 value={formData.titleAr}
                 onChange={e => setFormData({ ...formData, titleAr: e.target.value })}
-                placeholder="مثال: محطة 1: التشغيل والخراطة CNC"
+                placeholder="مثال: محطة فحص الاستلام والتوريد IQC"
                 className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400"
               />
             </div>
@@ -7591,7 +7437,7 @@ function StationEditModal({ station, isNew, isAr, onSave, onDelete, onClose }: S
                 type="text"
                 value={formData.titleEn}
                 onChange={e => setFormData({ ...formData, titleEn: e.target.value })}
-                placeholder="e.g. 5-Axis CNC Machining Cell"
+                placeholder="e.g. Inbound IQC Verification Hub"
                 className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400"
               />
             </div>
@@ -7606,7 +7452,7 @@ function StationEditModal({ station, isNew, isAr, onSave, onDelete, onClose }: S
                 required
                 value={formData.code}
                 onChange={e => setFormData({ ...formData, code: e.target.value })}
-                placeholder="مثال: CNC-01, ASM-02"
+                placeholder="مثال: IQC-01, SPC-01, NCR-01"
                 className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs font-mono text-amber-300 placeholder-slate-500 focus:outline-none focus:border-amber-400"
               />
             </div>
