@@ -37,9 +37,10 @@ import {
 } from '../../services/enterpriseDepartmentsEngine';
 import { ErrorBoundary } from '../../components/ErrorBoundary';
 import EnterprisePlant3D from '../../components/3d/EnterprisePlant3D';
+import { ModernQualityFlowchart } from '../../components/quality/ModernQualityFlowchart';
 
 export type StationZone = 'receiving' | 'assembly' | 'resolution' | 'oqc' | 'shipping' | 'lab' | 'setup';
-export type ViewMode = '3d-webgl' | 'scada-floorplan' | 'stations-grid' | 'customize-table';
+export type ViewMode = 'flowchart' | 'scada-floorplan' | '3d-webgl' | 'stations-grid' | 'customize-table';
 export type FilterStatus = 'all' | 'alerts-only' | 'normal-only';
 export type CameraPreset = 'iso-nw' | 'iso-ne' | 'elevation' | 'top-down';
 export type AmbientTheme = 'cyber-dark' | 'cleanroom' | 'night-shift';
@@ -1283,10 +1284,12 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
   // Dynamic Equipment Pods State
   const [equipmentList, setEquipmentList] = useState<ScadaEquipment[]>(loadSavedEquipment);
   
-  // View Modes & Advanced Perspectives: 3D Living Twin or 2D Architectural SCADA
-  const initialMode: ViewMode = searchParams.get('view') === '2d'
-    ? 'scada-floorplan'
-    : '3d-webgl';
+  // View Modes: Modern Lightweight Flowchart (Default), 2D SCADA, or 3D Digital Twin
+  const initialMode: ViewMode = searchParams.get('view') === '3d'
+    ? '3d-webgl'
+    : searchParams.get('view') === '2d'
+      ? 'scada-floorplan'
+      : 'flowchart';
 
   const [viewMode, setViewMode] = useState<ViewMode>(initialMode);
   
@@ -3096,22 +3099,24 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
           </div>
         </div>
 
-        {/* PRIMARY VIEW MODE SWITCHER: 3D WEBGL TWIN vs 2D SCADA FLOORPLAN + FACTORY SETTINGS */}
+        {/* PRIMARY VIEW MODE SWITCHER: FLOWCHART vs 2D SCADA vs 3D TWIN + FACTORY SETTINGS */}
         <div className="flex items-center gap-1 bg-[#090f1e]/95 p-1 rounded-2xl border border-cyan-500/40 shadow-xl shrink-0">
           <button
             onClick={() => {
-              setViewMode('3d-webgl');
+              setViewMode('flowchart');
               if (soundEnabled) playIndustrialChime('camera');
             }}
             className={`px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all ${
-              viewMode === '3d-webgl'
-                ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 shadow-md shadow-cyan-500/30 ring-2 ring-cyan-300 scale-105'
+              viewMode === 'flowchart'
+                ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-slate-950 shadow-md shadow-emerald-500/30 ring-2 ring-emerald-300 scale-105'
                 : 'text-slate-400 hover:text-white hover:bg-white/5'
             }`}
           >
-            <Box className="w-4 h-4 text-cyan-400" />
-            <span>{isAr ? '🌐 التوأم الرقمي 3D' : '🌐 3D Twin'}</span>
-            <span className="px-1.5 py-0.2 rounded-full bg-cyan-950 text-cyan-300 text-[9px] font-mono border border-cyan-500/40">Three.js</span>
+            <Workflow className="w-4 h-4 text-emerald-400" />
+            <span>{isAr ? '⚡ فلو شارت سريع' : '⚡ Flowchart'}</span>
+            <span className="px-1.5 py-0.2 rounded-full bg-emerald-950 text-emerald-300 text-[9px] font-mono border border-emerald-500/40">
+              {isAr ? 'خفيف' : 'Fast'}
+            </span>
           </button>
 
           <button
@@ -3127,6 +3132,22 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
           >
             <Layers className="w-4 h-4 text-amber-400" />
             <span>{isAr ? '🗺️ خريطة 2D' : '🗺️ 2D Plan'}</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setViewMode('3d-webgl');
+              if (soundEnabled) playIndustrialChime('camera');
+            }}
+            className={`px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all ${
+              viewMode === '3d-webgl'
+                ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 shadow-md shadow-cyan-500/30 ring-2 ring-cyan-300 scale-105'
+                : 'text-slate-400 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <Box className="w-4 h-4 text-cyan-400" />
+            <span>{isAr ? '🌐 التوأم 3D' : '🌐 3D Twin'}</span>
+            <span className="px-1.5 py-0.2 rounded-full bg-cyan-950 text-cyan-300 text-[9px] font-mono border border-cyan-500/40">Three.js</span>
           </button>
 
           <button
@@ -3846,10 +3867,37 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
       )}
 
       {/* ==================================================================== */}
-      {/* 3. MAIN WORKSPACE: SCADA FLOORPLAN (2D / 2.5D ISOMETRIC MULTI-ANGLE) */}
+      {/* 3. MAIN WORKSPACE: FLOWCHART / SCADA FLOORPLAN / 3D DIGITAL TWIN     */}
       {/* ==================================================================== */}
       <div className="flex-1 relative flex overflow-hidden">
-        {viewMode === '3d-webgl' ? (
+        {viewMode === 'flowchart' ? (
+          <ModernQualityFlowchart
+            equipmentList={equipmentList}
+            stationStatuses={stationStatuses}
+            selectedStationId={selectedStationId}
+            onSelectStation={(id) => {
+              setSelectedStationId(id);
+              setIsDrawerOpen(true);
+              if (soundEnabled) playIndustrialChime('camera');
+            }}
+            selectedDepartmentId={selectedDeptId}
+            onSelectDepartment={(deptId) => {
+              setSelectedDeptId(deptId);
+              setDrawerTab('department');
+              setIsDrawerOpen(true);
+              if (soundEnabled) playIndustrialChime('camera');
+            }}
+            isAr={isAr}
+            onSwitchTo2D={() => {
+              setViewMode('scada-floorplan');
+              if (soundEnabled) playIndustrialChime('camera');
+            }}
+            onSwitchTo3D={() => {
+              setViewMode('3d-webgl');
+              if (soundEnabled) playIndustrialChime('camera');
+            }}
+          />
+        ) : viewMode === '3d-webgl' ? (
           <div className="flex-1 w-full h-full relative overflow-hidden bg-[#040711] isolate z-0">
             <ErrorBoundary
               fallback={
