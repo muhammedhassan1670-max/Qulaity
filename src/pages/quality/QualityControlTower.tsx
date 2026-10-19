@@ -3099,8 +3099,8 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
           </div>
         </div>
 
-        {/* PRIMARY VIEW MODE SWITCHER: FLOWCHART vs 2D SCADA vs 3D TWIN + FACTORY SETTINGS */}
-        <div className="flex items-center gap-1 bg-[#090f1e]/95 p-1 rounded-2xl border border-cyan-500/40 shadow-xl shrink-0">
+        {/* CLEAN VIEW MODE SWITCHER */}
+        <div className="flex items-center gap-1.5 bg-[#090f1e]/95 p-1 rounded-2xl border border-cyan-500/40 shadow-xl shrink-0">
           <button
             onClick={() => {
               setViewMode('flowchart');
@@ -3108,15 +3108,12 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
             }}
             className={`px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all ${
               viewMode === 'flowchart'
-                ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-slate-950 shadow-md shadow-emerald-500/30 ring-2 ring-emerald-300 scale-105'
+                ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-slate-950 shadow-md ring-2 ring-emerald-300 scale-105'
                 : 'text-slate-400 hover:text-white hover:bg-white/5'
             }`}
           >
             <Workflow className="w-4 h-4 text-emerald-400" />
-            <span>{isAr ? '⚡ فلو شارت سريع' : '⚡ Flowchart'}</span>
-            <span className="px-1.5 py-0.2 rounded-full bg-emerald-950 text-emerald-300 text-[9px] font-mono border border-emerald-500/40">
-              {isAr ? 'خفيف' : 'Fast'}
-            </span>
+            <span>{isAr ? '⚡ فلو شارت الجودة' : '⚡ Quality Flowchart'}</span>
           </button>
 
           <button
@@ -3125,51 +3122,57 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
               if (soundEnabled) playIndustrialChime('camera');
             }}
             className={`px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all ${
-              viewMode === 'scada-floorplan'
-                ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 shadow-md shadow-amber-500/30 ring-2 ring-amber-300 scale-105'
+              viewMode !== 'flowchart'
+                ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 shadow-md ring-2 ring-amber-300 scale-105'
                 : 'text-slate-400 hover:text-white hover:bg-white/5'
             }`}
           >
             <Layers className="w-4 h-4 text-amber-400" />
-            <span>{isAr ? '🗺️ خريطة 2D' : '🗺️ 2D Plan'}</span>
+            <span>{isAr ? '🗺️ محاكاة SCADA (أرضية المصنع)' : '🗺️ SCADA Plant View'}</span>
           </button>
 
-          <button
-            onClick={() => {
-              setViewMode('3d-webgl');
-              if (soundEnabled) playIndustrialChime('camera');
-            }}
-            className={`px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all ${
-              viewMode === '3d-webgl'
-                ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 shadow-md shadow-cyan-500/30 ring-2 ring-cyan-300 scale-105'
-                : 'text-slate-400 hover:text-white hover:bg-white/5'
-            }`}
-          >
-            <Box className="w-4 h-4 text-cyan-400" />
-            <span>{isAr ? '🌐 التوأم 3D' : '🌐 3D Twin'}</span>
-            <span className="px-1.5 py-0.2 rounded-full bg-cyan-950 text-cyan-300 text-[9px] font-mono border border-cyan-500/40">Three.js</span>
-          </button>
+          {viewMode !== 'flowchart' && (
+            <>
+              <button
+                onClick={() => {
+                  setViewMode('3d-webgl');
+                  if (soundEnabled) playIndustrialChime('camera');
+                }}
+                className={`px-2.5 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all ${
+                  viewMode === '3d-webgl'
+                    ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 shadow-md ring-2 ring-cyan-300 scale-105'
+                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                <Box className="w-3.5 h-3.5 text-cyan-400" />
+                <span>3D</span>
+              </button>
 
-          <button
-            onClick={() => {
-              setSelectedStationId(null);
-              setIsDrawerOpen(prev => !prev);
-              if (soundEnabled) playIndustrialChime('camera');
-            }}
-            className={`px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all ${
-              isDrawerOpen && !selectedStationId
-                ? 'bg-amber-500 text-slate-950 shadow-md ring-2 ring-amber-300 scale-105'
-                : 'text-amber-400 hover:text-white hover:bg-amber-500/20'
-            }`}
-            title={isAr ? 'فتح لوحة إعدادات وتعديل المصنع والربط' : 'Factory Settings & Integrated Customizer'}
-          >
-            <Settings2 className="w-4 h-4 text-amber-400" />
-            <span>{isAr ? '⚙️ إعدادات وتعديل المصنع' : '⚙️ Factory Settings'}</span>
-          </button>
+              <button
+                onClick={() => {
+                  setSelectedStationId(null);
+                  setIsDrawerOpen(prev => !prev);
+                  if (soundEnabled) playIndustrialChime('camera');
+                }}
+                className={`px-2.5 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all ${
+                  isDrawerOpen && !selectedStationId
+                    ? 'bg-amber-500 text-slate-950 shadow-md ring-2 ring-amber-300 scale-105'
+                    : 'text-amber-400 hover:text-white hover:bg-amber-500/20'
+                }`}
+                title={isAr ? 'إعدادات وتعديل المصنع' : 'Factory Settings'}
+              >
+                <Settings2 className="w-3.5 h-3.5 text-amber-400" />
+                <span className="hidden sm:inline">{isAr ? 'إعدادات' : 'Settings'}</span>
+              </button>
+            </>
+          )}
         </div>
 
-        {/* HIGH-TECH MULTI-ANGLE CAMERA PRESET SWITCHER */}
-        <div className="flex items-center gap-1 bg-slate-950/80 p-1 rounded-xl border border-slate-800">
+        {/* SCADA SIMULATION CONTROLS (Only visible in 2D / 3D SCADA Modes) */}
+        {viewMode !== 'flowchart' && (
+          <>
+            {/* HIGH-TECH MULTI-ANGLE CAMERA PRESET SWITCHER */}
+            <div className="flex items-center gap-1 bg-slate-950/80 p-1 rounded-xl border border-slate-800">
           <span className="text-[10px] font-bold text-slate-400 px-1 hidden md:inline">{isAr ? 'الكاميرا:' : 'Camera:'}</span>
           {[
             { id: 'iso-nw', labelAr: '📐 آيزومترك N', labelEn: 'Iso NW' },
@@ -3544,22 +3547,27 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
             <Plus className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">{isAr ? '+ إضافة' : '+ Add'}</span>
           </button>
-
-          {/* Fullscreen Toggle */}
-          <button
-            onClick={toggleFullscreen}
-            className="p-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-amber-400 hover:text-amber-300 transition-all"
-            title={isAr ? 'ملء كامل الشاشة' : 'Toggle Fullscreen'}
-          >
-            {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
-          </button>
         </div>
-      </header>
+      </>
+    )}
 
-      {/* ==================================================================== */}
-      {/* 2. EXECUTIVE LIVE PRODUCTION & SAFETY TICKER BAR                     */}
-      {/* ==================================================================== */}
-      <div className="flex-none px-4 py-1.5 bg-[#060a14] border-b border-white/5 flex flex-wrap items-center justify-between text-[11px] font-mono z-20">
+    {/* Fullscreen Toggle */}
+    <button
+      onClick={toggleFullscreen}
+      className="p-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-amber-400 hover:text-amber-300 transition-all shrink-0"
+      title={isAr ? 'ملء كامل الشاشة' : 'Toggle Fullscreen'}
+    >
+      {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+    </button>
+  </header>
+
+      {/* SCADA MONITORING STRIPS & TOOLBARS (Hidden in Flowchart View) */}
+      {viewMode !== 'flowchart' && (
+        <>
+          {/* ==================================================================== */}
+          {/* 2. EXECUTIVE LIVE PRODUCTION & SAFETY TICKER BAR                     */}
+          {/* ==================================================================== */}
+          <div className="flex-none px-4 py-1.5 bg-[#060a14] border-b border-white/5 flex flex-wrap items-center justify-between text-[11px] font-mono z-20">
         <div className="flex items-center gap-3 overflow-x-auto max-w-full">
           <div className="flex items-center gap-1.5 text-cyan-400">
             <Zap className="w-3 h-3 text-cyan-400 animate-pulse" />
@@ -3865,9 +3873,11 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
           </div>
         </div>
       )}
+    </>
+  )}
 
-      {/* ==================================================================== */}
-      {/* 3. MAIN WORKSPACE: FLOWCHART / SCADA FLOORPLAN / 3D DIGITAL TWIN     */}
+  {/* ==================================================================== */}
+  {/* 3. MAIN WORKSPACE: FLOWCHART / SCADA FLOORPLAN / 3D DIGITAL TWIN     */}
       {/* ==================================================================== */}
       <div className="flex-1 relative flex overflow-hidden">
         {viewMode === 'flowchart' ? (
