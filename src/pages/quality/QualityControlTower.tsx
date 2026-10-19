@@ -3048,6 +3048,59 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
     });
   };
 
+  // ULTRA-CLEAN, FAST FLOWCHART PAGE LAYOUT (The Easiest Layout)
+  if (viewMode === 'flowchart') {
+    return (
+      <div className={`w-full min-h-screen bg-[#060a14] text-slate-100 flex flex-col font-sans ${className}`} dir={isAr ? 'rtl' : 'ltr'}>
+        {/* Simple Page Header */}
+        <header className="flex-none px-4 md:px-8 py-3.5 bg-[#090f1d] border-b border-white/10 flex flex-wrap items-center justify-between gap-3 shadow-md sticky top-0 z-40">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-600 flex items-center justify-center text-slate-950 shadow-lg shadow-emerald-500/20 ring-2 ring-emerald-300">
+              <Workflow className="w-5 h-5 text-slate-950 font-black" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-base md:text-lg font-black text-white tracking-wide">
+                  {isAr ? 'فلو شارت مسار الجودة (Quality Flowchart)' : 'Quality Process Flowchart'}
+                </h1>
+                <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[10px] font-mono font-bold">
+                  {isAr ? 'المراحل الـ 7 • التابات الـ 22' : '7 Stages • 22 Tabs'}
+                </span>
+              </div>
+              <p className="text-xs text-slate-400">
+                {isAr ? 'المخطط الانسيابي التدفقي الشامل لجميع مراحل وأقسام المنصة من الاستلام حتى شحن المنتج وحل المشكلات' : 'End-to-end quality process flow from raw materials to final release & problem solving'}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                setViewMode('scada-floorplan');
+                if (soundEnabled) playIndustrialChime('camera');
+              }}
+              className="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700 text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm"
+              title={isAr ? 'الانتقال إلى خريطة المصنع والمحاكاة ثلاثية الأبعاد' : 'Switch to 3D/2D SCADA Plant Simulation'}
+            >
+              <Layers className="w-4 h-4 text-cyan-400" />
+              <span>{isAr ? 'محاكاة أرضية المصنع (SCADA)' : 'SCADA Plant Simulation'}</span>
+            </button>
+          </div>
+        </header>
+
+        {/* The Cleanest, Easiest Flowchart Component */}
+        <ModernQualityFlowchart
+          equipmentList={equipmentList}
+          stationStatuses={stationStatuses}
+          selectedStationId={selectedStationId}
+          onSelectStation={(id) => setSelectedStationId(id)}
+          isAr={isAr}
+          onSwitchToSCADA={() => setViewMode('scada-floorplan')}
+        />
+      </div>
+    );
+  }
+
   return (
     <div 
       ref={containerRef}
