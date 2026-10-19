@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Truck, Smartphone, Activity, ShieldAlert, Workflow, PackageCheck,
@@ -7,7 +7,7 @@ import {
   ArrowUpRight, Search, AlertTriangle, Layers, ChevronDown, CheckSquare,
   Sparkles, FileText, Barcode, Brain, Blocks, Library, Users, GitFork,
   HelpCircle, ChevronRight, CornerDownRight, Crosshair, MapPin, X,
-  Shield, Check, ExternalLink, Lock, AlertOctagon, RotateCcw
+  Shield, Check, ExternalLink, Lock, AlertOctagon, RotateCcw, PlusCircle
 } from 'lucide-react';
 import { 
   ENTERPRISE_DEPARTMENTS, 
@@ -53,16 +53,18 @@ export interface TrackedLotJourney {
   relatedRecordUrl?: string;
   flowNarrativeAr: string;
   flowNarrativeEn: string;
+  isLiveInspection?: boolean;
 }
 
+// Built-in Sample Quality Lifecycles
 export const TRACKED_LOTS_DATABASE: TrackedLotJourney[] = [
   {
     lotNumber: 'LOT-2026-OR-02',
     materialNameAr: 'جوانات مطاطية عالية الضغط NBR 25x3mm',
     materialNameEn: 'High-Pressure NBR O-Rings 25x3mm',
     materialCode: 'RM-SEAL-NBR',
-    categoryAr: 'خامات واردة (IQC)',
-    categoryEn: 'Incoming Raw Material (IQC)',
+    categoryAr: 'فحص استلام (IQC)',
+    categoryEn: 'Incoming Inspection (IQC)',
     supplierNameAr: 'أبيكس بوليمرز وسيلز (Apex Polymer & Seals Ltd.)',
     supplierNameEn: 'Apex Polymer & Seals Ltd.',
     receivedDate: '2026-10-02',
@@ -223,10 +225,197 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
   const [selectedLotNumber, setSelectedLotNumber] = useState<string | null>(null);
   const [lotSearchInput, setLotSearchInput] = useState<string>('');
 
+  // --------------------------------------------------------------------------
+  // DYNAMIC INCOMING INSPECTIONS LOADER (Loads from localStorage & syncs live)
+  // --------------------------------------------------------------------------
+  const [realIncomingInspections, setRealIncomingInspections] = useState<any[]>(() => {
+    try {
+      const raw = localStorage.getItem('qms_local_inspections') || localStorage.getItem('qms_local_inspection') || '[]';
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed.filter(item => {
+          const t = (item.type || '').toLowerCase();
+          return t === 'incoming' || t === 'iqc' || !item.type;
+        });
+      }
+    } catch {}
+    
+    // Default seed incoming inspections
+    return [
+      {
+        id: 'INS-2026-RM-01',
+        inspectionNumber: 'INS-2026-RM-01',
+        productName: 'سبائك ألمونيوم 7075-T6 للطائرات',
+        product: 'RM-ALUM-7075',
+        batchNumber: 'LOT-2026-AL-01',
+        type: 'incoming',
+        inspectedBy: 'م. مصطفى رفعت',
+        inspectionDate: '2026-10-01',
+        sampleSize: 32,
+        defectCount: 0,
+        result: 'pass',
+        status: 'pass',
+        supplierName: 'بريسيجن ميتالز (Precision Metals Co.)'
+      },
+      {
+        id: 'INS-2026-RM-02',
+        inspectionNumber: 'INS-2026-RM-02',
+        productName: 'جوانات مطاطية عالية الضغط NBR 25x3mm',
+        product: 'RM-SEAL-NBR',
+        batchNumber: 'LOT-2026-OR-02',
+        type: 'incoming',
+        inspectedBy: 'م. مصطفى رفعت',
+        inspectionDate: '2026-10-02',
+        sampleSize: 80,
+        defectCount: 28,
+        result: 'fail',
+        status: 'fail',
+        supplierName: 'أبيكس بوليمرز (Apex Polymer & Seals Ltd.)'
+      },
+      {
+        id: 'INS-2026-RM-03',
+        inspectionNumber: 'INS-2026-RM-03',
+        productName: 'صمامات بلانجر SS316',
+        product: 'RM-VALV-SS316',
+        batchNumber: 'LOT-2026-VL-03',
+        type: 'incoming',
+        inspectedBy: 'تامر عادل',
+        inspectionDate: '2026-10-02',
+        sampleSize: 50,
+        defectCount: 0,
+        result: 'pass',
+        status: 'pass',
+        supplierName: 'دلتا بريسيجن (Delta Precision)'
+      },
+      {
+        id: 'INS-2026-RM-04',
+        inspectionNumber: 'INS-2026-RM-04',
+        productName: 'مسامير صلب مجلفن M8x45 Grade 10.9',
+        product: 'RM-BOLT-M8GR10',
+        batchNumber: 'LOT-2026-BL-04',
+        type: 'incoming',
+        inspectedBy: 'تامر عادل',
+        inspectionDate: '2026-10-03',
+        sampleSize: 200,
+        defectCount: 0,
+        result: 'pass',
+        status: 'pass',
+        supplierName: 'تيتان فاستنرز (Titan Fasteners)'
+      },
+      {
+        id: 'INS-2026-RM-05',
+        inspectionNumber: 'INS-2026-RM-05',
+        productName: 'زيت هيدروليكي صناعي مضاد للتآكل ISO 46',
+        product: 'RM-OIL-ISO46',
+        batchNumber: 'LOT-2026-OL-05',
+        type: 'incoming',
+        inspectedBy: 'كيميائية سلمى أحمد',
+        inspectionDate: '2026-10-03',
+        sampleSize: 8,
+        defectCount: 0,
+        result: 'pass',
+        status: 'pass',
+        supplierName: 'جلف للزيوت (Gulf Lubricants)'
+      }
+    ];
+  });
+
+  // Listen for storage changes across browser tabs or modal submissions
+  useEffect(() => {
+    const handleStorage = () => {
+      try {
+        const raw = localStorage.getItem('qms_local_inspections') || localStorage.getItem('qms_local_inspection') || '[]';
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const incomingOnly = parsed.filter(item => {
+            const t = (item.type || '').toLowerCase();
+            return t === 'incoming' || t === 'iqc' || !item.type;
+          });
+          if (incomingOnly.length > 0) {
+            setRealIncomingInspections(incomingOnly);
+          }
+        }
+      } catch {}
+    };
+
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
+
+  // Combined Trackable Lots (Live Real Inspections + Quality System Database)
+  const allTrackableLots = useMemo(() => {
+    const mappedFromInspections: TrackedLotJourney[] = realIncomingInspections.map(ins => {
+      const lotNo = ins.batchNumber || ins.batch || ins.lot || ins.inspectionNumber || ins.id;
+      const isPass = (ins.result || '').toLowerCase() === 'pass' || (ins.status || '').toLowerCase() === 'pass';
+      const isFail = (ins.result || '').toLowerCase() === 'fail' || (ins.status || '').toLowerCase() === 'fail';
+
+      return {
+        lotNumber: lotNo,
+        materialNameAr: ins.productName || ins.product || 'خامة واردة مفحوصة',
+        materialNameEn: ins.productName || ins.product || 'Inspected Incoming Material',
+        materialCode: ins.product || ins.productName || lotNo,
+        categoryAr: 'فحص استلام فعلي (Live IQC)',
+        categoryEn: 'Live IQC Receiving Inspection',
+        supplierNameAr: ins.supplierName || ins.supplierId || 'مورد معتمد مسجل',
+        supplierNameEn: ins.supplierName || ins.supplierId || 'Approved Supplier',
+        receivedDate: ins.inspectionDate || ins.date || new Date().toISOString().split('T')[0],
+        currentStageNumber: isFail ? 3 : isPass ? 2 : 1,
+        currentStageNameAr: isFail ? 'المرحلة 3: عدم المطابقة وحل المشكلات (NCR)' : isPass ? 'المرحلة 2: جودة التصنيع والعمليات (IPQC)' : 'المرحلة 1: استلام الخامات والموردين (IQC)',
+        currentStageNameEn: isFail ? 'Stage 3: NCR & Problem Solving' : isPass ? 'Stage 2: In-Process Quality (IPQC)' : 'Stage 1: Incoming & Supplier (IQC)',
+        status: isFail ? 'quarantined' : isPass ? 'in-progress' : 'hold',
+        statusLabelAr: isFail ? '🛑 مرفوضة ومحجوزة بـ NCR' : isPass ? '🟢 مقبولة ودخلت صالة الإنتاج' : '🟡 قيد استكمال الفحص',
+        statusLabelEn: isFail ? 'Rejected & Quarantined' : isPass ? 'Approved for Production' : 'Pending Inspection',
+        stoppedStationCode: isFail ? 'NCR-01' : isPass ? 'SHP-01' : 'IQC-01',
+        stoppedStationTitleAr: isFail ? 'تقارير عدم المطابقة NCR' : isPass ? 'تسجيل سريع من الأرضية' : 'فحص الشحنات الواردة (IQC)',
+        stoppedStationTitleEn: isFail ? 'NCR Non-Conformance' : isPass ? 'Fast Shopfloor Entry' : 'Incoming Inspection (IQC)',
+        stopReasonAr: isFail 
+          ? `فشلت في فحص الاستلام IQC (${ins.defectCount || 1} عيوب من ${ins.sampleSize || 0} عينة). تم الحجز الفوري وتحويلها لـ NCR لمنع دخولها للإنتاج.`
+          : isPass 
+            ? `اجتازت فحص الاستلام IQC بنجاح كامل (${ins.sampleSize || 0} عينة سليمة). صُرح لها بدخول صالة الإنتاج بالمرحلة 2.`
+            : 'الشحنة قيد الفحص والتحليل المخبري في رصيف الاستلام.',
+        stopReasonEn: isFail ? 'Failed IQC inspection - Quarantined in Stage 3' : 'Passed IQC - Released to Stage 2 Production',
+        passedStageNumbers: isPass ? [1] : isFail ? [1] : [],
+        blockedStageNumbers: isFail ? [2, 4, 5, 6, 7] : [3, 4, 5, 6, 7],
+        actionRequiredAr: isFail 
+          ? 'مطلوب فتح ومتابعة تقرير عدم مطابقة ومطالبة المورد بالتعويض الفوري.'
+          : 'متابعة تشغيل الخامة على خطوط الإنتاج وتسجيل قراءات الـ SPC.',
+        actionRequiredEn: isFail ? 'Action required in NCR' : 'Proceed with manufacturing',
+        relatedRecordCode: ins.inspectionNumber || ins.id,
+        relatedRecordUrl: '/compliance/hub/inspection',
+        flowNarrativeAr: isFail
+          ? `وصلت الخامة في ${ins.inspectionDate || ins.date || ''} ➔ رُفضت في فحص الاستلام ➔ تحويل إجباري عبر بوابة القرار 1 نحو المرحلة 3 (NCR) ➔ حجز تام لمنع الإنتاج.`
+          : `وصلت الخامة في ${ins.inspectionDate || ins.date || ''} ➔ تم فحصها واعتمادها ➔ عبرت بوابة القرار 1 بنجاح ➔ استقرت في صالة الإنتاج (المرحلة 2).`,
+        flowNarrativeEn: isFail ? 'Diverted to NCR' : 'Advanced to Production',
+        isLiveInspection: true
+      };
+    });
+
+    const seenLots = new Set<string>();
+    const list: TrackedLotJourney[] = [];
+
+    // Real Inspections first
+    mappedFromInspections.forEach(item => {
+      if (!seenLots.has(item.lotNumber)) {
+        seenLots.add(item.lotNumber);
+        list.push(item);
+      }
+    });
+
+    // Default system demo lots
+    TRACKED_LOTS_DATABASE.forEach(item => {
+      if (!seenLots.has(item.lotNumber)) {
+        seenLots.add(item.lotNumber);
+        list.push(item);
+      }
+    });
+
+    return list;
+  }, [realIncomingInspections]);
+
   // Active Lot Details
   const trackedLot = useMemo(() => {
     if (!selectedLotNumber) return null;
-    const found = TRACKED_LOTS_DATABASE.find(l => l.lotNumber === selectedLotNumber);
+    const found = allTrackableLots.find(l => l.lotNumber === selectedLotNumber);
     if (found) return found;
 
     // Fallback for custom searched lot
@@ -237,7 +426,7 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
       materialCode: selectedLotNumber,
       categoryAr: 'تشغيلة مدخلة يدوياً',
       categoryEn: 'Manually Entered Batch',
-      supplierNameAr: 'مورد معتمد مسجل في النظام',
+      supplierNameAr: 'مورد مسجل في النظام',
       supplierNameEn: 'Approved Platform Supplier',
       receivedDate: new Date().toISOString().split('T')[0],
       currentStageNumber: 1,
@@ -260,7 +449,7 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
       flowNarrativeAr: 'اللوت دخل النظام في المرحلة 1 وهو قيد فحص الاستلام حالياً.',
       flowNarrativeEn: 'Entered platform at Stage 1 IQC.'
     } as TrackedLotJourney;
-  }, [selectedLotNumber]);
+  }, [selectedLotNumber, allTrackableLots]);
 
   // Group stations strictly by Department (7 Stages, 22 Tabs)
   const stationsByDept = useMemo(() => {
@@ -493,8 +682,8 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
   }) => {
     // Check if tracked lot took the fail/branch path at this specific gateway
     const isLotDivertedHere = trackedLot && (
-      (gateNumber === 1 && trackedLot.lotNumber === 'LOT-2026-OR-02') ||
-      (gateNumber === 2 && trackedLot.lotNumber === 'BATCH-2026-901' && trackedLot.currentStageNumber === 3)
+      (gateNumber === 1 && trackedLot.status === 'quarantined') ||
+      (gateNumber === 2 && trackedLot.currentStageNumber === 3)
     );
 
     return (
@@ -777,16 +966,16 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="text-sm font-black text-white tracking-wide">
-                    {isAr ? 'تتبع مسار اللوط والخامات الحية على الفلو شارت' : 'Live Lot & Material Traceability Flow'}
+                    {isAr ? 'تتبع مسار اللوط والخامات المفحوصة في الاستلام (IQC)' : 'Live Lot & Material Traceability Flow'}
                   </h3>
                   <span className="px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 text-[10px] font-mono font-bold border border-cyan-500/40">
-                    LIVE TRACKER
+                    {allTrackableLots.length} {isAr ? 'خامة مسجلة' : 'Lots Available'}
                   </span>
                 </div>
                 <p className="text-xs text-slate-400">
                   {isAr 
-                    ? 'اختر رقم لوط أو خامة لمعرفة كيف تحركت في المصنع وأين توقفت بالضبط وبأي مرحلة' 
-                    : 'Select any lot or raw material to trace its exact journey and where it stopped'}
+                    ? 'اختر أي خامة تم فحصها في فحص الاستلام (IQC) لترى مسارها اللحظي: هل عَبَرت للإنتاج أم توقفت ومحجوزة بـ NCR؟' 
+                    : 'Select any material inspected in IQC to see whether it passed to production or halted in NCR'}
                 </p>
               </div>
             </div>
@@ -803,7 +992,7 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
                       setSelectedLotNumber(lotSearchInput.trim().toUpperCase());
                     }
                   }}
-                  placeholder={isAr ? 'اكتب رقم لوط مخصص...' : 'Enter custom lot ID...'}
+                  placeholder={isAr ? 'اكتب رقم لوط أو كود خامة...' : 'Enter lot or part code...'}
                   className="w-full px-3 py-1.5 rounded-xl bg-black/60 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 font-mono"
                 />
               </div>
@@ -831,40 +1020,59 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
             </div>
           </div>
 
-          {/* Quick Sample Lot Pills */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-            <span className="text-[11px] font-bold text-slate-400 shrink-0">
-              {isAr ? 'تشغيلات نموذجية جاهزة:' : 'Sample Lots:'}
-            </span>
+          {/* Quick Select Inspected Materials & Lots */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between text-[11px] text-slate-400">
+              <span className="font-bold flex items-center gap-1">
+                <span>📥 {isAr ? 'الخامات والتشغيلات المفحوصة (اضغط لتتبع المسار فوراً):' : 'Inspected Lots (Click to trace):'}</span>
+              </span>
+              <button
+                onClick={() => navigate('/compliance/hub/inspection')}
+                className="text-cyan-400 hover:text-cyan-300 font-bold flex items-center gap-1"
+              >
+                <span>{isAr ? 'فتح شاشة فحص الاستلام IQC ↗' : 'Open IQC Inspection ↗'}</span>
+              </button>
+            </div>
 
-            {TRACKED_LOTS_DATABASE.map((lot) => {
-              const isSelected = selectedLotNumber === lot.lotNumber;
-              return (
-                <button
-                  key={lot.lotNumber}
-                  onClick={() => setSelectedLotNumber(lot.lotNumber)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-2 border ${
-                    isSelected
-                      ? 'bg-cyan-500 text-slate-950 border-cyan-300 shadow-lg shadow-cyan-500/30 scale-105'
-                      : 'bg-black/50 hover:bg-white/10 text-slate-200 border-white/10'
-                  }`}
-                >
-                  <span className="font-mono font-black">{lot.lotNumber}</span>
-                  <span className="text-[10px] opacity-80">({isAr ? lot.materialNameAr.split(' ')[0] : lot.materialCode})</span>
-                  <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-black ${
-                    lot.status === 'quarantined'
-                      ? 'bg-rose-500 text-white'
-                      : lot.status === 'completed'
-                        ? 'bg-emerald-500 text-slate-950'
-                        : lot.status === 'hold'
-                          ? 'bg-indigo-500 text-white'
-                          : 'bg-amber-500 text-slate-950'
-                  }`}>
-                    {lot.status === 'quarantined' ? '🛑 حجز' : lot.status === 'completed' ? '🏁 تم' : lot.status === 'hold' ? '⚠️ شكوى' : '⚙️ تشغيل'}
-                  </span>
-                </button>
-              );
-            })}
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+              {allTrackableLots.map((lot) => {
+                const isSelected = selectedLotNumber === lot.lotNumber;
+                return (
+                  <button
+                    key={lot.lotNumber}
+                    onClick={() => {
+                      setSelectedLotNumber(lot.lotNumber);
+                      if (lot.status === 'quarantined') {
+                        scrollToStage('DEPT-STAGE-RESOLUTION', true);
+                      } else if (lot.currentStageNumber === 2) {
+                        scrollToStage('DEPT-STAGE-INPROCESS', true);
+                      } else {
+                        scrollToLotStopStage();
+                      }
+                    }}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-2 border ${
+                      isSelected
+                        ? 'bg-cyan-500 text-slate-950 border-cyan-300 shadow-lg shadow-cyan-500/30 scale-105'
+                        : 'bg-black/50 hover:bg-white/10 text-slate-200 border-white/10'
+                    }`}
+                  >
+                    <span className="font-mono font-black">{lot.lotNumber}</span>
+                    <span className="text-[10px] opacity-80">({isAr ? lot.materialNameAr.split(' ')[0] : lot.materialCode})</span>
+                    <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-black ${
+                      lot.status === 'quarantined'
+                        ? 'bg-rose-500 text-white'
+                        : lot.status === 'completed'
+                          ? 'bg-emerald-500 text-slate-950'
+                          : lot.status === 'hold'
+                            ? 'bg-indigo-500 text-white'
+                            : 'bg-amber-500 text-slate-950'
+                    }`}>
+                      {lot.status === 'quarantined' ? '🛑 حجز NCR' : lot.status === 'completed' ? '🏁 مكتمل' : lot.status === 'hold' ? '⚠️ شكوى' : '🟢 صالة الإنتاج'}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* ACTIVE TRACEABILITY HUD / JOURNEY CALLOUT BANNER */}
@@ -892,18 +1100,23 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
                     <span className="px-2 py-0.5 rounded-full bg-white/10 text-slate-300 text-[10px] font-mono">
                       {isAr ? trackedLot.categoryAr : trackedLot.categoryEn}
                     </span>
+                    {trackedLot.isLiveInspection && (
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[10px] font-bold">
+                        {isAr ? '🔴 فحص حي من IQC' : 'Live IQC'}
+                      </span>
+                    )}
                   </div>
 
                   {/* Narrative path */}
                   <div className="mt-1 text-xs text-slate-300 font-medium leading-relaxed">
-                    <b className="text-amber-400 font-black">{isAr ? 'مسار الحركة:' : 'Journey:'}</b> {isAr ? trackedLot.flowNarrativeAr : trackedLot.flowNarrativeEn}
+                    <b className="text-amber-400 font-black">{isAr ? 'مسار الحركة على الفلو شارت:' : 'Journey:'}</b> {isAr ? trackedLot.flowNarrativeAr : trackedLot.flowNarrativeEn}
                   </div>
 
                   {/* Where it stopped */}
                   <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs">
                     <span className="px-2.5 py-0.5 rounded-lg bg-rose-500/20 text-rose-300 border border-rose-500/40 font-bold flex items-center gap-1">
                       <AlertOctagon className="w-3.5 h-3.5 text-rose-400" />
-                      <span>{isAr ? `توقفت في: ${trackedLot.currentStageNameAr}` : `Stopped at: ${trackedLot.currentStageNameEn}`}</span>
+                      <span>{isAr ? `الموقع الحالي: ${trackedLot.currentStageNameAr}` : `Stopped at: ${trackedLot.currentStageNameEn}`}</span>
                     </span>
                     <span className="text-slate-400 text-xs">
                       {isAr ? trackedLot.stopReasonAr : trackedLot.stopReasonEn}
@@ -979,8 +1192,95 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
                 </div>
               </div>
 
+              {/* 1: Standard 3 Station Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {(stationsByDept.get('DEPT-STAGE-INCOMING') || []).map(st => renderCard(st, '#f59e0b', 1))}
+              </div>
+
+              {/* 2: LIVE INCOMING INSPECTION QUEUE & TESTED MATERIALS (HERE IS WHERE INSPECTED MATERIALS SHOW UP!) */}
+              <div className="mt-5 pt-4 border-t border-amber-500/30">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
+                    <h4 className="text-xs sm:text-sm font-black text-white">
+                      {isAr ? '📥 سجل الخامات المفحوصة في فحص الاستلام IQC (نتائج التفتيش المباشرة):' : 'Live Inspected Raw Materials Log (IQC):'}
+                    </h4>
+                    <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-mono font-bold border border-amber-500/40">
+                      {realIncomingInspections.length} {isAr ? 'خامات مفحوصة' : 'Lots'}
+                    </span>
+                  </div>
+
+                  <button
+                    onClick={() => navigate('/compliance/hub/inspection')}
+                    className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs flex items-center gap-1.5 transition-all shadow-md shadow-amber-500/20"
+                  >
+                    <span>{isAr ? '➕ فحص خامة جديدة في فحص الاستلام IQC' : '➕ Inspect New Material (IQC)'}</span>
+                    <ExternalLink className="w-3.5 h-3.5 text-slate-950" />
+                  </button>
+                </div>
+
+                {/* Grid of Inspected Raw Materials with Direct Flow Tracing */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {realIncomingInspections.map((ins, idx) => {
+                    const isPass = (ins.result || '').toLowerCase() === 'pass' || (ins.status || '').toLowerCase() === 'pass';
+                    const lotNo = ins.batchNumber || ins.batch || ins.lot || ins.inspectionNumber || ins.id;
+                    const isCurrentSelected = selectedLotNumber === lotNo;
+
+                    return (
+                      <div 
+                        key={ins.id || idx}
+                        onClick={() => {
+                          setSelectedLotNumber(lotNo);
+                          if (isPass) {
+                            scrollToStage('DEPT-STAGE-INPROCESS', true);
+                          } else {
+                            scrollToStage('DEPT-STAGE-RESOLUTION', true);
+                          }
+                        }}
+                        className={`p-3.5 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between group/iqc shadow-sm hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] ${
+                          isCurrentSelected
+                            ? 'bg-cyan-950/70 border-cyan-400 ring-2 ring-cyan-400/50 shadow-cyan-950/50'
+                            : isPass
+                              ? 'bg-slate-900/90 border-emerald-500/40 hover:border-emerald-400 hover:bg-slate-800'
+                              : 'bg-slate-900/90 border-rose-500/50 hover:border-rose-400 hover:bg-slate-800'
+                        }`}
+                      >
+                        <div>
+                          <div className="flex items-center justify-between gap-1 mb-1.5">
+                            <span className="font-mono font-black text-xs text-white group-hover/iqc:text-cyan-300 transition-colors">
+                              {lotNo}
+                            </span>
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-black flex items-center gap-1 ${
+                              isPass 
+                                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' 
+                                : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
+                            }`}>
+                              <span>{isPass ? '✓' : '✕'}</span>
+                              <span>{isPass ? (isAr ? 'مطابق • ذهب للإنتاج' : 'PASS ➔ IPQC') : (isAr ? 'مرفوض • حجز بـ NCR' : 'FAIL ➔ NCR')}</span>
+                            </span>
+                          </div>
+
+                          <h5 className="text-xs font-bold text-slate-100 line-clamp-1 mb-1">
+                            {ins.productName || ins.product || 'خامة صناعية'}
+                          </h5>
+                          <p className="text-[11px] text-slate-400 line-clamp-1">
+                            {ins.supplierName || 'مورد معتمد'} • {ins.inspectionDate || ins.date || ''}
+                          </p>
+                        </div>
+
+                        <div className="mt-3 pt-2 border-t border-white/10 flex items-center justify-between text-[11px]">
+                          <span className="text-slate-400 font-mono">
+                            {ins.defectCount || 0} عيب / {ins.sampleSize || 0} عينة
+                          </span>
+                          <span className="text-cyan-400 font-black flex items-center gap-1 group-hover/iqc:underline">
+                            <span>{isAr ? 'تتبع مسارها 🎯' : 'Trace Flow'}</span>
+                            <ArrowUpRight className="w-3 h-3" />
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </section>
           );
