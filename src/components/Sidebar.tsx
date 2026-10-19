@@ -94,13 +94,13 @@ export function Sidebar({ isOpen, onClose, onSectionChange }: SidebarProps) {
       {
         id: 'quality-control-tower',
         labelKey: 'quality-control-tower',
-        labelEn: 'Plant Floor Map & Layout',
-        labelAr: 'خريطة صالة المصنع (Floor Layout)',
-        hintEn: 'Physical plant floor layout & stop points',
-        hintAr: 'لاي أوت أرضية المصنع الحقيقي ومحطات التوقف',
-        icon: Factory,
-        badge: 'LAYOUT',
-        badgeColor: 'bg-amber-500'
+        labelEn: 'Quality Process Flowchart',
+        labelAr: 'فلو شارت مسار الجودة (Quality Flowchart)',
+        hintEn: 'Interactive end-to-end quality process flow & decision nodes',
+        hintAr: 'المخطط الانسيابي التفاعلي الشامل لجميع مراحل وأقسام المنصة',
+        icon: Workflow,
+        badge: 'FLOWCHART',
+        badgeColor: 'bg-emerald-500'
       },
 
       // Stage 1: Incoming & Supplier Quality (IQC)
