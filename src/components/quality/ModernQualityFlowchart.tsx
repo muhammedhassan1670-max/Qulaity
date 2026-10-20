@@ -13,6 +13,7 @@ import {
   ENTERPRISE_DEPARTMENTS, 
   getDepartmentForStation 
 } from '../../services/enterpriseDepartmentsEngine';
+import { unifiedInspectionApi } from '../../api/unified-api';
 import type { ScadaEquipment } from '../../pages/quality/QualityControlTower';
 
 export interface ModernQualityFlowchartProps {
@@ -320,7 +321,7 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
     ];
   });
 
-  // Listen for storage changes across browser tabs or modal submissions
+  // Listen for storage changes across browser tabs, and fetch live from server PHP API
   useEffect(() => {
     const handleStorage = () => {
       try {
@@ -339,6 +340,27 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
     };
 
     window.addEventListener('storage', handleStorage);
+
+    // Live fetch from server PHP API (so inspections entered from any device load immediately)
+    const fetchServerInspections = async () => {
+      try {
+        const res = await unifiedInspectionApi.getAll();
+        if (res && Array.isArray(res.data) && res.data.length > 0) {
+          const incoming = res.data.filter((item: any) => {
+            const t = (item.type || '').toLowerCase();
+            return t === 'incoming' || t === 'iqc' || !item.type;
+          });
+          if (incoming.length > 0) {
+            setRealIncomingInspections(incoming);
+          }
+        }
+      } catch (e) {
+        console.warn('Live inspection fetch fallback to local storage:', e);
+      }
+    };
+
+    fetchServerInspections();
+
     return () => window.removeEventListener('storage', handleStorage);
   }, []);
 

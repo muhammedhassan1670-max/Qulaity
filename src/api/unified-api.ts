@@ -7,9 +7,17 @@ import {
   safeWriteLocalDefectRecords,
 } from '@/services/safeDefectStorage';
 
-const RAW_BASE = (import.meta.env.VITE_API_URL as string | undefined) || 'http://localhost:3001';
-const API_BASE = RAW_BASE.replace(/\/+$/, '').replace(/\/api\/v\d+$/i, '/api');
-const API_PREFIX = /\/api$/i.test(API_BASE) ? API_BASE : `${API_BASE}/api`;
+const resolveApiPrefix = (): string => {
+  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+    return '/api';
+  }
+  const rawBase = (import.meta.env.VITE_API_URL as string | undefined) || 'http://localhost:3001';
+  const apiBase = rawBase.replace(/\/+$/, '').replace(/\/api\/v\d+$/i, '/api');
+  return /\/api$/i.test(apiBase) ? apiBase : `${apiBase}/api`;
+};
+
+const API_PREFIX = resolveApiPrefix();
+
 
 // Use consistent token key with main API service
 const getAuthToken = (): string | null => {
@@ -381,6 +389,17 @@ function createModuleApi<T, Q extends BaseQueryParams>(endpoint: string) {
             : (() => {
               const serverIds = new Set(serverResult.data.map((x: any) => x.id));
               const uniqueLocal = localItems.filter((x: any) => !serverIds.has(x.id));
+
+              if (uniqueLocal.length > 0) {
+                try {
+                  fetch(`${API_PREFIX}/${apiEndpoint}`, {
+                    method: 'POST',
+                    headers: getHeaders(true),
+                    body: JSON.stringify({ batch: uniqueLocal }),
+                  }).catch(() => {});
+                } catch (_) {}
+              }
+
               return [...uniqueLocal, ...serverResult.data];
             })();
 
