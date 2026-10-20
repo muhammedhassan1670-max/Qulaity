@@ -16,11 +16,22 @@ async function upload() {
         console.log("Navigating to htdocs...");
         await client.ensureDir("htdocs");
         
-        console.log("Clearing old files...");
+        console.log("Safely updating files (preserving server 'data/' folder)...");
         try {
-            await client.clearWorkingDir();
+            const list = await client.list();
+            for (const item of list) {
+                // Never delete live server data folder
+                if (item.name === "data") {
+                    continue;
+                }
+                if (item.isDirectory) {
+                    await client.removeDir(item.name);
+                } else {
+                    await client.remove(item.name);
+                }
+            }
         } catch (e) {
-            console.warn("clearWorkingDir warning (proceeding with upload):", e.message);
+            console.warn("Clean warning (proceeding with upload):", e.message);
         }
         
         console.log("Uploading new build (dist)...");
