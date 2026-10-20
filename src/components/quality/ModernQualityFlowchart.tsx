@@ -58,159 +58,8 @@ export interface TrackedLotJourney {
   isLiveInspection?: boolean;
 }
 
-// Built-in Sample Quality Lifecycles
-export const TRACKED_LOTS_DATABASE: TrackedLotJourney[] = [
-  {
-    lotNumber: 'LOT-2026-OR-02',
-    materialNameAr: 'جوانات مطاطية عالية الضغط NBR 25x3mm',
-    materialNameEn: 'High-Pressure NBR O-Rings 25x3mm',
-    materialCode: 'RM-SEAL-NBR',
-    categoryAr: 'فحص استلام (IQC)',
-    categoryEn: 'Incoming Inspection (IQC)',
-    supplierNameAr: 'أبيكس بوليمرز وسيلز (Apex Polymer & Seals Ltd.)',
-    supplierNameEn: 'Apex Polymer & Seals Ltd.',
-    receivedDate: '2026-10-02',
-    currentStageNumber: 3,
-    currentStageNameAr: 'المرحلة 3: عدم المطابقة وحل المشكلات (NCR)',
-    currentStageNameEn: 'Stage 3: NCR & Problem Solving',
-    status: 'quarantined',
-    statusLabelAr: '🛑 محجوزة بحجر الجودة (Quarantined)',
-    statusLabelEn: 'Quarantined in Yellow Bin',
-    stoppedStationCode: 'NCR-01',
-    stoppedStationTitleAr: 'تقارير عدم المطابقة NCR',
-    stoppedStationTitleEn: 'NCR Non-Conformance Reports',
-    stopReasonAr: 'رصد 28 عيب من أصل 80 عينة مفحوصة في فحص الاستلام IQC. انكماش بالأبعاد وصلابة Shore A أقل من المواصفة (62 بدل 75).',
-    stopReasonEn: 'Detected 28/80 defectives during IQC receiving inspection. Dimensional shrinkage and low Shore A hardness (62 instead of 75).',
-    passedStageNumbers: [1],
-    blockedStageNumbers: [2, 4, 5, 6, 7],
-    actionRequiredAr: 'تم فتح تقرير عدم مطابقة NCR-SUP-2026-001، وتفعيل حجر فوري في الصندوق الأصفر ومطالبة المورد بالاستبدال الفوري مع حظر إدخالها لصالة الإنتاج.',
-    actionRequiredEn: 'NCR-SUP-2026-001 opened, material locked in yellow containment bin, RTV return to vendor initiated.',
-    relatedRecordCode: 'NCR-SUP-2026-001',
-    relatedRecordUrl: '/quality/records/ncr',
-    flowNarrativeAr: 'وصلت الشحنة رصيف الاستلام (1) ➔ خضعت لفحص خطط الاستلام ➔ رُصد عيب الصلابة ➔ تحويل إجباري مباشر عبر بوابة القرار 1 نحو المرحلة 3 (NCR) ➔ حجز تام ومنع وصولها للإنتاج.',
-    flowNarrativeEn: 'Arrived at receiving dock (Stage 1) -> Failed IQC inspection -> Diverted by Decision Gate 1 into Stage 3 NCR -> Quarantined.'
-  },
-  {
-    lotNumber: 'LOT-2026-AL-01',
-    materialNameAr: 'سبائك ألمونيوم للطائرات 7075-T6',
-    materialNameEn: 'Aircraft Grade Aluminum 7075-T6 Billets',
-    materialCode: 'RM-ALUM-7075',
-    categoryAr: 'خامات واردة مقبولة',
-    categoryEn: 'Approved Raw Material',
-    supplierNameAr: 'بريسيجن ميتالز (Precision Metals Co.)',
-    supplierNameEn: 'Precision Metals Co.',
-    receivedDate: '2026-10-01',
-    currentStageNumber: 2,
-    currentStageNameAr: 'المرحلة 2: جودة التصنيع والعمليات (IPQC)',
-    currentStageNameEn: 'Stage 2: In-Process Quality (IPQC)',
-    status: 'in-progress',
-    statusLabelAr: '⚙️ قيد التشغيل بالخط (In-Process)',
-    statusLabelEn: 'In Production Shopfloor',
-    stoppedStationCode: 'SHP-01',
-    stoppedStationTitleAr: 'تسجيل سريع من الأرضية',
-    stoppedStationTitleEn: 'Fast Shopfloor Entry',
-    stopReasonAr: 'الخامة اجتازت فحص الاستلام بنجاح، ومصروفة حالياً لأمر الشغل WO-2026-880 على ماكينات الخراطة وخط التجميع 1.',
-    stopReasonEn: 'Passed IQC receiving test 100%. Dispatched to shopfloor work order WO-2026-880 on machining line 1.',
-    passedStageNumbers: [1],
-    blockedStageNumbers: [3, 4, 5, 6, 7],
-    actionRequiredAr: 'متابعة كارتات التحكم الإحصائي SPC ومراقبة تفاوتات الأقطار والتشغيل اللحظي.',
-    actionRequiredEn: 'Continuous SPC monitoring and operator shift defect logging.',
-    relatedRecordCode: 'INS-2026-RM-01',
-    relatedRecordUrl: '/compliance/hub/inspection',
-    flowNarrativeAr: 'اجتازت فحص الاستلام بالمرحلة 1 بنجاح تام ➔ عبرت بوابة القرار 1 بإجازة خضراء ➔ استقرت حالياً في صالة التصنيع بالمرحلة 2 قيد التشغيل.',
-    flowNarrativeEn: 'Cleared Stage 1 IQC with full pass -> Advanced through Gate 1 -> Currently being processed on Stage 2 shopfloor.'
-  },
-  {
-    lotNumber: 'BATCH-2026-901',
-    materialNameAr: 'طلمبات هيدروليكية كاملة Model HP-200X',
-    materialNameEn: 'Complete Hydraulic Pumps Model HP-200X',
-    materialCode: 'FG-PUMP-HP200X',
-    categoryAr: 'منتج تام الصنع (Finished Goods)',
-    categoryEn: 'Finished Goods Batch',
-    supplierNameAr: 'صالة الإنتاج والتجميع - خط 1',
-    supplierNameEn: 'Main Assembly Shopfloor Line 1',
-    receivedDate: '2026-10-05',
-    currentStageNumber: 5,
-    currentStageNameAr: 'المرحلة 5: شكاوى العملاء والميدان',
-    currentStageNameEn: 'Stage 5: Customer Complaints & Field QA',
-    status: 'hold',
-    statusLabelAr: '⚠️ بلاغ عميل ميداني (Customer RMA)',
-    statusLabelEn: 'Customer Warranty Claim',
-    stoppedStationCode: 'CMP-01',
-    stoppedStationTitleAr: 'سجل شكاوى العملاء',
-    stoppedStationTitleEn: 'Customer Complaints Log',
-    stopReasonAr: 'ورد بلاغ من العميل بتروجاس مصر (PetroGas Egypt) بحدوث تسريب زيت طفيف في بورت B بعد 120 ساعة تشغيل ميداني.',
-    stopReasonEn: 'Customer claim reported by PetroGas Egypt: Micro-leakage on port B after 120 hours of field operation.',
-    passedStageNumbers: [1, 2, 3, 4],
-    blockedStageNumbers: [],
-    actionRequiredAr: 'جاري تشكيل فريق حل المشكلات 8D لتحليل العزم في التجميع وتحديث خطة التحكم FMEA.',
-    actionRequiredEn: '8D team assembled to investigate assembly torque tolerance and update Control Plan FMEA.',
-    relatedRecordCode: 'COMP-2026-008',
-    relatedRecordUrl: '/quality/records/complaint',
-    flowNarrativeAr: 'بدأت من الخامات 1 ➔ صُنعت بـ 2 ➔ حُل عيب عزم بـ 3 ➔ فُحصت بـ 4 وأُصدرت شهادة المطابقة COC ➔ تم الشحن للعميل، وتوقفت بالمرحلة 5 لمتابعة الشكوى.',
-    flowNarrativeEn: 'Traveled through Stages 1, 2, 3, 4 (released with COC) -> Delivered -> Customer claim logged in Stage 5.'
-  },
-  {
-    lotNumber: 'LOT-2026-VL-03',
-    materialNameAr: 'صمامات بلانجر ستانلس ستيل SS316',
-    materialNameEn: 'Stainless Steel 316 Valve Plungers',
-    materialCode: 'RM-VALV-SS316',
-    categoryAr: 'تشغيلة تجميع منتهية',
-    categoryEn: 'Assembled Sub-lot',
-    supplierNameAr: 'دلتا بريسيجن (Delta Precision Components)',
-    supplierNameEn: 'Delta Precision Components',
-    receivedDate: '2026-10-02',
-    currentStageNumber: 4,
-    currentStageNameAr: 'المرحلة 4: فحص وخروج المنتج النهائي (OQC)',
-    currentStageNameEn: 'Stage 4: Outgoing Quality (OQC)',
-    status: 'in-progress',
-    statusLabelAr: '🔍 قيد الفحص النهائي AQL',
-    statusLabelEn: 'Final Release Sampling',
-    stoppedStationCode: 'OQC-01',
-    stoppedStationTitleAr: 'فحص جودة الشحنات الصادرة (OQC)',
-    stoppedStationTitleEn: 'Pre-Shipment Inspection (OQC)',
-    stopReasonAr: 'اللوت مكتمل التجميع وقيد سحب عينات القبول AQL Level II للتأكد من مطابقة أبعاد الصمامات قبل الشحن.',
-    stopReasonEn: 'Batch fully assembled. Undergoing final AQL Level II sampling verification prior to releasing shipment.',
-    passedStageNumbers: [1, 2],
-    blockedStageNumbers: [5, 6, 7],
-    actionRequiredAr: 'في انتظار توقيع شهادة المطابقة COC للإفراج النهائي والشحن.',
-    actionRequiredEn: 'Awaiting final Certificate of Conformance (COC) sign-off.',
-    relatedRecordCode: 'INS-2026-OQC-01',
-    relatedRecordUrl: '/outgoing-quality',
-    flowNarrativeAr: 'اجتازت استلام الخامات 1 ➔ اجتازت خطوط الإنتاج والـ SPC بالمرحلة 2 ➔ تقف الآن في محطة الفحص النهائي AQL بالمرحلة 4 بانتظار الإفراج.',
-    flowNarrativeEn: 'Passed Stage 1 IQC -> Cleared Stage 2 production with Cpk 1.48 -> Currently at Stage 4 Final OQC dock.'
-  },
-  {
-    lotNumber: 'LOT-2026-OL-05',
-    materialNameAr: 'زيت هيدروليكي صناعي مضاد للتآكل ISO VG 46',
-    materialNameEn: 'ISO VG 46 Anti-Wear Hydraulic Oil',
-    materialCode: 'RM-OIL-ISO46',
-    categoryAr: 'شحنة مكتملة ومغلقة 100%',
-    categoryEn: 'Completed Quality Cycle',
-    supplierNameAr: 'جلف للزيوت (Gulf Lubricants & Fluids)',
-    supplierNameEn: 'Gulf Lubricants & Fluids',
-    receivedDate: '2026-10-03',
-    currentStageNumber: 7,
-    currentStageNameAr: 'المرحلة 7: تهيئة المصنع والبيانات',
-    currentStageNameEn: 'Stage 7: Setup & Master Data',
-    status: 'completed',
-    statusLabelAr: '🏁 مكتمل ومطابق 100% (Completed)',
-    statusLabelEn: 'Fully Closed Quality Journey',
-    stoppedStationCode: 'KB-01',
-    stoppedStationTitleAr: 'قاعدة الدروس المستفادة',
-    stoppedStationTitleEn: 'Lessons Learned Knowledge Base',
-    stopReasonAr: 'تم الإفراج التام عن الشحنة وتسليمها للعميل مع رضا 100%، وتم أرشفة مواصفات لزوجة الزيت بقاعدة المعرفة والبيانات الرئيسية.',
-    stopReasonEn: 'Batch cleared, shipped and received with 100% customer satisfaction. Specs archived in Knowledge Base.',
-    passedStageNumbers: [1, 2, 4, 5, 6, 7],
-    blockedStageNumbers: [],
-    actionRequiredAr: 'دورة جودة مغلقة وناجحة بنسبة 100% بدون أي انحرافات، تغذي معايير التوريد القادمة.',
-    actionRequiredEn: 'Zero-defect closed cycle feeding incoming specs for upcoming purchasing orders.',
-    relatedRecordCode: 'KB-2026-01',
-    relatedRecordUrl: '/quality-knowledge-base',
-    flowNarrativeAr: 'أكملت الدورة الكاملة بنجاح من المورد حتى العميل، وتم حفظ الدروس المستفادة في المرحلة 7 وتغذية استلام الخامات.',
-    flowNarrativeEn: 'Completed entire closed-loop journey across all quality stages successfully.'
-  }
-];
+// Real Tracked Lots are dynamically generated from user inspections
+export const TRACKED_LOTS_DATABASE: TrackedLotJourney[] = [];
 
 export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
   equipmentList,
@@ -230,99 +79,46 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
   // Card Display Aesthetic Mode ('clean' 3-column stats vs 'compact' minimalist pills)
   const [cardDisplayMode, setCardDisplayMode] = useState<'clean' | 'compact'>('clean');
 
+  // Helper: Strictly filter out any legacy dummy/mock inspections
+  const filterRealOnly = (items: any[]) => {
+    if (!Array.isArray(items)) return [];
+    return items.filter(item => {
+      const id = String(item.id || '');
+      const num = String(item.inspectionNumber || '');
+      const prod = String(item.productName || item.product || '');
+      if (id.startsWith('INS-2026-RM-') || num.startsWith('INS-2026-RM-')) return false;
+      if (prod.includes('سبائك ألمونيوم') || prod.includes('حلقات إحكام مطاطية') || prod.includes('صمامات بلانجر')) return false;
+      const t = (item.type || '').toLowerCase();
+      return t === 'incoming' || t === 'iqc' || !item.type;
+    });
+  };
+
+  // Helper: Read real stored array from localStorage keys with ZERO fallbacks
+  const getStoredArray = useCallback((keys: string[]): any[] => {
+    for (const k of keys) {
+      try {
+        const raw = localStorage.getItem(k);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) return parsed;
+        }
+      } catch {}
+    }
+    return [];
+  }, []);
+
   // --------------------------------------------------------------------------
-  // DYNAMIC INCOMING INSPECTIONS LOADER (Loads from localStorage & syncs live)
+  // DYNAMIC INCOMING INSPECTIONS LOADER (Loads 100% REAL data from server & storage)
   // --------------------------------------------------------------------------
   const [realIncomingInspections, setRealIncomingInspections] = useState<any[]>(() => {
     try {
       const raw = localStorage.getItem('qms_local_inspections') || localStorage.getItem('qms_local_inspection') || '[]';
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed.filter(item => {
-          const t = (item.type || '').toLowerCase();
-          return t === 'incoming' || t === 'iqc' || !item.type;
-        });
+        return filterRealOnly(parsed);
       }
     } catch {}
-    
-    // Default seed incoming inspections
-    return [
-      {
-        id: 'INS-2026-RM-01',
-        inspectionNumber: 'INS-2026-RM-01',
-        productName: 'سبائك ألمونيوم 7075-T6 للطائرات',
-        product: 'RM-ALUM-7075',
-        batchNumber: 'LOT-2026-AL-01',
-        type: 'incoming',
-        inspectedBy: 'م. مصطفى رفعت',
-        inspectionDate: '2026-10-01',
-        sampleSize: 32,
-        defectCount: 0,
-        result: 'pass',
-        status: 'pass',
-        supplierName: 'بريسيجن ميتالز (Precision Metals Co.)'
-      },
-      {
-        id: 'INS-2026-RM-02',
-        inspectionNumber: 'INS-2026-RM-02',
-        productName: 'جوانات مطاطية عالية الضغط NBR 25x3mm',
-        product: 'RM-SEAL-NBR',
-        batchNumber: 'LOT-2026-OR-02',
-        type: 'incoming',
-        inspectedBy: 'م. مصطفى رفعت',
-        inspectionDate: '2026-10-02',
-        sampleSize: 80,
-        defectCount: 28,
-        result: 'fail',
-        status: 'fail',
-        supplierName: 'أبيكس بوليمرز (Apex Polymer & Seals Ltd.)'
-      },
-      {
-        id: 'INS-2026-RM-03',
-        inspectionNumber: 'INS-2026-RM-03',
-        productName: 'صمامات بلانجر SS316',
-        product: 'RM-VALV-SS316',
-        batchNumber: 'LOT-2026-VL-03',
-        type: 'incoming',
-        inspectedBy: 'تامر عادل',
-        inspectionDate: '2026-10-02',
-        sampleSize: 50,
-        defectCount: 0,
-        result: 'pass',
-        status: 'pass',
-        supplierName: 'دلتا بريسيجن (Delta Precision)'
-      },
-      {
-        id: 'INS-2026-RM-04',
-        inspectionNumber: 'INS-2026-RM-04',
-        productName: 'مسامير صلب مجلفن M8x45 Grade 10.9',
-        product: 'RM-BOLT-M8GR10',
-        batchNumber: 'LOT-2026-BL-04',
-        type: 'incoming',
-        inspectedBy: 'تامر عادل',
-        inspectionDate: '2026-10-03',
-        sampleSize: 200,
-        defectCount: 0,
-        result: 'pass',
-        status: 'pass',
-        supplierName: 'تيتان فاستنرز (Titan Fasteners)'
-      },
-      {
-        id: 'INS-2026-RM-05',
-        inspectionNumber: 'INS-2026-RM-05',
-        productName: 'زيت هيدروليكي صناعي مضاد للتآكل ISO 46',
-        product: 'RM-OIL-ISO46',
-        batchNumber: 'LOT-2026-OL-05',
-        type: 'incoming',
-        inspectedBy: 'كيميائية سلمى أحمد',
-        inspectionDate: '2026-10-03',
-        sampleSize: 8,
-        defectCount: 0,
-        result: 'pass',
-        status: 'pass',
-        supplierName: 'جلف للزيوت (Gulf Lubricants)'
-      }
-    ];
+    return [];
   });
 
   // Listen for storage changes across browser tabs, and fetch live from server PHP API
@@ -331,14 +127,9 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
       try {
         const raw = localStorage.getItem('qms_local_inspections') || localStorage.getItem('qms_local_inspection') || '[]';
         const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const incomingOnly = parsed.filter(item => {
-            const t = (item.type || '').toLowerCase();
-            return t === 'incoming' || t === 'iqc' || !item.type;
-          });
-          if (incomingOnly.length > 0) {
-            setRealIncomingInspections(incomingOnly);
-          }
+        if (Array.isArray(parsed)) {
+          const cleaned = filterRealOnly(parsed);
+          setRealIncomingInspections(cleaned);
         }
       } catch {}
     };
@@ -349,14 +140,12 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
     const fetchServerInspections = async () => {
       try {
         const res = await unifiedInspectionApi.getAll();
-        if (res && Array.isArray(res.data) && res.data.length > 0) {
-          const incoming = res.data.filter((item: any) => {
-            const t = (item.type || '').toLowerCase();
-            return t === 'incoming' || t === 'iqc' || !item.type;
-          });
-          if (incoming.length > 0) {
-            setRealIncomingInspections(incoming);
-          }
+        if (res && Array.isArray(res.data)) {
+          const cleaned = filterRealOnly(res.data);
+          setRealIncomingInspections(cleaned);
+          try {
+            localStorage.setItem('qms_local_inspections', JSON.stringify(cleaned));
+          } catch {}
         }
       } catch (e) {
         console.warn('Live inspection fetch fallback to local storage:', e);
@@ -419,16 +208,8 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
     const seenLots = new Set<string>();
     const list: TrackedLotJourney[] = [];
 
-    // Real Inspections first
+    // Real Inspections ONLY (Zero Mock Lots)
     mappedFromInspections.forEach(item => {
-      if (!seenLots.has(item.lotNumber)) {
-        seenLots.add(item.lotNumber);
-        list.push(item);
-      }
-    });
-
-    // Default system demo lots
-    TRACKED_LOTS_DATABASE.forEach(item => {
       if (!seenLots.has(item.lotNumber)) {
         seenLots.add(item.lotNumber);
         list.push(item);
@@ -503,7 +284,8 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
   }, [equipmentList, stationStatuses]);
 
   // --------------------------------------------------------------------------
-  // DYNAMIC RECORD METRICS ENGINE (Total, Pass, Fail across Stations & Stages)
+  // 100% REAL RECORD METRICS ENGINE (Total, Pass, Fail across Stations & Stages)
+  // ZERO FAKE DATA - Returns exact counts from user records or 0 if unrecorded
   // --------------------------------------------------------------------------
   const getStationRecordStats = useCallback((station: ScadaEquipment, _stageNumber: number) => {
     const code = (station.code || '').toUpperCase();
@@ -511,16 +293,14 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
 
     // 1. STAGE 1: IQC & Incoming
     if (id === 'STATION-IQC-INSPECTION' || code.includes('INSP') || code.includes('IQC')) {
-      const total = realIncomingInspections.length > 0 ? realIncomingInspections.length : 18;
-      const pass = realIncomingInspections.length > 0 
-        ? realIncomingInspections.filter(i => (i.result || i.status || '').toLowerCase() === 'pass').length 
-        : 16;
+      const total = realIncomingInspections.length;
+      const pass = realIncomingInspections.filter(i => (i.result || i.status || '').toLowerCase() === 'pass').length;
       const fail = total - pass;
       return {
         total,
         pass,
         fail,
-        acceptanceRate: Math.round((pass / Math.max(1, total)) * 100),
+        acceptanceRate: total > 0 ? Math.round((pass / total) * 100) : 100,
         unitAr: 'شحنة مفحوصة',
         unitEn: 'Inspected Lots',
         passLabelAr: 'مطابق للإفراج',
@@ -531,22 +311,16 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
     }
 
     if (id === 'STATION-SUPPLIER-QUALITY' || code.includes('SUP')) {
-      let suppliers: any[] = [];
-      try {
-        const raw = localStorage.getItem('qms_local_suppliers') || '[]';
-        suppliers = JSON.parse(raw);
-      } catch {}
-      const total = suppliers.length > 0 ? suppliers.length : 12;
-      const pass = suppliers.length > 0 
-        ? suppliers.filter(s => (s.status || '').toLowerCase() === 'approved' || (s.rating || 90) >= 80).length
-        : 10;
+      const suppliers = getStoredArray(['qms_local_suppliers']);
+      const total = suppliers.length;
+      const pass = suppliers.filter(s => (s.status || '').toLowerCase() === 'approved' || (s.rating || 0) >= 80).length;
       const fail = total - pass;
       return {
         total,
         pass,
         fail,
-        acceptanceRate: Math.round((pass / Math.max(1, total)) * 100),
-        unitAr: 'مورد معتمد',
+        acceptanceRate: total > 0 ? Math.round((pass / total) * 100) : 100,
+        unitAr: 'مورد مسجل',
         unitEn: 'Suppliers',
         passLabelAr: 'معتمد ومؤهل',
         passLabelEn: 'Approved',
@@ -556,11 +330,15 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
     }
 
     if (id === 'STATION-INSPECTION-PLANS' || code.includes('PLN') || code.includes('PLAN')) {
+      const plans = getStoredArray(['qms_local_inspection-plans', 'qms_local_inspection_plans', 'qms_inspection_plans_v1']);
+      const total = plans.length;
+      const pass = plans.filter(p => (p.status || '').toLowerCase() === 'active' || (p.status || '').toLowerCase() === 'approved').length;
+      const fail = total - pass;
       return {
-        total: 8,
-        pass: 8,
-        fail: 0,
-        acceptanceRate: 100,
+        total,
+        pass,
+        fail,
+        acceptanceRate: total > 0 ? Math.round((pass / total) * 100) : 100,
         unitAr: 'خطة فحص',
         unitEn: 'Inspection Plans',
         passLabelAr: 'معتمدة وفعالة',
@@ -572,21 +350,15 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
 
     // 2. STAGE 2: IPQC & Shopfloor
     if (id === 'STATION-SHOPFLOOR-ENTRY' || id === 'STATION-DEFECT-LOG' || code.includes('SHP') || code.includes('DEF')) {
-      let defects: any[] = [];
-      try {
-        const raw = localStorage.getItem('qms_local_defect-logs') || '[]';
-        defects = JSON.parse(raw);
-      } catch {}
-      const total = defects.length > 0 ? defects.length : 26;
-      const closed = defects.length > 0
-        ? defects.filter(d => (d.status || '').toLowerCase() === 'closed' || (d.status || '').toLowerCase() === 'resolved').length
-        : 22;
+      const defects = getStoredArray(['qms_local_defect-logs', 'qms_defect_record_audit_trail_v1']);
+      const total = defects.length;
+      const closed = defects.filter(d => (d.status || '').toLowerCase() === 'closed' || (d.status || '').toLowerCase() === 'resolved').length;
       const open = total - closed;
       return {
         total,
         pass: closed,
         fail: open,
-        acceptanceRate: Math.round((closed / Math.max(1, total)) * 100),
+        acceptanceRate: total > 0 ? Math.round((closed / total) * 100) : 100,
         unitAr: 'تسجيل عيب',
         unitEn: 'Defect Logs',
         passLabelAr: 'تم الحل والإغلاق',
@@ -597,11 +369,15 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
     }
 
     if (id === 'STATION-SPC-CHARTS' || code.includes('SPC')) {
+      const spc = getStoredArray(['qms_spc_real_measurements', 'qms_spc_charts_v2']);
+      const total = spc.length;
+      const pass = spc.filter(s => !s.outOfControl).length;
+      const fail = total - pass;
       return {
-        total: 25,
-        pass: 24,
-        fail: 1,
-        acceptanceRate: 96,
+        total,
+        pass,
+        fail,
+        acceptanceRate: total > 0 ? Math.round((pass / total) * 100) : 100,
         unitAr: 'كارتة تحكم',
         unitEn: 'SPC Charts',
         passLabelAr: 'تحت السيطرة (In-Control)',
@@ -612,11 +388,15 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
     }
 
     if (id === 'STATION-EXECUTION-BOARD' || code.includes('EXEC') || code.includes('BRD')) {
+      const tasks = getStoredArray(['qms_local_execution-tasks', 'qms_execution_tasks_v1']);
+      const total = tasks.length;
+      const pass = tasks.filter(t => t.status === 'completed' || t.status === 'done').length;
+      const fail = total - pass;
       return {
-        total: 16,
-        pass: 15,
-        fail: 1,
-        acceptanceRate: 94,
+        total,
+        pass,
+        fail,
+        acceptanceRate: total > 0 ? Math.round((pass / total) * 100) : 100,
         unitAr: 'أمر فحص',
         unitEn: 'Inspection Tasks',
         passLabelAr: 'منفذة بالكامل',
@@ -628,46 +408,34 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
 
     // 3. STAGE 3: NCR, CAPA, 8D, Deviations, Change Control
     if (id === 'STATION-NCR-REPORTS' || code.includes('NCR')) {
-      let ncrs: any[] = [];
-      try {
-        const raw = localStorage.getItem('qms_local_ncr') || '[]';
-        ncrs = JSON.parse(raw);
-      } catch {}
-      const total = ncrs.length > 0 ? ncrs.length : 9;
-      const closed = ncrs.length > 0
-        ? ncrs.filter(n => (n.status || '').toLowerCase() === 'closed' || (n.status || '').toLowerCase() === 'resolved').length
-        : 6;
+      const ncrs = getStoredArray(['qms_local_ncr']);
+      const total = ncrs.length;
+      const closed = ncrs.filter(n => (n.status || '').toLowerCase() === 'closed' || (n.status || '').toLowerCase() === 'resolved').length;
       const open = total - closed;
       return {
         total,
         pass: closed,
         fail: open,
-        acceptanceRate: Math.round((closed / Math.max(1, total)) * 100),
+        acceptanceRate: total > 0 ? Math.round((closed / total) * 100) : 100,
         unitAr: 'تقرير NCR',
         unitEn: 'NCR Reports',
         passLabelAr: 'معتمد ومغلق',
         passLabelEn: 'Closed',
-        failLabelAr: 'حالات حجر نشطة',
+        failLabelAr: 'حالات حجز نشطة',
         failLabelEn: 'Open Containment'
       };
     }
 
     if (id === 'STATION-CAPA-ACTIONS' || code.includes('CAPA')) {
-      let capas: any[] = [];
-      try {
-        const raw = localStorage.getItem('qms_local_capa') || '[]';
-        capas = JSON.parse(raw);
-      } catch {}
-      const total = capas.length > 0 ? capas.length : 8;
-      const closed = capas.length > 0
-        ? capas.filter(c => (c.status || '').toLowerCase() === 'closed' || (c.status || '').toLowerCase() === 'completed').length
-        : 6;
+      const capas = getStoredArray(['qms_local_capa']);
+      const total = capas.length;
+      const closed = capas.filter(c => (c.status || '').toLowerCase() === 'closed' || (c.status || '').toLowerCase() === 'completed').length;
       const open = total - closed;
       return {
         total,
         pass: closed,
         fail: open,
-        acceptanceRate: Math.round((closed / Math.max(1, total)) * 100),
+        acceptanceRate: total > 0 ? Math.round((closed / total) * 100) : 100,
         unitAr: 'إجراء تصحيحي',
         unitEn: 'CAPA Actions',
         passLabelAr: 'مكتمل وفعال',
@@ -678,21 +446,15 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
     }
 
     if (id === 'STATION-8D-SOLVING' || code.includes('8D')) {
-      let eightDs: any[] = [];
-      try {
-        const raw = localStorage.getItem('qms_local_eight-d') || '[]';
-        eightDs = JSON.parse(raw);
-      } catch {}
-      const total = eightDs.length > 0 ? eightDs.length : 5;
-      const closed = eightDs.length > 0
-        ? eightDs.filter(d => (d.status || '').toLowerCase() === 'closed' || d.currentStep === 'D8').length
-        : 3;
+      const eightDs = getStoredArray(['qms_local_8d', 'qms_local_eight-d']);
+      const total = eightDs.length;
+      const closed = eightDs.filter(d => (d.status || '').toLowerCase() === 'closed' || d.currentStep === 'D8').length;
       const open = total - closed;
       return {
         total,
         pass: closed,
         fail: open,
-        acceptanceRate: Math.round((closed / Math.max(1, total)) * 100),
+        acceptanceRate: total > 0 ? Math.round((closed / total) * 100) : 100,
         unitAr: 'مشروع 8D',
         unitEn: '8D Projects',
         passLabelAr: 'مغلق بنجاح (D8)',
@@ -703,11 +465,15 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
     }
 
     if (id === 'STATION-DEVIATION-PERMITS' || code.includes('DEV')) {
+      const devs = getStoredArray(['qms_local_deviations', 'qms_local_deviation']);
+      const total = devs.length;
+      const pass = devs.filter(d => (d.status || '').toLowerCase() === 'approved' || (d.status || '').toLowerCase() === 'closed').length;
+      const fail = total - pass;
       return {
-        total: 4,
-        pass: 3,
-        fail: 1,
-        acceptanceRate: 75,
+        total,
+        pass,
+        fail,
+        acceptanceRate: total > 0 ? Math.round((pass / total) * 100) : 100,
         unitAr: 'تصريح حيود',
         unitEn: 'Deviations',
         passLabelAr: 'معتمد ومقيد',
@@ -718,11 +484,15 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
     }
 
     if (id === 'STATION-CHANGE-CONTROL' || code.includes('CHG') || code.includes('ECN')) {
+      const changes = getStoredArray(['qms_local_change-control', 'qms_local_change_control']);
+      const total = changes.length;
+      const pass = changes.filter(c => (c.status || '').toLowerCase() === 'implemented' || (c.status || '').toLowerCase() === 'closed').length;
+      const fail = total - pass;
       return {
-        total: 6,
-        pass: 5,
-        fail: 1,
-        acceptanceRate: 83,
+        total,
+        pass,
+        fail,
+        acceptanceRate: total > 0 ? Math.round((pass / total) * 100) : 100,
         unitAr: 'أمر تغيير ECN',
         unitEn: 'Change Requests',
         passLabelAr: 'منفذ ومعتمد',
@@ -734,11 +504,15 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
 
     // 4. STAGE 4: Outgoing Quality (OQC)
     if (id === 'STATION-OUTGOING-OQC' || code.includes('OUT') || code.includes('OQC')) {
+      const oqc = getStoredArray(['qms_local_oqc', 'qms_local_outgoing']);
+      const total = oqc.length;
+      const pass = oqc.filter(o => (o.result || o.status || '').toLowerCase() === 'pass').length;
+      const fail = total - pass;
       return {
-        total: 22,
-        pass: 21,
-        fail: 1,
-        acceptanceRate: 95,
+        total,
+        pass,
+        fail,
+        acceptanceRate: total > 0 ? Math.round((pass / total) * 100) : 100,
         unitAr: 'لوط نهائي',
         unitEn: 'Release Lots',
         passLabelAr: 'تصريح شحن (COC)',
@@ -750,21 +524,15 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
 
     // 5. STAGE 5: Customer Complaints
     if (id === 'STATION-CUSTOMER-COMPLAINTS' || code.includes('CMP') || code.includes('CUST')) {
-      let complaints: any[] = [];
-      try {
-        const raw = localStorage.getItem('qms_local_complaints') || '[]';
-        complaints = JSON.parse(raw);
-      } catch {}
-      const total = complaints.length > 0 ? complaints.length : 6;
-      const closed = complaints.length > 0
-        ? complaints.filter(c => (c.status || '').toLowerCase() === 'closed' || (c.status || '').toLowerCase() === 'resolved').length
-        : 4;
+      const complaints = getStoredArray(['qms_local_complaints']);
+      const total = complaints.length;
+      const closed = complaints.filter(c => (c.status || '').toLowerCase() === 'closed' || (c.status || '').toLowerCase() === 'resolved').length;
       const open = total - closed;
       return {
         total,
         pass: closed,
         fail: open,
-        acceptanceRate: Math.round((closed / Math.max(1, total)) * 100),
+        acceptanceRate: total > 0 ? Math.round((closed / total) * 100) : 100,
         unitAr: 'بلاغ عميل',
         unitEn: 'Customer Claims',
         passLabelAr: 'تمت التسوية والإغلاق',
@@ -776,21 +544,15 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
 
     // 6. STAGE 6: Compliance & Lab
     if (id === 'STATION-CALIBRATION-MSA' || code.includes('CAL')) {
-      let cals: any[] = [];
-      try {
-        const raw = localStorage.getItem('qms_local_calibrations') || '[]';
-        cals = JSON.parse(raw);
-      } catch {}
-      const total = cals.length > 0 ? cals.length : 28;
-      const valid = cals.length > 0
-        ? cals.filter(c => (c.status || '').toLowerCase() === 'valid' || (c.status || '').toLowerCase() === 'calibrated').length
-        : 26;
+      const cals = getStoredArray(['qms_local_calibrations']);
+      const total = cals.length;
+      const valid = cals.filter(c => (c.status || '').toLowerCase() === 'valid' || (c.status || '').toLowerCase() === 'calibrated').length;
       const expired = total - valid;
       return {
         total,
         pass: valid,
         fail: expired,
-        acceptanceRate: Math.round((valid / Math.max(1, total)) * 100),
+        acceptanceRate: total > 0 ? Math.round((valid / total) * 100) : 100,
         unitAr: 'جهاز قياس',
         unitEn: 'Gages',
         passLabelAr: 'معايرة صالحة',
@@ -801,11 +563,15 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
     }
 
     if (id === 'STATION-CONTROL-PLAN' || code.includes('CP-') || code.includes('CTRL')) {
+      const cps = getStoredArray(['qms_local_control-plans']);
+      const total = cps.length;
+      const pass = cps.filter(p => (p.status || '').toLowerCase() === 'approved' || (p.status || '').toLowerCase() === 'active').length;
+      const fail = total - pass;
       return {
-        total: 12,
-        pass: 12,
-        fail: 0,
-        acceptanceRate: 100,
+        total,
+        pass,
+        fail,
+        acceptanceRate: total > 0 ? Math.round((pass / total) * 100) : 100,
         unitAr: 'خطة تحكم',
         unitEn: 'Control Plans',
         passLabelAr: 'معتمدة وسارية',
@@ -816,11 +582,15 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
     }
 
     if (id === 'STATION-FMEA-RISK' || code.includes('FMEA')) {
+      const fmeas = getStoredArray(['qms_local_fmea', 'qms_fmea_studies_v1']);
+      const total = fmeas.length;
+      const pass = fmeas.filter(f => (f.rpn || 0) < 100 || (f.status || '').toLowerCase() === 'approved').length;
+      const fail = total - pass;
       return {
-        total: 9,
-        pass: 8,
-        fail: 1,
-        acceptanceRate: 89,
+        total,
+        pass,
+        fail,
+        acceptanceRate: total > 0 ? Math.round((pass / total) * 100) : 100,
         unitAr: 'دراسة FMEA',
         unitEn: 'FMEA Studies',
         passLabelAr: 'مستوى خطر آمن',
@@ -831,21 +601,15 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
     }
 
     if (id === 'STATION-LAYERED-AUDITS' || id === 'STATION-INTERNAL-AUDIT' || code.includes('AUD')) {
-      let audits: any[] = [];
-      try {
-        const raw = localStorage.getItem('qms_local_audits') || '[]';
-        audits = JSON.parse(raw);
-      } catch {}
-      const total = audits.length > 0 ? audits.length : 15;
-      const conforming = audits.length > 0
-        ? audits.filter(a => (a.result || '').toLowerCase() === 'conforming' || (a.findingsCount || 0) === 0).length
-        : 14;
+      const audits = getStoredArray(['qms_local_audits']);
+      const total = audits.length;
+      const conforming = audits.filter(a => (a.result || a.status || '').toLowerCase() === 'conforming' || (a.result || a.status || '').toLowerCase() === 'passed' || (a.findingsCount || 0) === 0).length;
       const nonConf = total - conforming;
       return {
         total,
         pass: conforming,
         fail: nonConf,
-        acceptanceRate: Math.round((conforming / Math.max(1, total)) * 100),
+        acceptanceRate: total > 0 ? Math.round((conforming / total) * 100) : 100,
         unitAr: 'جولة تدقيق',
         unitEn: 'Audits',
         passLabelAr: 'مطابق للمواصفة',
@@ -856,19 +620,73 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
     }
 
     // 7. STAGE 7: Setup & Master Data
+    if (id === 'STATION-MASTER-DATA' || code.includes('MAS') || code.includes('DAT')) {
+      const p1 = getStoredArray(['qms_master_data_parts']);
+      const p2 = getStoredArray(['qms_master_data_production_lines']);
+      const p3 = getStoredArray(['qms_master_data_defects']);
+      const total = p1.length + p2.length + p3.length;
+      return {
+        total,
+        pass: total,
+        fail: 0,
+        acceptanceRate: 100,
+        unitAr: 'عنصر بيانات',
+        unitEn: 'Data Items',
+        passLabelAr: 'مفعل وجاهز',
+        passLabelEn: 'Ready',
+        failLabelAr: 'مسودات',
+        failLabelEn: 'Draft'
+      };
+    }
+
+    if (id === 'STATION-FORM-DESIGNER' || code.includes('FRM') || code.includes('TMP')) {
+      const tmps = getStoredArray(['qms_quality_form_templates_v1']);
+      const total = tmps.length;
+      return {
+        total,
+        pass: total,
+        fail: 0,
+        acceptanceRate: 100,
+        unitAr: 'نموذج مصمم',
+        unitEn: 'Templates',
+        passLabelAr: 'معتمد وجاهز',
+        passLabelEn: 'Ready',
+        failLabelAr: 'مسودات',
+        failLabelEn: 'Draft'
+      };
+    }
+
+    if (id === 'STATION-LESSONS-LEARNED' || code.includes('KB') || code.includes('LES')) {
+      const kbs = getStoredArray(['qms_quality_knowledge_base_v1']);
+      const total = kbs.length;
+      return {
+        total,
+        pass: total,
+        fail: 0,
+        acceptanceRate: 100,
+        unitAr: 'درس مستفاد',
+        unitEn: 'Lessons',
+        passLabelAr: 'موثق ومعتمد',
+        passLabelEn: 'Documented',
+        failLabelAr: 'مسودات',
+        failLabelEn: 'Draft'
+      };
+    }
+
+    // Default Fallback: ZERO fake numbers!
     return {
-      total: 18,
-      pass: 18,
+      total: 0,
+      pass: 0,
       fail: 0,
       acceptanceRate: 100,
-      unitAr: 'سجل إعدادات',
-      unitEn: 'Setup Items',
-      passLabelAr: 'مفعل وجاهز',
-      passLabelEn: 'Ready',
-      failLabelAr: 'مسودات',
-      failLabelEn: 'Draft'
+      unitAr: 'سجل',
+      unitEn: 'Records',
+      passLabelAr: 'مطابق',
+      passLabelEn: 'Pass',
+      failLabelAr: 'مرفوض',
+      failLabelEn: 'Fail'
     };
-  }, [realIncomingInspections]);
+  }, [realIncomingInspections, getStoredArray]);
 
   // Stage Total Roll-Up
   const getStageRecordStats = useCallback((deptId: string) => {
@@ -1626,43 +1444,49 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
             </div>
 
             <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-              {allTrackableLots.map((lot) => {
-                const isSelected = selectedLotNumber === lot.lotNumber;
-                return (
-                  <button
-                    key={lot.lotNumber}
-                    onClick={() => {
-                      setSelectedLotNumber(lot.lotNumber);
-                      if (lot.status === 'quarantined') {
-                        scrollToStage('DEPT-STAGE-RESOLUTION', true);
-                      } else if (lot.currentStageNumber === 2) {
-                        scrollToStage('DEPT-STAGE-INPROCESS', true);
-                      } else {
-                        scrollToLotStopStage();
-                      }
-                    }}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-2 border ${
-                      isSelected
-                        ? 'bg-cyan-500 text-slate-950 border-cyan-300 shadow-lg shadow-cyan-500/30 scale-105'
-                        : 'bg-black/50 hover:bg-white/10 text-slate-200 border-white/10'
-                    }`}
-                  >
-                    <span className="font-mono font-black">{lot.lotNumber}</span>
-                    <span className="text-[10px] opacity-80">({isAr ? lot.materialNameAr.split(' ')[0] : lot.materialCode})</span>
-                    <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-black ${
-                      lot.status === 'quarantined'
-                        ? 'bg-rose-500 text-white'
-                        : lot.status === 'completed'
-                          ? 'bg-emerald-500 text-slate-950'
-                          : lot.status === 'hold'
-                            ? 'bg-indigo-500 text-white'
-                            : 'bg-amber-500 text-slate-950'
-                    }`}>
-                      {lot.status === 'quarantined' ? '🛑 حجز NCR' : lot.status === 'completed' ? '🏁 مكتمل' : lot.status === 'hold' ? '⚠️ شكوى' : '🟢 صالة الإنتاج'}
-                    </span>
-                  </button>
-                );
-              })}
+              {allTrackableLots.length === 0 ? (
+                <span className="text-xs text-slate-500 py-1">
+                  {isAr ? 'لا توجد شحنات مفحوصة مسجلة حالياً — قم بتسجيل فحص استلام جديد في IQC لتتبعه' : 'No inspected lots recorded yet — add receiving inspections in IQC to trace'}
+                </span>
+              ) : (
+                allTrackableLots.map((lot) => {
+                  const isSelected = selectedLotNumber === lot.lotNumber;
+                  return (
+                    <button
+                      key={lot.lotNumber}
+                      onClick={() => {
+                        setSelectedLotNumber(lot.lotNumber);
+                        if (lot.status === 'quarantined') {
+                          scrollToStage('DEPT-STAGE-RESOLUTION', true);
+                        } else if (lot.currentStageNumber === 2) {
+                          scrollToStage('DEPT-STAGE-INPROCESS', true);
+                        } else {
+                          scrollToLotStopStage();
+                        }
+                      }}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-2 border ${
+                        isSelected
+                          ? 'bg-cyan-500 text-slate-950 border-cyan-300 shadow-lg shadow-cyan-500/30 scale-105'
+                          : 'bg-black/50 hover:bg-white/10 text-slate-200 border-white/10'
+                      }`}
+                    >
+                      <span className="font-mono font-black">{lot.lotNumber}</span>
+                      <span className="text-[10px] opacity-80">({isAr ? lot.materialNameAr.split(' ')[0] : lot.materialCode})</span>
+                      <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-black ${
+                        lot.status === 'quarantined'
+                          ? 'bg-rose-500 text-white'
+                          : lot.status === 'completed'
+                            ? 'bg-emerald-500 text-slate-950'
+                            : lot.status === 'hold'
+                              ? 'bg-indigo-500 text-white'
+                              : 'bg-amber-500 text-slate-950'
+                      }`}>
+                        {lot.status === 'quarantined' ? '🛑 حجز NCR' : lot.status === 'completed' ? '🏁 مكتمل' : lot.status === 'hold' ? '⚠️ شكوى' : '🟢 صالة الإنتاج'}
+                      </span>
+                    </button>
+                  );
+                })
+              )}
             </div>
           </div>
 
@@ -1883,67 +1707,75 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
                 </div>
 
                 {/* Grid of Inspected Raw Materials with Direct Flow Tracing */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {realIncomingInspections.map((ins, idx) => {
-                    const isPass = (ins.result || '').toLowerCase() === 'pass' || (ins.status || '').toLowerCase() === 'pass';
-                    const lotNo = ins.batchNumber || ins.batch || ins.lot || ins.inspectionNumber || ins.id;
-                    const isCurrentSelected = selectedLotNumber === lotNo;
+                {realIncomingInspections.length === 0 ? (
+                  <div className="p-6 rounded-2xl bg-black/40 border border-dashed border-amber-500/30 text-center">
+                    <p className="text-xs text-slate-400">
+                      {isAr ? 'لا توجد تسجيلات فحص استلام بعد. اضغط على زر "➕ فحص خامة جديدة في فحص الاستلام IQC" لإدخال فحص شحنة حقيقية.' : 'No incoming inspections recorded yet. Click above to record a new material inspection.'}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {realIncomingInspections.map((ins, idx) => {
+                      const isPass = (ins.result || '').toLowerCase() === 'pass' || (ins.status || '').toLowerCase() === 'pass';
+                      const lotNo = ins.batchNumber || ins.batch || ins.lot || ins.inspectionNumber || ins.id;
+                      const isCurrentSelected = selectedLotNumber === lotNo;
 
-                    return (
-                      <div 
-                        key={ins.id || idx}
-                        onClick={() => {
-                          setSelectedLotNumber(lotNo);
-                          if (isPass) {
-                            scrollToStage('DEPT-STAGE-INPROCESS', true);
-                          } else {
-                            scrollToStage('DEPT-STAGE-RESOLUTION', true);
-                          }
-                        }}
-                        className={`p-3.5 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between group/iqc shadow-sm hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] ${
-                          isCurrentSelected
-                            ? 'bg-cyan-950/70 border-cyan-400 ring-2 ring-cyan-400/50 shadow-cyan-950/50'
-                            : isPass
-                              ? 'bg-slate-900/90 border-emerald-500/40 hover:border-emerald-400 hover:bg-slate-800'
-                              : 'bg-slate-900/90 border-rose-500/50 hover:border-rose-400 hover:bg-slate-800'
-                        }`}
-                      >
-                        <div>
-                          <div className="flex items-center justify-between gap-1 mb-1.5">
-                            <span className="font-mono font-black text-xs text-white group-hover/iqc:text-cyan-300 transition-colors">
-                              {lotNo}
-                            </span>
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-black flex items-center gap-1 ${
-                              isPass 
-                                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' 
-                                : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
-                            }`}>
-                              <span>{isPass ? '✓' : '✕'}</span>
-                              <span>{isPass ? (isAr ? 'مطابق • ذهب للإنتاج' : 'PASS ➔ IPQC') : (isAr ? 'مرفوض • حجز بـ NCR' : 'FAIL ➔ NCR')}</span>
-                            </span>
+                      return (
+                        <div 
+                          key={ins.id || idx}
+                          onClick={() => {
+                            setSelectedLotNumber(lotNo);
+                            if (isPass) {
+                              scrollToStage('DEPT-STAGE-INPROCESS', true);
+                            } else {
+                              scrollToStage('DEPT-STAGE-RESOLUTION', true);
+                            }
+                          }}
+                          className={`p-3.5 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between group/iqc shadow-sm hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] ${
+                            isCurrentSelected
+                              ? 'bg-cyan-950/70 border-cyan-400 ring-2 ring-cyan-400/50 shadow-cyan-950/50'
+                              : isPass
+                                ? 'bg-slate-900/90 border-emerald-500/40 hover:border-emerald-400 hover:bg-slate-800'
+                                : 'bg-slate-900/90 border-rose-500/50 hover:border-rose-400 hover:bg-slate-800'
+                          }`}
+                        >
+                          <div>
+                            <div className="flex items-center justify-between gap-1 mb-1.5">
+                              <span className="font-mono font-black text-xs text-white group-hover/iqc:text-cyan-300 transition-colors">
+                                {lotNo}
+                              </span>
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-black flex items-center gap-1 ${
+                                isPass 
+                                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' 
+                                  : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
+                              }`}>
+                                <span>{isPass ? '✓' : '✕'}</span>
+                                <span>{isPass ? (isAr ? 'مطابق • ذهب للإنتاج' : 'PASS ➔ IPQC') : (isAr ? 'مرفوض • حجز بـ NCR' : 'FAIL ➔ NCR')}</span>
+                              </span>
+                            </div>
+
+                            <h5 className="text-xs font-bold text-slate-100 line-clamp-1 mb-1">
+                              {ins.productName || ins.product || 'خامة صناعية'}
+                            </h5>
+                            <p className="text-[11px] text-slate-400 line-clamp-1">
+                              {ins.supplierName || 'مورد معتمد'} • {ins.inspectionDate || ins.date || ''}
+                            </p>
                           </div>
 
-                          <h5 className="text-xs font-bold text-slate-100 line-clamp-1 mb-1">
-                            {ins.productName || ins.product || 'خامة صناعية'}
-                          </h5>
-                          <p className="text-[11px] text-slate-400 line-clamp-1">
-                            {ins.supplierName || 'مورد معتمد'} • {ins.inspectionDate || ins.date || ''}
-                          </p>
+                          <div className="mt-3 pt-2 border-t border-white/10 flex items-center justify-between text-[11px]">
+                            <span className="text-slate-400 font-mono">
+                              {ins.defectCount || 0} عيب / {ins.sampleSize || 0} عينة
+                            </span>
+                            <span className="text-cyan-400 font-black flex items-center gap-1 group-hover/iqc:underline">
+                              <span>{isAr ? 'تتبع مسارها 🎯' : 'Trace Flow'}</span>
+                              <ArrowUpRight className="w-3 h-3" />
+                            </span>
+                          </div>
                         </div>
-
-                        <div className="mt-3 pt-2 border-t border-white/10 flex items-center justify-between text-[11px]">
-                          <span className="text-slate-400 font-mono">
-                            {ins.defectCount || 0} عيب / {ins.sampleSize || 0} عينة
-                          </span>
-                          <span className="text-cyan-400 font-black flex items-center gap-1 group-hover/iqc:underline">
-                            <span>{isAr ? 'تتبع مسارها 🎯' : 'Trace Flow'}</span>
-                            <ArrowUpRight className="w-3 h-3" />
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </section>
           );
@@ -1954,11 +1786,11 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
           gateNumber: 1,
           questionAr: 'هل المواد الخام والشحنات الواردة مطابقة للمواصفات وخطط الفحص؟',
           questionEn: 'Are incoming raw materials compliant with quality specs & receiving plans?',
-          passLabelAr: 'مطابق: يتم ختم الشحنة وتصريح الإفراج لدخول صالة الإنتاج والتصنيع ⬇️',
-          passLabelEn: 'Conforming: Lot cleared & released for shopfloor production entry',
+          passLabelAr: `مطابق: تم إجازة ${getStageRecordStats('DEPT-STAGE-INCOMING').pass} شحنة لدخول صالة الإنتاج والتصنيع ⬇️`,
+          passLabelEn: `Conforming: ${getStageRecordStats('DEPT-STAGE-INCOMING').pass} lots cleared & released for shopfloor production entry ⬇️`,
           passTargetStageNumber: 2,
-          failLabelAr: 'غير مطابق: عزل الشحنة فوراً في منطقة الحجر وفتح تقرير عدم مطابقة لمطالبة المورد ➡️',
-          failLabelEn: 'Non-Conforming: Instant quarantine and automatic escalation to Stage 3 NCR',
+          failLabelAr: `غير مطابق: تم حجز ${getStageRecordStats('DEPT-STAGE-INCOMING').fail} شحنة وتحويلها فوراً للمرحلة 3 (NCR) ➡️`,
+          failLabelEn: `Non-Conforming: ${getStageRecordStats('DEPT-STAGE-INCOMING').fail} lots quarantined and escalated to Stage 3 NCR ➡️`,
           accentColor: '#f59e0b',
           targetNcr: true
         })}

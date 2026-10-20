@@ -74,51 +74,29 @@ $dataFile = $dataDir . '/' . $safeModule . '.json';
 // Helper: Read JSON Data from server file
 function readDataFile($file, $module) {
     if (!file_exists($file)) {
-        // Seed default incoming inspections if empty
-        if ($module === 'inspections') {
-            return [
-                [
-                    'id' => 'INS-2026-RM-01',
-                    'inspectionNumber' => 'INS-2026-RM-01',
-                    'productName' => 'سبائك ألمونيوم 7075-T6 للطائرات',
-                    'product' => 'RM-ALUM-7075',
-                    'batchNumber' => 'LOT-2026-AL-01',
-                    'type' => 'incoming',
-                    'inspectedBy' => 'م. مصطفى رفعت',
-                    'inspectionDate' => date('Y-m-d'),
-                    'sampleSize' => 32,
-                    'defectCount' => 0,
-                    'result' => 'pass',
-                    'status' => 'pass',
-                    'supplierName' => 'بريسيجن ميتالز (Precision Metals Co.)',
-                    'createdAt' => date('c'),
-                    'updatedAt' => date('c')
-                ],
-                [
-                    'id' => 'INS-2026-RM-02',
-                    'inspectionNumber' => 'INS-2026-RM-02',
-                    'productName' => 'حلقات إحكام مطاطية هيدروليكية NBR 25x3mm',
-                    'product' => 'RM-SEAL-NBR',
-                    'batchNumber' => 'LOT-2026-OR-02',
-                    'type' => 'incoming',
-                    'inspectedBy' => 'م. مصطفى رفعت',
-                    'inspectionDate' => date('Y-m-d'),
-                    'sampleSize' => 50,
-                    'defectCount' => 0,
-                    'result' => 'pass',
-                    'status' => 'pass',
-                    'supplierName' => 'إيلاستومر تكنولوجيز (Elastomer Tech)',
-                    'createdAt' => date('c'),
-                    'updatedAt' => date('c')
-                ]
-            ];
-        }
         return [];
     }
     $raw = @file_get_contents($file);
     if ($raw === false || empty(trim($raw))) return [];
     $parsed = @json_decode($raw, true);
-    return is_array($parsed) ? $parsed : [];
+    if (!is_array($parsed)) return [];
+
+    // Purge any legacy fake/seed records (e.g. INS-2026-RM-*)
+    $cleaned = array_values(array_filter($parsed, function($item) {
+        $id = $item['id'] ?? '';
+        $num = $item['inspectionNumber'] ?? '';
+        $product = $item['productName'] ?? ($item['product'] ?? '');
+        if (strpos($id, 'INS-2026-RM-') === 0 || strpos($num, 'INS-2026-RM-') === 0) return false;
+        if (strpos($product, 'سبائك ألمونيوم') !== false) return false;
+        if (strpos($product, 'حلقات إحكام مطاطية') !== false) return false;
+        return true;
+    }));
+
+    if (count($cleaned) !== count($parsed)) {
+        @file_put_contents($file, json_encode($cleaned, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
+    }
+
+    return $cleaned;
 }
 
 // Helper: Write JSON Data safely to server file
