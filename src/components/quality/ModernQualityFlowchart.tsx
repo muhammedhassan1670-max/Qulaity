@@ -7,7 +7,8 @@ import {
   ArrowUpRight, Search, AlertTriangle, Layers, ChevronDown, CheckSquare,
   Sparkles, FileText, Barcode, Brain, Blocks, Library, Users, GitFork,
   HelpCircle, ChevronRight, CornerDownRight, Crosshair, MapPin, X,
-  Shield, Check, ExternalLink, Lock, AlertOctagon, RotateCcw, PlusCircle
+  Shield, Check, ExternalLink, Lock, AlertOctagon, RotateCcw, PlusCircle,
+  LayoutGrid, ListFilter
 } from 'lucide-react';
 import { 
   ENTERPRISE_DEPARTMENTS, 
@@ -225,6 +226,9 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
   // Active Tracked Lot Journey State
   const [selectedLotNumber, setSelectedLotNumber] = useState<string | null>(null);
   const [lotSearchInput, setLotSearchInput] = useState<string>('');
+  
+  // Card Display Aesthetic Mode ('clean' 3-column stats vs 'compact' minimalist pills)
+  const [cardDisplayMode, setCardDisplayMode] = useState<'clean' | 'compact'>('clean');
 
   // --------------------------------------------------------------------------
   // DYNAMIC INCOMING INSPECTIONS LOADER (Loads from localStorage & syncs live)
@@ -986,13 +990,15 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
     scrollToStage(targetDeptId, true);
   };
 
-  // Flowchart Card Component (Clean, Clickable, High Usability)
+  // Flowchart Card Component (Clean, Symmetrical, Modern & High-Usability)
   const renderCard = (station: ScadaEquipment, accentColor: string, stageNumber: number) => {
     const cardStats = getStationRecordStats(station, stageNumber);
     const stStatus = stationStatuses[station.id];
     const isAlert = stStatus?.status === 'alert' || stStatus?.isAndonActive;
     const isWarning = stStatus?.status === 'warning';
     const isSelected = selectedStationId === station.id;
+    const isPassHigh = cardStats.acceptanceRate >= 90;
+    const isPassMed = cardStats.acceptanceRate >= 75 && cardStats.acceptanceRate < 90;
     
     // Check if this station is the exact stopping point for the tracked lot
     const isLotStoppedHere = trackedLot && trackedLot.currentStageNumber === stageNumber && (
@@ -1016,121 +1022,157 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
           onSelectStation(station.id);
           navigate(station.moduleUrl);
         }}
-        className={`p-4 rounded-2xl border-2 transition-all cursor-pointer text-start relative group shadow-sm hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] flex flex-col justify-between ${
+        className={`p-4 rounded-2xl border transition-all duration-300 cursor-pointer text-start relative group shadow-sm hover:shadow-xl hover:-translate-y-0.5 active:scale-[0.99] flex flex-col justify-between ${
           isLotStoppedHere
-            ? 'bg-rose-950/40 border-rose-500 ring-4 ring-rose-500/50 shadow-2xl shadow-rose-900/50'
+            ? 'bg-rose-950/40 border-rose-500 ring-4 ring-rose-500/50 shadow-2xl shadow-rose-900/50 animate-pulse'
             : isSelected
-              ? 'bg-slate-900 border-cyan-400 ring-2 ring-cyan-500/30'
+              ? 'bg-slate-900/95 border-cyan-400 ring-2 ring-cyan-500/40 shadow-cyan-950/50'
               : isAlert
                 ? 'bg-rose-950/30 border-rose-500/70 hover:border-rose-400 shadow-rose-950/20'
                 : isWarning
                   ? 'bg-amber-950/20 border-amber-500/70 hover:border-amber-400'
-                  : 'bg-slate-900/90 border-slate-800/90 hover:border-slate-600 hover:bg-slate-800'
+                  : 'bg-gradient-to-b from-slate-900/90 to-[#080e1c]/95 border-slate-800/80 hover:border-cyan-500/50 hover:shadow-cyan-950/30'
         }`}
         style={{
           borderTopColor: isLotStoppedHere ? '#f43f5e' : accentColor,
-          borderTopWidth: isLotStoppedHere ? '6px' : '4px'
+          borderTopWidth: '3.5px'
         }}
       >
         <div>
           {/* Card Top: Code & Status */}
-          <div className="flex items-center justify-between gap-2 mb-2.5">
+          <div className="flex items-center justify-between gap-2 mb-2">
             <div className="flex items-center gap-2">
               <span 
-                style={{ backgroundColor: `${accentColor}25`, color: accentColor }}
-                className="p-1.5 rounded-xl border border-white/10"
+                style={{ backgroundColor: `${accentColor}18`, color: accentColor, borderColor: `${accentColor}30` }}
+                className="w-7 h-7 rounded-xl border flex items-center justify-center shrink-0 shadow-inner"
               >
-                {renderIcon(station.iconType, 'w-4 h-4')}
+                {renderIcon(station.iconType, 'w-3.5 h-3.5')}
               </span>
-              <span className="text-xs font-mono font-black text-slate-300">
+              <span className="text-xs font-mono font-black text-slate-300 tracking-wide">
                 {station.code}
               </span>
             </div>
 
             {isLotStoppedHere ? (
-              <span className="px-2 py-0.5 rounded-full bg-rose-500 text-slate-950 text-[10px] font-black border border-white flex items-center gap-1 shadow-md animate-pulse">
+              <span className="px-2.5 py-0.5 rounded-full bg-rose-500 text-slate-950 text-[10px] font-black border border-white flex items-center gap-1 shadow-md animate-pulse">
                 <MapPin className="w-3 h-3 fill-slate-950" />
-                <span>{isAr ? 'موقع الخامة الحالي 📍' : 'Lot Located Here'}</span>
+                <span>{isAr ? 'اللوط هنا 📍' : 'Lot Located'}</span>
               </span>
             ) : isAlert ? (
-              <span className="px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-400 text-[10px] font-bold border border-rose-500/40 flex items-center gap-1.5">
+              <span className="px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-400 text-[10px] font-bold border border-rose-500/40 flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping" />
-                <span>{stStatus?.statusLabelAr || 'تنبيه'}</span>
+                <span>{stStatus?.statusLabelAr || (isAr ? 'تنبيه' : 'Alert')}</span>
               </span>
             ) : (
-              <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[10px] font-bold border border-emerald-500/30 flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                <span>{isAr ? 'مطابق' : 'Pass'}</span>
+              <span 
+                className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold border flex items-center gap-1.5 shadow-sm ${
+                  isPassHigh
+                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                    : isPassMed
+                      ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                      : 'bg-rose-500/10 text-rose-400 border-rose-500/30'
+                }`}
+              >
+                <span 
+                  className="w-1.5 h-1.5 rounded-full" 
+                  style={{ backgroundColor: isPassHigh ? '#34d399' : isPassMed ? '#fbbf24' : '#f43f5e' }} 
+                />
+                <span>{cardStats.acceptanceRate}% {isAr ? 'مطابقة' : 'Pass'}</span>
               </span>
             )}
           </div>
 
-          {/* Title */}
-          <h4 className="text-sm font-black text-white leading-snug mb-1 group-hover:text-cyan-300 transition-colors">
-            {isAr ? station.titleAr : station.titleEn}
-          </h4>
-          <p className="text-xs text-slate-400 line-clamp-1 mb-2">
-            {isAr ? station.locationAr : station.locationEn}
-          </p>
+          {/* Title & Subtitle */}
+          <div className="mb-3">
+            <h4 className="text-sm font-black text-white leading-snug group-hover:text-cyan-300 transition-colors line-clamp-1">
+              {isAr ? station.titleAr : station.titleEn}
+            </h4>
+            <p className="text-[11px] text-slate-400 line-clamp-1 mt-0.5">
+              {isAr ? station.locationAr : station.locationEn}
+            </p>
+          </div>
 
           {/* Live Record Breakdown (Total, Accepted, Rejected) */}
-          <div className="my-2.5 p-2 rounded-xl bg-slate-950/80 border border-white/10 space-y-1.5 shadow-inner">
-            <div className="flex items-center justify-between text-[11px]">
-              <span className="text-slate-300 font-bold flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: accentColor }} />
-                <span>{isAr ? 'إجمالي السجلات:' : 'Total:'}</span>
-                <b className="font-mono text-white text-xs">{cardStats.total}</b>
-                <span className="text-[10px] text-slate-400 font-normal">({isAr ? cardStats.unitAr : cardStats.unitEn})</span>
-              </span>
-              <span className="font-mono text-[10px] font-black" style={{ color: cardStats.acceptanceRate >= 90 ? '#34d399' : '#fbbf24' }}>
-                {cardStats.acceptanceRate}% {isAr ? 'مطابقة' : 'Pass'}
-              </span>
-            </div>
+          {cardDisplayMode === 'clean' ? (
+            <div className="my-2.5 p-2 rounded-xl bg-slate-950/60 border border-white/5 space-y-2 shadow-inner">
+              <div className="grid grid-cols-3 divide-x divide-x-reverse divide-white/10 text-center">
+                {/* Total */}
+                <div className="px-1">
+                  <span className="text-[10px] text-slate-400 block font-medium">
+                    {isAr ? 'الإجمالي' : 'Total'}
+                  </span>
+                  <span className="text-sm font-mono font-black text-white">
+                    {cardStats.total}
+                  </span>
+                </div>
 
-            {/* Dual Counter Chips: Accepted vs Rejected */}
-            <div className="grid grid-cols-2 gap-1.5">
-              <div className="px-2 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-between">
-                <span className="text-[10px] text-emerald-300 font-bold flex items-center gap-1">
-                  <span>✓</span>
-                  <span>{isAr ? 'مقبول:' : 'Pass:'}</span>
-                </span>
-                <span className="font-mono font-black text-xs text-emerald-400">{cardStats.pass}</span>
+                {/* Pass */}
+                <div className="px-1">
+                  <span className="text-[10px] text-emerald-400/90 block font-bold">
+                    {isAr ? '✓ مقبول' : '✓ Pass'}
+                  </span>
+                  <span className="text-sm font-mono font-black text-emerald-400">
+                    {cardStats.pass}
+                  </span>
+                </div>
+
+                {/* Fail */}
+                <div className="px-1">
+                  <span className="text-[10px] text-rose-400/90 block font-bold">
+                    {isAr ? '✕ مرفوض' : '✕ Fail'}
+                  </span>
+                  <span className="text-sm font-mono font-black text-rose-400">
+                    {cardStats.fail}
+                  </span>
+                </div>
               </div>
 
-              <div className="px-2 py-1 rounded-lg bg-rose-500/15 border border-rose-500/30 flex items-center justify-between">
-                <span className="text-[10px] text-rose-300 font-bold flex items-center gap-1">
-                  <span>✕</span>
-                  <span>{isAr ? 'مرفوض:' : 'Fail:'}</span>
-                </span>
-                <span className="font-mono font-black text-xs text-rose-400">{cardStats.fail}</span>
+              {/* Slim, smooth dual-color bar */}
+              <div className="w-full bg-slate-800/80 rounded-full h-1.5 overflow-hidden flex shadow-inner">
+                <div 
+                  className="bg-emerald-400 h-full transition-all duration-500 rounded-full" 
+                  style={{ width: `${cardStats.acceptanceRate}%` }} 
+                  title={`${cardStats.pass} ${isAr ? 'مقبول' : 'Pass'}`}
+                />
+                {cardStats.fail > 0 && (
+                  <div 
+                    className="bg-rose-500 h-full transition-all duration-500 rounded-full" 
+                    style={{ width: `${100 - cardStats.acceptanceRate}%` }} 
+                    title={`${cardStats.fail} ${isAr ? 'مرفوض' : 'Fail'}`}
+                  />
+                )}
               </div>
             </div>
-
-            {/* Visual Mini Progress Bar */}
-            <div className="w-full bg-rose-950/60 rounded-full h-1.5 overflow-hidden flex">
-              <div 
-                className="bg-emerald-400 h-full transition-all duration-500" 
-                style={{ width: `${cardStats.acceptanceRate}%` }} 
-                title={`${cardStats.pass} ${isAr ? cardStats.passLabelAr : cardStats.passLabelEn}`}
-              />
-              <div 
-                className="bg-rose-500 h-full transition-all duration-500" 
-                style={{ width: `${100 - cardStats.acceptanceRate}%` }} 
-                title={`${cardStats.fail} ${isAr ? cardStats.failLabelAr : cardStats.failLabelEn}`}
-              />
+          ) : (
+            <div className="my-2 p-1.5 px-2.5 rounded-xl bg-slate-950/50 border border-white/5 flex items-center justify-between text-xs">
+              <span className="text-slate-300 text-[11px] font-mono font-bold">
+                <b className="text-white text-xs">{cardStats.total}</b> {isAr ? 'سجل' : 'items'}
+              </span>
+              <div className="flex items-center gap-1.5 font-mono text-[10px] font-bold">
+                <span className="px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
+                  {cardStats.pass} ✓
+                </span>
+                <span className={`px-1.5 py-0.5 rounded-md border ${
+                  cardStats.fail > 0 
+                    ? 'bg-rose-500/15 text-rose-400 border-rose-500/20' 
+                    : 'bg-slate-800/60 text-slate-500 border-slate-700/40'
+                }`}>
+                  {cardStats.fail} ✕
+                </span>
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
-        {/* Action Button */}
-        <div className="pt-2.5 border-t border-white/10 flex items-center justify-between text-xs">
-          <span className="font-mono text-slate-400 text-[11px]">
-            FPY: <b className="text-emerald-400">{station.fpyEstimate || 99}%</b>
+        {/* Card Footer: Unit & Action */}
+        <div className="pt-2 border-t border-white/5 flex items-center justify-between text-xs mt-1">
+          <span className="text-[10px] text-slate-400 font-mono truncate max-w-[130px]">
+            {isAr ? cardStats.unitAr : cardStats.unitEn}
           </span>
 
-          <span className="px-3 py-1 rounded-xl bg-cyan-500/15 group-hover:bg-cyan-500 text-cyan-300 group-hover:text-slate-950 font-black text-xs flex items-center gap-1 transition-all shadow-sm">
-            <span>{isAr ? 'فتح التبويب' : 'Open Tab'}</span>
-            <ArrowUpRight className="w-3.5 h-3.5" />
+          <span className="px-2.5 py-1 rounded-lg bg-cyan-500/10 group-hover:bg-cyan-500 text-cyan-300 group-hover:text-slate-950 font-black text-[11px] flex items-center gap-1 transition-all shadow-sm">
+            <span>{isAr ? 'فتح المحطة' : 'Open Tab'}</span>
+            <ArrowUpRight className="w-3 h-3 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
           </span>
         </div>
       </div>
@@ -1450,24 +1492,55 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
             ))}
           </div>
 
-          {/* Search Box */}
-          <div className="relative w-full md:w-64 shrink-0">
-            <Search className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={isAr ? 'بحث بالاسم أو الكود...' : 'Search any tab...'}
-              className="w-full pr-9 pl-4 py-1.5 rounded-xl bg-black/60 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 transition-colors font-mono"
-            />
-            {searchQuery && (
+          {/* Controls: Mode Switcher & Search */}
+          <div className="flex items-center gap-2 w-full md:w-auto shrink-0">
+            {/* Card Display Mode Switcher */}
+            <div className="flex items-center gap-1 bg-black/60 p-1 rounded-xl border border-white/10 shrink-0">
               <button
-                onClick={() => setSearchQuery('')}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs"
+                onClick={() => setCardDisplayMode('clean')}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  cardDisplayMode === 'clean'
+                    ? 'bg-cyan-500 text-slate-950 shadow-md font-black'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+                title={isAr ? 'عرض إحصائي متوازن للكروت' : 'Balanced KPI Cards'}
               >
-                ✕
+                <LayoutGrid className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">{isAr ? 'عرض متوازن' : 'Balanced'}</span>
               </button>
-            )}
+              <button
+                onClick={() => setCardDisplayMode('compact')}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  cardDisplayMode === 'compact'
+                    ? 'bg-cyan-500 text-slate-950 shadow-md font-black'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+                title={isAr ? 'عرض مدمج خفيف للكروت' : 'Compact Cards'}
+              >
+                <ListFilter className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">{isAr ? 'عرض مدمج' : 'Compact'}</span>
+              </button>
+            </div>
+
+            {/* Search Box */}
+            <div className="relative w-full md:w-56 shrink-0">
+              <Search className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={isAr ? 'بحث بالاسم أو الكود...' : 'Search any tab...'}
+                className="w-full pr-9 pl-4 py-1.5 rounded-xl bg-black/60 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 transition-colors font-mono"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
