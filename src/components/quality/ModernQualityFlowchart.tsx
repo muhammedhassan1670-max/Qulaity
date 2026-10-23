@@ -3660,6 +3660,31 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
   // --------------------------------------------------------------------------
   // CLEAN PROCESS DIAGRAM COMPONENTS (Recommended Interactive Flowchart)
   // --------------------------------------------------------------------------
+  const renderIndustrialPipe = (color: string, labelAr?: string, labelEn?: string) => {
+    return (
+      <div className="flex flex-col items-center my-2 relative z-10 select-none">
+        <div className="w-0.5 h-8 bg-gradient-to-b from-white/20 via-cyan-400 to-white/20 relative flex items-center justify-center">
+          <div 
+            className="w-2.5 h-2.5 rounded-full blur-[2px] animate-pulse absolute" 
+            style={{ backgroundColor: color }} 
+          />
+          <div 
+            className="w-1.5 h-1.5 rounded-full absolute" 
+            style={{ backgroundColor: color }} 
+          />
+        </div>
+        {labelAr && (
+          <span className="px-3 py-1 rounded-full bg-slate-900/95 border border-white/10 text-[10px] font-mono font-bold text-slate-300 shadow-lg flex items-center gap-1.5 -my-1 z-20 backdrop-blur">
+            <span className="w-1.5 h-1.5 rounded-full animate-ping" style={{ backgroundColor: color }} />
+            <span>{isAr ? labelAr : labelEn}</span>
+          </span>
+        )}
+        <div className="w-0.5 h-3 bg-gradient-to-b from-cyan-400 to-transparent" />
+        <div className="text-[10px] font-mono font-black -mt-1 animate-bounce" style={{ color }}>▼</div>
+      </div>
+    );
+  };
+
   const renderProcessNode = (props: {
     stageNumber: number;
     stageId: string;
@@ -3674,6 +3699,8 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
   }) => {
     const stats = getStageRecordStats(props.stageId);
     const trackStyle = getStageTrackingStyle(props.stageNumber, 'border-cyan-500/40');
+    const stageStations = stationsByDept.get(props.stageId) || [];
+    const acceptanceRate = stats.total > 0 ? Math.round((stats.pass / stats.total) * 100) : 100;
 
     // Dynamic Simulation Highlighting for this Node
     const isNodeSimActive = simulationActive && (
@@ -3697,7 +3724,7 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
           stageNumber: props.stageNumber,
           stageId: props.stageId
         })}
-        className={`relative w-full max-w-2xl mx-auto p-4 sm:p-5 rounded-3xl bg-slate-900/90 border-2 transition-all cursor-pointer group shadow-xl hover:shadow-2xl hover:scale-[1.01] active:scale-[0.99] ${
+        className={`relative w-full max-w-3xl mx-auto p-4 sm:p-5 rounded-3xl bg-slate-900/95 border-2 transition-all cursor-pointer group shadow-xl hover:shadow-2xl hover:scale-[1.01] active:scale-[0.99] backdrop-blur ${
           isNodeSimActive 
             ? (simulationType === 'pass'
                 ? 'ring-4 ring-emerald-400 border-emerald-400 shadow-[0_0_35px_rgba(16,185,129,0.5)] animate-pulse'
@@ -3706,7 +3733,7 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
         }`}
         style={{
           borderColor: isNodeSimActive ? undefined : `${props.accentColor}70`,
-          boxShadow: `0 4px 25px ${props.accentColor}20`
+          boxShadow: `0 4px 30px ${props.accentColor}20`
         }}
       >
         {/* Floating Moving Lot Simulation Badge */}
@@ -3720,6 +3747,7 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
           </div>
         )}
 
+        {/* Top Header Row */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3.5">
             <div
@@ -3734,7 +3762,7 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
             </div>
 
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span
                   className="px-2.5 py-0.5 rounded-lg text-xs font-mono font-black border"
                   style={{
@@ -3749,12 +3777,12 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
                   {props.code}
                 </span>
                 <span className="text-[11px] text-slate-400 bg-black/40 px-2 py-0.5 rounded-md border border-white/5 font-mono">
-                  {props.stationCount} {isAr ? 'محطات' : 'stations'}
+                  {props.stationCount} {isAr ? 'محطات تشغيل' : 'stations'}
                 </span>
                 {trackStyle.badge}
               </div>
 
-              <h3 className="text-sm sm:text-base font-black text-white mt-1 group-hover:text-cyan-300 transition-colors">
+              <h3 className="text-base sm:text-lg font-black text-white mt-1 group-hover:text-cyan-300 transition-colors">
                 {isAr ? props.titleAr : props.titleEn}
               </h3>
 
@@ -3764,51 +3792,77 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
             </div>
           </div>
 
-          {/* Quick Metrics and Action Pill - Two Separated Boxes with Explicit Directional Arrows */}
+          {/* Quick Metrics and Action Pill */}
           <div className="flex items-center gap-2 self-end sm:self-auto shrink-0 flex-wrap">
-            {/* Separate Pass Box with Pass Arrow */}
+            {/* Separate Pass Box */}
             <div 
-              className="px-2.5 py-1.5 rounded-xl bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 text-xs font-mono font-black flex items-center gap-1.5 shadow-sm"
-              title={isAr ? 'عدد السجلات المطابقة المقبولة وسهم الإجازة (Pass)' : 'Conforming Pass Records & Arrow'}
+              className="px-3 py-1.5 rounded-xl bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 text-xs font-mono font-black flex items-center gap-1.5 shadow-sm"
+              title={isAr ? 'عدد السجلات المطابقة المقبولة' : 'Pass Records'}
             >
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
               <span>{stats.pass}</span>
               <span className="text-[10px] font-sans font-bold text-emerald-400/80">{isAr ? 'مقبول' : 'Pass'}</span>
-              <span className="px-1 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-mono flex items-center gap-0.5" title={isAr ? 'سهم الإجازة للإنتاج' : 'Pass Flow Arrow'}>
-                <ArrowDown className="w-2.5 h-2.5 text-emerald-400" />
-              </span>
             </div>
 
-            {/* Separate Fail Box with Fail Arrow */}
+            {/* Separate Fail Box */}
             <div 
-              className={`px-2.5 py-1.5 rounded-xl border text-xs font-mono font-black flex items-center gap-1.5 shadow-sm ${
+              className={`px-3 py-1.5 rounded-xl border text-xs font-mono font-black flex items-center gap-1.5 shadow-sm ${
                 stats.fail > 0
                   ? 'bg-rose-950/70 border-rose-500/50 text-rose-300'
                   : 'bg-black/40 border-slate-700/40 text-slate-500'
               }`}
-              title={isAr ? 'عدد السجلات المرفوضة والمحجوزة وسهم التحويل لـ NCR (Fail)' : 'Non-Conforming Fail Records & Arrow'}
+              title={isAr ? 'عدد السجلات المرفوضة والمحجوزة' : 'Fail Records'}
             >
               <AlertOctagon className={`w-3.5 h-3.5 shrink-0 ${stats.fail > 0 ? 'text-rose-400' : 'text-slate-500'}`} />
               <span>{stats.fail}</span>
               <span className={`text-[10px] font-sans font-bold ${stats.fail > 0 ? 'text-rose-400/80' : 'text-slate-500'}`}>
                 {isAr ? 'مرفوض' : 'Fail'}
               </span>
-              <span className={`px-1 py-0.5 rounded text-[10px] font-mono flex items-center gap-0.5 ${
-                stats.fail > 0 ? 'bg-rose-500/20 text-rose-300' : 'bg-black/30 text-slate-500'
-              }`} title={isAr ? 'سهم الحجز للـ NCR' : 'Quarantine Arrow'}>
-                <ArrowUpRight className="w-2.5 h-2.5" />
-              </span>
+            </div>
+
+            {/* Conformance % Badge */}
+            <div className="px-2.5 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs font-mono font-bold text-slate-300">
+              <span className="text-cyan-400">{acceptanceRate}%</span>
+              <span className="text-[10px] text-slate-500 ml-1">FPY</span>
             </div>
 
             <button
               type="button"
               className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/15 text-slate-200 hover:text-white border border-white/10 text-xs font-bold transition-all flex items-center gap-1.5 group-hover:bg-cyan-500 group-hover:text-slate-950 group-hover:border-cyan-400"
             >
-              <span>{isAr ? 'التفاصيل 👁️' : 'Details 👁️'}</span>
+              <span>{isAr ? 'استعراض 👁️' : 'Details 👁️'}</span>
               <ChevronRight className="w-3.5 h-3.5 rtl:rotate-180" />
             </button>
           </div>
         </div>
+
+        {/* Embedded Interactive Stations Quick Bar */}
+        {stageStations.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1.5 mt-3 pt-3 border-t border-white/10">
+            <span className="text-[10px] font-mono text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1 ml-1">
+              <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: props.accentColor }} />
+              {isAr ? 'محطات المرحلة:' : 'Stations:'}
+            </span>
+            {stageStations.map((st) => (
+              <button
+                key={st.id}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (st.moduleUrl) navigate(st.moduleUrl);
+                }}
+                className="px-2.5 py-1 rounded-xl bg-slate-950/80 hover:bg-white/10 border border-white/10 hover:border-cyan-400 text-[11px] font-bold text-slate-300 hover:text-white transition-all flex items-center gap-1.5 shadow-sm group/btn"
+                title={isAr ? `الانتقال المباشر لمحطة: ${st.titleAr}` : `Open station ${st.titleEn}`}
+              >
+                <span className="font-mono text-cyan-400 font-black text-[10px]">{st.code}</span>
+                <span className="text-slate-300 group-hover/btn:text-white truncate max-w-[140px]">
+                  {isAr ? st.titleAr : st.titleEn}
+                </span>
+                <ArrowUpRight className="w-3 h-3 text-slate-500 group-hover/btn:text-cyan-400 transition" />
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     );
   };
@@ -3846,7 +3900,7 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
     const isFailBranchSim = isSimAtGate && simulationType === 'fail';
 
     return (
-      <div id={`GATEWAY-${props.gateNumber}`} className="my-4 w-full max-w-2xl mx-auto flex flex-col items-center">
+      <div id={`GATEWAY-${props.gateNumber}`} className="my-3 w-full max-w-3xl mx-auto flex flex-col items-center">
         {/* Downward Pipe into Gateway */}
         <div className="w-1.5 h-5 rounded-full" style={{ backgroundColor: props.accentColor }} />
 
@@ -3995,7 +4049,7 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
     return (
       <div
         id="DEPT-STAGE-RESOLUTION"
-        className={`my-6 w-full max-w-2xl mx-auto p-5 rounded-3xl bg-gradient-to-br from-rose-950/60 via-slate-900 to-slate-950 border-2 border-rose-500/60 shadow-2xl space-y-4 ${trackStyle.className} ${
+        className={`my-4 w-full max-w-3xl mx-auto p-5 rounded-3xl bg-gradient-to-br from-rose-950/60 via-slate-900 to-slate-950 border-2 border-rose-500/60 shadow-2xl space-y-4 ${trackStyle.className} ${
           isSimAtHub ? 'ring-4 ring-rose-500/70 shadow-2xl shadow-rose-950/90' : ''
         }`}
       >
@@ -4032,13 +4086,13 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
             onClick={() => setActiveStageDrawer({ stageNumber: 3, stageId: 'DEPT-STAGE-RESOLUTION' })}
             className="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center gap-1.5 transition-all shadow-md shrink-0"
           >
-            <span>{isAr ? 'عرض الكروت الخمسة 👁️' : 'View 5 Tabs 👁️'}</span>
+            <span>{isAr ? 'عرض الكروت الستة 👁️' : 'View 6 Tabs 👁️'}</span>
             <ExternalLink className="w-3.5 h-3.5" />
           </button>
         </div>
 
-        {/* 5 Resolution Stations Quick Pills */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center text-xs">
+        {/* 6 Resolution Stations Quick Pills */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 text-center text-xs">
           <div 
             onClick={() => navigate('/ncr')} 
             className={`p-2.5 rounded-2xl border cursor-pointer transition-all ${
@@ -4081,10 +4135,17 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
           </div>
           <div 
             onClick={() => navigate('/change-control')} 
-            className="p-2.5 rounded-2xl bg-black/40 border border-rose-500/30 hover:border-rose-400 hover:bg-rose-950/30 cursor-pointer transition-all col-span-2 sm:col-span-1"
+            className="p-2.5 rounded-2xl bg-black/40 border border-rose-500/30 hover:border-rose-400 hover:bg-rose-950/30 cursor-pointer transition-all"
           >
             <span className="block font-black text-rose-300 text-xs">CHG-01</span>
             <span className="text-[10px] text-slate-400 block mt-0.5">{isAr ? 'ضبط التغيير' : 'Change Ctrl'}</span>
+          </div>
+          <div 
+            onClick={() => navigate('/defect-cost')} 
+            className="p-2.5 rounded-2xl bg-black/40 border border-rose-500/30 hover:border-rose-400 hover:bg-rose-950/30 cursor-pointer transition-all"
+          >
+            <span className="block font-black text-rose-300 text-xs">COP-01</span>
+            <span className="text-[10px] text-slate-400 block mt-0.5">{isAr ? 'تكلفة COPQ' : 'COPQ Cost'}</span>
           </div>
         </div>
 
@@ -4162,6 +4223,8 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
       {/* Start Terminal: Material Inflow */}
       {renderStartTerminal()}
 
+      {renderIndustrialPipe('#f59e0b', 'دخول شحنات المواد الخام والمكونات', 'Raw Materials Inflow')}
+
       {/* STAGE 1: IQC */}
       {renderProcessNode({
         stageNumber: 1,
@@ -4194,6 +4257,8 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
           setActiveStageDrawer({ stageNumber: 1, stageId: 'DEPT-STAGE-INCOMING' });
         }
       })}
+
+      {renderIndustrialPipe('#06b6d4', 'صرف وإجازة الخامات المطابقة لصالة الإنتاج', 'Release to Production Floor')}
 
       {/* STAGE 2: IPQC */}
       {renderProcessNode({
@@ -4228,6 +4293,12 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
         }
       })}
 
+      {/* STAGE 3: RESOLUTION & PROBLEM SOLVING HUB (NCR ➔ 8D ➔ CAPA) */}
+      {renderIndustrialPipe('#ef4444', 'عزل وحجر فوري في جناح حل المشكلات', 'Quarantine to Resolution Wing')}
+      {renderResolutionHubNode()}
+
+      {renderIndustrialPipe('#10b981', 'فحص عينات المنتج التام النهائي AQL', 'Final Inspection & AQL Sampling')}
+
       {/* STAGE 4: OQC */}
       {renderProcessNode({
         stageNumber: 4,
@@ -4260,6 +4331,8 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
           setActiveStageDrawer({ stageNumber: 4, stageId: 'DEPT-STAGE-OUTGOING' });
         }
       })}
+
+      {renderIndustrialPipe('#6366f1', 'تسليم المنتج التام للعميل والميدان', 'Customer Delivery & Field')}
 
       {/* STAGE 5: END CUSTOMER DELIVERY & FIELD QA */}
       {renderProcessNode({
@@ -4300,6 +4373,8 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
       {/* DEDICATED CUSTOMER-TO-FACTORY LINKAGE NETWORK (شبكة ربط العميل النهائي بالمصنع) */}
       {renderCustomerToFactoryLoop()}
 
+      {renderIndustrialPipe('#a855f7', 'تحديث خطط التحكم والـ FMEA والتدقيق الداخلي', 'Update Control Plans & FMEA')}
+
       {/* STAGE 6: LAB & AUDITS */}
       {renderProcessNode({
         stageNumber: 6,
@@ -4314,9 +4389,7 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
         icon: <ShieldCheck className="w-5 h-5" />
       })}
 
-      <div className="flex flex-col items-center my-3">
-        {renderFlowPipe('#3b82f6', 'تحديث وثائق النظام والبيانات', 'Update Master Data')}
-      </div>
+      {renderIndustrialPipe('#3b82f6', 'تحديث البيانات الرئيسية وشجرة الموديلات BOM', 'Update Master Data & BOM Trees')}
 
       {/* STAGE 7: MASTER DATA */}
       {renderProcessNode({
@@ -4331,6 +4404,8 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
         stationCount: 3,
         icon: <Database className="w-5 h-5" />
       })}
+
+      {renderIndustrialPipe('#10b981', 'اكتمال دورة الجودة الشاملة المغلقة', 'Closed-Loop Quality Excellence')}
 
       {/* FEEDBACK LOOP BANNER */}
       <div className="pt-2">
