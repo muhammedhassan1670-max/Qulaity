@@ -625,7 +625,7 @@ export default function ShopfloorDefectEntry() {
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <Link
-                to={form.productionLine || form.station ? `/quality-tower?station=${encodeURIComponent(form.station || form.productionLine)}` : '/quality-tower'}
+                to={formDraft.productionLine || formDraft.station ? `/quality-tower?station=${encodeURIComponent(String(formDraft.station || formDraft.productionLine))}` : '/quality-tower'}
                 className="w-full sm:w-auto rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-3 py-2 text-center text-xs font-bold text-cyan-300 hover:bg-cyan-500/20 flex items-center justify-center gap-1.5 transition-all"
                 title="عرض وتحديد المحطة على خريطة المصنع الرقمية SCADA"
               >
