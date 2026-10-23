@@ -2449,6 +2449,186 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
     );
   };
 
+  // DEDICATED INDUSTRIAL CUSTOMER-TO-FACTORY CLOSED-LOOP LINKAGE CARD
+  // شبكة ربط العميل النهائي بالمصنع (Customer ➔ Factory Closed Loop)
+  const renderCustomerToFactoryLoop = () => {
+    const complaintStats = getStageRecordStats('DEPT-STAGE-CUSTOMER');
+    return (
+      <div 
+        id="CUSTOMER-FACTORY-LOOP"
+        className="my-5 w-full max-w-4xl mx-auto p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-indigo-950/70 via-slate-900 to-slate-950 border-2 border-indigo-500/60 shadow-2xl space-y-4"
+      >
+        {/* Banner Header */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-indigo-500/20">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 border-2 border-indigo-500 text-indigo-400 flex items-center justify-center shrink-0 shadow-lg shadow-indigo-500/20">
+              <RotateCcw className="w-6 h-6 animate-spin" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-lg text-xs font-mono font-black bg-indigo-500/20 text-indigo-300 border border-indigo-500/40">
+                  IATF 16949 §10.2 • CLOSED-LOOP QA
+                </span>
+                <span className="w-2 h-2 rounded-full bg-indigo-400 animate-ping" />
+              </div>
+              <h3 className="text-base sm:text-lg font-black text-white mt-0.5">
+                {isAr ? '🔗 شبكة ربط العميل النهائي بالمصنع (Customer ➔ Factory Feedback Loop)' : 'Customer-to-Factory Closed-Loop Linkage Network'}
+              </h3>
+              <p className="text-xs text-slate-300 mt-0.5">
+                {isAr 
+                  ? 'أي ملاحظة أو شكوى أو مرتجع من العميل النهائي ترتبط فورياً بأقسام المصنع الأربعة للتحقيق ومنع التكرار' 
+                  : 'Field claims, RMA returns & customer feedback directly feed into 4 core factory nodes'}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 font-mono text-xs font-bold border border-indigo-500/30">
+              {complaintStats.fail} {isAr ? 'بلاغات نشطة' : 'Active Claims'}
+            </span>
+            <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 font-mono text-xs font-bold border border-emerald-500/30">
+              {complaintStats.pass} {isAr ? 'تسليم معتمد' : 'Approved'}
+            </span>
+          </div>
+        </div>
+
+        {/* 4 DIRECT FACTORY LINKAGE CHANNELS */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 pt-1">
+          {/* Channel 1: Link to Factory Production (Stage 2 IPQC) */}
+          <div className="p-4 rounded-2xl bg-cyan-950/30 border border-cyan-500/40 hover:border-cyan-400 transition-all flex flex-col justify-between group">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="px-2.5 py-0.5 rounded-lg bg-cyan-500/20 text-cyan-300 font-mono text-[11px] font-black border border-cyan-500/30 flex items-center gap-1.5">
+                  <Activity className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>{isAr ? '1. ربط بصالة الإنتاج (Stage 2)' : '1. Shopfloor Production (Stage 2)'}</span>
+                </span>
+                <span className="text-[10px] text-cyan-300 font-mono font-bold">IPQC Containment</span>
+              </div>
+              <h5 className="text-xs sm:text-sm font-black text-cyan-200">
+                {isAr ? 'حجر فوري للتشغيل ومنع تصنيع عيوب مماثلة' : 'Immediate WIP Containment & Andon Alert'}
+              </h5>
+              <p className="text-[11px] text-slate-300 mt-1 leading-relaxed">
+                {isAr 
+                  ? 'إشعار فوري لخطوط الإنتاج بحظر الدفعات المماثلة تحت التصنيع، وتفعيل إنذار أندون لتعديل ضبط الماكينات قبل خروج قطع أخرى للعملاء.' 
+                  : 'Instant notification to shopfloor to contain in-process lots and adjust machines to prevent repeating defects.'}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => scrollToStage('DEPT-STAGE-INPROCESS', true)}
+              className="mt-3 w-full py-2 px-3 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/40 font-bold text-xs flex items-center justify-center gap-1.5 transition-all group-hover:bg-cyan-500 group-hover:text-slate-950 cursor-pointer"
+            >
+              <span>{isAr ? 'انتقال لصالة الإنتاج بالمصنع (المرحلة 2) ⤴' : 'View Shopfloor (Stage 2) ⤴'}</span>
+              <ArrowUpRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {/* Channel 2: Link to Factory NCR & 8D Hub (Stage 3) */}
+          <div className="p-4 rounded-2xl bg-rose-950/30 border border-rose-500/40 hover:border-rose-400 transition-all flex flex-col justify-between group">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="px-2.5 py-0.5 rounded-lg bg-rose-500/20 text-rose-300 font-mono text-[11px] font-black border border-rose-500/30 flex items-center gap-1.5">
+                  <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
+                  <span>{isAr ? '2. ربط بمركز 8D و CAPA (Stage 3)' : '2. 8D & CAPA Problem Solving (Stage 3)'}</span>
+                </span>
+                <span className="text-[10px] text-rose-300 font-mono font-bold">Root-Cause 8D</span>
+              </div>
+              <h5 className="text-xs sm:text-sm font-black text-rose-200">
+                {isAr ? 'فتح تقرير NCR للعميل وتكليف فريق تحقيق 8D' : 'Customer NCR & Cross-Functional 8D Team'}
+              </h5>
+              <p className="text-[11px] text-slate-300 mt-1 leading-relaxed">
+                {isAr 
+                  ? 'تسجيل تقرير عدم مطابقة رسمي، وتعيين فريق فني متعدد التخصصات لتطبيق منهجية الـ 8D للوصول للسبب الجذري وإصدار خطة CAPA دائمة.' 
+                  : 'Logs customer NCR and forms a dedicated 8D team to perform 5-Why analysis and implement permanent corrective actions.'}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate('/d8')}
+              className="mt-3 w-full py-2 px-3 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 font-bold text-xs flex items-center justify-center gap-1.5 transition-all group-hover:bg-rose-600 group-hover:text-white cursor-pointer"
+            >
+              <span>{isAr ? 'فتح تحقيق 8D للعميل بالمصنع ➔' : 'Open 8D Investigation ➔'}</span>
+              <ArrowUpRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {/* Channel 3: Link to Factory Engineering & FMEA (Stage 6) */}
+          <div className="p-4 rounded-2xl bg-purple-950/30 border border-purple-500/40 hover:border-purple-400 transition-all flex flex-col justify-between group">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="px-2.5 py-0.5 rounded-lg bg-purple-500/20 text-purple-300 font-mono text-[11px] font-black border border-purple-500/30 flex items-center gap-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5 text-purple-400" />
+                  <span>{isAr ? '3. ربط بالمختبر الهندسي و FMEA (Stage 6)' : '3. Engineering Lab & FMEA (Stage 6)'}</span>
+                </span>
+                <span className="text-[10px] text-purple-300 font-mono font-bold">FMEA / Control Plan</span>
+              </div>
+              <h5 className="text-xs sm:text-sm font-black text-purple-200">
+                {isAr ? 'تحديث تحليل المخاطر FMEA وتعديل خطة المراقبة' : 'Update FMEA Risk Priority & Control Plan'}
+              </h5>
+              <p className="text-[11px] text-slate-300 mt-1 leading-relaxed">
+                {isAr 
+                  ? 'رفع درجة خطورة العيب في وثيقة PFMEA وإعادة ضبط خطة التحكم Control Plan وتشديد حدود فحص OQC لضمان عدم هروب العيب مجدداً.' 
+                  : 'Recalculates RPN/AP risk ratings, updates Control Plans and tightens OQC exit gates to prevent future escape.'}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate('/fmea')}
+              className="mt-3 w-full py-2 px-3 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/40 font-bold text-xs flex items-center justify-center gap-1.5 transition-all group-hover:bg-purple-600 group-hover:text-white cursor-pointer"
+            >
+              <span>{isAr ? 'تحديث وثائق FMEA وخطة المراقبة ➔' : 'Update FMEA & Control Plan ➔'}</span>
+              <ArrowUpRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {/* Channel 4: Link to Factory Raw Suppliers (Stage 1 IQC) */}
+          <div className="p-4 rounded-2xl bg-amber-950/30 border border-amber-500/40 hover:border-amber-400 transition-all flex flex-col justify-between group">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="px-2.5 py-0.5 rounded-lg bg-amber-500/20 text-amber-300 font-mono text-[11px] font-black border border-amber-500/30 flex items-center gap-1.5">
+                  <Truck className="w-3.5 h-3.5 text-amber-400" />
+                  <span>{isAr ? '4. ربط بموردي الخامات (Stage 1)' : '4. Supplier Quality (Stage 1)'}</span>
+                </span>
+                <span className="text-[10px] text-amber-300 font-mono font-bold">SCAR / Chargeback</span>
+              </div>
+              <h5 className="text-xs sm:text-sm font-black text-amber-200">
+                {isAr ? 'إصدار مطالبة تصحيحية للمورد (SCAR) وتعويض التكلفة' : 'Supplier Corrective Action (SCAR) & Claim'}
+              </h5>
+              <p className="text-[11px] text-slate-300 mt-1 leading-relaxed">
+                {isAr 
+                  ? 'لو تبيّن أن سبب عيب العميل خامة أولية معيبة، يتم فتح مطالبة رسمية SCAR لخصم تكلفة المرتجع وخفض تقييم المورد في Scorecard.' 
+                  : 'If customer defect originated from raw material, issues SCAR chargeback, debit memo and downgrades supplier scorecard.'}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate('/supplier-quality')}
+              className="mt-3 w-full py-2 px-3 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-bold text-xs flex items-center justify-center gap-1.5 transition-all group-hover:bg-amber-500 group-hover:text-slate-950 cursor-pointer"
+            >
+              <span>{isAr ? 'إصدار مطالبة SCAR لمورد الخامات ➔' : 'Issue Supplier SCAR ➔'}</span>
+              <ArrowUpRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Visual Animated Loop-Back Pipe Banner */}
+        <div className="mt-3 p-3.5 rounded-2xl bg-black/40 border border-indigo-500/30 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2 text-indigo-300 font-bold">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping shrink-0" />
+            <span>{isAr ? '🔄 تدفق التغذية الراجعة المغلقة: العميل النهائي ➔ أقسام المصنع الأربعة' : '🔄 Closed-Loop Feedback: End Customer ➔ 4 Core Factory Nodes'}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => scrollToStage('start-terminal', true)}
+            className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-black text-xs flex items-center gap-1.5 transition-all shadow-md shrink-0 cursor-pointer"
+          >
+            <span>{isAr ? 'الصعود لأعلى المصنع (المرحلة 1) ▲' : 'Top of Factory (Stage 1) ▲'}</span>
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   // Closed Loop Re-injection to Production Card
   const renderClosedLoopCard = () => (
     <div className="p-5 rounded-3xl bg-gradient-to-br from-emerald-950/60 via-slate-900 to-emerald-950/30 border-2 border-emerald-500/50 shadow-2xl space-y-3">
@@ -3212,10 +3392,10 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
                   </span>
                   <div>
                     <h3 className="text-sm sm:text-base font-black text-white">
-                      {isAr ? 'المرحلة 5: شكاوى العملاء والميدان (Customer Quality)' : 'Stage 5: Customer Complaints & Field QA'}
+                      {isAr ? 'المرحلة 5: العميل النهائي والتسليم للميدان (End Customer & Delivery)' : 'Stage 5: End Customer Delivery & Field QA'}
                     </h3>
                     <p className="text-xs text-slate-400">
-                      {isAr ? 'استقبال بلاغات العملاء ومطالبات الضمان ومرتجعات RMA وتحويل الملاحظات للهندسة' : 'Customer claims, warranty returns RMA & field feedback loops'}
+                      {isAr ? 'تسليم المنتج التام للعميل، شهادات المطابقة COC، قياس رضاء العميل CSAT، والربط المغلق بالمصنع' : 'Customer dispatch, COC certificates, CSAT satisfaction & closed-loop factory linkage'}
                     </p>
                   </div>
                 </div>
@@ -3234,6 +3414,9 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {(stationsByDept.get('DEPT-STAGE-CUSTOMER') || []).map(st => renderCard(st, '#6366f1', 5))}
               </div>
+
+              {/* Customer-to-Factory Closed Loop Network */}
+              {renderCustomerToFactoryLoop()}
             </section>
           );
           };
@@ -3998,15 +4181,15 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
         }
       })}
 
-      {/* STAGE 5: CUSTOMER QA */}
+      {/* STAGE 5: END CUSTOMER DELIVERY & FIELD QA */}
       {renderProcessNode({
         stageNumber: 5,
         stageId: 'DEPT-STAGE-CUSTOMER',
         code: 'CSM-01',
-        titleAr: 'المرحلة 5: شكاوى العملاء والميدان (Customer Quality)',
-        titleEn: 'Stage 5: Customer Complaints & Field QA',
-        descAr: 'استقبال بلاغات العملاء ومطالبات الضمان ومرتجعات RMA وتحويل الملاحظات للهندسة',
-        descEn: 'Customer claims, warranty returns RMA & field feedback loops',
+        titleAr: 'المرحلة 5: العميل النهائي والتسليم للميدان (End Customer & Delivery)',
+        titleEn: 'Stage 5: End Customer Delivery & Field QA',
+        descAr: 'تسليم المنتج التام للعميل، شهادات المطابقة COC، قياس رضاء العميل CSAT، والربط المغلق بالمصنع',
+        descEn: 'Customer dispatch, COC certificates, CSAT satisfaction & closed-loop factory linkage',
         accentColor: '#6366f1',
         stationCount: 1,
         icon: <Users className="w-5 h-5" />
@@ -4015,21 +4198,24 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
       {/* GATEWAY 5 */}
       {renderVisualDecisionGateway({
         gateNumber: 5,
-        questionAr: 'هل تسليمات المنتجات للعملاء مقبولة وبدون بلاغات أو شكاوى جودة أو مطالبات ضمان؟',
-        questionEn: 'Are customer deliveries accepted without warranty claims or field defects?',
+        questionAr: 'هل تسليمات المنتجات للعميل النهائي مقبولة 100% ومطابقة للطلب بدون أي شكاوى أو مطالبات ضمان؟',
+        questionEn: 'Are finished goods deliveries accepted by customer without claims or warranty returns?',
         accentColor: '#6366f1',
         nextStageNumber: 6,
         nextStageNameAr: 'المرحلة 6: المختبر الهندسي والتدقيق (LAB)',
         nextStageNameEn: 'Stage 6: Engineering Lab & Audits (LAB)',
         passCount: getStageRecordStats('DEPT-STAGE-CUSTOMER').pass,
         failCount: getStageRecordStats('DEPT-STAGE-CUSTOMER').fail,
-        failTitleAr: 'مركز تسوية مرتجعات الضمان RMA واستخلاص الأسباب لـ FMEA',
-        failTitleEn: 'Warranty Returns RMA Center & FMEA Root-Cause',
+        failTitleAr: 'شبكة الربط بالمصنع ➔ حجر الإنتاج وتحقيق 8D وتحديث FMEA ومرتجع RMA',
+        failTitleEn: 'Customer-to-Factory Closed Loop ➔ Production Containment, 8D, FMEA & RMA',
         failNcrRoute: '/complaints',
         failTargetAction: () => {
           setActiveStageDrawer({ stageNumber: 5, stageId: 'DEPT-STAGE-CUSTOMER' });
         }
       })}
+
+      {/* DEDICATED CUSTOMER-TO-FACTORY LINKAGE NETWORK (شبكة ربط العميل النهائي بالمصنع) */}
+      {renderCustomerToFactoryLoop()}
 
       {/* STAGE 6: LAB & AUDITS */}
       {renderProcessNode({
