@@ -80,6 +80,30 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
   // Card Display Aesthetic Mode ('clean' 3-column stats vs 'compact' minimalist pills)
   const [cardDisplayMode, setCardDisplayMode] = useState<'clean' | 'compact'>('clean');
 
+  // Drill-Down Modal State for Station Records (Pass / Fail / Total) & Full Lot Traceability
+  const [stationDrilldown, setStationDrilldown] = useState<{
+    isOpen: boolean;
+    station: ScadaEquipment | null;
+    stageNumber: number;
+    filter: 'all' | 'pass' | 'fail';
+  }>({
+    isOpen: false,
+    station: null,
+    stageNumber: 1,
+    filter: 'all'
+  });
+  const [drilldownSearch, setDrilldownSearch] = useState('');
+
+  const handleOpenDrilldown = useCallback((station: ScadaEquipment, stageNumber: number, filter: 'all' | 'pass' | 'fail') => {
+    setStationDrilldown({
+      isOpen: true,
+      station,
+      stageNumber,
+      filter
+    });
+    setDrilldownSearch('');
+  }, []);
+
   // Helper: Strictly filter out any legacy dummy/mock inspections
   const filterRealOnly = (items: any[]) => {
     if (!Array.isArray(items)) return [];
@@ -294,57 +318,66 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
     // 1. STAGE 1: IQC & Incoming
     if (id === 'STATION-IQC-INSPECTION' || code.includes('INSP') || code.includes('IQC')) {
       const total = realIncomingInspections.length;
-      const pass = realIncomingInspections.filter(i => (i.result || i.status || '').toLowerCase() === 'pass').length;
-      const fail = total - pass;
+      const passItems = realIncomingInspections.filter(i => (i.result || i.status || '').toLowerCase() === 'pass');
+      const failItems = realIncomingInspections.filter(i => (i.result || i.status || '').toLowerCase() !== 'pass');
       return {
         total,
-        pass,
-        fail,
-        acceptanceRate: total > 0 ? Math.round((pass / total) * 100) : 100,
+        pass: passItems.length,
+        fail: failItems.length,
+        acceptanceRate: total > 0 ? Math.round((passItems.length / total) * 100) : 100,
         unitAr: 'شحنة مفحوصة',
         unitEn: 'Inspected Lots',
         passLabelAr: 'مطابق للإفراج',
         passLabelEn: 'Released (Pass)',
         failLabelAr: 'مرفوض بالحجر',
-        failLabelEn: 'Quarantined (Fail)'
+        failLabelEn: 'Quarantined (Fail)',
+        allItems: realIncomingInspections,
+        passItems,
+        failItems
       };
     }
 
     if (id === 'STATION-SUPPLIER-QUALITY' || code.includes('SUP')) {
       const suppliers = getStoredArray(['qms_local_suppliers']);
       const total = suppliers.length;
-      const pass = suppliers.filter(s => (s.status || '').toLowerCase() === 'approved' || (s.rating || 0) >= 80).length;
-      const fail = total - pass;
+      const passItems = suppliers.filter(s => (s.status || '').toLowerCase() === 'approved' || (s.rating || 0) >= 80);
+      const failItems = suppliers.filter(s => !((s.status || '').toLowerCase() === 'approved' || (s.rating || 0) >= 80));
       return {
         total,
-        pass,
-        fail,
-        acceptanceRate: total > 0 ? Math.round((pass / total) * 100) : 100,
+        pass: passItems.length,
+        fail: failItems.length,
+        acceptanceRate: total > 0 ? Math.round((passItems.length / total) * 100) : 100,
         unitAr: 'مورد مسجل',
         unitEn: 'Suppliers',
         passLabelAr: 'معتمد ومؤهل',
         passLabelEn: 'Approved',
         failLabelAr: 'موقوف / تحت الملاحظة',
-        failLabelEn: 'On Probation'
+        failLabelEn: 'On Probation',
+        allItems: suppliers,
+        passItems,
+        failItems
       };
     }
 
     if (id === 'STATION-INSPECTION-PLANS' || code.includes('PLN') || code.includes('PLAN')) {
       const plans = getStoredArray(['qms_local_inspection-plans', 'qms_local_inspection_plans', 'qms_inspection_plans_v1']);
       const total = plans.length;
-      const pass = plans.filter(p => (p.status || '').toLowerCase() === 'active' || (p.status || '').toLowerCase() === 'approved').length;
-      const fail = total - pass;
+      const passItems = plans.filter(p => (p.status || '').toLowerCase() === 'active' || (p.status || '').toLowerCase() === 'approved');
+      const failItems = plans.filter(p => !((p.status || '').toLowerCase() === 'active' || (p.status || '').toLowerCase() === 'approved'));
       return {
         total,
-        pass,
-        fail,
-        acceptanceRate: total > 0 ? Math.round((pass / total) * 100) : 100,
+        pass: passItems.length,
+        fail: failItems.length,
+        acceptanceRate: total > 0 ? Math.round((passItems.length / total) * 100) : 100,
         unitAr: 'خطة فحص',
         unitEn: 'Inspection Plans',
         passLabelAr: 'معتمدة وفعالة',
         passLabelEn: 'Active',
         failLabelAr: 'مسودات متوقفة',
-        failLabelEn: 'Draft'
+        failLabelEn: 'Draft',
+        allItems: plans,
+        passItems,
+        failItems
       };
     }
 
@@ -352,57 +385,66 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
     if (id === 'STATION-SHOPFLOOR-ENTRY' || id === 'STATION-DEFECT-LOG' || code.includes('SHP') || code.includes('DEF')) {
       const defects = getStoredArray(['qms_local_defect-logs', 'qms_defect_record_audit_trail_v1']);
       const total = defects.length;
-      const closed = defects.filter(d => (d.status || '').toLowerCase() === 'closed' || (d.status || '').toLowerCase() === 'resolved').length;
-      const open = total - closed;
+      const passItems = defects.filter(d => (d.status || '').toLowerCase() === 'closed' || (d.status || '').toLowerCase() === 'resolved');
+      const failItems = defects.filter(d => !((d.status || '').toLowerCase() === 'closed' || (d.status || '').toLowerCase() === 'resolved'));
       return {
         total,
-        pass: closed,
-        fail: open,
-        acceptanceRate: total > 0 ? Math.round((closed / total) * 100) : 100,
+        pass: passItems.length,
+        fail: failItems.length,
+        acceptanceRate: total > 0 ? Math.round((passItems.length / total) * 100) : 100,
         unitAr: 'تسجيل عيب',
         unitEn: 'Defect Logs',
         passLabelAr: 'تم الحل والإغلاق',
         passLabelEn: 'Resolved',
         failLabelAr: 'عيوب نشطة ومفتوحة',
-        failLabelEn: 'Open'
+        failLabelEn: 'Open',
+        allItems: defects,
+        passItems,
+        failItems
       };
     }
 
     if (id === 'STATION-SPC-CHARTS' || code.includes('SPC')) {
       const spc = getStoredArray(['qms_spc_real_measurements', 'qms_spc_charts_v2']);
       const total = spc.length;
-      const pass = spc.filter(s => !s.outOfControl).length;
-      const fail = total - pass;
+      const passItems = spc.filter(s => !s.outOfControl);
+      const failItems = spc.filter(s => s.outOfControl);
       return {
         total,
-        pass,
-        fail,
-        acceptanceRate: total > 0 ? Math.round((pass / total) * 100) : 100,
+        pass: passItems.length,
+        fail: failItems.length,
+        acceptanceRate: total > 0 ? Math.round((passItems.length / total) * 100) : 100,
         unitAr: 'كارتة تحكم',
         unitEn: 'SPC Charts',
         passLabelAr: 'تحت السيطرة (In-Control)',
         passLabelEn: 'In Control',
         failLabelAr: 'انحراف إحصائي (OOC)',
-        failLabelEn: 'Out of Control'
+        failLabelEn: 'Out of Control',
+        allItems: spc,
+        passItems,
+        failItems
       };
     }
 
     if (id === 'STATION-EXECUTION-BOARD' || code.includes('EXEC') || code.includes('BRD')) {
       const tasks = getStoredArray(['qms_local_execution-tasks', 'qms_execution_tasks_v1']);
       const total = tasks.length;
-      const pass = tasks.filter(t => t.status === 'completed' || t.status === 'done').length;
-      const fail = total - pass;
+      const passItems = tasks.filter(t => t.status === 'completed' || t.status === 'done');
+      const failItems = tasks.filter(t => !(t.status === 'completed' || t.status === 'done'));
       return {
         total,
-        pass,
-        fail,
-        acceptanceRate: total > 0 ? Math.round((pass / total) * 100) : 100,
+        pass: passItems.length,
+        fail: failItems.length,
+        acceptanceRate: total > 0 ? Math.round((passItems.length / total) * 100) : 100,
         unitAr: 'أمر فحص',
         unitEn: 'Inspection Tasks',
         passLabelAr: 'منفذة بالكامل',
         passLabelEn: 'Executed',
         failLabelAr: 'متأخرة عن الـ SLA',
-        failLabelEn: 'Delayed'
+        failLabelEn: 'Delayed',
+        allItems: tasks,
+        passItems,
+        failItems
       };
     }
 
@@ -410,95 +452,110 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
     if (id === 'STATION-NCR-REPORTS' || code.includes('NCR')) {
       const ncrs = getStoredArray(['qms_local_ncr']);
       const total = ncrs.length;
-      const closed = ncrs.filter(n => (n.status || '').toLowerCase() === 'closed' || (n.status || '').toLowerCase() === 'resolved').length;
-      const open = total - closed;
+      const passItems = ncrs.filter(n => (n.status || '').toLowerCase() === 'closed' || (n.status || '').toLowerCase() === 'resolved');
+      const failItems = ncrs.filter(n => !((n.status || '').toLowerCase() === 'closed' || (n.status || '').toLowerCase() === 'resolved'));
       return {
         total,
-        pass: closed,
-        fail: open,
-        acceptanceRate: total > 0 ? Math.round((closed / total) * 100) : 100,
+        pass: passItems.length,
+        fail: failItems.length,
+        acceptanceRate: total > 0 ? Math.round((passItems.length / total) * 100) : 100,
         unitAr: 'تقرير NCR',
         unitEn: 'NCR Reports',
         passLabelAr: 'معتمد ومغلق',
         passLabelEn: 'Closed',
         failLabelAr: 'حالات حجز نشطة',
-        failLabelEn: 'Open Containment'
+        failLabelEn: 'Open Containment',
+        allItems: ncrs,
+        passItems,
+        failItems
       };
     }
 
     if (id === 'STATION-CAPA-ACTIONS' || code.includes('CAPA')) {
       const capas = getStoredArray(['qms_local_capa']);
       const total = capas.length;
-      const closed = capas.filter(c => (c.status || '').toLowerCase() === 'closed' || (c.status || '').toLowerCase() === 'completed').length;
-      const open = total - closed;
+      const passItems = capas.filter(c => (c.status || '').toLowerCase() === 'closed' || (c.status || '').toLowerCase() === 'completed');
+      const failItems = capas.filter(c => !((c.status || '').toLowerCase() === 'closed' || (c.status || '').toLowerCase() === 'completed'));
       return {
         total,
-        pass: closed,
-        fail: open,
-        acceptanceRate: total > 0 ? Math.round((closed / total) * 100) : 100,
+        pass: passItems.length,
+        fail: failItems.length,
+        acceptanceRate: total > 0 ? Math.round((passItems.length / total) * 100) : 100,
         unitAr: 'إجراء تصحيحي',
         unitEn: 'CAPA Actions',
         passLabelAr: 'مكتمل وفعال',
         passLabelEn: 'Completed',
         failLabelAr: 'قيد التنفيذ',
-        failLabelEn: 'Pending'
+        failLabelEn: 'Pending',
+        allItems: capas,
+        passItems,
+        failItems
       };
     }
 
     if (id === 'STATION-8D-SOLVING' || code.includes('8D')) {
       const eightDs = getStoredArray(['qms_local_8d', 'qms_local_eight-d']);
       const total = eightDs.length;
-      const closed = eightDs.filter(d => (d.status || '').toLowerCase() === 'closed' || d.currentStep === 'D8').length;
-      const open = total - closed;
+      const passItems = eightDs.filter(d => (d.status || '').toLowerCase() === 'closed' || d.currentStep === 'D8');
+      const failItems = eightDs.filter(d => !((d.status || '').toLowerCase() === 'closed' || d.currentStep === 'D8'));
       return {
         total,
-        pass: closed,
-        fail: open,
-        acceptanceRate: total > 0 ? Math.round((closed / total) * 100) : 100,
+        pass: passItems.length,
+        fail: failItems.length,
+        acceptanceRate: total > 0 ? Math.round((passItems.length / total) * 100) : 100,
         unitAr: 'مشروع 8D',
         unitEn: '8D Projects',
         passLabelAr: 'مغلق بنجاح (D8)',
         passLabelEn: 'Closed (D8)',
         failLabelAr: 'قيد التحليل الجذري',
-        failLabelEn: 'Under Analysis'
+        failLabelEn: 'Under Analysis',
+        allItems: eightDs,
+        passItems,
+        failItems
       };
     }
 
     if (id === 'STATION-DEVIATION-PERMITS' || code.includes('DEV')) {
       const devs = getStoredArray(['qms_local_deviations', 'qms_local_deviation']);
       const total = devs.length;
-      const pass = devs.filter(d => (d.status || '').toLowerCase() === 'approved' || (d.status || '').toLowerCase() === 'closed').length;
-      const fail = total - pass;
+      const passItems = devs.filter(d => (d.status || '').toLowerCase() === 'approved' || (d.status || '').toLowerCase() === 'closed');
+      const failItems = devs.filter(d => !((d.status || '').toLowerCase() === 'approved' || (d.status || '').toLowerCase() === 'closed'));
       return {
         total,
-        pass,
-        fail,
-        acceptanceRate: total > 0 ? Math.round((pass / total) * 100) : 100,
+        pass: passItems.length,
+        fail: failItems.length,
+        acceptanceRate: total > 0 ? Math.round((passItems.length / total) * 100) : 100,
         unitAr: 'تصريح حيود',
         unitEn: 'Deviations',
         passLabelAr: 'معتمد ومقيد',
         passLabelEn: 'Approved',
         failLabelAr: 'مرفوض لخطورته',
-        failLabelEn: 'Rejected'
+        failLabelEn: 'Rejected',
+        allItems: devs,
+        passItems,
+        failItems
       };
     }
 
     if (id === 'STATION-CHANGE-CONTROL' || code.includes('CHG') || code.includes('ECN')) {
       const changes = getStoredArray(['qms_local_change-control', 'qms_local_change_control']);
       const total = changes.length;
-      const pass = changes.filter(c => (c.status || '').toLowerCase() === 'implemented' || (c.status || '').toLowerCase() === 'closed').length;
-      const fail = total - pass;
+      const passItems = changes.filter(c => (c.status || '').toLowerCase() === 'implemented' || (c.status || '').toLowerCase() === 'closed');
+      const failItems = changes.filter(c => !((c.status || '').toLowerCase() === 'implemented' || (c.status || '').toLowerCase() === 'closed'));
       return {
         total,
-        pass,
-        fail,
-        acceptanceRate: total > 0 ? Math.round((pass / total) * 100) : 100,
+        pass: passItems.length,
+        fail: failItems.length,
+        acceptanceRate: total > 0 ? Math.round((passItems.length / total) * 100) : 100,
         unitAr: 'أمر تغيير ECN',
         unitEn: 'Change Requests',
         passLabelAr: 'منفذ ومعتمد',
         passLabelEn: 'Implemented',
         failLabelAr: 'قيد دراسة الأثر',
-        failLabelEn: 'Under Review'
+        failLabelEn: 'Under Review',
+        allItems: changes,
+        passItems,
+        failItems
       };
     }
 
@@ -506,19 +563,22 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
     if (id === 'STATION-OUTGOING-OQC' || code.includes('OUT') || code.includes('OQC')) {
       const oqc = getStoredArray(['qms_local_oqc', 'qms_local_outgoing']);
       const total = oqc.length;
-      const pass = oqc.filter(o => (o.result || o.status || '').toLowerCase() === 'pass').length;
-      const fail = total - pass;
+      const passItems = oqc.filter(o => (o.result || o.status || '').toLowerCase() === 'pass');
+      const failItems = oqc.filter(o => (o.result || o.status || '').toLowerCase() !== 'pass');
       return {
         total,
-        pass,
-        fail,
-        acceptanceRate: total > 0 ? Math.round((pass / total) * 100) : 100,
+        pass: passItems.length,
+        fail: failItems.length,
+        acceptanceRate: total > 0 ? Math.round((passItems.length / total) * 100) : 100,
         unitAr: 'لوط نهائي',
         unitEn: 'Release Lots',
         passLabelAr: 'تصريح شحن (COC)',
         passLabelEn: 'Approved for Dispatch',
         failLabelAr: 'حجز وإعادة تعديل',
-        failLabelEn: 'Quarantined / Rework'
+        failLabelEn: 'Quarantined / Rework',
+        allItems: oqc,
+        passItems,
+        failItems
       };
     }
 
@@ -526,19 +586,22 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
     if (id === 'STATION-CUSTOMER-COMPLAINTS' || code.includes('CMP') || code.includes('CUST')) {
       const complaints = getStoredArray(['qms_local_complaints']);
       const total = complaints.length;
-      const closed = complaints.filter(c => (c.status || '').toLowerCase() === 'closed' || (c.status || '').toLowerCase() === 'resolved').length;
-      const open = total - closed;
+      const passItems = complaints.filter(c => (c.status || '').toLowerCase() === 'closed' || (c.status || '').toLowerCase() === 'resolved');
+      const failItems = complaints.filter(c => !((c.status || '').toLowerCase() === 'closed' || (c.status || '').toLowerCase() === 'resolved'));
       return {
         total,
-        pass: closed,
-        fail: open,
-        acceptanceRate: total > 0 ? Math.round((closed / total) * 100) : 100,
+        pass: passItems.length,
+        fail: failItems.length,
+        acceptanceRate: total > 0 ? Math.round((passItems.length / total) * 100) : 100,
         unitAr: 'بلاغ عميل',
         unitEn: 'Customer Claims',
         passLabelAr: 'تمت التسوية والإغلاق',
         passLabelEn: 'Settled',
         failLabelAr: 'بلاغات نشطة',
-        failLabelEn: 'Active Claims'
+        failLabelEn: 'Active Claims',
+        allItems: complaints,
+        passItems,
+        failItems
       };
     }
 
@@ -546,76 +609,88 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
     if (id === 'STATION-CALIBRATION-MSA' || code.includes('CAL')) {
       const cals = getStoredArray(['qms_local_calibrations']);
       const total = cals.length;
-      const valid = cals.filter(c => (c.status || '').toLowerCase() === 'valid' || (c.status || '').toLowerCase() === 'calibrated').length;
-      const expired = total - valid;
+      const passItems = cals.filter(c => (c.status || '').toLowerCase() === 'valid' || (c.status || '').toLowerCase() === 'calibrated');
+      const failItems = cals.filter(c => !((c.status || '').toLowerCase() === 'valid' || (c.status || '').toLowerCase() === 'calibrated'));
       return {
         total,
-        pass: valid,
-        fail: expired,
-        acceptanceRate: total > 0 ? Math.round((valid / total) * 100) : 100,
+        pass: passItems.length,
+        fail: failItems.length,
+        acceptanceRate: total > 0 ? Math.round((passItems.length / total) * 100) : 100,
         unitAr: 'جهاز قياس',
         unitEn: 'Gages',
         passLabelAr: 'معايرة صالحة',
         passLabelEn: 'Valid Calibration',
         failLabelAr: 'منتهية المعايرة',
-        failLabelEn: 'Expired'
+        failLabelEn: 'Expired',
+        allItems: cals,
+        passItems,
+        failItems
       };
     }
 
     if (id === 'STATION-CONTROL-PLAN' || code.includes('CP-') || code.includes('CTRL')) {
       const cps = getStoredArray(['qms_local_control-plans']);
       const total = cps.length;
-      const pass = cps.filter(p => (p.status || '').toLowerCase() === 'approved' || (p.status || '').toLowerCase() === 'active').length;
-      const fail = total - pass;
+      const passItems = cps.filter(p => (p.status || '').toLowerCase() === 'approved' || (p.status || '').toLowerCase() === 'active');
+      const failItems = cps.filter(p => !((p.status || '').toLowerCase() === 'approved' || (p.status || '').toLowerCase() === 'active'));
       return {
         total,
-        pass,
-        fail,
-        acceptanceRate: total > 0 ? Math.round((pass / total) * 100) : 100,
+        pass: passItems.length,
+        fail: failItems.length,
+        acceptanceRate: total > 0 ? Math.round((passItems.length / total) * 100) : 100,
         unitAr: 'خطة تحكم',
         unitEn: 'Control Plans',
         passLabelAr: 'معتمدة وسارية',
         passLabelEn: 'Approved',
         failLabelAr: 'مسودات',
-        failLabelEn: 'Draft'
+        failLabelEn: 'Draft',
+        allItems: cps,
+        passItems,
+        failItems
       };
     }
 
     if (id === 'STATION-FMEA-RISK' || code.includes('FMEA')) {
       const fmeas = getStoredArray(['qms_local_fmea', 'qms_fmea_studies_v1']);
       const total = fmeas.length;
-      const pass = fmeas.filter(f => (f.rpn || 0) < 100 || (f.status || '').toLowerCase() === 'approved').length;
-      const fail = total - pass;
+      const passItems = fmeas.filter(f => (f.rpn || 0) < 100 || (f.status || '').toLowerCase() === 'approved');
+      const failItems = fmeas.filter(f => !((f.rpn || 0) < 100 || (f.status || '').toLowerCase() === 'approved'));
       return {
         total,
-        pass,
-        fail,
-        acceptanceRate: total > 0 ? Math.round((pass / total) * 100) : 100,
+        pass: passItems.length,
+        fail: failItems.length,
+        acceptanceRate: total > 0 ? Math.round((passItems.length / total) * 100) : 100,
         unitAr: 'دراسة FMEA',
         unitEn: 'FMEA Studies',
         passLabelAr: 'مستوى خطر آمن',
         passLabelEn: 'Low Risk',
         failLabelAr: 'خطر حرج (High RPN)',
-        failLabelEn: 'High RPN'
+        failLabelEn: 'High RPN',
+        allItems: fmeas,
+        passItems,
+        failItems
       };
     }
 
     if (id === 'STATION-LAYERED-AUDITS' || id === 'STATION-INTERNAL-AUDIT' || code.includes('AUD')) {
       const audits = getStoredArray(['qms_local_audits']);
       const total = audits.length;
-      const conforming = audits.filter(a => (a.result || a.status || '').toLowerCase() === 'conforming' || (a.result || a.status || '').toLowerCase() === 'passed' || (a.findingsCount || 0) === 0).length;
-      const nonConf = total - conforming;
+      const passItems = audits.filter(a => (a.result || a.status || '').toLowerCase() === 'conforming' || (a.result || a.status || '').toLowerCase() === 'passed' || (a.findingsCount || 0) === 0);
+      const failItems = audits.filter(a => !((a.result || a.status || '').toLowerCase() === 'conforming' || (a.result || a.status || '').toLowerCase() === 'passed' || (a.findingsCount || 0) === 0));
       return {
         total,
-        pass: conforming,
-        fail: nonConf,
-        acceptanceRate: total > 0 ? Math.round((conforming / total) * 100) : 100,
+        pass: passItems.length,
+        fail: failItems.length,
+        acceptanceRate: total > 0 ? Math.round((passItems.length / total) * 100) : 100,
         unitAr: 'جولة تدقيق',
         unitEn: 'Audits',
         passLabelAr: 'مطابق للمواصفة',
         passLabelEn: 'Conforming',
         failLabelAr: 'حالات عدم مطابقة',
-        failLabelEn: 'Non-Conformances'
+        failLabelEn: 'Non-Conformances',
+        allItems: audits,
+        passItems,
+        failItems
       };
     }
 
@@ -625,6 +700,7 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
       const p2 = getStoredArray(['qms_master_data_production_lines']);
       const p3 = getStoredArray(['qms_master_data_defects']);
       const total = p1.length + p2.length + p3.length;
+      const all = [...p1, ...p2, ...p3];
       return {
         total,
         pass: total,
@@ -635,7 +711,10 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
         passLabelAr: 'مفعل وجاهز',
         passLabelEn: 'Ready',
         failLabelAr: 'مسودات',
-        failLabelEn: 'Draft'
+        failLabelEn: 'Draft',
+        allItems: all,
+        passItems: all,
+        failItems: []
       };
     }
 
@@ -652,7 +731,10 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
         passLabelAr: 'معتمد وجاهز',
         passLabelEn: 'Ready',
         failLabelAr: 'مسودات',
-        failLabelEn: 'Draft'
+        failLabelEn: 'Draft',
+        allItems: tmps,
+        passItems: tmps,
+        failItems: []
       };
     }
 
@@ -669,7 +751,10 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
         passLabelAr: 'موثق ومعتمد',
         passLabelEn: 'Documented',
         failLabelAr: 'مسودات',
-        failLabelEn: 'Draft'
+        failLabelEn: 'Draft',
+        allItems: kbs,
+        passItems: kbs,
+        failItems: []
       };
     }
 
@@ -684,7 +769,10 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
       passLabelAr: 'مطابق',
       passLabelEn: 'Pass',
       failLabelAr: 'مرفوض',
-      failLabelEn: 'Fail'
+      failLabelEn: 'Fail',
+      allItems: [],
+      passItems: [],
+      failItems: []
     };
   }, [realIncomingInspections, getStoredArray]);
 
@@ -733,35 +821,65 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
   // Render Stage KPI & Metric Summary Header
   const renderStageMetricsBanner = (stageNumber: number, deptId: string, accentColor: string) => {
     const stageStats = getStageRecordStats(deptId);
+    const stageStations = stationsByDept.get(deptId) || [];
+    const targetStation = stageStations.find(st => {
+      const s = getStationRecordStats(st, stageNumber);
+      return s.total > 0;
+    }) || stageStations[0];
+
     return (
       <div 
         className="p-3 sm:px-4 rounded-2xl bg-slate-950/90 border border-white/10 flex flex-wrap items-center justify-between gap-3 shadow-inner my-2"
         style={{ borderInlineStartColor: accentColor, borderInlineStartWidth: '4px' }}
       >
-        <div className="flex items-center gap-2">
+        <div 
+          onClick={() => {
+            if (targetStation) handleOpenDrilldown(targetStation, stageNumber, 'all');
+          }}
+          className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+          title={isAr ? 'اضغط لعرض السجلات ومسار هذه المرحلة' : 'Click to inspect stage records'}
+        >
           <span className="w-2.5 h-2.5 rounded-full animate-pulse" style={{ backgroundColor: accentColor }} />
           <span className="text-xs font-bold text-slate-300">
             {isAr ? `إجمالي تسجيلات المرحلة ${stageNumber}:` : `Stage ${stageNumber} Total Records:`}
           </span>
-          <span className="px-2.5 py-0.5 rounded-lg bg-white/10 text-white font-mono font-black text-xs border border-white/10">
-            {stageStats.total} {isAr ? stageStats.unitAr : stageStats.unitEn}
+          <span className="px-2.5 py-0.5 rounded-lg bg-white/10 hover:bg-white/20 text-white font-mono font-black text-xs border border-white/10 transition-colors">
+            {stageStats.total} {isAr ? stageStats.unitAr : stageStats.unitEn} ↗
           </span>
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
-          <span className="px-2.5 py-1 rounded-xl bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-xs font-bold flex items-center gap-1.5 shadow-sm">
+          <button
+            type="button"
+            onClick={() => {
+              if (targetStation) handleOpenDrilldown(targetStation, stageNumber, 'pass');
+            }}
+            className="px-2.5 py-1 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+            title={isAr ? 'اضغط لفتح السجلات المقبولة ومسارها' : 'Click to view accepted records'}
+          >
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
             <span>{isAr ? 'مقبول ومطابق:' : 'Accepted:'}</span>
             <b className="font-mono text-emerald-400 text-xs">{stageStats.pass}</b>
-            <span className="text-[10px] text-emerald-400/80">({stageStats.acceptanceRate}%)</span>
-          </span>
+            <span className="text-[10px] text-emerald-400/80">({stageStats.acceptanceRate}%) ↗</span>
+          </button>
 
-          <span className="px-2.5 py-1 rounded-xl bg-rose-500/15 text-rose-300 border border-rose-500/30 text-xs font-bold flex items-center gap-1.5 shadow-sm">
+          <button
+            type="button"
+            onClick={() => {
+              if (targetStation) handleOpenDrilldown(targetStation, stageNumber, 'fail');
+            }}
+            className={`px-2.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer border ${
+              stageStats.fail > 0 
+                ? 'bg-rose-500/15 hover:bg-rose-500/30 text-rose-300 border-rose-500/30' 
+                : 'bg-slate-800/40 hover:bg-slate-800/80 text-slate-400 border-slate-700/30'
+            }`}
+            title={isAr ? 'اضغط لفتح السجلات المرفوضة ومسار الحجز' : 'Click to view rejected records'}
+          >
             <AlertOctagon className="w-3.5 h-3.5 text-rose-400" />
             <span>{isAr ? 'مرفوض ومحجوز:' : 'Rejected:'}</span>
             <b className="font-mono text-rose-400 text-xs">{stageStats.fail}</b>
-            <span className="text-[10px] text-rose-400/80">({100 - stageStats.acceptanceRate}%)</span>
-          </span>
+            <span className="text-[10px] text-rose-400/80">({100 - stageStats.acceptanceRate}%) ↗</span>
+          </button>
         </div>
       </div>
     );
@@ -915,38 +1033,69 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
             <div className="my-2.5 p-2 rounded-xl bg-slate-950/60 border border-white/5 space-y-2 shadow-inner">
               <div className="grid grid-cols-3 divide-x divide-x-reverse divide-white/10 text-center">
                 {/* Total */}
-                <div className="px-1">
-                  <span className="text-[10px] text-slate-400 block font-medium">
+                <div 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleOpenDrilldown(station, stageNumber, 'all');
+                  }}
+                  className="px-1 py-1 rounded-lg hover:bg-white/10 cursor-pointer transition-all group/stat relative"
+                  title={isAr ? 'اضغط لفتح كامل السجلات والمسار' : 'Click to view all records'}
+                >
+                  <span className="text-[10px] text-slate-400 group-hover/stat:text-cyan-300 block font-medium transition-colors">
                     {isAr ? 'الإجمالي' : 'Total'}
                   </span>
-                  <span className="text-sm font-mono font-black text-white">
+                  <span className="text-sm font-mono font-black text-white group-hover/stat:text-cyan-300 flex items-center justify-center gap-0.5">
                     {cardStats.total}
+                    <span className="text-[9px] opacity-0 group-hover/stat:opacity-100 transition-opacity">↗</span>
                   </span>
                 </div>
 
                 {/* Pass */}
-                <div className="px-1">
-                  <span className="text-[10px] text-emerald-400/90 block font-bold">
+                <div 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleOpenDrilldown(station, stageNumber, 'pass');
+                  }}
+                  className="px-1 py-1 rounded-lg hover:bg-emerald-950/60 cursor-pointer transition-all group/stat relative"
+                  title={isAr ? 'اضغط لفتح السجلات المقبولة والمسار' : 'Click to view accepted records'}
+                >
+                  <span className="text-[10px] text-emerald-400/90 group-hover/stat:text-emerald-300 block font-bold transition-colors">
                     {isAr ? '✓ مقبول' : '✓ Pass'}
                   </span>
-                  <span className="text-sm font-mono font-black text-emerald-400">
+                  <span className="text-sm font-mono font-black text-emerald-400 group-hover/stat:scale-105 transition-transform flex items-center justify-center gap-0.5">
                     {cardStats.pass}
+                    <span className="text-[9px] opacity-0 group-hover/stat:opacity-100 transition-opacity">↗</span>
                   </span>
                 </div>
 
                 {/* Fail */}
-                <div className="px-1">
-                  <span className="text-[10px] text-rose-400/90 block font-bold">
+                <div 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleOpenDrilldown(station, stageNumber, 'fail');
+                  }}
+                  className="px-1 py-1 rounded-lg hover:bg-rose-950/60 cursor-pointer transition-all group/stat relative"
+                  title={isAr ? 'اضغط لفتح السجلات المرفوضة ومسار الحجز' : 'Click to view rejected records'}
+                >
+                  <span className="text-[10px] text-rose-400/90 group-hover/stat:text-rose-300 block font-bold transition-colors">
                     {isAr ? '✕ مرفوض' : '✕ Fail'}
                   </span>
-                  <span className="text-sm font-mono font-black text-rose-400">
+                  <span className="text-sm font-mono font-black text-rose-400 group-hover/stat:scale-105 transition-transform flex items-center justify-center gap-0.5">
                     {cardStats.fail}
+                    <span className="text-[9px] opacity-0 group-hover/stat:opacity-100 transition-opacity">↗</span>
                   </span>
                 </div>
               </div>
 
-              {/* Slim, smooth dual-color bar */}
-              <div className="w-full bg-slate-800/80 rounded-full h-1.5 overflow-hidden flex shadow-inner">
+              {/* Slim, smooth dual-color bar - clickable to open records */}
+              <div 
+                className="w-full bg-slate-800/80 rounded-full h-1.5 overflow-hidden flex shadow-inner cursor-pointer hover:h-2 transition-all"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleOpenDrilldown(station, stageNumber, 'all');
+                }}
+                title={isAr ? 'اضغط لعرض السجلات ومسار الخامة' : 'Click to inspect records & lot path'}
+              >
                 <div 
                   className="bg-emerald-400 h-full transition-all duration-500 rounded-full" 
                   style={{ width: `${cardStats.acceptanceRate}%` }} 
@@ -963,20 +1112,44 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
             </div>
           ) : (
             <div className="my-2 p-1.5 px-2.5 rounded-xl bg-slate-950/50 border border-white/5 flex items-center justify-between text-xs">
-              <span className="text-slate-300 text-[11px] font-mono font-bold">
-                <b className="text-white text-xs">{cardStats.total}</b> {isAr ? 'سجل' : 'items'}
-              </span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleOpenDrilldown(station, stageNumber, 'all');
+                }}
+                className="text-slate-300 hover:text-cyan-300 text-[11px] font-mono font-bold flex items-center gap-1 transition-colors"
+                title={isAr ? 'اضغط لفتح كامل السجلات' : 'Click to inspect all records'}
+              >
+                <b className="text-white text-xs">{cardStats.total}</b> {isAr ? 'سجل' : 'items'} ↗
+              </button>
               <div className="flex items-center gap-1.5 font-mono text-[10px] font-bold">
-                <span className="px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleOpenDrilldown(station, stageNumber, 'pass');
+                  }}
+                  className="px-1.5 py-0.5 rounded-md bg-emerald-500/15 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/20 transition-all cursor-pointer"
+                  title={isAr ? 'اضغط لفتح السجلات المقبولة' : 'Click to view accepted records'}
+                >
                   {cardStats.pass} ✓
-                </span>
-                <span className={`px-1.5 py-0.5 rounded-md border ${
-                  cardStats.fail > 0 
-                    ? 'bg-rose-500/15 text-rose-400 border-rose-500/20' 
-                    : 'bg-slate-800/60 text-slate-500 border-slate-700/40'
-                }`}>
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleOpenDrilldown(station, stageNumber, 'fail');
+                  }}
+                  className={`px-1.5 py-0.5 rounded-md border transition-all cursor-pointer ${
+                    cardStats.fail > 0 
+                      ? 'bg-rose-500/15 hover:bg-rose-500/30 text-rose-400 border-rose-500/20' 
+                      : 'bg-slate-800/60 text-slate-500 border-slate-700/40'
+                  }`}
+                  title={isAr ? 'اضغط لفتح السجلات المرفوضة ومسار الحجز' : 'Click to view rejected records'}
+                >
                   {cardStats.fail} ✕
-                </span>
+                </button>
               </div>
             </div>
           )}
@@ -1266,6 +1439,422 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
     };
   };
 
+  // --------------------------------------------------------------------------
+  // DRILL-DOWN RECORD MODAL & LOT JOURNEY INSPECTOR (Detailed Pass / Fail / All)
+  // --------------------------------------------------------------------------
+  const renderStationDrilldownModal = () => {
+    if (!stationDrilldown.isOpen || !stationDrilldown.station) return null;
+
+    const st = stationDrilldown.station;
+    const stageNum = stationDrilldown.stageNumber;
+    const stats = getStationRecordStats(st, stageNum);
+    const activeFilter = stationDrilldown.filter;
+
+    // Pick items based on active tab
+    const sourceList: any[] = activeFilter === 'pass' 
+      ? (stats.passItems || []) 
+      : activeFilter === 'fail' 
+        ? (stats.failItems || []) 
+        : (stats.allItems || []);
+
+    // Filter by search query if user searches
+    const query = drilldownSearch.trim().toLowerCase();
+    const displayItems = sourceList.filter((item: any) => {
+      if (!query) return true;
+      const lot = String(item.batchNumber || item.lotNumber || item.batch || item.lot || '').toLowerCase();
+      const name = String(item.productName || item.product || item.title || item.name || item.partName || '').toLowerCase();
+      const num = String(item.inspectionNumber || item.ncrNumber || item.capaNumber || item.code || item.id || '').toLowerCase();
+      const notes = String(item.notes || item.reason || item.description || item.defectType || '').toLowerCase();
+      const supp = String(item.supplierName || item.supplier || '').toLowerCase();
+      return lot.includes(query) || name.includes(query) || num.includes(query) || notes.includes(query) || supp.includes(query);
+    });
+
+    const isPassFilter = activeFilter === 'pass';
+    const isFailFilter = activeFilter === 'fail';
+
+    return (
+      <div 
+        className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200"
+        onClick={() => setStationDrilldown(prev => ({ ...prev, isOpen: false }))}
+      >
+        <div 
+          className="w-full max-w-4xl max-h-[90vh] bg-slate-900 border border-slate-700/80 rounded-3xl shadow-2xl flex flex-col overflow-hidden text-start animate-in zoom-in-95 duration-200"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* MODAL HEADER */}
+          <div className="p-4 sm:p-5 bg-gradient-to-r from-slate-900 via-slate-950 to-slate-900 border-b border-white/10 flex items-center justify-between gap-3 shrink-0">
+            <div className="flex items-center gap-3">
+              <span className="w-10 h-10 rounded-2xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 flex items-center justify-center shrink-0 shadow-inner">
+                {renderIcon(st.iconType, 'w-5 h-5')}
+              </span>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="px-2 py-0.5 rounded-md bg-slate-800 border border-slate-700 text-cyan-300 font-mono font-black text-xs">
+                    {st.code}
+                  </span>
+                  <span className="text-xs font-mono text-slate-400">
+                    {isAr ? `المرحلة ${stageNum}` : `Stage ${stageNum}`}
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/5 text-slate-300 border border-white/10">
+                    {stats.total} {isAr ? stats.unitAr : stats.unitEn}
+                  </span>
+                </div>
+                <h3 className="text-base sm:text-lg font-black text-white mt-0.5">
+                  {isAr ? st.titleAr : st.titleEn}
+                </h3>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setStationDrilldown(prev => ({ ...prev, isOpen: false }))}
+              className="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/15 text-slate-400 hover:text-white flex items-center justify-center transition-colors border border-white/10"
+              title={isAr ? 'إغلاق' : 'Close'}
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* FILTER TABS & SEARCH BAR */}
+          <div className="p-3 sm:px-5 bg-slate-950/60 border-b border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
+            {/* Filter Tabs */}
+            <div className="flex items-center gap-1.5 p-1 bg-slate-900/90 rounded-2xl border border-white/10">
+              {/* Total */}
+              <button
+                onClick={() => setStationDrilldown(prev => ({ ...prev, filter: 'all' }))}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  activeFilter === 'all'
+                    ? 'bg-cyan-500 text-slate-950 shadow-md font-black'
+                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                <span>{isAr ? 'الكل' : 'All'}</span>
+                <span className={`px-1.5 py-0.2 rounded-md text-[10px] font-mono ${
+                  activeFilter === 'all' ? 'bg-slate-950/30 text-slate-950' : 'bg-white/10 text-slate-300'
+                }`}>
+                  {stats.total}
+                </span>
+              </button>
+
+              {/* Pass */}
+              <button
+                onClick={() => setStationDrilldown(prev => ({ ...prev, filter: 'pass' }))}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  activeFilter === 'pass'
+                    ? 'bg-emerald-500 text-slate-950 shadow-md font-black'
+                    : 'text-emerald-400 hover:bg-emerald-950/40'
+                }`}
+              >
+                <span>{isAr ? '✓ مقبول ومطابق' : '✓ Pass'}</span>
+                <span className={`px-1.5 py-0.2 rounded-md text-[10px] font-mono ${
+                  activeFilter === 'pass' ? 'bg-slate-950/30 text-slate-950' : 'bg-emerald-500/20 text-emerald-300'
+                }`}>
+                  {stats.pass}
+                </span>
+              </button>
+
+              {/* Fail */}
+              <button
+                onClick={() => setStationDrilldown(prev => ({ ...prev, filter: 'fail' }))}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  activeFilter === 'fail'
+                    ? 'bg-rose-500 text-slate-950 shadow-md font-black'
+                    : 'text-rose-400 hover:bg-rose-950/40'
+                }`}
+              >
+                <span>{isAr ? '✕ مرفوض ومحجوز' : '✕ Fail'}</span>
+                <span className={`px-1.5 py-0.2 rounded-md text-[10px] font-mono ${
+                  activeFilter === 'fail' ? 'bg-slate-950/30 text-slate-950' : 'bg-rose-500/20 text-rose-300'
+                }`}>
+                  {stats.fail}
+                </span>
+              </button>
+            </div>
+
+            {/* In-Modal Search Input */}
+            <div className="relative w-full sm:w-64">
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute start-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                value={drilldownSearch}
+                onChange={(e) => setDrilldownSearch(e.target.value)}
+                placeholder={isAr ? 'بحث برقم اللوط أو الخامة...' : 'Search lot or record...'}
+                className="w-full ps-8 pe-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 font-mono"
+              />
+              {drilldownSearch && (
+                <button
+                  onClick={() => setDrilldownSearch('')}
+                  className="absolute end-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* RECORDS LIST CONTAINER */}
+          <div className="p-4 sm:p-6 overflow-y-auto max-h-[60vh] space-y-3.5 scrollbar-thin">
+            {displayItems.length === 0 ? (
+              <div className="py-12 text-center space-y-3">
+                <div className="w-14 h-14 rounded-3xl bg-slate-800/80 text-slate-400 flex items-center justify-center mx-auto border border-white/10 shadow-lg">
+                  {isFailFilter ? (
+                    <CheckCircle2 className="w-7 h-7 text-emerald-400" />
+                  ) : (
+                    <FileText className="w-7 h-7 text-slate-400" />
+                  )}
+                </div>
+                <div className="space-y-1">
+                  <h4 className="text-sm font-black text-white">
+                    {isFailFilter 
+                      ? (isAr ? 'ممتاز! لا توجد أي سجلات مرفوضة في هذه المحطة 🎉' : 'Zero Rejections! 100% Conformance 🎉')
+                      : isPassFilter
+                        ? (isAr ? 'لا توجد سجلات مقبولة حالياً' : 'No pass records found')
+                        : (isAr ? 'لا توجد سجلات مسجلة بعد في هذه المحطة' : 'No records logged in this station yet')}
+                  </h4>
+                  <p className="text-xs text-slate-400 max-w-md mx-auto">
+                    {isFailFilter 
+                      ? (isAr ? 'جميع الفحوصات والعمليات المنفذة في هذه المحطة مطابقة تماماً للمواصفات الفنية وبدون أي حالات حجز.' : 'All inspected units passed technical tolerance specifications.')
+                      : (isAr ? 'يمكنك النقر على الزر أدناه للانتقال وإضافة فحص جديد مباشرةً.' : 'Click below to open the module and record inspections.')}
+                  </p>
+                </div>
+                {isFailFilter && stats.pass > 0 ? (
+                  <button
+                    onClick={() => setStationDrilldown(prev => ({ ...prev, filter: 'pass' }))}
+                    className="px-4 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-xs font-bold transition-all"
+                  >
+                    {isAr ? `عرض السجلات المقبولة (✓ ${stats.pass})` : `View Accepted Records (${stats.pass})`}
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setStationDrilldown(prev => ({ ...prev, isOpen: false }));
+                      navigate(st.moduleUrl);
+                    }}
+                    className="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-black text-xs transition-all flex items-center gap-1.5 mx-auto shadow-md"
+                  >
+                    <span>{isAr ? 'الانتقال إلى المحطة وتسجيل فحص جديد ↗' : 'Open Module & Add Inspection ↗'}</span>
+                  </button>
+                )}
+              </div>
+            ) : (
+              displayItems.map((item: any, idx: number) => {
+                // Extract record metadata
+                const lotNo = String(item.batchNumber || item.lotNumber || item.batch || item.lot || '');
+                const recId = String(item.inspectionNumber || item.ncrNumber || item.capaNumber || item.auditNumber || item.code || item.id || `#REC-${idx + 1}`);
+                const prodName = item.productName || item.product || item.title || item.name || item.partName || (isAr ? 'خامة مسجلة' : 'Registered Item');
+                const dateVal = item.inspectionDate || item.date || (item.createdAt ? String(item.createdAt).split('T')[0] : '') || (isAr ? 'اليوم' : 'Today');
+                const inspector = item.inspectedBy || item.auditor || item.createdBy || item.owner || (isAr ? 'مفتش الجودة' : 'QA Lead');
+                const sampleQty = item.sampleSize ?? item.quantity ?? item.units ?? null;
+                const defCount = item.defectCount ?? item.defects ?? item.findingsCount ?? 0;
+                const lineName = item.productionLine || item.line || item.location || '';
+                const supplierName = item.supplierName || item.supplier || '';
+                const notes = item.notes || item.reason || item.description || item.defectType || '';
+
+                // Conformance flag
+                const isItemPass = (() => {
+                  if (item.result) return (item.result || '').toLowerCase() === 'pass';
+                  if (item.status) {
+                    const s = (item.status || '').toLowerCase();
+                    return s === 'pass' || s === 'approved' || s === 'closed' || s === 'resolved' || s === 'completed' || s === 'valid' || s === 'conforming';
+                  }
+                  return true;
+                })();
+
+                return (
+                  <div
+                    key={item.id || item.inspectionNumber || idx}
+                    className={`p-4 rounded-2xl border transition-all text-start space-y-3 shadow-md ${
+                      isItemPass
+                        ? 'bg-slate-950/70 border-emerald-500/30 hover:border-emerald-500/60'
+                        : 'bg-rose-950/20 border-rose-500/40 hover:border-rose-500/70 shadow-rose-950/20'
+                    }`}
+                  >
+                    {/* TOP LINE: LOT NUMBER, RECORD ID & STATUS PILL */}
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/5 pb-2.5">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {lotNo ? (
+                          <span className="px-2.5 py-1 rounded-xl bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 font-mono font-black text-xs flex items-center gap-1.5 shadow-sm">
+                            <Barcode className="w-3.5 h-3.5 text-cyan-400" />
+                            <span>{isAr ? 'لوط:' : 'Lot:'} <b>{lotNo}</b></span>
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded-lg bg-slate-800 text-slate-400 font-mono text-xs">
+                            {recId}
+                          </span>
+                        )}
+
+                        <span className="text-xs font-mono text-slate-400">
+                          {recId}
+                        </span>
+
+                        <span className="text-xs text-slate-400">
+                          📅 {dateVal}
+                        </span>
+                      </div>
+
+                      {/* Conformance status badge */}
+                      <span className={`px-2.5 py-1 rounded-xl text-xs font-bold border flex items-center gap-1.5 shadow-sm ${
+                        isItemPass
+                          ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+                          : 'bg-rose-500/15 text-rose-300 border-rose-500/30'
+                      }`}>
+                        {isItemPass ? (
+                          <>
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                            <span>{stats.passLabelAr || (isAr ? 'مطابق ومقبول للإفراج' : 'Approved (Pass)')}</span>
+                          </>
+                        ) : (
+                          <>
+                            <AlertOctagon className="w-3.5 h-3.5 text-rose-400" />
+                            <span>{stats.failLabelAr || (isAr ? 'مرفوض بالحجر / حظر' : 'Quarantined (Fail)')}</span>
+                          </>
+                        )}
+                      </span>
+                    </div>
+
+                    {/* COMPLETE DATA GRID (2 to 4 cols) */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                      {/* Product Name */}
+                      <div className="p-2 rounded-xl bg-white/5 border border-white/5">
+                        <span className="text-[10px] text-slate-400 block font-medium">
+                          {isAr ? '📦 الخامة / الصنف:' : 'Material / Item:'}
+                        </span>
+                        <b className="text-white text-xs block font-bold truncate mt-0.5" title={prodName}>
+                          {prodName}
+                        </b>
+                      </div>
+
+                      {/* Inspector */}
+                      <div className="p-2 rounded-xl bg-white/5 border border-white/5">
+                        <span className="text-[10px] text-slate-400 block font-medium">
+                          {isAr ? '👤 الفاحص / المسؤول:' : 'Inspector / Owner:'}
+                        </span>
+                        <span className="text-slate-200 text-xs block truncate mt-0.5">
+                          {inspector}
+                        </span>
+                      </div>
+
+                      {/* Sample Size / Quantity */}
+                      <div className="p-2 rounded-xl bg-white/5 border border-white/5">
+                        <span className="text-[10px] text-slate-400 block font-medium">
+                          {isAr ? '🔢 حجم العينة / الكمية:' : 'Sample / Qty:'}
+                        </span>
+                        <span className="text-slate-200 text-xs font-mono font-bold block mt-0.5">
+                          {sampleQty !== null ? sampleQty : '-'}
+                        </span>
+                      </div>
+
+                      {/* Defect Count */}
+                      <div className="p-2 rounded-xl bg-white/5 border border-white/5">
+                        <span className="text-[10px] text-slate-400 block font-medium">
+                          {isAr ? '⚠️ عدد العيوب / الانحرافات:' : 'Defects Found:'}
+                        </span>
+                        <span className={`text-xs font-mono font-black block mt-0.5 ${
+                          defCount > 0 ? 'text-rose-400' : 'text-emerald-400'
+                        }`}>
+                          {defCount} {isAr ? 'عيب' : 'defects'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Secondary row if line or supplier exists */}
+                    {(lineName || supplierName) && (
+                      <div className="flex flex-wrap items-center gap-3 text-xs text-slate-300 bg-white/[0.02] p-2 rounded-xl border border-white/5">
+                        {supplierName && (
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-slate-400">{isAr ? '🏢 المورد:' : 'Supplier:'}</span>
+                            <span className="font-bold text-white">{supplierName}</span>
+                          </div>
+                        )}
+                        {lineName && (
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-slate-400">{isAr ? '🏭 خط الإنتاج / الموقع:' : 'Line:'}</span>
+                            <span className="font-bold text-white">{lineName}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Notes & Reason Box */}
+                    {notes && (
+                      <div className={`p-2.5 rounded-xl border text-xs leading-relaxed ${
+                        isItemPass 
+                          ? 'bg-emerald-950/20 border-emerald-500/20 text-emerald-200' 
+                          : 'bg-rose-950/30 border-rose-500/30 text-rose-200 font-medium'
+                      }`}>
+                        <span className="font-bold block mb-0.5 text-[11px] opacity-90">
+                          {isItemPass 
+                            ? (isAr ? '📝 ملاحظات الفحص والاعتماد:' : 'Release Notes:') 
+                            : (isAr ? '🚨 سبب الرفض وإجراء الحجر:' : 'Rejection Reason / Quarantine Action:')}
+                        </span>
+                        <span>{notes}</span>
+                      </div>
+                    )}
+
+                    {/* LOT JOURNEY & ACTION BAR (The core user request) */}
+                    <div className="pt-2 border-t border-white/10 flex flex-wrap items-center justify-between gap-2">
+                      {lotNo ? (
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => {
+                              setSelectedLotNumber(lotNo.toUpperCase());
+                              setStationDrilldown(prev => ({ ...prev, isOpen: false }));
+                              // Smooth scroll to lot traceability banner or stopping stage
+                              setTimeout(() => {
+                                const tracker = document.getElementById('lot-journey-traceability-bar');
+                                if (tracker) {
+                                  tracker.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                } else if (!isItemPass) {
+                                  scrollToStage('DEPT-STAGE-RESOLUTION', true);
+                                } else {
+                                  scrollToStage('DEPT-STAGE-INCOMING', true);
+                                }
+                              }, 150);
+                            }}
+                            className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-xs flex items-center gap-1.5 shadow-md shadow-cyan-500/20 hover:scale-105 active:scale-95 transition-all"
+                          >
+                            <Crosshair className="w-3.5 h-3.5 text-slate-950" />
+                            <span>{isAr ? `🧭 تتبع مسار هذا اللوط (${lotNo}) في الفلوشارت` : `Track Lot (${lotNo}) Journey`}</span>
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-slate-400 italic">
+                          {isAr ? 'مسجل بدون رقم لوط محدد' : 'No specific lot code attached'}
+                        </span>
+                      )}
+
+                      <button
+                        onClick={() => {
+                          setStationDrilldown(prev => ({ ...prev, isOpen: false }));
+                          navigate(st.moduleUrl);
+                        }}
+                        className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white border border-white/10 text-xs font-bold flex items-center gap-1.5 transition-colors"
+                      >
+                        <span>{isAr ? 'فتح المحطة ↗' : 'Open Station ↗'}</span>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* MODAL FOOTER */}
+          <div className="p-3 sm:px-5 bg-slate-950 border-t border-white/10 flex items-center justify-between text-xs text-slate-400 shrink-0">
+            <span>
+              {isAr ? `إجمالي السجلات المعروضة: ${displayItems.length}` : `Showing ${displayItems.length} records`}
+            </span>
+            <button
+              onClick={() => setStationDrilldown(prev => ({ ...prev, isOpen: false }))}
+              className="px-4 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold transition-colors"
+            >
+              {isAr ? 'إغلاق' : 'Close'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="flex-1 w-full bg-[#060a14] text-slate-100 flex flex-col font-sans select-none">
       {/* Dynamic Keyframe Animation Styles */}
@@ -1364,7 +1953,7 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
       </div>
 
       {/* 2. ADVANCED LOT & RAW MATERIAL TRACEABILITY SELECTOR BAR */}
-      <div className="bg-[#0b1224] border-b-2 border-cyan-500/30 p-4 md:px-8 shadow-2xl">
+      <div id="lot-journey-traceability-bar" className="bg-[#0b1224] border-b-2 border-cyan-500/30 p-4 md:px-8 shadow-2xl">
         <div className="max-w-6xl mx-auto space-y-3.5">
           {/* Header & Description */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
@@ -2150,6 +2739,9 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
         </div>
 
       </div>
+
+      {/* DRILL-DOWN RECORD MODAL & LOT JOURNEY INSPECTOR */}
+      {renderStationDrilldownModal()}
     </div>
   );
 };
