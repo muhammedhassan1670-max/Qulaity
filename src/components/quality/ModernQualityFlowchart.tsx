@@ -104,6 +104,12 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
     setDrilldownSearch('');
   }, []);
 
+  // Stage 1 Live Lot Tray Controls (Search, Conformance Filter, ViewMode & Collapsible)
+  const [lotTraySearch, setLotTraySearch] = useState('');
+  const [lotTrayFilter, setLotTrayFilter] = useState<'all' | 'pass' | 'fail'>('all');
+  const [lotTrayViewMode, setLotTrayViewMode] = useState<'cards' | 'table'>('cards');
+  const [isLotTrayCollapsed, setIsLotTrayCollapsed] = useState(false);
+
   // Helper: Strictly filter out any legacy dummy/mock inspections
   const filterRealOnly = (items: any[]) => {
     if (!Array.isArray(items)) return [];
@@ -984,9 +990,14 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
               >
                 {renderIcon(station.iconType, 'w-3.5 h-3.5')}
               </span>
-              <span className="text-xs font-mono font-black text-slate-300 tracking-wide">
-                {station.code}
-              </span>
+              <div>
+                <span className="text-xs font-mono font-black text-slate-200 tracking-wide block leading-none">
+                  {station.code}
+                </span>
+                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block mt-0.5">
+                  {isAr ? '🏢 محطة جودة' : 'Station Terminal'}
+                </span>
+              </div>
             </div>
 
             {isLotStoppedHere ? (
@@ -2268,104 +2279,393 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
               {/* Stage 1 Record Metrics Banner (Total, Pass, Fail) */}
               {renderStageMetricsBanner(1, 'DEPT-STAGE-INCOMING', '#f59e0b')}
 
-              {/* 1: Standard 3 Station Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {(stationsByDept.get('DEPT-STAGE-INCOMING') || []).map(st => renderCard(st, '#f59e0b', 1))}
-              </div>
-
-              {/* 2: LIVE INCOMING INSPECTION QUEUE & TESTED MATERIALS (HERE IS WHERE INSPECTED MATERIALS SHOW UP!) */}
-              <div className="mt-5 pt-4 border-t border-amber-500/30">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-3">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
-                    <h4 className="text-xs sm:text-sm font-black text-white">
-                      {isAr ? '📥 سجل الخامات المفحوصة في فحص الاستلام IQC (نتائج التفتيش المباشرة):' : 'Live Inspected Raw Materials Log (IQC):'}
-                    </h4>
-                    <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-mono font-bold border border-amber-500/40">
-                      {realIncomingInspections.length} {isAr ? 'خامات مفحوصة' : 'Lots'}
-                    </span>
-                  </div>
-
-                  <button
-                    onClick={() => navigate('/compliance/hub/inspection')}
-                    className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs flex items-center gap-1.5 transition-all shadow-md shadow-amber-500/20"
-                  >
-                    <span>{isAr ? '➕ فحص خامة جديدة في فحص الاستلام IQC' : '➕ Inspect New Material (IQC)'}</span>
-                    <ExternalLink className="w-3.5 h-3.5 text-slate-950" />
-                  </button>
+              {/* ------------------------------------------------------------- */}
+              {/* SECTION A: PERMANENT QUALITY STATIONS (محطات الفحص الثابتة) */}
+              {/* ------------------------------------------------------------- */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-xs text-slate-300 px-1">
+                  <span className="font-black flex items-center gap-1.5 text-amber-400">
+                    <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+                    <span>{isAr ? '🏢 محطات الجودة الرقابية الثابتة في المصنع (3 محطات):' : 'Stage 1 Quality Terminals (3 Permanent Stations):'}</span>
+                  </span>
+                  <span className="text-[11px] font-mono text-slate-400 bg-black/40 px-2 py-0.5 rounded-md border border-white/5">
+                    {isAr ? 'SUP-01 | PLN-01 | IQC-01' : 'Fixed Stations'}
+                  </span>
                 </div>
 
-                {/* Grid of Inspected Raw Materials with Direct Flow Tracing */}
-                {realIncomingInspections.length === 0 ? (
-                  <div className="p-6 rounded-2xl bg-black/40 border border-dashed border-amber-500/30 text-center">
-                    <p className="text-xs text-slate-400">
-                      {isAr ? 'لا توجد تسجيلات فحص استلام بعد. اضغط على زر "➕ فحص خامة جديدة في فحص الاستلام IQC" لإدخال فحص شحنة حقيقية.' : 'No incoming inspections recorded yet. Click above to record a new material inspection.'}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {realIncomingInspections.map((ins, idx) => {
-                      const isPass = (ins.result || '').toLowerCase() === 'pass' || (ins.status || '').toLowerCase() === 'pass';
-                      const lotNo = ins.batchNumber || ins.batch || ins.lot || ins.inspectionNumber || ins.id;
-                      const isCurrentSelected = selectedLotNumber === lotNo;
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {(stationsByDept.get('DEPT-STAGE-INCOMING') || []).map(st => renderCard(st, '#f59e0b', 1))}
+                </div>
+              </div>
 
-                      return (
-                        <div 
-                          key={ins.id || idx}
-                          onClick={() => {
-                            setSelectedLotNumber(lotNo);
-                            if (isPass) {
-                              scrollToStage('DEPT-STAGE-INPROCESS', true);
-                            } else {
-                              scrollToStage('DEPT-STAGE-RESOLUTION', true);
-                            }
-                          }}
-                          className={`p-3.5 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between group/iqc shadow-sm hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] ${
-                            isCurrentSelected
-                              ? 'bg-cyan-950/70 border-cyan-400 ring-2 ring-cyan-400/50 shadow-cyan-950/50'
-                              : isPass
-                                ? 'bg-slate-900/90 border-emerald-500/40 hover:border-emerald-400 hover:bg-slate-800'
-                                : 'bg-slate-900/90 border-rose-500/50 hover:border-rose-400 hover:bg-slate-800'
-                          }`}
+              {/* ------------------------------------------------------------- */}
+              {/* SECTION B: INSPECTED RAW MATERIAL LOTS TRAY (شحنات وتشغيلات الخامات) */}
+              {/* ------------------------------------------------------------- */}
+              {(() => {
+                const totalLotsCount = realIncomingInspections.length;
+                const passLots = realIncomingInspections.filter(i => (i.result || i.status || '').toLowerCase() === 'pass');
+                const failLots = realIncomingInspections.filter(i => (i.result || i.status || '').toLowerCase() !== 'pass');
+
+                // Filter by Status Tab
+                const statusFiltered = lotTrayFilter === 'pass' 
+                  ? passLots 
+                  : lotTrayFilter === 'fail' 
+                    ? failLots 
+                    : realIncomingInspections;
+
+                // Filter by Search Query
+                const q = lotTraySearch.trim().toLowerCase();
+                const displayLots = statusFiltered.filter(ins => {
+                  if (!q) return true;
+                  const lotNo = String(ins.batchNumber || ins.batch || ins.lot || ins.inspectionNumber || ins.id || '').toLowerCase();
+                  const prod = String(ins.productName || ins.product || '').toLowerCase();
+                  const supp = String(ins.supplierName || ins.supplier || '').toLowerCase();
+                  return lotNo.includes(q) || prod.includes(q) || supp.includes(q);
+                });
+
+                return (
+                  <div className="mt-6 pt-5 border-t-2 border-dashed border-amber-500/30 bg-gradient-to-b from-slate-950/95 via-[#081022] to-[#050a14] rounded-3xl p-4 sm:p-6 border border-cyan-500/30 shadow-2xl space-y-4">
+                    {/* TRAY HEADER */}
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-2xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 flex items-center justify-center shrink-0 shadow-inner">
+                          <Barcode className="w-5 h-5 text-cyan-400" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="px-2 py-0.5 rounded-md bg-cyan-950 border border-cyan-500/40 text-cyan-300 font-mono font-black text-xs">
+                              {isAr ? '📦 سجل التشغيلات والشحنات المفحوصة' : 'Material Batches Log'}
+                            </span>
+                            <span className="text-[11px] font-bold text-amber-400 bg-amber-950/60 px-2 py-0.5 rounded-md border border-amber-500/30">
+                              {isAr ? '📍 ناتجة من محطة فحص الاستلام: IQC-01' : 'Processed via IQC-01 Station'}
+                            </span>
+                            <span className="px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 text-[10px] font-mono font-bold">
+                              {totalLotsCount} {isAr ? 'لوط مسجل' : 'Lots'}
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-400 mt-1">
+                            {isAr 
+                              ? 'هذه كروت شحنات الخامات الفعلية المارة برصيف الفحص ومسار كل تشغيلة لحظياً نحو صالة الإنتاج أو الحجز الإجباري.' 
+                              : 'Actual material shipment lots inspected at IQC and their routing to production or quarantine.'}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+                        <button
+                          onClick={() => navigate('/compliance/hub/inspection')}
+                          className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs flex items-center gap-1.5 transition-all shadow-md shadow-amber-500/20 active:scale-95"
                         >
-                          <div>
-                            <div className="flex items-center justify-between gap-1 mb-1.5">
-                              <span className="font-mono font-black text-xs text-white group-hover/iqc:text-cyan-300 transition-colors">
-                                {lotNo}
-                              </span>
-                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-black flex items-center gap-1 ${
-                                isPass 
-                                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' 
-                                  : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
-                              }`}>
-                                <span>{isPass ? '✓' : '✕'}</span>
-                                <span>{isPass ? (isAr ? 'مطابق • ذهب للإنتاج' : 'PASS ➔ IPQC') : (isAr ? 'مرفوض • حجز بـ NCR' : 'FAIL ➔ NCR')}</span>
-                              </span>
-                            </div>
+                          <span>{isAr ? '➕ فحص خامة جديدة' : '➕ Inspect Material'}</span>
+                          <ExternalLink className="w-3.5 h-3.5 text-slate-950" />
+                        </button>
 
-                            <h5 className="text-xs font-bold text-slate-100 line-clamp-1 mb-1">
-                              {ins.productName || ins.product || 'خامة صناعية'}
-                            </h5>
-                            <p className="text-[11px] text-slate-400 line-clamp-1">
-                              {ins.supplierName || 'مورد معتمد'} • {ins.inspectionDate || ins.date || ''}
-                            </p>
+                        <button
+                          onClick={() => setIsLotTrayCollapsed(!isLotTrayCollapsed)}
+                          className="px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white border border-white/10 text-xs font-bold transition-all flex items-center gap-1"
+                          title={isLotTrayCollapsed ? (isAr ? 'توسيع السجل' : 'Expand') : (isAr ? 'طي السجل' : 'Collapse')}
+                        >
+                          <span>{isLotTrayCollapsed ? (isAr ? 'توسيع ▼' : 'Expand ▼') : (isAr ? 'طي ▲' : 'Collapse ▲')}</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* SCALABILITY TOOLBAR (عند زيادة اللوطات: بحث فوري + تصفية + تبديل النمط) */}
+                    {!isLotTrayCollapsed && totalLotsCount > 0 && (
+                      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-black/40 p-2.5 rounded-2xl border border-white/5">
+                        {/* Status Filters */}
+                        <div className="flex items-center gap-1.5 p-1 bg-slate-900 rounded-xl border border-white/10 overflow-x-auto scrollbar-none">
+                          <button
+                            type="button"
+                            onClick={() => setLotTrayFilter('all')}
+                            className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                              lotTrayFilter === 'all'
+                                ? 'bg-cyan-500 text-slate-950 font-black shadow-sm'
+                                : 'text-slate-400 hover:text-white'
+                            }`}
+                          >
+                            {isAr ? 'كافة اللوطات' : 'All'} ({totalLotsCount})
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setLotTrayFilter('pass')}
+                            className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                              lotTrayFilter === 'pass'
+                                ? 'bg-emerald-500 text-slate-950 font-black shadow-sm'
+                                : 'text-emerald-400 hover:bg-emerald-950/40'
+                            }`}
+                          >
+                            {isAr ? '✓ المفرج عنها' : '✓ Pass'} ({passLots.length})
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setLotTrayFilter('fail')}
+                            className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                              lotTrayFilter === 'fail'
+                                ? 'bg-rose-500 text-slate-950 font-black shadow-sm'
+                                : 'text-rose-400 hover:bg-rose-950/40'
+                            }`}
+                          >
+                            {isAr ? '✕ المحجوزة بـ NCR' : '✕ Quarantined'} ({failLots.length})
+                          </button>
+                        </div>
+
+                        {/* Search Input & View Toggle */}
+                        <div className="flex items-center gap-2">
+                          <div className="relative flex-1 md:w-60">
+                            <Search className="w-3.5 h-3.5 text-slate-400 absolute start-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                            <input
+                              type="text"
+                              value={lotTraySearch}
+                              onChange={(e) => setLotTraySearch(e.target.value)}
+                              placeholder={isAr ? 'بحث برقم اللوط أو الخامة...' : 'Quick search lot or part...'}
+                              className="w-full ps-8 pe-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 font-mono"
+                            />
+                            {lotTraySearch && (
+                              <button
+                                onClick={() => setLotTraySearch('')}
+                                className="absolute end-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs"
+                              >
+                                ✕
+                              </button>
+                            )}
                           </div>
 
-                          <div className="mt-3 pt-2 border-t border-white/10 flex items-center justify-between text-[11px]">
-                            <span className="text-slate-400 font-mono">
-                              {ins.defectCount || 0} عيب / {ins.sampleSize || 0} عينة
-                            </span>
-                            <span className="text-cyan-400 font-black flex items-center gap-1 group-hover/iqc:underline">
-                              <span>{isAr ? 'تتبع مسارها 🎯' : 'Trace Flow'}</span>
-                              <ArrowUpRight className="w-3 h-3" />
-                            </span>
+                          {/* View Mode Toggle (Cards vs Table) */}
+                          <div className="flex items-center gap-1 p-1 bg-slate-900 rounded-xl border border-white/10 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => setLotTrayViewMode('cards')}
+                              className={`p-1.5 rounded-lg text-xs transition-all ${
+                                lotTrayViewMode === 'cards'
+                                  ? 'bg-cyan-500 text-slate-950 shadow-sm'
+                                  : 'text-slate-400 hover:text-white'
+                              }`}
+                              title={isAr ? 'عرض بطاقات الشحنات' : 'Cards Grid'}
+                            >
+                              <LayoutGrid className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setLotTrayViewMode('table')}
+                              className={`p-1.5 rounded-lg text-xs transition-all ${
+                                lotTrayViewMode === 'table'
+                                  ? 'bg-cyan-500 text-slate-950 shadow-sm'
+                                  : 'text-slate-400 hover:text-white'
+                              }`}
+                              title={isAr ? 'عرض جدول مدمج مضغوط (للكميات الكبيرة)' : 'Dense Table View (For high volumes)'}
+                            >
+                              <ListFilter className="w-3.5 h-3.5" />
+                            </button>
                           </div>
                         </div>
-                      );
-                    })}
+                      </div>
+                    )}
+
+                    {/* LOTS DISPLAY AREA (SCROLLABLE & PROTECTED AGAINST OVERFLOW) */}
+                    {!isLotTrayCollapsed && (
+                      <div>
+                        {totalLotsCount === 0 ? (
+                          <div className="p-8 rounded-2xl bg-black/40 border border-dashed border-amber-500/30 text-center space-y-2">
+                            <Barcode className="w-8 h-8 text-amber-400 mx-auto opacity-80" />
+                            <h5 className="text-sm font-bold text-white">
+                              {isAr ? 'لا توجد شحنات خامات مفحوصة بعد في محطة IQC' : 'No material lots inspected at IQC yet'}
+                            </h5>
+                            <p className="text-xs text-slate-400 max-w-md mx-auto">
+                              {isAr ? 'اضغط على زر "➕ فحص خامة جديدة" لتسجيل أول شحنة واردة ومتابعة مسارها في الفلوشارت.' : 'Click above to record your first incoming batch inspection.'}
+                            </p>
+                          </div>
+                        ) : displayLots.length === 0 ? (
+                          <div className="p-6 rounded-2xl bg-black/30 text-center space-y-2">
+                            <p className="text-xs text-slate-400">
+                              {isAr ? `لا توجد لوطات تطابق البحث "${lotTraySearch}"` : `No lots matching "${lotTraySearch}"`}
+                            </p>
+                            <button
+                              onClick={() => { setLotTraySearch(''); setLotTrayFilter('all'); }}
+                              className="text-xs text-cyan-400 hover:underline font-bold"
+                            >
+                              {isAr ? 'إعادة ضبط البحث والتصفية' : 'Reset filters'}
+                            </button>
+                          </div>
+                        ) : lotTrayViewMode === 'cards' ? (
+                          /* ---------------- CARDS VIEW (BATCH TAG STYLE) ---------------- */
+                          <div className="max-h-[420px] overflow-y-auto pr-1 scrollbar-thin space-y-3">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                              {displayLots.map((ins, idx) => {
+                                const isPass = (ins.result || '').toLowerCase() === 'pass' || (ins.status || '').toLowerCase() === 'pass';
+                                const lotNo = ins.batchNumber || ins.batch || ins.lot || ins.inspectionNumber || ins.id;
+                                const isCurrentSelected = selectedLotNumber === lotNo;
+
+                                return (
+                                  <div
+                                    key={ins.id || idx}
+                                    className={`p-4 rounded-2xl border-2 transition-all flex flex-col justify-between text-start relative group/lot shadow-md ${
+                                      isCurrentSelected
+                                        ? 'bg-cyan-950/80 border-cyan-400 ring-2 ring-cyan-400/50 shadow-cyan-950/60'
+                                        : isPass
+                                          ? 'bg-slate-900/90 border-emerald-500/40 hover:border-emerald-400 hover:bg-slate-850'
+                                          : 'bg-rose-950/20 border-rose-500/50 hover:border-rose-400 hover:bg-rose-950/30'
+                                    }`}
+                                  >
+                                    <div>
+                                      {/* Top Badge: Explicit Lot Tag distinction */}
+                                      <div className="flex items-center justify-between gap-2 border-b border-white/5 pb-2 mb-2.5">
+                                        <div className="flex items-center gap-1.5">
+                                          <span className="w-5 h-5 rounded-md bg-cyan-500/20 text-cyan-400 flex items-center justify-center border border-cyan-500/30">
+                                            <Barcode className="w-3 h-3 text-cyan-400" />
+                                          </span>
+                                          <div>
+                                            <span className="font-mono font-black text-xs text-white group-hover/lot:text-cyan-300 transition-colors tracking-wide block">
+                                              {lotNo}
+                                            </span>
+                                            <span className="text-[9px] font-bold text-cyan-400/80 uppercase tracking-wider block">
+                                              {isAr ? '📦 تشغيلة خامة' : 'Material Lot'}
+                                            </span>
+                                          </div>
+                                        </div>
+
+                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black border flex items-center gap-1 ${
+                                          isPass 
+                                            ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' 
+                                            : 'bg-rose-500/15 text-rose-300 border-rose-500/30'
+                                        }`}>
+                                          <span>{isPass ? '✓' : '✕'}</span>
+                                          <span>{isPass ? (isAr ? 'عَبَر للإنتاج' : 'PASS ➔ IPQC') : (isAr ? 'محجوز بـ NCR' : 'FAIL ➔ NCR')}</span>
+                                        </span>
+                                      </div>
+
+                                      {/* Material Info */}
+                                      <div className="space-y-1">
+                                        <div className="flex items-center justify-between">
+                                          <span className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">
+                                            {isAr ? 'اسم الخامة:' : 'Material:'}
+                                          </span>
+                                          <span className="text-[10px] text-slate-400 font-mono">
+                                            📅 {ins.inspectionDate || ins.date || ''}
+                                          </span>
+                                        </div>
+
+                                        <h5 className="text-sm font-black text-white line-clamp-1">
+                                          {ins.productName || ins.product || (isAr ? 'خامة واردة' : 'Material')}
+                                        </h5>
+
+                                        <p className="text-xs text-slate-400 line-clamp-1">
+                                          🏢 {ins.supplierName || (isAr ? 'مورد معتمد' : 'Approved Supplier')}
+                                        </p>
+                                      </div>
+                                    </div>
+
+                                    {/* Action & Stats Footer */}
+                                    <div className="mt-3.5 pt-2.5 border-t border-white/10 flex items-center justify-between text-xs">
+                                      <span className="text-slate-400 font-mono text-[11px]">
+                                        <b className={ins.defectCount > 0 ? 'text-rose-400' : 'text-emerald-400'}>{ins.defectCount || 0}</b> {isAr ? 'عيب' : 'def'} / {ins.sampleSize || 0} {isAr ? 'عينة' : 'samples'}
+                                      </span>
+
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setSelectedLotNumber(lotNo);
+                                          if (isPass) {
+                                            scrollToStage('DEPT-STAGE-INPROCESS', true);
+                                          } else {
+                                            scrollToStage('DEPT-STAGE-RESOLUTION', true);
+                                          }
+                                        }}
+                                        className="px-2.5 py-1 rounded-lg bg-cyan-500/20 hover:bg-cyan-500 text-cyan-300 hover:text-slate-950 font-black text-[11px] flex items-center gap-1 transition-all shadow-sm"
+                                        title={isAr ? 'تتبع مسار هذه الخامة في الفلوشارت' : 'Trace lot path in flowchart'}
+                                      >
+                                        <Crosshair className="w-3 h-3" />
+                                        <span>{isAr ? 'تتبع المسار 🎯' : 'Trace Flow'}</span>
+                                      </button>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ) : (
+                          /* ---------------- COMPACT TABLE VIEW (FOR HIGH VOLUME LOTS) ---------------- */
+                          <div className="max-h-[380px] overflow-y-auto scrollbar-thin border border-white/10 rounded-2xl bg-black/50">
+                            <table className="w-full text-start text-xs border-collapse">
+                              <thead className="bg-slate-900/90 text-slate-400 border-b border-white/10 sticky top-0 z-10 font-bold text-[11px]">
+                                <tr>
+                                  <th className="p-2.5 px-3 text-start">{isAr ? 'رقم اللوط' : 'Lot #'}</th>
+                                  <th className="p-2.5 px-3 text-start">{isAr ? 'الخامة / الصنف' : 'Material'}</th>
+                                  <th className="p-2.5 px-3 text-start">{isAr ? 'تاريخ الفحص' : 'Date'}</th>
+                                  <th className="p-2.5 px-3 text-start">{isAr ? 'المورد' : 'Supplier'}</th>
+                                  <th className="p-2.5 px-3 text-start">{isAr ? 'العينات / العيوب' : 'Samples / Defects'}</th>
+                                  <th className="p-2.5 px-3 text-start">{isAr ? 'النتيجة ومسار القرار' : 'Result & Path'}</th>
+                                  <th className="p-2.5 px-3 text-center">{isAr ? 'المسار' : 'Trace'}</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-white/5 font-mono">
+                                {displayLots.map((ins, idx) => {
+                                  const isPass = (ins.result || '').toLowerCase() === 'pass' || (ins.status || '').toLowerCase() === 'pass';
+                                  const lotNo = ins.batchNumber || ins.batch || ins.lot || ins.inspectionNumber || ins.id;
+                                  const isCurrentSelected = selectedLotNumber === lotNo;
+
+                                  return (
+                                    <tr 
+                                      key={ins.id || idx}
+                                      onClick={() => {
+                                        setSelectedLotNumber(lotNo);
+                                        if (isPass) {
+                                          scrollToStage('DEPT-STAGE-INPROCESS', true);
+                                        } else {
+                                          scrollToStage('DEPT-STAGE-RESOLUTION', true);
+                                        }
+                                      }}
+                                      className={`transition-colors cursor-pointer hover:bg-white/5 ${
+                                        isCurrentSelected ? 'bg-cyan-950/60 text-cyan-200' : ''
+                                      }`}
+                                    >
+                                      <td className="p-2.5 px-3 font-black text-cyan-300">
+                                        {lotNo}
+                                      </td>
+                                      <td className="p-2.5 px-3 text-white font-sans font-bold">
+                                        {ins.productName || ins.product || '-'}
+                                      </td>
+                                      <td className="p-2.5 px-3 text-slate-400">
+                                        {ins.inspectionDate || ins.date || '-'}
+                                      </td>
+                                      <td className="p-2.5 px-3 text-slate-300 font-sans">
+                                        {ins.supplierName || '-'}
+                                      </td>
+                                      <td className="p-2.5 px-3 text-slate-400">
+                                        {ins.sampleSize || 0} / <b className={ins.defectCount > 0 ? 'text-rose-400' : 'text-emerald-400'}>{ins.defectCount || 0}</b>
+                                      </td>
+                                      <td className="p-2.5 px-3">
+                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black border inline-flex items-center gap-1 ${
+                                          isPass 
+                                            ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' 
+                                            : 'bg-rose-500/15 text-rose-300 border-rose-500/30'
+                                        }`}>
+                                          <span>{isPass ? '✓' : '✕'}</span>
+                                          <span>{isPass ? (isAr ? 'عَبَر للإنتاج' : 'PASS ➔ IPQC') : (isAr ? 'محجوز بـ NCR' : 'FAIL ➔ NCR')}</span>
+                                        </span>
+                                      </td>
+                                      <td className="p-2.5 px-3 text-center">
+                                        <button
+                                          type="button"
+                                          className="p-1 px-2 rounded-lg bg-cyan-500/20 hover:bg-cyan-500 text-cyan-300 hover:text-slate-950 font-black text-[10px] inline-flex items-center gap-1 transition-all"
+                                        >
+                                          <span>{isAr ? 'تتبع' : 'Trace'}</span>
+                                          <ArrowUpRight className="w-3 h-3" />
+                                        </button>
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
+                );
+              })()}
             </section>
           );
         })()}
