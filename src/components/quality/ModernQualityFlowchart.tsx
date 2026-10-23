@@ -82,6 +82,11 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
 
   // Flowchart Architecture Layout Mode ('dual' = Two Parallel Swimlanes vs 'linear' = Single Column)
   const [flowchartLayoutMode, setFlowchartLayoutMode] = useState<'dual' | 'linear'>('dual');
+  const [flowchartViewMode, setFlowchartViewMode] = useState<'diagram' | 'expanded'>('diagram');
+  const [activeStageDrawer, setActiveStageDrawer] = useState<{
+    stageNumber: number;
+    stageId: string;
+  } | null>(null);
 
   // Drill-Down Modal State for Station Records (Pass / Fail / Total) & Full Lot Traceability
   const [stationDrilldown, setStationDrilldown] = useState<{
@@ -3027,6 +3032,574 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
           );
           };
 
+
+  // --------------------------------------------------------------------------
+  // CLEAN PROCESS DIAGRAM COMPONENTS (Recommended Interactive Flowchart)
+  // --------------------------------------------------------------------------
+  const renderProcessNode = (props: {
+    stageNumber: number;
+    stageId: string;
+    code: string;
+    titleAr: string;
+    titleEn: string;
+    descAr: string;
+    descEn: string;
+    accentColor: string;
+    stationCount: number;
+    icon: React.ReactNode;
+  }) => {
+    const stats = getStageRecordStats(props.stageId);
+    const trackStyle = getStageTrackingStyle(props.stageNumber, 'border-cyan-500/40');
+
+    return (
+      <div
+        id={props.stageId}
+        onClick={() => setActiveStageDrawer({
+          stageNumber: props.stageNumber,
+          stageId: props.stageId
+        })}
+        className="relative w-full max-w-2xl mx-auto p-4 sm:p-5 rounded-3xl bg-slate-900/90 border-2 transition-all cursor-pointer group shadow-xl hover:shadow-2xl hover:scale-[1.01] active:scale-[0.99]"
+        style={{
+          borderColor: `${props.accentColor}70`,
+          boxShadow: `0 4px 25px ${props.accentColor}20`
+        }}
+      >
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3.5">
+            <div
+              className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border-2 shadow-inner"
+              style={{
+                backgroundColor: `${props.accentColor}20`,
+                borderColor: props.accentColor,
+                color: props.accentColor
+              }}
+            >
+              {props.icon}
+            </div>
+
+            <div>
+              <div className="flex items-center gap-2">
+                <span
+                  className="px-2.5 py-0.5 rounded-lg text-xs font-mono font-black border"
+                  style={{
+                    backgroundColor: `${props.accentColor}15`,
+                    color: props.accentColor,
+                    borderColor: `${props.accentColor}40`
+                  }}
+                >
+                  STAGE 0${props.stageNumber}
+                </span>
+                <span className="text-xs text-slate-400 font-mono font-bold">
+                  {props.code}
+                </span>
+                <span className="text-[11px] text-slate-400 bg-black/40 px-2 py-0.5 rounded-md border border-white/5 font-mono">
+                  {props.stationCount} {isAr ? 'محطات' : 'stations'}
+                </span>
+                {trackStyle.badge}
+              </div>
+
+              <h3 className="text-sm sm:text-base font-black text-white mt-1 group-hover:text-cyan-300 transition-colors">
+                {isAr ? props.titleAr : props.titleEn}
+              </h3>
+
+              <p className="text-xs text-slate-400 line-clamp-1 mt-0.5">
+                {isAr ? props.descAr : props.descEn}
+              </p>
+            </div>
+          </div>
+
+          {/* Quick Metrics and Action Pill */}
+          <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/50 border border-white/10 text-xs font-mono">
+              <span className="text-emerald-400 font-black flex items-center gap-1">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                <span>{stats.pass}</span>
+              </span>
+              <span className="text-slate-600">|</span>
+              <span className={stats.fail > 0 ? 'text-rose-400 font-black flex items-center gap-1' : 'text-slate-500 flex items-center gap-1'}>
+                <AlertOctagon className="w-3.5 h-3.5" />
+                <span>{stats.fail}</span>
+              </span>
+            </div>
+
+            <button
+              type="button"
+              className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/15 text-slate-200 hover:text-white border border-white/10 text-xs font-bold transition-all flex items-center gap-1.5 group-hover:bg-cyan-500 group-hover:text-slate-950 group-hover:border-cyan-400"
+            >
+              <span>{isAr ? 'التفاصيل 👁️' : 'Details 👁️'}</span>
+              <ChevronRight className="w-3.5 h-3.5 rtl:rotate-180" />
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Clean Decision Gateway with explicit 🟢 PASS ⬇️ vs 🛑 FAIL ➡️ branching
+  const renderVisualDecisionGateway = (props: {
+    gateNumber: number;
+    questionAr: string;
+    questionEn: string;
+    accentColor: string;
+    nextStageNumber: number;
+    passCount: number;
+    failCount: number;
+    failTitleAr: string;
+    failTitleEn: string;
+    failTargetAction: () => void;
+  }) => {
+    return (
+      <div className="my-3.5 w-full max-w-2xl mx-auto flex flex-col items-center">
+        {/* Downward Pipe into Gateway */}
+        <div className="w-1 h-5 rounded-full" style={{ backgroundColor: props.accentColor }} />
+
+        {/* Diamond Card Container */}
+        <div
+          className="relative w-full p-4 sm:p-5 rounded-3xl bg-gradient-to-b from-slate-900 via-[#0a1122] to-slate-950 border-2 shadow-xl"
+          style={{ borderColor: `${props.accentColor}60` }}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between gap-3 border-b border-white/10 pb-3">
+            <div className="flex items-center gap-3">
+              <div
+                className="w-9 h-9 rounded-xl flex items-center justify-center font-black text-xs rotate-45 border-2 shrink-0 shadow-md"
+                style={{
+                  backgroundColor: `${props.accentColor}20`,
+                  borderColor: props.accentColor,
+                  color: props.accentColor
+                }}
+              >
+                <span className="-rotate-45">◆</span>
+              </div>
+              <div>
+                <span
+                  className="text-[10px] font-mono font-black uppercase px-2 py-0.5 rounded border"
+                  style={{
+                    backgroundColor: `${props.accentColor}15`,
+                    color: props.accentColor,
+                    borderColor: `${props.accentColor}40`
+                  }}
+                >
+                  {isAr ? `بوابة اتخاذ القرار #${props.gateNumber}` : `Decision Gateway #${props.gateNumber}`}
+                </span>
+                <h4 className="text-xs sm:text-sm font-black text-white mt-1">
+                  {isAr ? props.questionAr : props.questionEn}
+                </h4>
+              </div>
+            </div>
+            <span className="text-[10px] font-mono text-slate-400 hidden sm:inline">
+              ISO / IATF
+            </span>
+          </div>
+
+          {/* TWO DIRECT EXPLICIT BRANCHES */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3.5">
+            {/* 1. GREEN PASS BRANCH ⬇️ */}
+            <div className="p-3 rounded-2xl bg-emerald-950/30 border border-emerald-500/40 flex flex-col justify-between shadow-sm">
+              <div className="flex items-center justify-between">
+                <span className="px-2 py-0.5 rounded-lg bg-emerald-500/20 text-emerald-300 font-black text-[11px] border border-emerald-500/40 flex items-center gap-1">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                  <span>{isAr ? '✓ مطابق (PASS)' : '✓ Pass'}</span>
+                </span>
+                <span className="font-mono text-xs font-black text-emerald-300">
+                  {props.passCount} {isAr ? 'مجاز' : 'Pass'}
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-300 mt-2">
+                {isAr ? `مطابق: يستمر مباشرة للمرحلة ${props.nextStageNumber}` : `Conforming: Advances to Stage ${props.nextStageNumber}`}
+              </p>
+              <div className="mt-2.5 pt-2 border-t border-emerald-500/20 flex items-center justify-between text-xs font-bold text-emerald-300">
+                <span>{isAr ? `مسار الإنتاج ⬇` : `Production Stream ⬇`}</span>
+                <ArrowDown className="w-3.5 h-3.5 text-emerald-400 animate-bounce" />
+              </div>
+            </div>
+
+            {/* 2. RED FAIL BRANCH ➡️ */}
+            <div className="p-3 rounded-2xl bg-rose-950/30 border border-rose-500/40 flex flex-col justify-between shadow-sm">
+              <div className="flex items-center justify-between">
+                <span className="px-2 py-0.5 rounded-lg bg-rose-500/20 text-rose-300 font-black text-[11px] border border-rose-500/40 flex items-center gap-1">
+                  <AlertOctagon className="w-3 h-3 text-rose-400" />
+                  <span>{isAr ? '✕ غير مطابق (FAIL)' : '✕ Fail'}</span>
+                </span>
+                <span className="font-mono text-xs font-black text-rose-300">
+                  {props.failCount} {isAr ? 'محجوز' : 'Hold'}
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-300 mt-2">
+                {isAr ? `حظر وتحويل إلى: ${props.failTitleAr}` : `Diverted to: ${props.failTitleEn}`}
+              </p>
+              <div className="mt-2.5 pt-2 border-t border-rose-500/20">
+                <button
+                  type="button"
+                  onClick={props.failTargetAction}
+                  className="w-full py-1 px-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95"
+                >
+                  <span>{isAr ? `تفرع لـ [${props.failTitleAr}] ➡️` : `Divert to [${props.failTitleEn}] ➡️`}</span>
+                  <ArrowUpRight className="w-3 h-3" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Downward Pipe out to next stage */}
+        <div className="flex flex-col items-center mt-1.5">
+          <div className="w-1.5 h-5 rounded-full bg-gradient-to-b from-emerald-500 to-emerald-400" />
+          <div className="text-emerald-400 text-xs font-bold -mt-1.5">▼</div>
+        </div>
+      </div>
+    );
+  };
+
+  // Central Resolution Hub Node in Clean Process Diagram
+  const renderResolutionHubNode = () => {
+    const stats = getStageRecordStats('DEPT-STAGE-RESOLUTION');
+    const trackStyle = getStageTrackingStyle(3, 'border-rose-500/60');
+
+    return (
+      <div
+        id="DEPT-STAGE-RESOLUTION"
+        className={`my-6 w-full max-w-2xl mx-auto p-5 rounded-3xl bg-gradient-to-br from-rose-950/60 via-slate-900 to-slate-950 border-2 border-rose-500/60 shadow-2xl space-y-4 ${trackStyle.className}`}
+      >
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-rose-500/20">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-rose-500/20 border-2 border-rose-500 text-rose-400 flex items-center justify-center shrink-0 shadow-lg shadow-rose-950/40">
+              <ShieldAlert className="w-6 h-6 animate-pulse" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-lg text-xs font-mono font-black bg-rose-500/20 text-rose-300 border border-rose-500/40">
+                  STAGE 03 • RESOLUTION HUB
+                </span>
+                {trackStyle.badge}
+              </div>
+              <h3 className="text-base font-black text-rose-400 mt-1">
+                {isAr ? 'المرحلة 3: مركز احتواء عدم المطابقة وحل المشكلات (NCR / 8D / CAPA)' : 'Stage 3: Problem Solving, NCR & Corrective Actions'}
+              </h3>
+              <p className="text-xs text-slate-300 mt-0.5">
+                {isAr 
+                  ? 'يستقبل المرفوض من بوابات القرار (1، 2، 4) للعزل والتحقيق الجذري وإعادة التدوير' 
+                  : 'Central receiving hub for rejections from Gateways 1, 2, 4 for 8D root-cause'}
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setActiveStageDrawer({ stageNumber: 3, stageId: 'DEPT-STAGE-RESOLUTION' })}
+            className="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center gap-1.5 transition-all shadow-md shrink-0"
+          >
+            <span>{isAr ? 'عرض الكروت الخمسة 👁️' : 'View 5 Tabs 👁️'}</span>
+            <ExternalLink className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* 5 Resolution Stations Quick Pills */}
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center text-xs">
+          <div 
+            onClick={() => navigate('/ncr')} 
+            className="p-2.5 rounded-2xl bg-black/40 border border-rose-500/30 hover:border-rose-400 hover:bg-rose-950/30 cursor-pointer transition-all"
+          >
+            <span className="block font-black text-rose-300 text-xs">NCR-01</span>
+            <span className="text-[10px] text-slate-400 block mt-0.5">{isAr ? 'عدم مطابقة' : 'Reports'}</span>
+          </div>
+          <div 
+            onClick={() => navigate('/d8')} 
+            className="p-2.5 rounded-2xl bg-black/40 border border-rose-500/30 hover:border-rose-400 hover:bg-rose-950/30 cursor-pointer transition-all"
+          >
+            <span className="block font-black text-rose-300 text-xs">D8-01</span>
+            <span className="text-[10px] text-slate-400 block mt-0.5">{isAr ? 'مشاريع 8D' : '8D Projects'}</span>
+          </div>
+          <div 
+            onClick={() => navigate('/capa')} 
+            className="p-2.5 rounded-2xl bg-black/40 border border-rose-500/30 hover:border-rose-400 hover:bg-rose-950/30 cursor-pointer transition-all"
+          >
+            <span className="block font-black text-rose-300 text-xs">CAPA-01</span>
+            <span className="text-[10px] text-slate-400 block mt-0.5">{isAr ? 'إجراءات تصحيح' : 'Actions'}</span>
+          </div>
+          <div 
+            onClick={() => navigate('/deviation')} 
+            className="p-2.5 rounded-2xl bg-black/40 border border-rose-500/30 hover:border-rose-400 hover:bg-rose-950/30 cursor-pointer transition-all"
+          >
+            <span className="block font-black text-rose-300 text-xs">DEV-01</span>
+            <span className="text-[10px] text-slate-400 block mt-0.5">{isAr ? 'تصاريح حيود' : 'Deviations'}</span>
+          </div>
+          <div 
+            onClick={() => navigate('/change-control')} 
+            className="p-2.5 rounded-2xl bg-black/40 border border-rose-500/30 hover:border-rose-400 hover:bg-rose-950/30 cursor-pointer transition-all col-span-2 sm:col-span-1"
+          >
+            <span className="block font-black text-rose-300 text-xs">CHG-01</span>
+            <span className="text-[10px] text-slate-400 block mt-0.5">{isAr ? 'ضبط التغيير' : 'Change Ctrl'}</span>
+          </div>
+        </div>
+
+        {/* Closed-loop Re-injection Card with Glowing Green Return Arrow */}
+        <div className="p-3.5 rounded-2xl bg-emerald-950/30 border border-emerald-500/40 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2.5">
+            <RotateCcw className="w-5 h-5 text-emerald-400 animate-spin shrink-0" />
+            <div>
+              <span className="font-black text-emerald-300 block">
+                {isAr ? '🔄 دورة الجودة المغلقة: سهم العودة للإنتاج' : 'Closed-Loop Production Return Loop'}
+              </span>
+              <span className="text-[11px] text-slate-400">
+                {isAr ? 'بعد إغلاق الـ CAPA وفك الحجر عبر لجنة MRB، تعود الشحنات للإنتاج في المرحلة 2' : 'Upon CAPA closure & MRB release, lots return to Stage 2 production'}
+              </span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => scrollToStage('DEPT-STAGE-INPROCESS', true)}
+            className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs flex items-center gap-1.5 transition-all shadow-md shrink-0 active:scale-95"
+          >
+            <span>{isAr ? 'ضخ بالإنتاج (المرحلة 2) ⤴' : 'Return to Stage 2 ⤴'}</span>
+            <ArrowUpRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  // THE FULL CLEAN PROCESS DIAGRAM FLOW
+  const renderCleanProcessDiagram = () => (
+    <div className="space-y-2 py-4">
+      {/* START */}
+      {renderStartTerminal()}
+
+      {/* STAGE 1: IQC */}
+      {renderProcessNode({
+        stageNumber: 1,
+        stageId: 'DEPT-STAGE-INCOMING',
+        code: 'IQC-01',
+        titleAr: 'المرحلة 1: استلام وتفتيش الخامات والموردين (IQC)',
+        titleEn: 'Stage 1: Incoming & Supplier Quality (IQC)',
+        descAr: 'تفتيش الشحنات الواردة، تقييم الموردين، وتحليل شهادات التحليل COA',
+        descEn: 'Receiving inspection, supplier scorecards & COA verification',
+        accentColor: '#f59e0b',
+        stationCount: 3,
+        icon: <Truck className="w-5 h-5" />
+      })}
+
+      {/* GATEWAY 1 */}
+      {renderVisualDecisionGateway({
+        gateNumber: 1,
+        questionAr: 'هل المواد الخام والشحنات الواردة مطابقة للمواصفات وخطط الفحص؟',
+        questionEn: 'Are incoming raw materials compliant with quality specs & receiving plans?',
+        accentColor: '#f59e0b',
+        nextStageNumber: 2,
+        passCount: getStageRecordStats('DEPT-STAGE-INCOMING').pass,
+        failCount: getStageRecordStats('DEPT-STAGE-INCOMING').fail,
+        failTitleAr: 'رصيف حجر الخامات QRN-01 والـ NCR',
+        failTitleEn: 'Quarantine Dock QRN-01 & NCR',
+        failTargetAction: () => {
+          setActiveStageDrawer({ stageNumber: 3, stageId: 'DEPT-STAGE-RESOLUTION' });
+        }
+      })}
+
+      {/* STAGE 2: IPQC */}
+      {renderProcessNode({
+        stageNumber: 2,
+        stageId: 'DEPT-STAGE-INPROCESS',
+        code: 'IPQC-01',
+        titleAr: 'المرحلة 2: جودة صالة الإنتاج والتحكم الإحصائي (IPQC)',
+        titleEn: 'Stage 2: In-Process Quality & SPC (IPQC)',
+        descAr: 'تسجيل صالة الإنتاج، قائمة العيوب اليومية، كارتات ضبط SPC، وبوابات الخلوص',
+        descEn: 'Shopfloor fast entry, daily defect logs, SPC control charts & clearance gates',
+        accentColor: '#06b6d4',
+        stationCount: 4,
+        icon: <Activity className="w-5 h-5" />
+      })}
+
+      {/* GATEWAY 2 */}
+      {renderVisualDecisionGateway({
+        gateNumber: 2,
+        questionAr: 'هل عينات التشغيل والقياسات ضمن حدود الضبط SPC وخالية من العيوب الحرجة؟',
+        questionEn: 'Are in-process samples within SPC control limits & free of critical defects?',
+        accentColor: '#06b6d4',
+        nextStageNumber: 4,
+        passCount: getStageRecordStats('DEPT-STAGE-INPROCESS').pass,
+        failCount: getStageRecordStats('DEPT-STAGE-INPROCESS').fail,
+        failTitleAr: 'إيقاف التشغيل وتصعيد لـ 8D والـ CAPA',
+        failTitleEn: 'Line Stop, NCR & 8D Escalation',
+        failTargetAction: () => {
+          setActiveStageDrawer({ stageNumber: 3, stageId: 'DEPT-STAGE-RESOLUTION' });
+        }
+      })}
+
+      {/* CENTRAL RESOLUTION HUB: STAGE 3 */}
+      {renderResolutionHubNode()}
+
+      {/* STAGE 4: OQC */}
+      {renderProcessNode({
+        stageNumber: 4,
+        stageId: 'DEPT-STAGE-OUTGOING',
+        code: 'OQC-01',
+        titleAr: 'المرحلة 4: فحص وخروج المنتج النهائي (OQC)',
+        titleEn: 'Stage 4: Outgoing Quality & Release (OQC)',
+        descAr: 'فحص عينات القبول AQL للشحنات التامة الصنع قبل التحميل وإصدار شهادات المطابقة COC',
+        descEn: 'Pre-shipment AQL sampling, COC certificates & final release authorization',
+        accentColor: '#10b981',
+        stationCount: 1,
+        icon: <PackageCheck className="w-5 h-5" />
+      })}
+
+      {/* GATEWAY 4 */}
+      {renderVisualDecisionGateway({
+        gateNumber: 4,
+        questionAr: 'هل شحنة المنتج التام مطابقة لمعايير قبول عينات AQL؟',
+        questionEn: 'Are finished goods lots fully compliant with AQL acceptance criteria?',
+        accentColor: '#10b981',
+        nextStageNumber: 5,
+        passCount: getStageRecordStats('DEPT-STAGE-OUTGOING').pass,
+        failCount: getStageRecordStats('DEPT-STAGE-OUTGOING').fail,
+        failTitleAr: 'حجر المنتج النهائي ولجنة MRB للفرز',
+        failTitleEn: 'Finished Goods Quarantine & MRB',
+        failTargetAction: () => {
+          setActiveStageDrawer({ stageNumber: 3, stageId: 'DEPT-STAGE-RESOLUTION' });
+        }
+      })}
+
+      {/* STAGE 5: CUSTOMER QA */}
+      {renderProcessNode({
+        stageNumber: 5,
+        stageId: 'DEPT-STAGE-CUSTOMER',
+        code: 'CSM-01',
+        titleAr: 'المرحلة 5: شكاوى العملاء والميدان (Customer Quality)',
+        titleEn: 'Stage 5: Customer Complaints & Field QA',
+        descAr: 'استقبال بلاغات العملاء ومطالبات الضمان ومرتجعات RMA وتحويل الملاحظات للهندسة',
+        descEn: 'Customer claims, warranty returns RMA & field feedback loops',
+        accentColor: '#6366f1',
+        stationCount: 1,
+        icon: <Users className="w-5 h-5" />
+      })}
+
+      {/* GATEWAY 5 */}
+      {renderVisualDecisionGateway({
+        gateNumber: 5,
+        questionAr: 'هل تم حل شكوى العميل، تسوية المرتجع RMA، واستخلاص السبب الفني؟',
+        questionEn: 'Has customer claim been settled, RMA processed & technical feedback extracted?',
+        accentColor: '#6366f1',
+        nextStageNumber: 6,
+        passCount: getStageRecordStats('DEPT-STAGE-CUSTOMER').pass,
+        failCount: getStageRecordStats('DEPT-STAGE-CUSTOMER').fail,
+        failTitleAr: 'تصعيد طارئ للتحقيق الجذري والـ CAPA',
+        failTitleEn: 'Emergency CAPA Investigation',
+        failTargetAction: () => {
+          setActiveStageDrawer({ stageNumber: 3, stageId: 'DEPT-STAGE-RESOLUTION' });
+        }
+      })}
+
+      {/* STAGE 6: LAB & AUDITS */}
+      {renderProcessNode({
+        stageNumber: 6,
+        stageId: 'DEPT-STAGE-COMPLIANCE',
+        code: 'LAB-01',
+        titleAr: 'المرحلة 6: المختبر الهندسي والتدقيق (Lab & Audits)',
+        titleEn: 'Stage 6: Engineering Lab & Audits',
+        descAr: 'خطط التحكم Control Plan، تحليل المخاطر FMEA، معايرة الأجهزة MSA، والتدقيق الداخلي',
+        descEn: 'Control Plans, FMEA risk analysis, gage calibration MSA & ISO audits',
+        accentColor: '#a855f7',
+        stationCount: 5,
+        icon: <ShieldCheck className="w-5 h-5" />
+      })}
+
+      <div className="flex flex-col items-center my-3">
+        {renderFlowPipe('#3b82f6', 'تحديث وثائق النظام والبيانات', 'Update Master Data')}
+      </div>
+
+      {/* STAGE 7: MASTER DATA */}
+      {renderProcessNode({
+        stageNumber: 7,
+        stageId: 'DEPT-STAGE-SETUP',
+        code: 'MST-01',
+        titleAr: 'المرحلة 7: تهيئة المصنع والبيانات (Setup & Master Data)',
+        titleEn: 'Stage 7: Factory Setup & Master Data',
+        descAr: 'البيانات الرئيسية للأجزاء والموديلات، مصمم نماذج الفحص، وقاعدة الدروس المستفادة',
+        descEn: 'Parts catalog, form designer & lessons learned repository',
+        accentColor: '#3b82f6',
+        stationCount: 3,
+        icon: <Database className="w-5 h-5" />
+      })}
+
+      {/* FEEDBACK LOOP */}
+      <div className="pt-3">
+        {renderClosedLoopFeedbackBanner()}
+      </div>
+
+      {/* END TERMINAL */}
+      {renderEndTerminal()}
+    </div>
+  );
+
+  // Interactive Slide-Over Drawer / Modal for Full Stage Details
+  const renderStageDrawer = () => {
+    if (!activeStageDrawer) return null;
+    const stageNum = activeStageDrawer.stageNumber;
+
+    return (
+      <div 
+        className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200"
+        onClick={() => setActiveStageDrawer(null)}
+      >
+        <div 
+          className="w-full max-w-5xl max-h-[92vh] bg-slate-900 border border-slate-700/80 rounded-3xl shadow-2xl flex flex-col overflow-hidden text-start animate-in zoom-in-95 duration-200"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Drawer Header */}
+          <div className="p-4 sm:p-5 bg-gradient-to-r from-slate-900 via-slate-950 to-slate-900 border-b border-white/10 flex items-center justify-between gap-3 shrink-0">
+            <div className="flex items-center gap-3">
+              <span className="w-10 h-10 rounded-2xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 flex items-center justify-center shrink-0 shadow-inner font-mono font-black text-sm">
+                0${stageNum}
+              </span>
+              <div>
+                <span className="text-xs font-mono text-cyan-400 font-bold">
+                  {isAr ? `استعراض سجلات ومحطات المرحلة #${stageNum}` : `Stage #${stageNum} Detailed Records`}
+                </span>
+                <h3 className="text-base sm:text-lg font-black text-white mt-0.5">
+                  {isAr 
+                    ? ENTERPRISE_DEPARTMENTS.find(d => d.number === stageNum)?.nameAr 
+                    : ENTERPRISE_DEPARTMENTS.find(d => d.number === stageNum)?.nameEn}
+                </h3>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setActiveStageDrawer(null)}
+              className="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/15 text-slate-400 hover:text-white flex items-center justify-center transition-colors border border-white/10"
+              title={isAr ? 'إغلاق' : 'Close'}
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Drawer Scrollable Content */}
+          <div className="p-4 sm:p-6 overflow-y-auto space-y-4 flex-1 scrollbar-thin">
+            {stageNum === 1 && renderStage1()}
+            {stageNum === 2 && renderStage2()}
+            {stageNum === 3 && renderStage3()}
+            {stageNum === 4 && renderStage4()}
+            {stageNum === 5 && renderStage5()}
+            {stageNum === 6 && renderStage6()}
+            {stageNum === 7 && renderStage7()}
+          </div>
+
+          {/* Drawer Footer */}
+          <div className="p-3 sm:px-6 bg-slate-950 border-t border-white/10 flex items-center justify-between text-xs text-slate-400 shrink-0">
+            <span>
+              {isAr ? '💡 يمكنك الضغط على أي كارت بالداخل لفتح شاشته المباشرة' : 'Click any card inside to open its module'}
+            </span>
+            <button
+              onClick={() => setActiveStageDrawer(null)}
+              className="px-4 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold transition-colors"
+            >
+              {isAr ? 'إغلاق النافذة' : 'Close'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="flex-1 w-full bg-[#060a14] text-slate-100 flex flex-col font-sans select-none">
       {/* Dynamic Keyframe Animation Styles */}
@@ -3077,29 +3650,29 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
             <div className="flex items-center gap-1 bg-black/60 p-1 rounded-xl border border-white/10 shrink-0">
               <button
                 type="button"
-                onClick={() => setFlowchartLayoutMode('dual')}
-                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  flowchartLayoutMode === 'dual'
-                    ? 'bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-500 text-slate-950 shadow-md font-black'
+                onClick={() => setFlowchartViewMode('diagram')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  flowchartViewMode === 'diagram'
+                    ? 'bg-gradient-to-r from-cyan-500 via-teal-400 to-emerald-400 text-slate-950 shadow-md font-black scale-105'
                     : 'text-slate-400 hover:text-white'
                 }`}
-                title={isAr ? 'مساران متوازيان: مسار الإنتاج الأخضر ومسار الـ NCR الأحمر' : 'Dual Swimlanes: Production vs NCR'}
+                title={isAr ? 'خريطة انسيابية تفاعلية هندسية مبسطة وأنيقة (الموصى بها)' : 'Clean Process Diagram (Recommended)'}
               >
-                <GitFork className="w-3.5 h-3.5 rotate-90" />
-                <span className="hidden sm:inline">{isAr ? 'مساران متوازيان' : 'Dual Lanes'}</span>
+                <Workflow className="w-3.5 h-3.5" />
+                <span>{isAr ? '🗺️ خريطة العمليات' : 'Process Diagram'}</span>
               </button>
               <button
                 type="button"
-                onClick={() => setFlowchartLayoutMode('linear')}
-                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  flowchartLayoutMode === 'linear'
+                onClick={() => setFlowchartViewMode('expanded')}
+                className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  flowchartViewMode === 'expanded'
                     ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-slate-950 shadow-md font-black'
                     : 'text-slate-400 hover:text-white'
                 }`}
-                title={isAr ? 'تسلسل رأسي مدمج في عمود واحد' : 'Single Stream Flow'}
+                title={isAr ? 'عرض كافة البطاقات ومحطات الفحص بشكل موسع' : 'Expanded Cards Mode'}
               >
-                <Layers className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">{isAr ? 'مسار فردي' : 'Single'}</span>
+                <LayoutGrid className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">{isAr ? 'بطاقات موسعة' : 'Expanded'}</span>
               </button>
             </div>
 
@@ -3428,8 +4001,9 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
           </div>
         </div>
         
-                {/* DUAL SWIMLANES VS LINEAR ARCHITECTURE */}
-        {flowchartLayoutMode === 'dual' ? (
+                {flowchartViewMode === 'diagram' ? (
+          renderCleanProcessDiagram()
+        ) : flowchartLayoutMode === 'dual' ? (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {/* ========================================================================= */}
             {/* LANE 1: PRODUCTION & CONFORMANCE STREAM (المسار الأخضر - مسار الإنتاج المطابق) */}
@@ -3550,7 +4124,10 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
         )}
       </div>
 
-{/* DRILL-DOWN RECORD MODAL & LOT JOURNEY INSPECTOR */}
+{/* STAGE DETAIL DRAWER MODAL */}
+      {renderStageDrawer()}
+
+      {/* DRILL-DOWN RECORD MODAL & LOT JOURNEY INSPECTOR */}
       {renderStationDrilldownModal()}
     </div>
   );
