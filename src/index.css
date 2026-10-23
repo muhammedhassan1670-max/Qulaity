@@ -1460,3 +1460,62 @@ canvas { touch-action: pan-y !important; }
   border-color: rgba(0, 163, 224, 0.8) !important;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+/* =========================================================================
+   OFFICIAL PFD QUALITY DOCUMENT PRINT STYLES (ISO 9001 / IATF 16949)
+   ========================================================================= */
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  #pfd-document-printable-area,
+  #pfd-document-printable-area * {
+    visibility: visible !important;
+  }
+  #pfd-document-printable-area {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 20px !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    overflow: visible !important;
+    max-height: none !important;
+    box-shadow: none !important;
+  }
+  #pfd-document-printable-area .bg-slate-900,
+  #pfd-document-printable-area .bg-slate-950,
+  #pfd-document-printable-area .bg-black\/30,
+  #pfd-document-printable-area .bg-slate-900\/90,
+  #pfd-document-printable-area .bg-slate-900\/80,
+  #pfd-document-printable-area .bg-slate-900\/60,
+  #pfd-document-printable-area .bg-slate-800\/90 {
+    background: #f8fafc !important;
+    color: #0f172a !important;
+  }
+  #pfd-document-printable-area .text-white {
+    color: #0f172a !important;
+  }
+  #pfd-document-printable-area .text-slate-100,
+  #pfd-document-printable-area .text-slate-200,
+  #pfd-document-printable-area .text-slate-300 {
+    color: #334155 !important;
+  }
+  #pfd-document-printable-area .border-slate-700,
+  #pfd-document-printable-area .border-slate-800 {
+    border-color: #cbd5e1 !important;
+  }
+  #pfd-document-printable-area table th {
+    background: #e2e8f0 !important;
+    color: #0f172a !important;
+  }
+  #pfd-document-printable-area table td {
+    color: #1e293b !important;
+  }
+  @page {
+    size: A4 landscape;
+    margin: 10mm;
+  }
+}

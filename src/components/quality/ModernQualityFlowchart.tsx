@@ -8,7 +8,7 @@ import {
   Sparkles, FileText, Barcode, Brain, Blocks, Library, Users, GitFork,
   HelpCircle, ChevronRight, CornerDownRight, Crosshair, MapPin, X,
   Shield, Check, ExternalLink, Lock, AlertOctagon, RotateCcw, PlusCircle,
-  LayoutGrid, ListFilter
+  LayoutGrid, ListFilter, Play, Pause, FastForward, Printer, Download, Box, Sliders
 } from 'lucide-react';
 import { 
   ENTERPRISE_DEPARTMENTS, 
@@ -87,6 +87,16 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
     stageNumber: number;
     stageId: string;
   } | null>(null);
+
+  // =========================================================================
+  // LIVE MATERIAL FLOW SIMULATION & OFFICIAL PFD EXPORT STATES
+  // =========================================================================
+  const [simulationActive, setSimulationActive] = useState<boolean>(false);
+  const [simulationPaused, setSimulationPaused] = useState<boolean>(false);
+  const [simulationType, setSimulationType] = useState<'pass' | 'fail'>('pass');
+  const [simulationStep, setSimulationStep] = useState<number>(0);
+  const [simulationSpeed, setSimulationSpeed] = useState<1 | 2>(1); // 1 = normal (2.8s), 2 = fast (1.4s)
+  const [isPfdExportOpen, setIsPfdExportOpen] = useState<boolean>(false);
 
   // Drill-Down Modal State for Station Records (Pass / Fail / Total) & Full Lot Traceability
   const [stationDrilldown, setStationDrilldown] = useState<{
@@ -320,6 +330,274 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
     });
     return { alertCount, normalCount };
   }, [equipmentList, stationStatuses]);
+
+  // =========================================================================
+  // SIMULATION SCENARIO STEPS CONFIGURATION & AUTOMATION HOOKS
+  // =========================================================================
+  const simulationSteps = useMemo(() => {
+    if (simulationType === 'pass') {
+      return [
+        {
+          stepIndex: 0,
+          id: 'start',
+          targetDomId: 'start-terminal',
+          badgeLabelAr: '📦 وصول شحنة جديدة',
+          badgeLabelEn: 'Incoming Lot Arrival',
+          titleAr: 'بداية التدفق: وصول خامات معتمدة إلى رصيف الاستلام',
+          titleEn: 'START: Approved Material Arrival at Receiving Dock',
+          narrativeAr: 'وصلت شحنة جديدة برقم كود LOT-2026-PASS-01 قادمة من المورد المعتمد. جاري تفريغ الحاويات وتسجيل رقم التتبع وفحص مستندات الشحن وشهادة التحليل COA.',
+          narrativeEn: 'Lot LOT-2026-PASS-01 arrived from approved supplier. Unloading and COA document verification initiated.',
+          actionRequiredAr: 'تسجيل الدخول في محطة استلام الخامات وتعيين خطة الفحص الفني.',
+          actionRequiredEn: 'Register arrival and assign IQC inspection plan.',
+          statusType: 'info'
+        },
+        {
+          stepIndex: 1,
+          id: 'stage1',
+          stageNumber: 1,
+          targetDomId: 'DEPT-STAGE-INCOMING',
+          badgeLabelAr: '🔬 فحص الاستلام IQC',
+          badgeLabelEn: 'IQC Receiving Inspection',
+          titleAr: 'المرحلة 1: إجراء فحص الاستلام المخبري والفني (IQC)',
+          titleEn: 'Stage 1: Incoming Quality Control Inspection (IQC)',
+          narrativeAr: 'قام مهندس الجودة بسحب 50 عينة عشوائية حسب خطة AQL 1.0 واختبار الصلادة والأبعاد والشوائب في محطة IQC-01. جميع العينات مطابقة للمعايير بنسبة 100%.',
+          narrativeEn: 'QA engineer sampled 50 units per AQL 1.0. Hardness, dimensions and purity tests conform 100%.',
+          actionRequiredAr: 'اعتماد نتائج الفحص وتوقيع محضر الاستلام الإلكتروني.',
+          actionRequiredEn: 'Approve inspection results and e-sign receiving report.',
+          statusType: 'pass'
+        },
+        {
+          stepIndex: 2,
+          id: 'gate1',
+          gateNumber: 1,
+          targetDomId: 'GATEWAY-1',
+          badgeLabelAr: '✓ إجازة التوريد (PASS)',
+          badgeLabelEn: 'Gate 1 Cleared (PASS)',
+          titleAr: 'بوابة القرار 1: تقييم مطابقة الشحنة والاعتماد',
+          titleEn: 'Decision Gateway 1: Raw Material Specification Acceptance',
+          narrativeAr: 'تم تقييم نتائج الفحص عبر بوابة القرار رقم 1 ➔ النتيجة: مطابق بنجاح (PASS) ✓. النظام يفتح إذن الصرف ويوجه الشحنة مباشرة لصالة الإنتاج.',
+          narrativeEn: 'Gate 1 evaluation ➔ PASS ✓. Material clearance issued directly to production floor.',
+          actionRequiredAr: 'توجيه الشحنة إلى مستودع التجهيز وبدء تغذية خطوط التجميع.',
+          actionRequiredEn: 'Dispatch material to staging buffer and load assembly line.',
+          statusType: 'pass'
+        },
+        {
+          stepIndex: 3,
+          id: 'stage2',
+          stageNumber: 2,
+          targetDomId: 'DEPT-STAGE-INPROCESS',
+          badgeLabelAr: '⚙️ إنتاج وضبط SPC',
+          badgeLabelEn: 'In-Process & SPC',
+          titleAr: 'المرحلة 2: بدء التشغيل والمراقبة الإحصائية للعمليات (IPQC)',
+          titleEn: 'Stage 2: In-Process Manufacturing & SPC Control (IPQC)',
+          narrativeAr: 'بدأت ماكينات التشغيل في تصنيع الأجزاء. محطة SPC-01 تسجل قياسات كل ساعة على كارت X-bar / R، ومؤشر المقدرة Cpk = 1.67 (عملية فائقة الاستقرار).',
+          narrativeEn: 'Production line active. Hourly measurements plotted on SPC X-bar/R chart. Process capability Cpk = 1.67 (highly capable).',
+          actionRequiredAr: 'الحفاظ على ثبات سرعة التغذية ومعايرة أدوات القياس الدورية.',
+          actionRequiredEn: 'Maintain feed rate and monitor periodic gauge calibrations.',
+          statusType: 'pass'
+        },
+        {
+          stepIndex: 4,
+          id: 'gate2',
+          gateNumber: 2,
+          targetDomId: 'GATEWAY-2',
+          badgeLabelAr: '✓ خلوص التشغيل (PASS)',
+          badgeLabelEn: 'Gate 2 Cleared (PASS)',
+          titleAr: 'بوابة القرار 2: التحقق من خلو العمليات من العيوب الحرجة',
+          titleEn: 'Decision Gateway 2: In-Process Quality Clearance Gate',
+          narrativeAr: 'فحص بوابات الخلوص والتحقق من عدم وجود أي عيوب حرجة أو انحرافات أثناء التجميع ➔ مطابقة كاملة (PASS) ✓. الإذن بالانتقال للفحص النهائي.',
+          narrativeEn: 'Clearance verification passed with 0 critical defects ➔ PASS ✓. Clearance granted to final inspection.',
+          actionRequiredAr: 'تغليف وتجميع الدفعة ونقلها إلى منطقة الفحص النهائي OQC.',
+          actionRequiredEn: 'Lot packing and transport to OQC inspection area.',
+          statusType: 'pass'
+        },
+        {
+          stepIndex: 5,
+          id: 'stage4',
+          stageNumber: 4,
+          targetDomId: 'DEPT-STAGE-OUTGOING',
+          badgeLabelAr: '📦 فحص نهائي OQC',
+          badgeLabelEn: 'OQC Final Audit',
+          titleAr: 'المرحلة 4: الفحص النهائي وإصدار شهادة المطابقة (OQC)',
+          titleEn: 'Stage 4: Outgoing Final Quality Audit & COC Generation',
+          narrativeAr: 'مفتش الجودة النهائي يفحص الدفعة التامة الصنع في OQC-01 وفق خطة AQL 0.65. فحص التغليف والملصقات والأداء الوظيفي واكتمال الفحص بنجاح 100%.',
+          narrativeEn: 'Final QA auditor verified packed finished goods per AQL 0.65. Packaging, barcode labels and functional tests 100% conforming.',
+          actionRequiredAr: 'إصدار شهادة المطابقة الرسمية (Certificate of Conformance) وربطها باللوط.',
+          actionRequiredEn: 'Generate official COC certificate and attach to shipment lot.',
+          statusType: 'pass'
+        },
+        {
+          stepIndex: 6,
+          id: 'gate4',
+          gateNumber: 4,
+          targetDomId: 'GATEWAY-4',
+          badgeLabelAr: '✓ إذن الإفراج النهائي (PASS)',
+          badgeLabelEn: 'Gate 4 Cleared (PASS)',
+          titleAr: 'بوابة القرار 4: إذن الإفراج والتسليم النهائي للعميل',
+          titleEn: 'Decision Gateway 4: Final Product Dispatch & Release Gate',
+          narrativeAr: 'بوابة القرار 4 تصدر إذن الإفراج النهائي ➔ مطابق 100% (PASS) ✓. تم اعتماد جميع وثائق الجودة وفتح إذن الشحن والتحميل على أسطول التوزيع.',
+          narrativeEn: 'Gate 4 issues final release authorization ➔ 100% PASS ✓. Quality documents validated and logistics loading approved.',
+          actionRequiredAr: 'تحميل الشحنة على شاحنة التوزيع والتنسيق مع إدارة المبيعات.',
+          actionRequiredEn: 'Dispatch loading onto transport fleet and notify customer.',
+          statusType: 'pass'
+        },
+        {
+          stepIndex: 7,
+          id: 'end',
+          targetDomId: 'end-terminal',
+          badgeLabelAr: '🏆 تسليم ناجح 100%',
+          badgeLabelEn: '100% Release Complete',
+          titleAr: 'نهاية الدورة: تسليم الشحنة للعميل بنجاح وتميز تام',
+          titleEn: 'END: Customer Delivery & 100% Quality Conformance Achieved',
+          narrativeAr: 'اكتملت دورة التدفق للشحنة بنجاح استثنائي! الشحنة وصلت للعميل دون أي عيوب، مع تحقيق صفر شكاوى وإثراء سجل الجودة بالبيانات الموثقة.',
+          narrativeEn: 'Pipeline journey completed with zero defects! Conforming lot safely delivered to customer with flawless quality audit trail.',
+          actionRequiredAr: 'تحديث مؤشرات أداء الجودة وسجل رضاء العملاء.',
+          actionRequiredEn: 'Update quality KPI scorecard and customer satisfaction log.',
+          statusType: 'success'
+        }
+      ];
+    } else {
+      return [
+        {
+          stepIndex: 0,
+          id: 'start',
+          targetDomId: 'start-terminal',
+          badgeLabelAr: '📦 وصول شحنة خامات',
+          badgeLabelEn: 'Incoming Lot Arrival',
+          titleAr: 'وصول دفعة خامات تحت الرمز LOT-2026-DEFECT-8D',
+          titleEn: 'START: Raw Material Batch LOT-2026-DEFECT-8D Arrived',
+          narrativeAr: 'وصلت شحنة جديدة من المورد إلى رصيف الاستلام المبدئي. الشحنة تتضمن 500 قطعة من سبائك الألومنيوم بانتظار فحص الاستلام IQC.',
+          narrativeEn: 'Incoming batch arrived at receiving dock consisting of 500 precision alloy units awaiting IQC.',
+          actionRequiredAr: 'تسليم العينات لمختبر فحص المواد وسحب العينات الممثلة.',
+          actionRequiredEn: 'Deliver test specimens to receiving QA lab.',
+          statusType: 'info'
+        },
+        {
+          stepIndex: 1,
+          id: 'stage1',
+          stageNumber: 1,
+          targetDomId: 'DEPT-STAGE-INCOMING',
+          badgeLabelAr: '⚠️ اكتشاف عيوب بالخامة',
+          badgeLabelEn: 'Defect Detected in IQC',
+          titleAr: 'المرحلة 1: اكتشاف انحراف حرج أثناء فحص الاستلام (IQC)',
+          titleEn: 'Stage 1: Critical Non-Conformance Detected in IQC Inspection',
+          narrativeAr: 'أثناء فحص العينات في محطة IQC-01، كشفت أجهزة القياس أن 18 قطعة تعاني من انحراف في الصلادة ووجود تشققات ميكرونية تتجاوز حدود القبول!',
+          narrativeEn: 'Lab inspection at IQC-01 revealed 18 parts with severe hardness variations and micro-cracks exceeding tolerance!',
+          actionRequiredAr: 'إيقاف قبول الشحنة فوراً وإبلاغ مسؤول الجودة لتفعيل الحظر.',
+          actionRequiredEn: 'Halt lot acceptance immediately and initiate containment trigger.',
+          statusType: 'fail'
+        },
+        {
+          stepIndex: 2,
+          id: 'gate1',
+          gateNumber: 1,
+          targetDomId: 'GATEWAY-1',
+          badgeLabelAr: '🛑 إنذار رفض وتفرع (FAIL)',
+          badgeLabelEn: 'Rejection Triggered (FAIL)',
+          titleAr: 'بوابة القرار 1: إطلاق إنذار عدم المطابقة والحظر الفوري',
+          titleEn: 'Decision Gateway 1: Rejection Alarm & Automated Lockout',
+          narrativeAr: 'بوابة القرار 1 تطلق صفارة الإنذار: غير مطابق (FAIL 🛑)! النظام يغلق مسار الإنتاج آلياً ويمنع مرور الشحنة، مع فتح تفرع الطوارئ الأفقي ➡️ نحو منطقة الحجر.',
+          narrativeEn: 'Gate 1 triggers FAIL 🛑! Automated system locks out production conduit, redirecting lot horizontally into quarantine.',
+          actionRequiredAr: 'حظر الباركود في نظام ERP وتوجيه الرافعة الشوكية إلى قفص الحجر.',
+          actionRequiredEn: 'Lock barcode in ERP and route forklift to quarantine bay.',
+          statusType: 'fail'
+        },
+        {
+          stepIndex: 3,
+          id: 'quarantine',
+          targetDomId: 'GATEWAY-1',
+          badgeLabelAr: '🔒 رصيف الحجر QRN-01',
+          badgeLabelEn: 'Quarantine Dock QRN-01',
+          titleAr: 'عزل الشحنة وتثبيت بطاقات الحجر الحمراء (QRN-01)',
+          titleEn: 'Physical Containment & Red Tagging at Quarantine Dock QRN-01',
+          narrativeAr: 'تم نقل الشحنة بالكامل إلى رصيف الحجر QRN-01 وتثبيت أشرطة التحذير وبطاقات "مرفوض - حجر جودة" لمنع أي سحب خاطئ أو اختلاط بالإنتاج.',
+          narrativeEn: 'Lot physically moved to Quarantine Bay QRN-01. Red tags and barricades applied to prevent accidental loading.',
+          actionRequiredAr: 'قفل القفص الفيزيائي وتسليم تقرير الحجر لإدارة الجودة.',
+          actionRequiredEn: 'Lock quarantine gate and issue quarantine custody voucher.',
+          statusType: 'quarantine'
+        },
+        {
+          stepIndex: 4,
+          id: 'stage3',
+          stageNumber: 3,
+          targetDomId: 'DEPT-STAGE-RESOLUTION',
+          badgeLabelAr: '📋 فتح تقرير NCR & 8D',
+          badgeLabelEn: 'NCR & 8D Investigation',
+          titleAr: 'المرحلة 3: فتح تقرير NCR وتشكيل فريق حل المشكلات 8D',
+          titleEn: 'Stage 3: Non-Conformance Report (NCR) & 8D Problem Solving',
+          narrativeAr: 'تم فتح تقرير عدم مطابقة NCR-2026-089 رسمياً، وتشكيل فريق 8D متعدد التخصصات (جودة، هندسة، مورد). جاري تحليل عظمة السمكة (Ishikawa) و 5-Whys.',
+          narrativeEn: 'NCR-2026-089 logged. Cross-functional 8D team formed to conduct Ishikawa root cause and 5-Whys analysis.',
+          actionRequiredAr: 'مطالبة المورد بالحضور الفوري وتطبيق إجراء الاحتواء المؤقت ICA.',
+          actionRequiredEn: 'Summon supplier for urgent review and establish Interim Containment (ICA).',
+          statusType: 'ncr'
+        },
+        {
+          stepIndex: 5,
+          id: 'capa',
+          stageNumber: 3,
+          targetDomId: 'DEPT-STAGE-RESOLUTION',
+          badgeLabelAr: '🛡️ إجراء تصحيحي CAPA & MRB',
+          badgeLabelEn: 'CAPA Corrective Action & MRB',
+          titleAr: 'اعتماد إجراء تصحيحي CAPA وقرار لجنة مراجعة المواد MRB',
+          titleEn: 'CAPA Corrective Plan Verified & MRB Disposition Review',
+          narrativeAr: 'المورد عدّل برامج المعالجة الحرارية، ولجنة MRB أصدرت قرار فرز 100% مع استبدال العينات المعيبة على نفقة المورد بالكامل واجتياز الفحص البديل.',
+          narrativeEn: 'Supplier recalibrated heat treatment recipe. MRB approved 100% sorting and full supplier compensation for rejected parts.',
+          actionRequiredAr: 'إغلاق إجراء الـ CAPA وتوقيع محضر لجنة MRB لفك الحجر.',
+          actionRequiredEn: 'Close CAPA ticket and authorize MRB disposition release.',
+          statusType: 'capa'
+        },
+        {
+          stepIndex: 6,
+          id: 'loop',
+          stageNumber: 3,
+          targetDomId: 'DEPT-STAGE-RESOLUTION',
+          badgeLabelAr: '🔄 فك الحجر والعودة للإنتاج',
+          badgeLabelEn: 'Closed-Loop Release to Stage 2',
+          titleAr: 'دورة الجودة المغلقة: فك الحجر وضخ الشحنة لصالة الإنتاج',
+          titleEn: 'Closed-Loop Quality Cycle: Quarantine Lifted & Released to Production',
+          narrativeAr: 'تم فك الحجر رسمياً وتغيير حالة اللوط إلى "مجاز بعد المعالجة". انطلاق سهم العودة الأخضر لإعادة ضخ الشحنة السليمة في صالة الإنتاج (المرحلة 2)!',
+          narrativeEn: 'Quarantine lifted! Green return loop activates, safely reinjecting conforming sorted stock back into Stage 2 Production stream!',
+          actionRequiredAr: 'بدء تصنيع الشحنة تحت مراقبة مشددة وتحديث سجل المورد.',
+          actionRequiredEn: 'Begin manufacturing under heightened SPC watch and update supplier scorecard.',
+          statusType: 'loop'
+        }
+      ];
+    }
+  }, [simulationType]);
+
+  const currentSimStepInfo = simulationSteps[simulationStep] || simulationSteps[0];
+
+  // Simulation Progression Timer
+  useEffect(() => {
+    if (!simulationActive || simulationPaused) return;
+
+    const maxStep = simulationSteps.length - 1;
+    const intervalMs = simulationSpeed === 1 ? 2800 : 1400;
+
+    const timer = setInterval(() => {
+      setSimulationStep((prev) => {
+        if (prev >= maxStep) {
+          setSimulationPaused(true);
+          return maxStep;
+        }
+        return prev + 1;
+      });
+    }, intervalMs);
+
+    return () => clearInterval(timer);
+  }, [simulationActive, simulationPaused, simulationSteps.length, simulationSpeed]);
+
+  // Simulation Dynamic Auto-Scroll to Active Flow Element
+  useEffect(() => {
+    if (!simulationActive) return;
+    const stepObj = simulationSteps[simulationStep];
+    if (stepObj?.targetDomId) {
+      const el = document.getElementById(stepObj.targetDomId);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  }, [simulationActive, simulationStep, simulationSteps]);
 
   // --------------------------------------------------------------------------
   // 100% REAL RECORD METRICS ENGINE (Total, Pass, Fail across Stations & Stages)
@@ -2203,24 +2481,44 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
     </div>
   );
 
-  const renderStartTerminal = () => (
-    <div className="flex flex-col items-center">
-      <div className="px-6 py-2.5 rounded-full bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-slate-950 font-black text-xs sm:text-sm shadow-xl shadow-amber-500/20 border-2 border-white flex items-center gap-2">
-        <span className="w-2.5 h-2.5 rounded-full bg-white animate-ping" />
-        <span>{isAr ? '🚀 بداية المسار: استلام الخامات وتأهيل الموردين' : 'START: Incoming Materials & Supplier Verification'}</span>
+  const renderStartTerminal = () => {
+    const isStepStart = simulationActive && simulationStep === 0;
+    return (
+      <div id="start-terminal" className="flex flex-col items-center">
+        <div className={`px-6 py-2.5 rounded-full bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-slate-950 font-black text-xs sm:text-sm shadow-xl shadow-amber-500/20 border-2 border-white flex items-center gap-2 transition-all ${
+          isStepStart ? 'ring-4 ring-amber-300 scale-105 shadow-2xl animate-pulse' : ''
+        }`}>
+          <span className="w-2.5 h-2.5 rounded-full bg-white animate-ping" />
+          <span>{isAr ? '🚀 بداية المسار: استلام الخامات وتأهيل الموردين' : 'START: Incoming Materials & Supplier Verification'}</span>
+          {isStepStart && (
+            <span className="px-2 py-0.5 rounded-md bg-black text-amber-300 font-mono text-[10px] font-bold">
+              LOT ARRIVAL
+            </span>
+          )}
+        </div>
+        {renderFlowPipe('#f59e0b', 'توريد خامات جديدة', 'New Raw Batch')}
       </div>
-      {renderFlowPipe('#f59e0b', 'توريد خامات جديدة', 'New Raw Batch')}
-    </div>
-  );
+    );
+  };
 
-  const renderEndTerminal = () => (
-    <div className="flex flex-col items-center pt-2">
-      <div className="px-6 py-2.5 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-black text-xs sm:text-sm shadow-xl shadow-emerald-500/20 border-2 border-white flex items-center gap-2">
-        <CheckCircle2 className="w-4 h-4 text-slate-950" />
-        <span>{isAr ? '🏁 نهاية الدورة: مطابقة تامة 100% وتحسين مستمر' : 'END: 100% Conformance & Continuous Excellence'}</span>
+  const renderEndTerminal = () => {
+    const isStepEnd = simulationActive && simulationType === 'pass' && simulationStep === 7;
+    return (
+      <div id="end-terminal" className="flex flex-col items-center pt-2">
+        <div className={`px-6 py-2.5 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-black text-xs sm:text-sm shadow-xl shadow-emerald-500/20 border-2 border-white flex items-center gap-2 transition-all ${
+          isStepEnd ? 'ring-4 ring-emerald-300 scale-105 shadow-2xl animate-bounce' : ''
+        }`}>
+          <CheckCircle2 className="w-4 h-4 text-slate-950" />
+          <span>{isAr ? '🏁 نهاية الدورة: مطابقة تامة 100% وتحسين مستمر' : 'END: 100% Conformance & Continuous Excellence'}</span>
+          {isStepEnd && (
+            <span className="px-2 py-0.5 rounded-md bg-black text-emerald-300 font-mono text-[10px] font-bold">
+              100% RELEASED
+            </span>
+          )}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderClosedLoopFeedbackBanner = () => (
 <div className="p-5 sm:p-7 rounded-3xl bg-gradient-to-r from-purple-950/40 via-blue-950/40 to-emerald-950/40 border-2 border-cyan-500/50 flex flex-col md:flex-row items-center justify-between gap-4 text-xs shadow-2xl">
@@ -3051,6 +3349,21 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
     const stats = getStageRecordStats(props.stageId);
     const trackStyle = getStageTrackingStyle(props.stageNumber, 'border-cyan-500/40');
 
+    // Dynamic Simulation Highlighting for this Node
+    const isNodeSimActive = simulationActive && (
+      (simulationType === 'pass' && (
+        (simulationStep === 1 && props.stageNumber === 1) ||
+        (simulationStep === 3 && props.stageNumber === 2) ||
+        (simulationStep === 5 && props.stageNumber === 4)
+      )) ||
+      (simulationType === 'fail' && (
+        (simulationStep === 1 && props.stageNumber === 1) ||
+        (simulationStep === 4 && props.stageNumber === 3) ||
+        (simulationStep === 5 && props.stageNumber === 3) ||
+        (simulationStep === 6 && props.stageNumber === 3)
+      ))
+    );
+
     return (
       <div
         id={props.stageId}
@@ -3058,12 +3371,29 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
           stageNumber: props.stageNumber,
           stageId: props.stageId
         })}
-        className="relative w-full max-w-2xl mx-auto p-4 sm:p-5 rounded-3xl bg-slate-900/90 border-2 transition-all cursor-pointer group shadow-xl hover:shadow-2xl hover:scale-[1.01] active:scale-[0.99]"
+        className={`relative w-full max-w-2xl mx-auto p-4 sm:p-5 rounded-3xl bg-slate-900/90 border-2 transition-all cursor-pointer group shadow-xl hover:shadow-2xl hover:scale-[1.01] active:scale-[0.99] ${
+          isNodeSimActive 
+            ? (simulationType === 'pass'
+                ? 'ring-4 ring-emerald-400 border-emerald-400 shadow-[0_0_35px_rgba(16,185,129,0.5)] animate-pulse'
+                : 'ring-4 ring-rose-500 border-rose-500 shadow-[0_0_35px_rgba(244,63,94,0.6)] animate-pulse')
+            : ''
+        }`}
         style={{
-          borderColor: `${props.accentColor}70`,
+          borderColor: isNodeSimActive ? undefined : `${props.accentColor}70`,
           boxShadow: `0 4px 25px ${props.accentColor}20`
         }}
       >
+        {/* Floating Moving Lot Simulation Badge */}
+        {isNodeSimActive && (
+          <div className="absolute -top-3.5 right-6 px-3 py-1 rounded-full bg-gradient-to-r from-cyan-500 to-emerald-400 text-slate-950 text-xs font-black flex items-center gap-1.5 shadow-xl animate-bounce z-20">
+            <span className="w-2 h-2 rounded-full bg-slate-950 animate-ping" />
+            <span>{isAr ? currentSimStepInfo.badgeLabelAr : currentSimStepInfo.badgeLabelEn}</span>
+            <span className="font-mono bg-slate-950 text-cyan-300 px-1.5 py-0.2 rounded text-[10px]">
+              {simulationType === 'pass' ? 'LOT-2026-PASS' : 'LOT-2026-FAIL'}
+            </span>
+          </div>
+        )}
+
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3.5">
             <div
@@ -3148,14 +3478,32 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
     failTitleEn: string;
     failTargetAction: () => void;
   }) => {
+    // Dynamic Simulation Gateway Active Check
+    const isSimAtGate = simulationActive && (
+      (simulationType === 'pass' && (
+        (simulationStep === 2 && props.gateNumber === 1) ||
+        (simulationStep === 4 && props.gateNumber === 2) ||
+        (simulationStep === 6 && props.gateNumber === 4)
+      )) ||
+      (simulationType === 'fail' && (
+        (simulationStep === 2 && props.gateNumber === 1) ||
+        (simulationStep === 3 && props.gateNumber === 1)
+      ))
+    );
+
+    const isPassBranchSim = isSimAtGate && simulationType === 'pass';
+    const isFailBranchSim = isSimAtGate && simulationType === 'fail';
+
     return (
-      <div className="my-3.5 w-full max-w-2xl mx-auto flex flex-col items-center">
+      <div id={`GATEWAY-${props.gateNumber}`} className="my-3.5 w-full max-w-2xl mx-auto flex flex-col items-center">
         {/* Downward Pipe into Gateway */}
         <div className="w-1 h-5 rounded-full" style={{ backgroundColor: props.accentColor }} />
 
         {/* Diamond Card Container */}
         <div
-          className="relative w-full p-4 sm:p-5 rounded-3xl bg-gradient-to-b from-slate-900 via-[#0a1122] to-slate-950 border-2 shadow-xl"
+          className={`relative w-full p-4 sm:p-5 rounded-3xl bg-gradient-to-b from-slate-900 via-[#0a1122] to-slate-950 border-2 shadow-xl transition-all ${
+            isSimAtGate ? 'ring-2 ring-amber-400/80 shadow-2xl' : ''
+          }`}
           style={{ borderColor: `${props.accentColor}60` }}
         >
           {/* Header */}
@@ -3195,7 +3543,11 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
           {/* TWO DIRECT EXPLICIT BRANCHES */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3.5">
             {/* 1. GREEN PASS BRANCH ⬇️ */}
-            <div className="p-3 rounded-2xl bg-emerald-950/30 border border-emerald-500/40 flex flex-col justify-between shadow-sm">
+            <div className={`p-3 rounded-2xl border flex flex-col justify-between shadow-sm transition-all ${
+              isPassBranchSim 
+                ? 'bg-emerald-950/80 border-emerald-400 ring-4 ring-emerald-400 shadow-xl shadow-emerald-500/40 scale-[1.02] animate-pulse'
+                : 'bg-emerald-950/30 border-emerald-500/40'
+            }`}>
               <div className="flex items-center justify-between">
                 <span className="px-2 py-0.5 rounded-lg bg-emerald-500/20 text-emerald-300 font-black text-[11px] border border-emerald-500/40 flex items-center gap-1">
                   <CheckCircle2 className="w-3 h-3 text-emerald-400" />
@@ -3210,12 +3562,16 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
               </p>
               <div className="mt-2.5 pt-2 border-t border-emerald-500/20 flex items-center justify-between text-xs font-bold text-emerald-300">
                 <span>{isAr ? `مسار الإنتاج ⬇` : `Production Stream ⬇`}</span>
-                <ArrowDown className="w-3.5 h-3.5 text-emerald-400 animate-bounce" />
+                <ArrowDown className={`w-3.5 h-3.5 text-emerald-400 ${isPassBranchSim ? 'animate-bounce' : ''}`} />
               </div>
             </div>
 
             {/* 2. RED FAIL BRANCH ➡️ */}
-            <div className="p-3 rounded-2xl bg-rose-950/30 border border-rose-500/40 flex flex-col justify-between shadow-sm">
+            <div className={`p-3 rounded-2xl border flex flex-col justify-between shadow-sm transition-all ${
+              isFailBranchSim
+                ? 'bg-rose-950/90 border-rose-400 ring-4 ring-rose-500 shadow-xl shadow-rose-500/50 scale-[1.02] animate-pulse'
+                : 'bg-rose-950/30 border-rose-500/40'
+            }`}>
               <div className="flex items-center justify-between">
                 <span className="px-2 py-0.5 rounded-lg bg-rose-500/20 text-rose-300 font-black text-[11px] border border-rose-500/40 flex items-center gap-1">
                   <AlertOctagon className="w-3 h-3 text-rose-400" />
@@ -3232,7 +3588,11 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
                 <button
                   type="button"
                   onClick={props.failTargetAction}
-                  className="w-full py-1 px-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95"
+                  className={`w-full py-1 px-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95 ${
+                    isFailBranchSim
+                      ? 'bg-rose-500 text-white animate-bounce shadow-lg shadow-rose-500/50'
+                      : 'bg-rose-600 hover:bg-rose-500 text-white'
+                  }`}
                 >
                   <span>{isAr ? `تفرع لـ [${props.failTitleAr}] ➡️` : `Divert to [${props.failTitleEn}] ➡️`}</span>
                   <ArrowUpRight className="w-3 h-3" />
@@ -3256,10 +3616,17 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
     const stats = getStageRecordStats('DEPT-STAGE-RESOLUTION');
     const trackStyle = getStageTrackingStyle(3, 'border-rose-500/60');
 
+    const isSimAtHub = simulationActive && simulationType === 'fail';
+    const isStepNcr = isSimAtHub && simulationStep === 4;
+    const isStepCapa = isSimAtHub && simulationStep === 5;
+    const isStepLoop = isSimAtHub && simulationStep === 6;
+
     return (
       <div
         id="DEPT-STAGE-RESOLUTION"
-        className={`my-6 w-full max-w-2xl mx-auto p-5 rounded-3xl bg-gradient-to-br from-rose-950/60 via-slate-900 to-slate-950 border-2 border-rose-500/60 shadow-2xl space-y-4 ${trackStyle.className}`}
+        className={`my-6 w-full max-w-2xl mx-auto p-5 rounded-3xl bg-gradient-to-br from-rose-950/60 via-slate-900 to-slate-950 border-2 border-rose-500/60 shadow-2xl space-y-4 ${trackStyle.className} ${
+          isSimAtHub ? 'ring-4 ring-rose-500/70 shadow-2xl shadow-rose-950/90' : ''
+        }`}
       >
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-rose-500/20">
           <div className="flex items-center gap-3">
@@ -3272,6 +3639,11 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
                   STAGE 03 • RESOLUTION HUB
                 </span>
                 {trackStyle.badge}
+                {isSimAtHub && (
+                  <span className="px-2 py-0.5 rounded-md bg-rose-500 text-white font-mono text-[10px] font-black animate-pulse">
+                    ⚡ SIMULATION ACTIVE
+                  </span>
+                )}
               </div>
               <h3 className="text-base font-black text-rose-400 mt-1">
                 {isAr ? 'المرحلة 3: مركز احتواء عدم المطابقة وحل المشكلات (NCR / 8D / CAPA)' : 'Stage 3: Problem Solving, NCR & Corrective Actions'}
@@ -3298,21 +3670,33 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center text-xs">
           <div 
             onClick={() => navigate('/ncr')} 
-            className="p-2.5 rounded-2xl bg-black/40 border border-rose-500/30 hover:border-rose-400 hover:bg-rose-950/30 cursor-pointer transition-all"
+            className={`p-2.5 rounded-2xl border cursor-pointer transition-all ${
+              isStepNcr
+                ? 'bg-rose-900/80 border-rose-400 ring-4 ring-rose-400 shadow-xl shadow-rose-500/50 scale-105 animate-pulse'
+                : 'bg-black/40 border-rose-500/30 hover:border-rose-400 hover:bg-rose-950/30'
+            }`}
           >
             <span className="block font-black text-rose-300 text-xs">NCR-01</span>
             <span className="text-[10px] text-slate-400 block mt-0.5">{isAr ? 'عدم مطابقة' : 'Reports'}</span>
           </div>
           <div 
             onClick={() => navigate('/d8')} 
-            className="p-2.5 rounded-2xl bg-black/40 border border-rose-500/30 hover:border-rose-400 hover:bg-rose-950/30 cursor-pointer transition-all"
+            className={`p-2.5 rounded-2xl border cursor-pointer transition-all ${
+              isStepNcr
+                ? 'bg-rose-900/80 border-rose-400 ring-4 ring-rose-400 shadow-xl shadow-rose-500/50 scale-105 animate-pulse'
+                : 'bg-black/40 border-rose-500/30 hover:border-rose-400 hover:bg-rose-950/30'
+            }`}
           >
             <span className="block font-black text-rose-300 text-xs">D8-01</span>
             <span className="text-[10px] text-slate-400 block mt-0.5">{isAr ? 'مشاريع 8D' : '8D Projects'}</span>
           </div>
           <div 
             onClick={() => navigate('/capa')} 
-            className="p-2.5 rounded-2xl bg-black/40 border border-rose-500/30 hover:border-rose-400 hover:bg-rose-950/30 cursor-pointer transition-all"
+            className={`p-2.5 rounded-2xl border cursor-pointer transition-all ${
+              isStepCapa
+                ? 'bg-rose-900/80 border-rose-400 ring-4 ring-rose-400 shadow-xl shadow-rose-500/50 scale-105 animate-pulse'
+                : 'bg-black/40 border-rose-500/30 hover:border-rose-400 hover:bg-rose-950/30'
+            }`}
           >
             <span className="block font-black text-rose-300 text-xs">CAPA-01</span>
             <span className="text-[10px] text-slate-400 block mt-0.5">{isAr ? 'إجراءات تصحيح' : 'Actions'}</span>
@@ -3334,9 +3718,13 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
         </div>
 
         {/* Closed-loop Re-injection Card with Glowing Green Return Arrow */}
-        <div className="p-3.5 rounded-2xl bg-emerald-950/30 border border-emerald-500/40 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+        <div className={`p-3.5 rounded-2xl border flex flex-col sm:flex-row items-center justify-between gap-3 text-xs transition-all ${
+          isStepLoop
+            ? 'bg-emerald-950/90 border-emerald-400 ring-4 ring-emerald-400 shadow-2xl shadow-emerald-500/60 scale-[1.02] animate-pulse'
+            : 'bg-emerald-950/30 border-emerald-500/40'
+        }`}>
           <div className="flex items-center gap-2.5">
-            <RotateCcw className="w-5 h-5 text-emerald-400 animate-spin shrink-0" />
+            <RotateCcw className={`w-5 h-5 text-emerald-400 shrink-0 ${isStepLoop ? 'animate-spin' : ''}`} />
             <div>
               <span className="font-black text-emerald-300 block">
                 {isAr ? '🔄 دورة الجودة المغلقة: سهم العودة للإنتاج' : 'Closed-Loop Production Return Loop'}
@@ -3350,9 +3738,13 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
           <button
             type="button"
             onClick={() => scrollToStage('DEPT-STAGE-INPROCESS', true)}
-            className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs flex items-center gap-1.5 transition-all shadow-md shrink-0 active:scale-95"
+            className={`px-3 py-1.5 rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-md shrink-0 active:scale-95 ${
+              isStepLoop
+                ? 'bg-emerald-400 text-slate-950 font-black animate-bounce shadow-xl shadow-emerald-400/50'
+                : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black'
+            }`}
           >
-            <span>{isAr ? 'ضخ بالإنتاج (المرحلة 2) ⤴' : 'Return to Stage 2 ⤴'}</span>
+            <span>{isStepLoop ? (isAr ? '🚀 ضخ بالإنتاج الآن! ⤴' : 'Reinjecting to Stage 2! ⤴') : (isAr ? 'ضخ بالإنتاج (المرحلة 2) ⤴' : 'Return to Stage 2 ⤴')}</span>
             <ArrowUpRight className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -3600,6 +3992,536 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
     );
   };
 
+  // =========================================================================
+  // INTERACTIVE LIVE MATERIAL FLOW SIMULATION CONTROLLER (HUD)
+  // =========================================================================
+  const renderSimulationPlayerHud = () => {
+    const maxStep = simulationSteps.length - 1;
+    const isFinished = simulationStep >= maxStep;
+
+    return (
+      <div className="w-full max-w-6xl mx-auto my-3 p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-slate-900 via-[#0c1427] to-slate-900 border-2 border-amber-500/60 shadow-2xl shadow-amber-950/50 space-y-3.5 animate-in fade-in slide-in-from-top-4 duration-300">
+        {/* Top Row: Title, Scenario Switcher, Close */}
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 border-b border-white/10 pb-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-500 text-slate-950 flex items-center justify-center font-black shadow-lg shadow-amber-500/30 shrink-0">
+              <Play className="w-5 h-5 fill-slate-950" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-mono font-black text-xs border border-amber-500/40">
+                  LIVE FLOW SIMULATOR
+                </span>
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping" />
+              </div>
+              <h3 className="text-sm sm:text-base font-black text-white mt-0.5">
+                {isAr ? '🎮 محاكاة تدفق الشحنات والعينات الحية عبر مسار الجودة' : 'Live Material Flow & Lot Inspection Simulator'}
+              </h3>
+            </div>
+          </div>
+
+          {/* Scenario Toggle (Pass vs Defect & Quarantine) */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1 bg-black/60 p-1 rounded-2xl border border-white/10">
+              <button
+                type="button"
+                onClick={() => {
+                  setSimulationType('pass');
+                  setSimulationStep(0);
+                  setSimulationPaused(false);
+                }}
+                className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 ${
+                  simulationType === 'pass'
+                    ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/30 scale-105'
+                    : 'text-slate-400 hover:text-emerald-300'
+                }`}
+              >
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>{isAr ? '🟢 شحنة مطابقة (Pass Stream)' : 'Conforming Lot (Pass)'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setSimulationType('fail');
+                  setSimulationStep(0);
+                  setSimulationPaused(false);
+                }}
+                className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 ${
+                  simulationType === 'fail'
+                    ? 'bg-rose-500 text-white shadow-md shadow-rose-500/30 scale-105'
+                    : 'text-slate-400 hover:text-rose-300'
+                }`}
+              >
+                <AlertOctagon className="w-3.5 h-3.5" />
+                <span>{isAr ? '🛑 شحنة معيبة وحجر (Fail & Quarantine)' : 'Defect & Quarantine (Fail)'}</span>
+              </button>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setSimulationActive(false);
+                setSimulationStep(0);
+              }}
+              className="w-8 h-8 rounded-xl bg-white/5 hover:bg-rose-500/20 text-slate-400 hover:text-rose-300 border border-white/10 flex items-center justify-center transition-colors"
+              title={isAr ? 'إغلاق المحاكاة' : 'Close Simulation'}
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Controls: Play/Pause, Reset, Speed, Step Nav */}
+        <div className="flex flex-wrap items-center justify-between gap-3 bg-black/40 p-3 rounded-2xl border border-white/5">
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Play / Pause */}
+            <button
+              type="button"
+              onClick={() => setSimulationPaused(prev => !prev)}
+              className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs flex items-center gap-1.5 shadow-md shadow-amber-500/20 active:scale-95 transition-all"
+            >
+              {simulationPaused ? (
+                <>
+                  <Play className="w-3.5 h-3.5 fill-slate-950" />
+                  <span>{isAr ? 'استئناف الحركة ▶' : 'Resume ▶'}</span>
+                </>
+              ) : (
+                <>
+                  <Pause className="w-3.5 h-3.5 fill-slate-950" />
+                  <span>{isAr ? 'إيقاف مؤقت ⏸' : 'Pause ⏸'}</span>
+                </>
+              )}
+            </button>
+
+            {/* Reset */}
+            <button
+              type="button"
+              onClick={() => {
+                setSimulationStep(0);
+                setSimulationPaused(false);
+              }}
+              className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center gap-1.5 border border-white/10 active:scale-95 transition-all"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>{isAr ? 'إعادة للبداية ↺' : 'Restart ↺'}</span>
+            </button>
+
+            {/* Step Navigation */}
+            <div className="flex items-center gap-1 bg-black/60 p-0.5 rounded-xl border border-white/10">
+              <button
+                type="button"
+                disabled={simulationStep === 0}
+                onClick={() => {
+                  setSimulationStep(prev => Math.max(0, prev - 1));
+                  setSimulationPaused(true);
+                }}
+                className="px-2.5 py-1 rounded-lg text-xs font-bold text-slate-300 hover:text-white disabled:opacity-30 disabled:pointer-events-none"
+              >
+                {isAr ? '◀ السابق' : '◀ Prev'}
+              </button>
+              <span className="text-[11px] font-mono font-bold text-amber-300 px-1">
+                {simulationStep + 1} / {simulationSteps.length}
+              </span>
+              <button
+                type="button"
+                disabled={simulationStep >= maxStep}
+                onClick={() => {
+                  setSimulationStep(prev => Math.min(maxStep, prev + 1));
+                  setSimulationPaused(true);
+                }}
+                className="px-2.5 py-1 rounded-lg text-xs font-bold text-slate-300 hover:text-white disabled:opacity-30 disabled:pointer-events-none"
+              >
+                {isAr ? 'التالي ▶' : 'Next ▶'}
+              </button>
+            </div>
+          </div>
+
+          {/* Speed Switcher */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-slate-400 font-mono">
+              {isAr ? 'سرعة التدفق:' : 'Flow Speed:'}
+            </span>
+            <div className="flex items-center gap-1 bg-black/60 p-0.5 rounded-xl border border-white/10 text-xs">
+              <button
+                type="button"
+                onClick={() => setSimulationSpeed(1)}
+                className={`px-2.5 py-1 rounded-lg font-mono font-bold transition-all ${
+                  simulationSpeed === 1 ? 'bg-amber-500 text-slate-950 font-black' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                1x {isAr ? '(طبيعي)' : '(Normal)'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setSimulationSpeed(2)}
+                className={`px-2.5 py-1 rounded-lg font-mono font-bold transition-all ${
+                  simulationSpeed === 2 ? 'bg-amber-500 text-slate-950 font-black' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                2x {isAr ? '(سريع)' : '(Fast)'}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Step Breadcrumbs Tracker */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
+          {simulationSteps.map((step, idx) => {
+            const isPassed = idx < simulationStep;
+            const isCurrent = idx === simulationStep;
+            return (
+              <button
+                key={step.id}
+                type="button"
+                onClick={() => {
+                  setSimulationStep(idx);
+                  setSimulationPaused(true);
+                }}
+                className={`px-2.5 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all flex items-center gap-1.5 ${
+                  isCurrent
+                    ? simulationType === 'pass'
+                      ? 'bg-emerald-500 text-slate-950 ring-2 ring-emerald-300 shadow-lg shadow-emerald-500/40 font-black scale-105'
+                      : 'bg-rose-500 text-white ring-2 ring-rose-300 shadow-lg shadow-rose-500/40 font-black scale-105'
+                    : isPassed
+                    ? 'bg-slate-800 text-slate-300 border border-emerald-500/40'
+                    : 'bg-black/40 text-slate-500 border border-white/5 opacity-60 hover:opacity-100'
+                }`}
+              >
+                <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-black ${
+                  isCurrent ? 'bg-black/30 text-white' : isPassed ? 'bg-emerald-500 text-slate-950' : 'bg-slate-800 text-slate-400'
+                }`}>
+                  {isPassed ? '✓' : idx + 1}
+                </span>
+                <span>{isAr ? step.badgeLabelAr : step.badgeLabelEn}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Live Narrative Action Box */}
+        <div className={`p-4 rounded-2xl border transition-all ${
+          simulationType === 'pass' 
+            ? 'bg-gradient-to-r from-emerald-950/40 via-slate-900 to-teal-950/40 border-emerald-500/40'
+            : 'bg-gradient-to-r from-rose-950/40 via-slate-900 to-amber-950/40 border-rose-500/40'
+        }`}>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pb-2 border-b border-white/10">
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-black/40 text-amber-300 border border-amber-500/30">
+                {simulationType === 'pass' ? 'LOT-2026-PASS-01' : 'LOT-2026-DEFECT-8D'}
+              </span>
+              <span className="text-xs font-black text-white">
+                {isAr ? currentSimStepInfo.titleAr : currentSimStepInfo.titleEn}
+              </span>
+            </div>
+
+            <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-black flex items-center gap-1 ${
+              isFinished
+                ? 'bg-emerald-500 text-slate-950 animate-bounce'
+                : 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
+            }`}>
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
+              <span>{isFinished ? (isAr ? '🎉 اكتمل التدفق' : 'Flow Completed') : (isAr ? 'جاري التنفيذ اللحظي...' : 'Executing...')}</span>
+            </span>
+          </div>
+
+          <p className="text-xs sm:text-sm text-slate-200 mt-2 leading-relaxed">
+            {isAr ? currentSimStepInfo.narrativeAr : currentSimStepInfo.narrativeEn}
+          </p>
+
+          <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between text-xs text-slate-400">
+            <div className="flex items-center gap-1.5 text-amber-300">
+              <span className="font-bold">{isAr ? 'الإجراء الهندسي المطلوب:' : 'Quality Action:'}</span>
+              <span>{isAr ? currentSimStepInfo.actionRequiredAr : currentSimStepInfo.actionRequiredEn}</span>
+            </div>
+            <span className="text-[11px] font-mono text-slate-500 hidden sm:inline">
+              ISO 9001:2015 §8.5.1
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // =========================================================================
+  // OFFICIAL ISO 9001:2015 & IATF 16949 PROCESS FLOW DIAGRAM (PFD) MODAL
+  // =========================================================================
+  const renderPfdExportModal = () => {
+    if (!isPfdExportOpen) return null;
+
+    return (
+      <div 
+        className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200 overflow-y-auto"
+        onClick={() => setIsPfdExportOpen(false)}
+      >
+        <div 
+          className="w-full max-w-5xl bg-slate-900 border border-slate-700 rounded-3xl shadow-2xl flex flex-col overflow-hidden text-start my-auto animate-in zoom-in-95 duration-200"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Modal Toolbar (Non-printable) */}
+          <div className="p-4 sm:p-5 bg-gradient-to-r from-slate-900 via-slate-950 to-slate-900 border-b border-white/10 flex items-center justify-between gap-3 shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-blue-500/20 text-blue-400 border border-blue-500/40 flex items-center justify-center shrink-0">
+                <FileText className="w-5 h-5 text-blue-400" />
+              </div>
+              <div>
+                <span className="text-xs font-mono text-blue-400 font-bold">
+                  ISO 9001:2015 & IATF 16949 COMPLIANT
+                </span>
+                <h3 className="text-base sm:text-lg font-black text-white mt-0.5">
+                  {isAr ? 'وثيقة خريطة تدفق العمليات الهندسية المعتمدة (PFD Document)' : 'Official Process Flow Diagram (PFD) Quality Document'}
+                </h3>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-400 hover:to-cyan-400 text-slate-950 font-black text-xs flex items-center gap-2 shadow-lg shadow-blue-500/20 active:scale-95 transition-all"
+              >
+                <Printer className="w-4 h-4 text-slate-950" />
+                <span>{isAr ? 'طباعة / حفظ كـ PDF 🖨️' : 'Print / Export PDF 🖨️'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsPfdExportOpen(false)}
+                className="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/15 text-slate-400 hover:text-white flex items-center justify-center transition-colors border border-white/10"
+                title={isAr ? 'إغلاق' : 'Close'}
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Printable Document Body */}
+          <div id="pfd-document-printable-area" className="p-6 sm:p-10 bg-slate-950 text-slate-100 overflow-y-auto max-h-[80vh] space-y-6 font-sans">
+            {/* Engineering Document Header Block */}
+            <div className="border-2 border-slate-700 rounded-2xl p-4 sm:p-6 bg-slate-900/90 shadow-md">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center border-b border-slate-700 pb-4 text-center md:text-start">
+                <div className="md:col-span-1 border-b md:border-b-0 md:border-r border-slate-700 pb-3 md:pb-0 md:pr-4">
+                  <span className="text-xl font-black text-cyan-400 tracking-wider">QMS 4.0</span>
+                  <span className="block text-[10px] text-slate-400 uppercase tracking-widest mt-0.5">Enterprise Quality</span>
+                </div>
+                <div className="md:col-span-2 text-center">
+                  <h1 className="text-base sm:text-xl font-black text-white">
+                    PROCESS FLOW DIAGRAM (PFD)
+                  </h1>
+                  <h2 className="text-xs sm:text-sm text-cyan-300 font-bold mt-1">
+                    خريطة مسار العمليات وبوابات اتخاذ القرار لضمان الجودة
+                  </h2>
+                  <span className="inline-block mt-1 px-3 py-0.5 rounded-full bg-blue-500/20 text-blue-300 text-[10px] font-mono border border-blue-500/40">
+                    STANDARD: ISO 9001:2015 Clause 4.4 & 8.5.1 / IATF 16949 Section 8.5
+                  </span>
+                </div>
+                <div className="md:col-span-1 border-t md:border-t-0 md:border-l border-slate-700 pt-3 md:pt-0 md:pl-4 text-xs font-mono space-y-1">
+                  <div><span className="text-slate-400">DOC ID:</span> <strong className="text-white">DOC-QMS-PFD-001</strong></div>
+                  <div><span className="text-slate-400">REV:</span> <strong className="text-emerald-400">4.2 (ACTIVE)</strong></div>
+                  <div><span className="text-slate-400">DATE:</span> <span className="text-slate-300">{new Date().toISOString().split('T')[0]}</span></div>
+                  <div><span className="text-slate-400">PAGE:</span> <span className="text-slate-300">1 of 1</span></div>
+                </div>
+              </div>
+
+              {/* Scope & Plant Meta */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 text-xs text-slate-300 font-mono">
+                <div>
+                  <span className="text-slate-500 block text-[10px]">{isAr ? 'المنشأة:' : 'Plant:'}</span>
+                  <span className="font-bold text-white">Main Manufacturing Facility</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 block text-[10px]">{isAr ? 'نطاق التطبيق:' : 'Scope:'}</span>
+                  <span className="font-bold text-white">Receiving to Dispatch</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 block text-[10px]">{isAr ? 'حالة التوازن:' : 'Yield Balance:'}</span>
+                  <span className="font-bold text-emerald-400">
+                    {globalFactoryStats.total > 0 
+                      ? `${Math.round((globalFactoryStats.pass / globalFactoryStats.total) * 100)}% Conformance` 
+                      : '100% Certified'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-slate-500 block text-[10px]">{isAr ? 'حالة الاعتماد:' : 'Approval:'}</span>
+                  <span className="font-bold text-cyan-300">Audited & Released</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Plant Live Health Balance Metrics */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-center">
+                <span className="text-[11px] text-slate-400 block">{isAr ? 'إجمالي المحطات المعتمدة' : 'Total Workstations'}</span>
+                <span className="text-xl font-black text-cyan-400 font-mono mt-1 block">17 Stations</span>
+              </div>
+              <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-center">
+                <span className="text-[11px] text-slate-400 block">{isAr ? 'بوابات اتخاذ القرار' : 'Quality Gateways'}</span>
+                <span className="text-xl font-black text-amber-400 font-mono mt-1 block">5 Gates</span>
+              </div>
+              <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-center">
+                <span className="text-[11px] text-slate-400 block">{isAr ? 'الشحنات المطابقة (PASS)' : 'Conforming Lots'}</span>
+                <span className="text-xl font-black text-emerald-400 font-mono mt-1 block">{globalFactoryStats.pass} Lots</span>
+              </div>
+              <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-center">
+                <span className="text-[11px] text-slate-400 block">{isAr ? 'شحنات الحجر المعزولة' : 'Quarantine Lots'}</span>
+                <span className="text-xl font-black text-rose-400 font-mono mt-1 block">{globalFactoryStats.fail} Lots</span>
+              </div>
+            </div>
+
+            {/* Process Flow Matrix (PFD Engineering Table) */}
+            <div className="border border-slate-700 rounded-2xl overflow-hidden shadow-lg bg-slate-900/60">
+              <div className="bg-slate-800/90 px-4 py-3 border-b border-slate-700 flex items-center justify-between">
+                <h4 className="text-xs sm:text-sm font-black text-white flex items-center gap-2">
+                  <span>📋</span>
+                  <span>{isAr ? 'جدول مصفوفة تدفق العمليات وبوابات الضبط الفني' : 'Process Flow Matrix & Inspection Gates'}</span>
+                </h4>
+                <span className="text-[10px] font-mono text-slate-400">IATF 16949 §8.5.1</span>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs text-start border-collapse font-sans">
+                  <thead>
+                    <tr className="bg-slate-900/90 text-slate-400 font-mono text-[11px] border-b border-slate-800">
+                      <th className="p-2.5 text-center">#</th>
+                      <th className="p-2.5 text-start">{isAr ? 'المرحلة والعملية' : 'Stage / Process'}</th>
+                      <th className="p-2.5 text-center">{isAr ? 'كود المحطة' : 'Station Code'}</th>
+                      <th className="p-2.5 text-start">{isAr ? 'نوع النشاط' : 'Activity Type'}</th>
+                      <th className="p-2.5 text-start">{isAr ? 'معيار بوابة القرار (Acceptance)' : 'Decision Criteria'}</th>
+                      <th className="p-2.5 text-start">{isAr ? 'إجراء عدم المطابقة (Diverted)' : 'Non-Conformance'}</th>
+                      <th className="p-2.5 text-center">{isAr ? 'الإدارة المسؤولة' : 'Dept'}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800">
+                    <tr className="hover:bg-slate-800/40">
+                      <td className="p-2.5 text-center font-bold text-amber-400">01</td>
+                      <td className="p-2.5 font-bold text-white">
+                        {isAr ? 'استلام وتفتيش المواد الخام (IQC)' : 'Incoming Material Inspection (IQC)'}
+                      </td>
+                      <td className="p-2.5 text-center font-mono text-amber-300">IQC-01, VDR-01</td>
+                      <td className="p-2.5 text-slate-300">{isAr ? 'فحص مخبري وقياس أبعاد' : 'Lab & Dimension Inspection'}</td>
+                      <td className="p-2.5 text-emerald-300 font-mono">Gateway 1: Specs & COA</td>
+                      <td className="p-2.5 text-rose-300 font-mono">QRN-01 Quarantine & NCR</td>
+                      <td className="p-2.5 text-center font-mono text-slate-400">QA / QC</td>
+                    </tr>
+                    <tr className="hover:bg-slate-800/40">
+                      <td className="p-2.5 text-center font-bold text-cyan-400">02</td>
+                      <td className="p-2.5 font-bold text-white">
+                        {isAr ? 'جودة صالة الإنتاج والتحكم الإحصائي (IPQC)' : 'In-Process Quality & SPC (IPQC)'}
+                      </td>
+                      <td className="p-2.5 text-center font-mono text-cyan-300">SHP-01, DEF-01, SPC-01</td>
+                      <td className="p-2.5 text-slate-300">{isAr ? 'تشغيل وتجميع ومراقبة Cpk' : 'Assembly & SPC Monitoring'}</td>
+                      <td className="p-2.5 text-emerald-300 font-mono">Gateway 2: SPC Control Limits</td>
+                      <td className="p-2.5 text-rose-300 font-mono">Line Stop, 8D Escalation</td>
+                      <td className="p-2.5 text-center font-mono text-slate-400">Production / QC</td>
+                    </tr>
+                    <tr className="hover:bg-slate-800/40 bg-rose-950/20">
+                      <td className="p-2.5 text-center font-bold text-rose-400">03</td>
+                      <td className="p-2.5 font-bold text-white">
+                        {isAr ? 'مركز احتواء عدم المطابقة وحل المشكلات' : 'Containment & CAPA Resolution Hub'}
+                      </td>
+                      <td className="p-2.5 text-center font-mono text-rose-300">NCR-01, D8-01, CAPA-01</td>
+                      <td className="p-2.5 text-slate-300">{isAr ? 'تحقيق جذري 8D وتصحيح CAPA' : '8D Root Cause & MRB Release'}</td>
+                      <td className="p-2.5 text-cyan-300 font-mono">MRB Disposition Sign-Off</td>
+                      <td className="p-2.5 text-emerald-400 font-mono">Closed-Loop Return to Stage 2 🔄</td>
+                      <td className="p-2.5 text-center font-mono text-slate-400">MRB / QA</td>
+                    </tr>
+                    <tr className="hover:bg-slate-800/40">
+                      <td className="p-2.5 text-center font-bold text-emerald-400">04</td>
+                      <td className="p-2.5 font-bold text-white">
+                        {isAr ? 'فحص وخروج المنتج النهائي (OQC)' : 'Outgoing QA & Final Release (OQC)'}
+                      </td>
+                      <td className="p-2.5 text-center font-mono text-emerald-300">OQC-01</td>
+                      <td className="p-2.5 text-slate-300">{isAr ? 'فحص عينات القبول وإصدار COC' : 'Pre-Shipment AQL Audit & COC'}</td>
+                      <td className="p-2.5 text-emerald-300 font-mono">Gateway 4: AQL 0.65 Criteria</td>
+                      <td className="p-2.5 text-rose-300 font-mono">Hold & 100% Re-screening</td>
+                      <td className="p-2.5 text-center font-mono text-slate-400">QA / Logistics</td>
+                    </tr>
+                    <tr className="hover:bg-slate-800/40">
+                      <td className="p-2.5 text-center font-bold text-indigo-400">05</td>
+                      <td className="p-2.5 font-bold text-white">
+                        {isAr ? 'شكاوى العملاء والميدان (Customer QA)' : 'Customer Complaints & RMA (CSM)'}
+                      </td>
+                      <td className="p-2.5 text-center font-mono text-indigo-300">CSM-01</td>
+                      <td className="p-2.5 text-slate-300">{isAr ? 'استقبال بلاغات ومرتجعات RMA' : 'Warranty Claims & RMA Intake'}</td>
+                      <td className="p-2.5 text-emerald-300 font-mono">Gateway 5: Settlement & Feedback</td>
+                      <td className="p-2.5 text-rose-300 font-mono">Emergency 8D Corrective Action</td>
+                      <td className="p-2.5 text-center font-mono text-slate-400">Customer Support</td>
+                    </tr>
+                    <tr className="hover:bg-slate-800/40">
+                      <td className="p-2.5 text-center font-bold text-purple-400">06</td>
+                      <td className="p-2.5 font-bold text-white">
+                        {isAr ? 'المختبر الهندسي والتدقيق (Compliance)' : 'Engineering Metrology & Audits'}
+                      </td>
+                      <td className="p-2.5 text-center font-mono text-purple-300">CP-01, FMEA-01, MSA-01</td>
+                      <td className="p-2.5 text-slate-300">{isAr ? 'معايرة الأجهزة وتحديث FMEA' : 'Gage MSA & FMEA Updates'}</td>
+                      <td className="p-2.5 text-slate-300 font-mono">ISO 9001 / IATF Audit Conformance</td>
+                      <td className="p-2.5 text-slate-400 font-mono">Internal Audit Finding</td>
+                      <td className="p-2.5 text-center font-mono text-slate-400">Metrology / Audit</td>
+                    </tr>
+                    <tr className="hover:bg-slate-800/40">
+                      <td className="p-2.5 text-center font-bold text-blue-400">07</td>
+                      <td className="p-2.5 font-bold text-white">
+                        {isAr ? 'تهيئة المصنع والبيانات (Master Data)' : 'Master Data Setup & Lessons Learned'}
+                      </td>
+                      <td className="p-2.5 text-center font-mono text-blue-300">PRT-01, MD-01, LES-01</td>
+                      <td className="p-2.5 text-slate-300">{isAr ? 'إدارة النماذج والدروس المستفادة' : 'Forms Designer & Repository'}</td>
+                      <td className="p-2.5 text-emerald-400 font-mono">Closed-Loop Feed to Stage 1</td>
+                      <td className="p-2.5 text-slate-400 font-mono">Document Revision Required</td>
+                      <td className="p-2.5 text-center font-mono text-slate-400">Quality Systems</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Formal Approval Signatures Box */}
+            <div className="border border-slate-700 rounded-2xl p-4 sm:p-6 bg-slate-900/80">
+              <div className="text-xs font-black text-slate-300 uppercase tracking-wider pb-3 border-b border-slate-700">
+                {isAr ? 'اعتمادات وثيقة الجودة الهندسية (Document Approval Signatures)' : 'Engineering Quality Document Approvals'}
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-4 text-xs">
+                <div className="space-y-1.5 border border-slate-800 p-3 rounded-xl bg-black/30">
+                  <span className="text-[10px] text-slate-400 block">{isAr ? 'إعداد مهندس الجودة:' : 'Prepared by (QA Engineer):'}</span>
+                  <span className="font-bold text-white block">Eng. Quality Systems Lead</span>
+                  <span className="text-[10px] text-emerald-400 font-mono block">✓ E-SIGN VERIFIED</span>
+                  <span className="text-[10px] text-slate-500 font-mono block">{new Date().toISOString().split('T')[0]}</span>
+                </div>
+                <div className="space-y-1.5 border border-slate-800 p-3 rounded-xl bg-black/30">
+                  <span className="text-[10px] text-slate-400 block">{isAr ? 'مراجعة مدير ضمان الجودة:' : 'Reviewed by (QA Manager):'}</span>
+                  <span className="font-bold text-white block">Quality Assurance Director</span>
+                  <span className="text-[10px] text-emerald-400 font-mono block">✓ AUDITED & APPROVED</span>
+                  <span className="text-[10px] text-slate-500 font-mono block">{new Date().toISOString().split('T')[0]}</span>
+                </div>
+                <div className="space-y-1.5 border border-slate-800 p-3 rounded-xl bg-black/30">
+                  <span className="text-[10px] text-slate-400 block">{isAr ? 'اعتماد مدير العمليات والمصنع:' : 'Approved by (Plant Director):'}</span>
+                  <span className="font-bold text-white block">VP of Manufacturing Operations</span>
+                  <span className="text-[10px] text-cyan-400 font-mono block">✓ RELEASE AUTHORIZED</span>
+                  <span className="text-[10px] text-slate-500 font-mono block">{new Date().toISOString().split('T')[0]}</span>
+                </div>
+              </div>
+              <div className="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between text-[10px] font-mono text-slate-500">
+                <span>DOC-VERIFY-HASH: 8F2B-901C-A19F-QMS4</span>
+                <span>ISO 9001:2015 REGISTERED FACILITY</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Modal Footer */}
+          <div className="p-4 bg-slate-950 border-t border-white/10 flex items-center justify-between text-xs text-slate-400 shrink-0">
+            <span>{isAr ? '💡 يمكنك طباعة هذه الوثيقة كملف PDF معتمد لتقديمه في تدقيقات ISO و IATF' : 'Ready to export as official PDF for ISO / IATF audits'}</span>
+            <button
+              type="button"
+              onClick={() => setIsPfdExportOpen(false)}
+              className="px-4 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold transition-colors"
+            >
+              {isAr ? 'إغلاق' : 'Close'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="flex-1 w-full bg-[#060a14] text-slate-100 flex flex-col font-sans select-none">
       {/* Dynamic Keyframe Animation Styles */}
@@ -3704,6 +4626,39 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
               </button>
             </div>
 
+            {/* Simulation Launcher Button */}
+            <button
+              type="button"
+              onClick={() => {
+                setSimulationActive(prev => !prev);
+                if (!simulationActive) {
+                  setSimulationStep(0);
+                  setSimulationPaused(false);
+                }
+              }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 ${
+                simulationActive
+                  ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 shadow-lg shadow-amber-500/30 font-black animate-pulse'
+                  : 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:border-amber-400'
+              }`}
+              title={isAr ? 'بدء محاكاة التدفق الحي للشحنات والعينات' : 'Launch Live Material Flow Simulation'}
+            >
+              <Play className={`w-3.5 h-3.5 ${simulationActive ? 'fill-slate-950 text-slate-950' : 'text-amber-400'}`} />
+              <span>{isAr ? (simulationActive ? 'المحاكاة نشطة ⚡' : '🎮 محاكاة التدفق') : (simulationActive ? 'Simulation Active' : 'Simulate Flow')}</span>
+            </button>
+
+            {/* Official PFD Document Export Button */}
+            <button
+              type="button"
+              onClick={() => setIsPfdExportOpen(true)}
+              className="px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 border border-blue-500/40 hover:border-blue-400"
+              title={isAr ? 'تصدير وثيقة خريطة العمليات المعتمدة ISO / IATF' : 'Export Official PFD Document'}
+            >
+              <FileText className="w-3.5 h-3.5 text-blue-400" />
+              <span className="hidden sm:inline">{isAr ? 'وثيقة PFD المعتمدة' : 'Official PFD'}</span>
+              <span className="sm:hidden">PFD</span>
+            </button>
+
             {/* Search Box */}
             <div className="relative w-full md:w-56 shrink-0">
               <Search className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -3726,6 +4681,9 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Dynamic Simulation Player HUD */}
+      {simulationActive && renderSimulationPlayerHud()}
 
       {/* 2. ADVANCED LOT & RAW MATERIAL TRACEABILITY SELECTOR BAR */}
       <div id="lot-journey-traceability-bar" className="bg-[#0b1224] border-b-2 border-cyan-500/30 p-4 md:px-8 shadow-2xl">
@@ -4129,6 +5087,9 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
 
       {/* DRILL-DOWN RECORD MODAL & LOT JOURNEY INSPECTOR */}
       {renderStationDrilldownModal()}
+
+      {/* OFFICIAL PFD QUALITY DOCUMENT EXPORT & PRINT MODAL */}
+      {renderPfdExportModal()}
     </div>
   );
 };
