@@ -80,6 +80,9 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
   // Card Display Aesthetic Mode ('clean' 3-column stats vs 'compact' minimalist pills)
   const [cardDisplayMode, setCardDisplayMode] = useState<'clean' | 'compact'>('clean');
 
+  // Flowchart Architecture Layout Mode ('dual' = Two Parallel Swimlanes vs 'linear' = Single Column)
+  const [flowchartLayoutMode, setFlowchartLayoutMode] = useState<'dual' | 'linear'>('dual');
+
   // Drill-Down Modal State for Station Records (Pass / Fail / Total) & Full Lot Traceability
   const [stationDrilldown, setStationDrilldown] = useState<{
     isOpen: boolean;
@@ -2084,390 +2087,279 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
     );
   };
 
-  return (
-    <div className="flex-1 w-full bg-[#060a14] text-slate-100 flex flex-col font-sans select-none">
-      {/* Dynamic Keyframe Animation Styles */}
-      <style>{`
-        @keyframes flowDash {
-          from { stroke-dashoffset: 20; }
-          to { stroke-dashoffset: 0; }
-        }
-        .flowchart-pipe-anim {
-          animation: flowDash 1.2s linear infinite;
-        }
-        @keyframes pulseHighlight {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
-          50% { box-shadow: 0 0 35px 8px rgba(244, 63, 94, 0.7); border-color: rgba(244, 63, 94, 1); }
-        }
-        .stage-highlight-ncr {
-          animation: pulseHighlight 1.5s ease-in-out 3;
-        }
-      `}</style>
-
-      {/* 1. SIMPLE TOP STICKY BAR: SEARCH & SEQUENTIAL STAGE JUMPERS */}
-      <div className="bg-[#080d1a] border-b border-white/10 p-3 md:px-6 sticky top-0 z-30 shadow-md">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
-          {/* Fast Sequential Stage Quick-Jump Pills (1 to 7) */}
-          <div className="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto pb-1 md:pb-0 scrollbar-none">
-            <span className="text-xs font-bold text-slate-400 shrink-0 hidden lg:inline">
-              {isAr ? 'المراحل الـ 7 بالتسلسل:' : '7 Stages (1 ➔ 7):'}
-            </span>
-
-            {ENTERPRISE_DEPARTMENTS.map((dept) => (
-              <button
-                key={dept.id}
-                onClick={() => scrollToStage(dept.id, false)}
-                style={{ borderColor: `${dept.accentHex}50` }}
-                className="px-2.5 py-1 rounded-xl bg-black/40 hover:bg-white/10 text-xs font-bold text-slate-300 hover:text-white border shrink-0 transition-all flex items-center gap-1.5"
-              >
-                <span className="w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-black text-slate-950" style={{ backgroundColor: dept.accentHex }}>
-                  {dept.number}
-                </span>
-                <span>{isAr ? dept.shortNameAr : dept.shortNameEn}</span>
-              </button>
-            ))}
+  // Cross-lane Shunt component for Dual Swimlane mode (Horizontal Defect Shunt)
+  const renderCrossLaneShunt = (targetNodeTitleAr: string, targetNodeTitleEn: string, targetStageId: string, alertTextAr: string, alertTextEn: string) => (
+    <div className="w-full my-3 p-3.5 rounded-2xl bg-gradient-to-r from-rose-950/70 via-slate-900 to-rose-950/40 border-2 border-rose-500/50 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3 group">
+      <div className="flex items-center gap-2.5">
+        <div className="w-8 h-8 rounded-xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center shrink-0 shadow-md shadow-rose-950/40">
+          <GitFork className="w-4 h-4 text-rose-400 rotate-90" />
+        </div>
+        <div>
+          <div className="text-[11px] font-black text-rose-300 flex items-center gap-1.5">
+            <span>{isAr ? '🛑 مسار انحراف العيوب ➔ تحويل عرضي للمسار الأحمر' : 'Defect Shunt ➔ Cross-lane to Red Lane'}</span>
+            <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
           </div>
-
-          {/* Controls: Mode Switcher & Search */}
-          <div className="flex items-center gap-2 w-full md:w-auto shrink-0">
-            {/* Card Display Mode Switcher */}
-            <div className="flex items-center gap-1 bg-black/60 p-1 rounded-xl border border-white/10 shrink-0">
-              <button
-                onClick={() => setCardDisplayMode('clean')}
-                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  cardDisplayMode === 'clean'
-                    ? 'bg-cyan-500 text-slate-950 shadow-md font-black'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-                title={isAr ? 'عرض إحصائي متوازن للكروت' : 'Balanced KPI Cards'}
-              >
-                <LayoutGrid className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">{isAr ? 'عرض متوازن' : 'Balanced'}</span>
-              </button>
-              <button
-                onClick={() => setCardDisplayMode('compact')}
-                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  cardDisplayMode === 'compact'
-                    ? 'bg-cyan-500 text-slate-950 shadow-md font-black'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-                title={isAr ? 'عرض مدمج خفيف للكروت' : 'Compact Cards'}
-              >
-                <ListFilter className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">{isAr ? 'عرض مدمج' : 'Compact'}</span>
-              </button>
-            </div>
-
-            {/* Search Box */}
-            <div className="relative w-full md:w-56 shrink-0">
-              <Search className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={isAr ? 'بحث بالاسم أو الكود...' : 'Search any tab...'}
-                className="w-full pr-9 pl-4 py-1.5 rounded-xl bg-black/60 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 transition-colors font-mono"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs"
-                >
-                  ✕
-                </button>
-              )}
-            </div>
+          <div className="text-[10px] text-slate-300">
+            {isAr ? alertTextAr : alertTextEn}
           </div>
         </div>
       </div>
+      <button
+        type="button"
+        onClick={() => scrollToStage(targetStageId, true)}
+        className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-black text-xs flex items-center justify-center gap-1.5 shrink-0 shadow-md shadow-rose-950/40 transition-all hover:scale-105 active:scale-95"
+      >
+        <span>{isAr ? `انحراف لـ [${targetNodeTitleAr}]` : `Shunt to [${targetNodeTitleEn}]`}</span>
+        <ArrowUpRight className="w-3.5 h-3.5" />
+      </button>
+    </div>
+  );
 
-      {/* 2. ADVANCED LOT & RAW MATERIAL TRACEABILITY SELECTOR BAR */}
-      <div id="lot-journey-traceability-bar" className="bg-[#0b1224] border-b-2 border-cyan-500/30 p-4 md:px-8 shadow-2xl">
-        <div className="max-w-6xl mx-auto space-y-3.5">
-          {/* Header & Description */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center border border-cyan-500/40 shadow-inner">
-                <Crosshair className="w-5 h-5 text-cyan-400 animate-pulse" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-black text-white tracking-wide">
-                    {isAr ? 'تتبع مسار اللوط والخامات المفحوصة في الاستلام (IQC)' : 'Live Lot & Material Traceability Flow'}
-                  </h3>
-                  <span className="px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 text-[10px] font-mono font-bold border border-cyan-500/40">
-                    {allTrackableLots.length} {isAr ? 'خامة مسجلة' : 'Lots Available'}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-400">
-                  {isAr 
-                    ? 'اختر أي خامة تم فحصها في فحص الاستلام (IQC) لترى مسارها اللحظي: هل عَبَرت للإنتاج أم توقفت ومحجوزة بـ NCR؟' 
-                    : 'Select any material inspected in IQC to see whether it passed to production or halted in NCR'}
-                </p>
-              </div>
-            </div>
-
-            {/* Custom Lot Input */}
-            <div className="flex items-center gap-2 w-full md:w-auto">
-              <div className="relative flex-1 md:w-56">
-                <input
-                  type="text"
-                  value={lotSearchInput}
-                  onChange={(e) => setLotSearchInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && lotSearchInput.trim()) {
-                      setSelectedLotNumber(lotSearchInput.trim().toUpperCase());
-                    }
-                  }}
-                  placeholder={isAr ? 'اكتب رقم لوط أو كود خامة...' : 'Enter lot or part code...'}
-                  className="w-full px-3 py-1.5 rounded-xl bg-black/60 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 font-mono"
-                />
-              </div>
-              <button
-                onClick={() => {
-                  if (lotSearchInput.trim()) setSelectedLotNumber(lotSearchInput.trim().toUpperCase());
-                }}
-                className="px-3 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-black text-xs transition-all shrink-0"
-              >
-                {isAr ? 'تتبع' : 'Track'}
-              </button>
-              {selectedLotNumber && (
-                <button
-                  onClick={() => {
-                    setSelectedLotNumber(null);
-                    setLotSearchInput('');
-                  }}
-                  className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-bold transition-all shrink-0 flex items-center gap-1 border border-slate-700"
-                  title={isAr ? 'إلغاء التتبع والعودة للمسار الشامل' : 'Reset Traceability'}
-                >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                  <span>{isAr ? 'إلغاء' : 'Reset'}</span>
-                </button>
-              )}
+  // Raw Materials Quarantine Dock in Red Lane (QRN-01)
+  const renderRawQuarantineDock = () => {
+    const stageStats = getStageRecordStats('DEPT-STAGE-INCOMING');
+    return (
+      <div id="LANE-RED-QUARANTINE-IQC" className="p-5 rounded-3xl bg-slate-900/90 border-2 border-rose-500/50 shadow-2xl space-y-3">
+        <div className="flex items-center justify-between pb-2.5 border-b border-rose-500/20">
+          <div className="flex items-center gap-2.5">
+            <span className="px-2.5 py-1 rounded-xl text-xs font-mono font-black bg-rose-500/20 text-rose-400 border border-rose-500/40">
+              QRN-01
+            </span>
+            <div>
+              <h4 className="text-sm font-black text-white">
+                {isAr ? '🛑 رصيف حجر وعزل خامات الاستلام (IQC)' : 'IQC Receiving Quarantine Dock'}
+              </h4>
+              <p className="text-[11px] text-slate-400">
+                {isAr ? 'يستقبل الشحنات غير المطابقة المحالة من بوابة القرار 1 في المسار الأخضر' : 'Receives non-conforming raw lots diverted from Gateway 1'}
+              </p>
             </div>
           </div>
+          <span className="px-2.5 py-1 rounded-full bg-rose-950 border border-rose-500/30 text-xs font-mono font-black text-rose-300">
+            {stageStats.fail} {isAr ? 'شحنة محجوزة' : 'Lots Hold'}
+          </span>
+        </div>
 
-          {/* Quick Select Inspected Materials & Lots */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between text-[11px] text-slate-400">
-              <span className="font-bold flex items-center gap-1">
-                <span>📥 {isAr ? 'الخامات والتشغيلات المفحوصة (اضغط لتتبع المسار فوراً):' : 'Inspected Lots (Click to trace):'}</span>
-              </span>
-              <button
-                onClick={() => navigate('/compliance/hub/inspection')}
-                className="text-cyan-400 hover:text-cyan-300 font-bold flex items-center gap-1"
-              >
-                <span>{isAr ? 'فتح شاشة فحص الاستلام IQC ↗' : 'Open IQC Inspection ↗'}</span>
-              </button>
-            </div>
-
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-              {allTrackableLots.length === 0 ? (
-                <span className="text-xs text-slate-500 py-1">
-                  {isAr ? 'لا توجد شحنات مفحوصة مسجلة حالياً — قم بتسجيل فحص استلام جديد في IQC لتتبعه' : 'No inspected lots recorded yet — add receiving inspections in IQC to trace'}
-                </span>
-              ) : (
-                allTrackableLots.map((lot) => {
-                  const isSelected = selectedLotNumber === lot.lotNumber;
-                  return (
-                    <button
-                      key={lot.lotNumber}
-                      onClick={() => {
-                        setSelectedLotNumber(lot.lotNumber);
-                        if (lot.status === 'quarantined') {
-                          scrollToStage('DEPT-STAGE-RESOLUTION', true);
-                        } else if (lot.currentStageNumber === 2) {
-                          scrollToStage('DEPT-STAGE-INPROCESS', true);
-                        } else {
-                          scrollToLotStopStage();
-                        }
-                      }}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-2 border ${
-                        isSelected
-                          ? 'bg-cyan-500 text-slate-950 border-cyan-300 shadow-lg shadow-cyan-500/30 scale-105'
-                          : 'bg-black/50 hover:bg-white/10 text-slate-200 border-white/10'
-                      }`}
-                    >
-                      <span className="font-mono font-black">{lot.lotNumber}</span>
-                      <span className="text-[10px] opacity-80">({isAr ? lot.materialNameAr.split(' ')[0] : lot.materialCode})</span>
-                      <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-black ${
-                        lot.status === 'quarantined'
-                          ? 'bg-rose-500 text-white'
-                          : lot.status === 'completed'
-                            ? 'bg-emerald-500 text-slate-950'
-                            : lot.status === 'hold'
-                              ? 'bg-indigo-500 text-white'
-                              : 'bg-amber-500 text-slate-950'
-                      }`}>
-                        {lot.status === 'quarantined' ? '🛑 حجز NCR' : lot.status === 'completed' ? '🏁 مكتمل' : lot.status === 'hold' ? '⚠️ شكوى' : '🟢 صالة الإنتاج'}
-                      </span>
-                    </button>
-                  );
-                })
-              )}
-            </div>
+        {/* Action Controls */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+          <div className="p-2.5 rounded-xl bg-slate-950/60 border border-white/5 flex items-center justify-between">
+            <span className="text-xs text-rose-300 font-bold flex items-center gap-1.5">
+              <Lock className="w-3.5 h-3.5 text-rose-400" />
+              <span>{isAr ? 'حظر فيزيائي نشط' : 'Active Physical Hold'}</span>
+            </span>
+            <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
           </div>
-
-          {/* ACTIVE TRACEABILITY HUD / JOURNEY CALLOUT BANNER */}
-          {trackedLot && (
-            <div className="mt-3 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-slate-900 via-[#0e172a] to-slate-900 border-2 border-cyan-400 shadow-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 animate-in fade-in duration-300">
-              <div className="flex items-start gap-3.5">
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border-2 ${
-                  trackedLot.status === 'quarantined' 
-                    ? 'bg-rose-500/20 text-rose-400 border-rose-500 shadow-lg shadow-rose-500/20 animate-pulse' 
-                    : trackedLot.status === 'completed'
-                      ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500'
-                      : 'bg-amber-500/20 text-amber-400 border-amber-500'
-                }`}>
-                  <MapPin className="w-6 h-6" />
-                </div>
-
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-base font-black text-white font-mono tracking-wide">
-                      {trackedLot.lotNumber}
-                    </span>
-                    <span className="text-xs font-bold text-cyan-300">
-                      • {isAr ? trackedLot.materialNameAr : trackedLot.materialNameEn}
-                    </span>
-                    <span className="px-2 py-0.5 rounded-full bg-white/10 text-slate-300 text-[10px] font-mono">
-                      {isAr ? trackedLot.categoryAr : trackedLot.categoryEn}
-                    </span>
-                    {trackedLot.isLiveInspection && (
-                      <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[10px] font-bold">
-                        {isAr ? '🔴 فحص حي من IQC' : 'Live IQC'}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Narrative path */}
-                  <div className="mt-1 text-xs text-slate-300 font-medium leading-relaxed">
-                    <b className="text-amber-400 font-black">{isAr ? 'مسار الحركة على الفلو شارت:' : 'Journey:'}</b> {isAr ? trackedLot.flowNarrativeAr : trackedLot.flowNarrativeEn}
-                  </div>
-
-                  {/* Where it stopped */}
-                  <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs">
-                    <span className="px-2.5 py-0.5 rounded-lg bg-rose-500/20 text-rose-300 border border-rose-500/40 font-bold flex items-center gap-1">
-                      <AlertOctagon className="w-3.5 h-3.5 text-rose-400" />
-                      <span>{isAr ? `الموقع الحالي: ${trackedLot.currentStageNameAr}` : `Stopped at: ${trackedLot.currentStageNameEn}`}</span>
-                    </span>
-                    <span className="text-slate-400 text-xs">
-                      {isAr ? trackedLot.stopReasonAr : trackedLot.stopReasonEn}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex items-center gap-2 shrink-0 w-full md:w-auto pt-2 md:pt-0 border-t md:border-t-0 border-white/10">
-                <button
-                  onClick={scrollToLotStopStage}
-                  className="flex-1 md:flex-none px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-xs flex items-center justify-center gap-2 transition-all shadow-lg shadow-cyan-500/20 hover:scale-105 active:scale-95"
-                >
-                  <MapPin className="w-4 h-4 fill-slate-950" />
-                  <span>{isAr ? 'القفز لموقع التوقف 🎯' : 'Jump to Current Station'}</span>
-                </button>
-
-                {trackedLot.relatedRecordUrl && (
-                  <button
-                    onClick={() => navigate(trackedLot.relatedRecordUrl!)}
-                    className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-bold text-xs flex items-center gap-1.5 border border-slate-700 transition-all"
-                  >
-                    <span>{trackedLot.relatedRecordCode}</span>
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
+          <button
+            type="button"
+            onClick={() => navigate('/ncr')}
+            className="p-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-md shadow-rose-950/40"
+          >
+            <PlusCircle className="w-3.5 h-3.5" />
+            <span>{isAr ? 'فتح تقرير NCR فوري' : 'Create NCR Form'}</span>
+          </button>
         </div>
       </div>
+    );
+  };
 
-      {/* 3. THE DEVELOPED FLOWCHART LAYOUT: SEQUENTIAL (1 ➔ 2 ➔ 3 ➔ 4 ➔ 5 ➔ 6 ➔ 7) */}
-      <div className="max-w-6xl mx-auto w-full p-4 md:p-8 space-y-4 pb-20">
-
-        {/* GLOBAL FACTORY QUALITY BALANCE STRIP (TOTAL, ACCEPTED, REJECTED) */}
-        <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-slate-900 via-slate-950 to-slate-900 border-2 border-cyan-500/30 shadow-2xl space-y-3">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-white/10 pb-2.5">
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping" />
-              <h3 className="text-sm sm:text-base font-black text-white flex items-center gap-2">
-                <span>📊 {isAr ? 'ميزان الجودة ومطابقة التسجيلات في المصنع بالكامل:' : 'Plant-Wide Quality & Inspection Balance:'}</span>
-              </h3>
-            </div>
-            <span className="text-xs text-slate-400 font-mono">
-              {isAr ? 'مُحدث لحظياً لجميع المراحل الـ 7' : 'Live across all 7 stages'}
-            </span>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {/* Total Records */}
-            <div className="p-3 rounded-2xl bg-black/50 border border-white/10 flex flex-col justify-between shadow-sm">
-              <span className="text-xs text-slate-400 font-bold flex items-center gap-1.5">
-                <span>📋</span>
-                <span>{isAr ? 'إجمالي التسجيلات' : 'Total Records'}</span>
-              </span>
-              <div className="flex items-baseline justify-between mt-1.5">
-                <span className="font-mono font-black text-2xl text-white">{globalFactoryStats.total}</span>
-                <span className="text-xs text-slate-400 font-bold">{isAr ? 'سجل' : 'items'}</span>
-              </div>
-            </div>
-
-            {/* Total Conforming / Accepted */}
-            <div className="p-3 rounded-2xl bg-emerald-950/40 border border-emerald-500/40 flex flex-col justify-between shadow-sm">
-              <span className="text-xs text-emerald-400 font-bold flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                <span>{isAr ? 'المقبول والمطابق' : 'Accepted (Pass)'}</span>
-              </span>
-              <div className="flex items-baseline justify-between mt-1.5">
-                <span className="font-mono font-black text-2xl text-emerald-400">{globalFactoryStats.pass}</span>
-                <span className="font-mono text-xs font-bold text-emerald-300 bg-emerald-500/20 px-2 py-0.5 rounded-full border border-emerald-500/30">
-                  {globalFactoryStats.acceptanceRate}% FPY
-                </span>
-              </div>
-            </div>
-
-            {/* Total Non-Conforming / Quarantined */}
-            <div className="p-3 rounded-2xl bg-rose-950/40 border border-rose-500/40 flex flex-col justify-between shadow-sm">
-              <span className="text-xs text-rose-400 font-bold flex items-center gap-1.5">
-                <AlertOctagon className="w-4 h-4 text-rose-400" />
-                <span>{isAr ? 'المرفوض والمحجوز' : 'Rejected (Fail)'}</span>
-              </span>
-              <div className="flex items-baseline justify-between mt-1.5">
-                <span className="font-mono font-black text-2xl text-rose-400">{globalFactoryStats.fail}</span>
-                <span className="font-mono text-xs font-bold text-rose-300 bg-rose-500/20 px-2 py-0.5 rounded-full border border-rose-500/30">
-                  {Math.round((globalFactoryStats.fail / Math.max(1, globalFactoryStats.total)) * 100)}%
-                </span>
-              </div>
-            </div>
-
-            {/* Containment & Problem Solving */}
-            <div className="p-3 rounded-2xl bg-amber-950/40 border border-amber-500/40 flex flex-col justify-between shadow-sm">
-              <span className="text-xs text-amber-400 font-bold flex items-center gap-1.5">
-                <Workflow className="w-4 h-4 text-amber-400" />
-                <span>{isAr ? 'قيد الحجر والـ NCR' : 'In Resolution'}</span>
-              </span>
-              <div className="flex items-baseline justify-between mt-1.5">
-                <span className="font-mono font-black text-2xl text-amber-400">{getStageRecordStats('DEPT-STAGE-RESOLUTION').fail}</span>
-                <span className="text-xs text-amber-300 font-bold">{isAr ? 'حالات نشطة' : 'active'}</span>
-              </div>
-            </div>
+  // Closed Loop Re-injection to Production Card
+  const renderClosedLoopCard = () => (
+    <div className="p-5 rounded-3xl bg-gradient-to-br from-emerald-950/60 via-slate-900 to-emerald-950/30 border-2 border-emerald-500/50 shadow-2xl space-y-3">
+      <div className="flex items-center justify-between pb-2 border-b border-emerald-500/20">
+        <div className="flex items-center gap-2">
+          <span className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0 shadow-md">
+            <RotateCcw className="w-4 h-4 text-emerald-400 animate-spin" />
+          </span>
+          <div>
+            <h4 className="text-sm font-black text-emerald-300">
+              {isAr ? '🔄 دورة الجودة المغلقة (Closed-Loop Resolution)' : 'Closed-Loop Quality Resolution'}
+            </h4>
+            <span className="text-[11px] text-slate-300 font-mono">IATF 16949 §10.2 • Corrective Action Verification</span>
           </div>
         </div>
-        
-        {/* START TERMINAL */}
-        <div className="flex flex-col items-center">
-          <div className="px-6 py-2.5 rounded-full bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-slate-950 font-black text-xs sm:text-sm shadow-xl shadow-amber-500/20 border-2 border-white flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-white animate-ping" />
-            <span>{isAr ? '🚀 بداية المسار: استلام الخامات وتأهيل الموردين' : 'START: Incoming Materials & Supplier Verification'}</span>
-          </div>
-          {renderFlowPipe('#f59e0b', 'توريد خامات جديدة', 'New Raw Batch')}
-        </div>
+        <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-mono font-black border border-emerald-500/40">
+          {getStageRecordStats('DEPT-STAGE-RESOLUTION').pass} {isAr ? 'مُفرج عنها' : 'Released'}
+        </span>
+      </div>
 
-        {/* ==================================================================== */}
-        {/* STAGE 1: INCOMING & SUPPLIER (IQC)                                   */}
-        {/* ==================================================================== */}
-        {(() => {
+      <p className="text-xs text-slate-300 leading-relaxed">
+        {isAr
+          ? 'عند التحقق من نجاح خطة 8D وإغلاق الإجراءات التصحيحية CAPA، تصدر لجنة MRB قرار فك الحجر الصحي وإعادة توجيه المواد إلى خط الإنتاج المعتمد.'
+          : 'Upon 8D root cause closure and CAPA verification, MRB lifts quarantine and lots return to production stream.'}
+      </p>
+
+      <button
+        type="button"
+        onClick={() => scrollToStage('DEPT-STAGE-INPROCESS', true)}
+        className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-slate-950 font-black text-xs flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-950/40 hover:scale-[1.02] active:scale-[0.98]"
+      >
+        <span>{isAr ? '🟢 سهم العودة للإنتاج: فك الحجر وضخ اللوط بالمسار الأخضر' : 'Loop-back: Return lot to Production Lane'}</span>
+        <ArrowUpRight className="w-4 h-4" />
+      </button>
+    </div>
+  );
+
+  const renderStartTerminal = () => (
+    <div className="flex flex-col items-center">
+      <div className="px-6 py-2.5 rounded-full bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-slate-950 font-black text-xs sm:text-sm shadow-xl shadow-amber-500/20 border-2 border-white flex items-center gap-2">
+        <span className="w-2.5 h-2.5 rounded-full bg-white animate-ping" />
+        <span>{isAr ? '🚀 بداية المسار: استلام الخامات وتأهيل الموردين' : 'START: Incoming Materials & Supplier Verification'}</span>
+      </div>
+      {renderFlowPipe('#f59e0b', 'توريد خامات جديدة', 'New Raw Batch')}
+    </div>
+  );
+
+  const renderEndTerminal = () => (
+    <div className="flex flex-col items-center pt-2">
+      <div className="px-6 py-2.5 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-black text-xs sm:text-sm shadow-xl shadow-emerald-500/20 border-2 border-white flex items-center gap-2">
+        <CheckCircle2 className="w-4 h-4 text-slate-950" />
+        <span>{isAr ? '🏁 نهاية الدورة: مطابقة تامة 100% وتحسين مستمر' : 'END: 100% Conformance & Continuous Excellence'}</span>
+      </div>
+    </div>
+  );
+
+  const renderClosedLoopFeedbackBanner = () => (
+<div className="p-5 sm:p-7 rounded-3xl bg-gradient-to-r from-purple-950/40 via-blue-950/40 to-emerald-950/40 border-2 border-cyan-500/50 flex flex-col md:flex-row items-center justify-between gap-4 text-xs shadow-2xl">
+          <div className="flex items-center gap-3.5">
+            <div className="w-12 h-12 rounded-2xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center border border-cyan-500/40 shrink-0 shadow-lg shadow-cyan-500/20">
+              <RefreshCw className="w-6 h-6 text-cyan-400 animate-spin" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-mono font-black text-cyan-400 uppercase tracking-wider bg-cyan-500/10 px-2 py-0.5 rounded-md border border-cyan-500/30">
+                  {isAr ? 'دورة الجودة الشاملة المغلقة' : 'Total Quality Closed Loop'}
+                </span>
+                <span className="px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 text-[10px] font-mono font-bold">
+                  Stage 7 ➔ Stage 1
+                </span>
+              </div>
+              <h5 className="font-black text-white text-sm sm:text-base mt-1">
+                {isAr ? 'تغذية عكسية مستمرة وتحديث تلقائي لجميع المراحل' : 'Continuous Closed-Loop Feedback & Standard Evolution'}
+              </h5>
+              <p className="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
+                {isAr 
+                  ? 'الدروس المستفادة والبيانات وقوالب الفحص من المرحلة 7 تُعيد تلقائياً ضبط خطط فحص المواد الخام في المرحلة 1 ومعايير خطوط الإنتاج لمنع تكرار أي خلل نهائياً.' 
+                  : 'Master data, lessons learned and form templates continuously refine Stage 1 receiving criteria and production plans.'}
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => scrollToStage('DEPT-STAGE-INCOMING', true)}
+            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-xs flex items-center gap-2 transition-all shadow-lg shadow-cyan-500/20 hover:scale-105 active:scale-95 shrink-0"
+          >
+            <span>{isAr ? 'العودة لبداية المسار (المرحلة 1) ▲' : 'Back to Stage 1 (Top) ▲'}</span>
+          </button>
+        </div>
+  );
+
+  const renderGate1 = () => (
+    <div className="space-y-3">
+      {renderDecisionDiamond({
+          gateNumber: 1,
+          questionAr: 'هل المواد الخام والشحنات الواردة مطابقة للمواصفات وخطط الفحص؟',
+          questionEn: 'Are incoming raw materials compliant with quality specs & receiving plans?',
+          passLabelAr: `مطابق: تم إجازة ${getStageRecordStats('DEPT-STAGE-INCOMING').pass} شحنة لدخول صالة الإنتاج والتصنيع ⬇️`,
+          passLabelEn: `Conforming: ${getStageRecordStats('DEPT-STAGE-INCOMING').pass} lots cleared & released for shopfloor production entry ⬇️`,
+          passTargetStageNumber: 2,
+          failLabelAr: `غير مطابق: تم حجز ${getStageRecordStats('DEPT-STAGE-INCOMING').fail} شحنة وتحويلها فوراً للمرحلة 3 (NCR) ➡️`,
+          failLabelEn: `Non-Conforming: ${getStageRecordStats('DEPT-STAGE-INCOMING').fail} lots quarantined and escalated to Stage 3 NCR ➡️`,
+          accentColor: '#f59e0b',
+          targetNcr: true
+        })}
+      {flowchartLayoutMode === "dual" && renderCrossLaneShunt(
+        'رصيف الحجر QRN-01 والـ NCR بالمسار الأحمر',
+        'Quarantine Dock QRN-01 in Red Lane',
+        'LANE-RED-QUARANTINE-IQC',
+        'الشحنات المرفوضة في فحص الاستلام تنحرف عرضياً إلى رصيف الحجر الصحي QRN-01 في المسار الأحمر',
+        'Rejected incoming lots shunt across to Quarantine Dock QRN-01 in the Red Lane'
+      )}
+    </div>
+  );
+
+  const renderGate2 = () => (
+    <div className="space-y-3">
+      {renderDecisionDiamond({
+          gateNumber: 2,
+          questionAr: 'هل عينات التشغيل والقياسات ضمن حدود الضبط SPC وخالية من العيوب الحرجة؟',
+          questionEn: 'Are in-process samples within SPC control limits & free of critical defects?',
+          passLabelAr: `مطابق ومستقر: ${getStageRecordStats('DEPT-STAGE-INPROCESS').pass} عملية إنتاج سليمة ومجازة للمرحلة 4 (فحص المنتج النهائي OQC) ⬇️`,
+          passLabelEn: `Conforming: ${getStageRecordStats('DEPT-STAGE-INPROCESS').pass} conforming processes cleared for Stage 4 (Outgoing OQC) ⬇️`,
+          passTargetStageNumber: 4,
+          failLabelAr: `خلل أو أندون: ${getStageRecordStats('DEPT-STAGE-INPROCESS').fail} عيوب استدعت حجز الإنتاج والتصعيد لـ NCR و 8D ⬇️`,
+          failLabelEn: `Alert / Out of Control: ${getStageRecordStats('DEPT-STAGE-INPROCESS').fail} defects escalated to NCR & 8D ⬇️`,
+          accentColor: '#06b6d4',
+          targetNcr: true
+        })}
+      {flowchartLayoutMode === "dual" && renderCrossLaneShunt(
+        'مركز حل المشكلات 8D و CAPA بالمسار الأحمر',
+        'Problem Solving 8D & CAPA in Red Lane',
+        'DEPT-STAGE-RESOLUTION',
+        'انحرافات وعيوب خط الإنتاج والأندون تنحرف عرضياً نحو المسار الأحمر للتحليل الجذري 8D',
+        'In-process defects & Andon alerts shunt across to Red Lane for 8D root-cause resolution'
+      )}
+    </div>
+  );
+
+  const renderGate3 = () => (
+    <div className="w-full">
+      {renderDecisionDiamond({
+          gateNumber: 3,
+          questionAr: 'هل تم حصر الخلل، إغلاق السبب الجذري 8D، وتأكيد فعالية الإجراء التصحيحي CAPA؟',
+          questionEn: 'Has the root cause been contained, 8D verified & CAPA corrective action closed?',
+          passLabelAr: `تم الحل والاعتماد: ${getStageRecordStats('DEPT-STAGE-RESOLUTION').pass} تقرير وإجراء تم إغلاقه وفك الحجر الصحي ⬇️`,
+          passLabelEn: `Resolved & Verified: ${getStageRecordStats('DEPT-STAGE-RESOLUTION').pass} closed reports, quarantine lifted ⬇️`,
+          passTargetStageNumber: 4,
+          failLabelAr: `قيد التحقيق: ${getStageRecordStats('DEPT-STAGE-RESOLUTION').fail} حالات عزل قيد التحليل الجذري والمتابعة ➡️`,
+          failLabelEn: `Under Investigation: ${getStageRecordStats('DEPT-STAGE-RESOLUTION').fail} containment actions under review ➡️`,
+          accentColor: '#f43f5e',
+          targetNcr: false
+        })}
+    </div>
+  );
+
+  const renderGate4 = () => (
+    <div className="space-y-3">
+      {renderDecisionDiamond({
+          gateNumber: 4,
+          questionAr: 'هل شحنة المنتج التام مطابقة لمعايير قبول عينات AQL؟',
+          questionEn: 'Are finished goods lots fully compliant with AQL acceptance criteria?',
+          passLabelAr: `مطابق ومجاز: ${getStageRecordStats('DEPT-STAGE-OUTGOING').pass} لوط تم إصدار شهادة المطابقة COC والترخيص بالشحن ⬇️`,
+          passLabelEn: `Compliant: ${getStageRecordStats('DEPT-STAGE-OUTGOING').pass} lots issued COC and cleared for shipping ⬇️`,
+          passTargetStageNumber: 5,
+          failLabelAr: `مرفوض: ${getStageRecordStats('DEPT-STAGE-OUTGOING').fail} شحنة محجوزة ومحالة فوراً إلى المرحلة 3 لإعادة الفرز أو NCR ➡️`,
+          failLabelEn: `Rejected: ${getStageRecordStats('DEPT-STAGE-OUTGOING').fail} lot quarantined and escalated to Stage 3 NCR ➡️`,
+          accentColor: '#10b981',
+          targetNcr: true
+        })}
+      {flowchartLayoutMode === "dual" && renderCrossLaneShunt(
+        'حجر المنتجات التامة ولجنة MRB بالمسار الأحمر',
+        'Finished Goods Quarantine & MRB in Red Lane',
+        'DEPT-STAGE-RESOLUTION',
+        'شحنات المنتج النهائي المرفوضة في فحص الخروج تنحرف للمسار الأحمر لإعادة الفرز أو التكهين',
+        'Rejected finished goods lots shunt across to Red Lane for sorting or scrap disposition'
+      )}
+    </div>
+  );
+
+  const renderGate5 = () => (
+    <div className="w-full">
+      {renderDecisionDiamond({
+          gateNumber: 5,
+          questionAr: 'هل تم حل شكوى العميل، تسوية المرتجع RMA، واستخلاص السبب الفني؟',
+          questionEn: 'Has customer claim been settled, RMA processed & technical feedback extracted?',
+          passLabelAr: `نعم: تم إغلاق ${getStageRecordStats('DEPT-STAGE-CUSTOMER').pass} شكوى وتمرير الملاحظات للمختبر والتدقيق لتحديث FMEA ⬇️`,
+          passLabelEn: `Yes: ${getStageRecordStats('DEPT-STAGE-CUSTOMER').pass} claims resolved & fed back to Lab & FMEA ⬇️`,
+          passTargetStageNumber: 6,
+          failLabelAr: `شكوى حرجة مفتوحة: ${getStageRecordStats('DEPT-STAGE-CUSTOMER').fail} بلاغات قيد التحقيق والمتابعة الطارئة ➡️`,
+          failLabelEn: `Open Claim: ${getStageRecordStats('DEPT-STAGE-CUSTOMER').fail} claims under emergency review ➡️`,
+          accentColor: '#6366f1',
+          targetNcr: true
+        })}
+    </div>
+  );
+
+  const renderStage1 = () => {
+
           const trackStyle = getStageTrackingStyle(1, 'border-amber-500/40');
           return (
             <section id="DEPT-STAGE-INCOMING" className={`p-5 sm:p-6 rounded-3xl bg-slate-900/70 border-amber-500/40 space-y-4 ${trackStyle.className}`}>
@@ -2886,26 +2778,10 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
               })()}
             </section>
           );
-        })()}
+          };
 
-        {/* DECISION GATE 1 (IQC) */}
-        {renderDecisionDiamond({
-          gateNumber: 1,
-          questionAr: 'هل المواد الخام والشحنات الواردة مطابقة للمواصفات وخطط الفحص؟',
-          questionEn: 'Are incoming raw materials compliant with quality specs & receiving plans?',
-          passLabelAr: `مطابق: تم إجازة ${getStageRecordStats('DEPT-STAGE-INCOMING').pass} شحنة لدخول صالة الإنتاج والتصنيع ⬇️`,
-          passLabelEn: `Conforming: ${getStageRecordStats('DEPT-STAGE-INCOMING').pass} lots cleared & released for shopfloor production entry ⬇️`,
-          passTargetStageNumber: 2,
-          failLabelAr: `غير مطابق: تم حجز ${getStageRecordStats('DEPT-STAGE-INCOMING').fail} شحنة وتحويلها فوراً للمرحلة 3 (NCR) ➡️`,
-          failLabelEn: `Non-Conforming: ${getStageRecordStats('DEPT-STAGE-INCOMING').fail} lots quarantined and escalated to Stage 3 NCR ➡️`,
-          accentColor: '#f59e0b',
-          targetNcr: true
-        })}
+  const renderStage2 = () => {
 
-        {/* ==================================================================== */}
-        {/* STAGE 2: IN-PROCESS QUALITY (IPQC)                                   */}
-        {/* ==================================================================== */}
-        {(() => {
           const trackStyle = getStageTrackingStyle(2, 'border-cyan-500/40');
           return (
             <section id="DEPT-STAGE-INPROCESS" className={`p-5 sm:p-6 rounded-3xl bg-slate-900/70 border-cyan-500/40 space-y-4 ${trackStyle.className}`}>
@@ -2935,31 +2811,15 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
               {/* Stage 2 Record Metrics Banner (Total, Pass, Fail) */}
               {renderStageMetricsBanner(2, 'DEPT-STAGE-INPROCESS', '#06b6d4')}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className={`grid gap-3 ${flowchartLayoutMode === "dual" ? "grid-cols-1 sm:grid-cols-2 xl:grid-cols-4" : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"}`}>
                 {(stationsByDept.get('DEPT-STAGE-INPROCESS') || []).map(st => renderCard(st, '#06b6d4', 2))}
               </div>
             </section>
           );
-        })()}
+          };
 
-        {/* DECISION GATE 2 (IPQC) */}
-        {renderDecisionDiamond({
-          gateNumber: 2,
-          questionAr: 'هل عينات التشغيل والقياسات ضمن حدود الضبط SPC وخالية من العيوب الحرجة؟',
-          questionEn: 'Are in-process samples within SPC control limits & free of critical defects?',
-          passLabelAr: `مطابق ومستقر: ${getStageRecordStats('DEPT-STAGE-INPROCESS').pass} عملية إنتاج سليمة ومجازة للمرحلة 4 (فحص المنتج النهائي OQC) ⬇️`,
-          passLabelEn: `Conforming: ${getStageRecordStats('DEPT-STAGE-INPROCESS').pass} conforming processes cleared for Stage 4 (Outgoing OQC) ⬇️`,
-          passTargetStageNumber: 4,
-          failLabelAr: `خلل أو أندون: ${getStageRecordStats('DEPT-STAGE-INPROCESS').fail} عيوب استدعت حجز الإنتاج والتصعيد لـ NCR و 8D ⬇️`,
-          failLabelEn: `Alert / Out of Control: ${getStageRecordStats('DEPT-STAGE-INPROCESS').fail} defects escalated to NCR & 8D ⬇️`,
-          accentColor: '#06b6d4',
-          targetNcr: true
-        })}
+  const renderStage3 = () => {
 
-        {/* ==================================================================== */}
-        {/* STAGE 3: PROBLEM SOLVING & NCR / 8D / CAPA                           */}
-        {/* ==================================================================== */}
-        {(() => {
           const trackStyle = getStageTrackingStyle(3, 'border-rose-500/60');
           return (
             <section 
@@ -3008,31 +2868,15 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
               {/* Stage 3 Record Metrics Banner (Total, Pass, Fail) */}
               {renderStageMetricsBanner(3, 'DEPT-STAGE-RESOLUTION', '#f43f5e')}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+              <div className={`grid gap-3 ${flowchartLayoutMode === "dual" ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-5"}`}>
                 {(stationsByDept.get('DEPT-STAGE-RESOLUTION') || []).map(st => renderCard(st, '#f43f5e', 3))}
               </div>
             </section>
           );
-        })()}
+          };
 
-        {/* DECISION GATE 3 (NCR & CAPA RESOLUTION) */}
-        {renderDecisionDiamond({
-          gateNumber: 3,
-          questionAr: 'هل تم حصر الخلل، إغلاق السبب الجذري 8D، وتأكيد فعالية الإجراء التصحيحي CAPA؟',
-          questionEn: 'Has the root cause been contained, 8D verified & CAPA corrective action closed?',
-          passLabelAr: `تم الحل والاعتماد: ${getStageRecordStats('DEPT-STAGE-RESOLUTION').pass} تقرير وإجراء تم إغلاقه وفك الحجر الصحي ⬇️`,
-          passLabelEn: `Resolved & Verified: ${getStageRecordStats('DEPT-STAGE-RESOLUTION').pass} closed reports, quarantine lifted ⬇️`,
-          passTargetStageNumber: 4,
-          failLabelAr: `قيد التحقيق: ${getStageRecordStats('DEPT-STAGE-RESOLUTION').fail} حالات عزل قيد التحليل الجذري والمتابعة ➡️`,
-          failLabelEn: `Under Investigation: ${getStageRecordStats('DEPT-STAGE-RESOLUTION').fail} containment actions under review ➡️`,
-          accentColor: '#f43f5e',
-          targetNcr: false
-        })}
+  const renderStage4 = () => {
 
-        {/* ==================================================================== */}
-        {/* STAGE 4: OUTGOING QUALITY (OQC)                                       */}
-        {/* ==================================================================== */}
-        {(() => {
           const trackStyle = getStageTrackingStyle(4, 'border-emerald-500/40');
           return (
             <section id="DEPT-STAGE-OUTGOING" className={`p-5 sm:p-6 rounded-3xl bg-slate-900/70 border-emerald-500/40 space-y-4 ${trackStyle.className}`}>
@@ -3067,26 +2911,10 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
               </div>
             </section>
           );
-        })()}
+          };
 
-        {/* DECISION GATE 4 (OQC) */}
-        {renderDecisionDiamond({
-          gateNumber: 4,
-          questionAr: 'هل شحنة المنتج التام مطابقة لمعايير قبول عينات AQL؟',
-          questionEn: 'Are finished goods lots fully compliant with AQL acceptance criteria?',
-          passLabelAr: `مطابق ومجاز: ${getStageRecordStats('DEPT-STAGE-OUTGOING').pass} لوط تم إصدار شهادة المطابقة COC والترخيص بالشحن ⬇️`,
-          passLabelEn: `Compliant: ${getStageRecordStats('DEPT-STAGE-OUTGOING').pass} lots issued COC and cleared for shipping ⬇️`,
-          passTargetStageNumber: 5,
-          failLabelAr: `مرفوض: ${getStageRecordStats('DEPT-STAGE-OUTGOING').fail} شحنة محجوزة ومحالة فوراً إلى المرحلة 3 لإعادة الفرز أو NCR ➡️`,
-          failLabelEn: `Rejected: ${getStageRecordStats('DEPT-STAGE-OUTGOING').fail} lot quarantined and escalated to Stage 3 NCR ➡️`,
-          accentColor: '#10b981',
-          targetNcr: true
-        })}
+  const renderStage5 = () => {
 
-        {/* ==================================================================== */}
-        {/* STAGE 5: CUSTOMER COMPLAINTS                                          */}
-        {/* ==================================================================== */}
-        {(() => {
           const trackStyle = getStageTrackingStyle(5, 'border-indigo-500/40');
           return (
             <section id="DEPT-STAGE-CUSTOMER" className={`p-5 sm:p-6 rounded-3xl bg-slate-900/70 border-indigo-500/40 space-y-4 ${trackStyle.className}`}>
@@ -3121,26 +2949,10 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
               </div>
             </section>
           );
-        })()}
+          };
 
-        {/* DECISION GATE 5 (CUSTOMER RMA) */}
-        {renderDecisionDiamond({
-          gateNumber: 5,
-          questionAr: 'هل تم حل شكوى العميل، تسوية المرتجع RMA، واستخلاص السبب الفني؟',
-          questionEn: 'Has customer claim been settled, RMA processed & technical feedback extracted?',
-          passLabelAr: `نعم: تم إغلاق ${getStageRecordStats('DEPT-STAGE-CUSTOMER').pass} شكوى وتمرير الملاحظات للمختبر والتدقيق لتحديث FMEA ⬇️`,
-          passLabelEn: `Yes: ${getStageRecordStats('DEPT-STAGE-CUSTOMER').pass} claims resolved & fed back to Lab & FMEA ⬇️`,
-          passTargetStageNumber: 6,
-          failLabelAr: `شكوى حرجة مفتوحة: ${getStageRecordStats('DEPT-STAGE-CUSTOMER').fail} بلاغات قيد التحقيق والمتابعة الطارئة ➡️`,
-          failLabelEn: `Open Claim: ${getStageRecordStats('DEPT-STAGE-CUSTOMER').fail} claims under emergency review ➡️`,
-          accentColor: '#6366f1',
-          targetNcr: true
-        })}
+  const renderStage6 = () => {
 
-        {/* ==================================================================== */}
-        {/* STAGE 6: ENGINEERING LAB & AUDITS                                     */}
-        {/* ==================================================================== */}
-        {(() => {
           const trackStyle = getStageTrackingStyle(6, 'border-purple-500/40');
           return (
             <section id="DEPT-STAGE-COMPLIANCE" className={`p-5 sm:p-6 rounded-3xl bg-slate-900/70 border-purple-500/40 space-y-4 ${trackStyle.className}`}>
@@ -3170,19 +2982,15 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
               {/* Stage 6 Record Metrics Banner (Total, Pass, Fail) */}
               {renderStageMetricsBanner(6, 'DEPT-STAGE-COMPLIANCE', '#a855f7')}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+              <div className={`grid gap-3 ${flowchartLayoutMode === "dual" ? "grid-cols-1 sm:grid-cols-2 xl:grid-cols-3" : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-5"}`}>
                 {(stationsByDept.get('DEPT-STAGE-COMPLIANCE') || []).map(st => renderCard(st, '#a855f7', 6))}
               </div>
             </section>
           );
-        })()}
+          };
 
-        {renderFlowPipe('#3b82f6', 'تحديث وثائق النظام والبيانات', 'Update Master Data')}
+  const renderStage7 = () => {
 
-        {/* ==================================================================== */}
-        {/* STAGE 7: FACTORY SETUP & MASTER DATA                                 */}
-        {/* ==================================================================== */}
-        {(() => {
           const trackStyle = getStageTrackingStyle(7, 'border-blue-500/40');
           return (
             <section id="DEPT-STAGE-SETUP" className={`p-5 sm:p-6 rounded-3xl bg-slate-900/70 border-blue-500/40 space-y-4 ${trackStyle.className}`}>
@@ -3217,53 +3025,532 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
               </div>
             </section>
           );
-        })()}
+          };
 
-        {/* CLOSED-LOOP CONTINUOUS IMPROVEMENT FEEDBACK LOOP */}
-        <div className="p-5 sm:p-7 rounded-3xl bg-gradient-to-r from-purple-950/40 via-blue-950/40 to-emerald-950/40 border-2 border-cyan-500/50 flex flex-col md:flex-row items-center justify-between gap-4 text-xs shadow-2xl">
-          <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center border border-cyan-500/40 shrink-0 shadow-lg shadow-cyan-500/20">
-              <RefreshCw className="w-6 h-6 text-cyan-400 animate-spin" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-mono font-black text-cyan-400 uppercase tracking-wider bg-cyan-500/10 px-2 py-0.5 rounded-md border border-cyan-500/30">
-                  {isAr ? 'دورة الجودة الشاملة المغلقة' : 'Total Quality Closed Loop'}
+  return (
+    <div className="flex-1 w-full bg-[#060a14] text-slate-100 flex flex-col font-sans select-none">
+      {/* Dynamic Keyframe Animation Styles */}
+      <style>{`
+        @keyframes flowDash {
+          from { stroke-dashoffset: 20; }
+          to { stroke-dashoffset: 0; }
+        }
+        .flowchart-pipe-anim {
+          animation: flowDash 1.2s linear infinite;
+        }
+        @keyframes pulseHighlight {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
+          50% { box-shadow: 0 0 35px 8px rgba(244, 63, 94, 0.7); border-color: rgba(244, 63, 94, 1); }
+        }
+        .stage-highlight-ncr {
+          animation: pulseHighlight 1.5s ease-in-out 3;
+        }
+      `}</style>
+
+      {/* 1. SIMPLE TOP STICKY BAR: SEARCH & SEQUENTIAL STAGE JUMPERS */}
+      <div className="bg-[#080d1a] border-b border-white/10 p-3 md:px-6 sticky top-0 z-30 shadow-md">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
+          {/* Fast Sequential Stage Quick-Jump Pills (1 to 7) */}
+          <div className="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto pb-1 md:pb-0 scrollbar-none">
+            <span className="text-xs font-bold text-slate-400 shrink-0 hidden lg:inline">
+              {isAr ? 'المراحل الـ 7 بالتسلسل:' : '7 Stages (1 ➔ 7):'}
+            </span>
+
+            {ENTERPRISE_DEPARTMENTS.map((dept) => (
+              <button
+                key={dept.id}
+                onClick={() => scrollToStage(dept.id, false)}
+                style={{ borderColor: `${dept.accentHex}50` }}
+                className="px-2.5 py-1 rounded-xl bg-black/40 hover:bg-white/10 text-xs font-bold text-slate-300 hover:text-white border shrink-0 transition-all flex items-center gap-1.5"
+              >
+                <span className="w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-black text-slate-950" style={{ backgroundColor: dept.accentHex }}>
+                  {dept.number}
                 </span>
-                <span className="px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 text-[10px] font-mono font-bold">
-                  Stage 7 ➔ Stage 1
-                </span>
-              </div>
-              <h5 className="font-black text-white text-sm sm:text-base mt-1">
-                {isAr ? 'تغذية عكسية مستمرة وتحديث تلقائي لجميع المراحل' : 'Continuous Closed-Loop Feedback & Standard Evolution'}
-              </h5>
-              <p className="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
-                {isAr 
-                  ? 'الدروس المستفادة والبيانات وقوالب الفحص من المرحلة 7 تُعيد تلقائياً ضبط خطط فحص المواد الخام في المرحلة 1 ومعايير خطوط الإنتاج لمنع تكرار أي خلل نهائياً.' 
-                  : 'Master data, lessons learned and form templates continuously refine Stage 1 receiving criteria and production plans.'}
-              </p>
-            </div>
+                <span>{isAr ? dept.shortNameAr : dept.shortNameEn}</span>
+              </button>
+            ))}
           </div>
 
-          <button
-            onClick={() => scrollToStage('DEPT-STAGE-INCOMING', true)}
-            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-xs flex items-center gap-2 transition-all shadow-lg shadow-cyan-500/20 hover:scale-105 active:scale-95 shrink-0"
-          >
-            <span>{isAr ? 'العودة لبداية المسار (المرحلة 1) ▲' : 'Back to Stage 1 (Top) ▲'}</span>
-          </button>
-        </div>
+          {/* Controls: Mode Switcher & Search */}
+          <div className="flex items-center gap-2 w-full md:w-auto shrink-0 flex-wrap sm:flex-nowrap">
+            {/* Flowchart Architecture Switcher: Dual Swimlanes vs Single Stream */}
+            <div className="flex items-center gap-1 bg-black/60 p-1 rounded-xl border border-white/10 shrink-0">
+              <button
+                type="button"
+                onClick={() => setFlowchartLayoutMode('dual')}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  flowchartLayoutMode === 'dual'
+                    ? 'bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-500 text-slate-950 shadow-md font-black'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+                title={isAr ? 'مساران متوازيان: مسار الإنتاج الأخضر ومسار الـ NCR الأحمر' : 'Dual Swimlanes: Production vs NCR'}
+              >
+                <GitFork className="w-3.5 h-3.5 rotate-90" />
+                <span className="hidden sm:inline">{isAr ? 'مساران متوازيان' : 'Dual Lanes'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setFlowchartLayoutMode('linear')}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  flowchartLayoutMode === 'linear'
+                    ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-slate-950 shadow-md font-black'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+                title={isAr ? 'تسلسل رأسي مدمج في عمود واحد' : 'Single Stream Flow'}
+              >
+                <Layers className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">{isAr ? 'مسار فردي' : 'Single'}</span>
+              </button>
+            </div>
 
-        {/* SUCCESS TERMINAL */}
-        <div className="flex flex-col items-center pt-2">
-          <div className="px-6 py-2.5 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-black text-xs sm:text-sm shadow-xl shadow-emerald-500/20 border-2 border-white flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-slate-950" />
-            <span>{isAr ? '🏁 نهاية الدورة: مطابقة تامة 100% وتحسين مستمر' : 'END: 100% Conformance & Continuous Excellence'}</span>
+            {/* Card Display Mode Switcher */}
+            <div className="flex items-center gap-1 bg-black/60 p-1 rounded-xl border border-white/10 shrink-0">
+              <button
+                onClick={() => setCardDisplayMode('clean')}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  cardDisplayMode === 'clean'
+                    ? 'bg-cyan-500 text-slate-950 shadow-md font-black'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+                title={isAr ? 'عرض إحصائي متوازن للكروت' : 'Balanced KPI Cards'}
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">{isAr ? 'عرض متوازن' : 'Balanced'}</span>
+              </button>
+              <button
+                onClick={() => setCardDisplayMode('compact')}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  cardDisplayMode === 'compact'
+                    ? 'bg-cyan-500 text-slate-950 shadow-md font-black'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+                title={isAr ? 'عرض مدمج خفيف للكروت' : 'Compact Cards'}
+              >
+                <ListFilter className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">{isAr ? 'عرض مدمج' : 'Compact'}</span>
+              </button>
+            </div>
+
+            {/* Search Box */}
+            <div className="relative w-full md:w-56 shrink-0">
+              <Search className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={isAr ? 'بحث بالاسم أو الكود...' : 'Search any tab...'}
+                className="w-full pr-9 pl-4 py-1.5 rounded-xl bg-black/60 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 transition-colors font-mono"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
           </div>
         </div>
-
       </div>
 
-      {/* DRILL-DOWN RECORD MODAL & LOT JOURNEY INSPECTOR */}
+      {/* 2. ADVANCED LOT & RAW MATERIAL TRACEABILITY SELECTOR BAR */}
+      <div id="lot-journey-traceability-bar" className="bg-[#0b1224] border-b-2 border-cyan-500/30 p-4 md:px-8 shadow-2xl">
+        <div className="max-w-6xl mx-auto space-y-3.5">
+          {/* Header & Description */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center border border-cyan-500/40 shadow-inner">
+                <Crosshair className="w-5 h-5 text-cyan-400 animate-pulse" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-black text-white tracking-wide">
+                    {isAr ? 'تتبع مسار اللوط والخامات المفحوصة في الاستلام (IQC)' : 'Live Lot & Material Traceability Flow'}
+                  </h3>
+                  <span className="px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 text-[10px] font-mono font-bold border border-cyan-500/40">
+                    {allTrackableLots.length} {isAr ? 'خامة مسجلة' : 'Lots Available'}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400">
+                  {isAr 
+                    ? 'اختر أي خامة تم فحصها في فحص الاستلام (IQC) لترى مسارها اللحظي: هل عَبَرت للإنتاج أم توقفت ومحجوزة بـ NCR؟' 
+                    : 'Select any material inspected in IQC to see whether it passed to production or halted in NCR'}
+                </p>
+              </div>
+            </div>
+
+            {/* Custom Lot Input */}
+            <div className="flex items-center gap-2 w-full md:w-auto">
+              <div className="relative flex-1 md:w-56">
+                <input
+                  type="text"
+                  value={lotSearchInput}
+                  onChange={(e) => setLotSearchInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && lotSearchInput.trim()) {
+                      setSelectedLotNumber(lotSearchInput.trim().toUpperCase());
+                    }
+                  }}
+                  placeholder={isAr ? 'اكتب رقم لوط أو كود خامة...' : 'Enter lot or part code...'}
+                  className="w-full px-3 py-1.5 rounded-xl bg-black/60 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 font-mono"
+                />
+              </div>
+              <button
+                onClick={() => {
+                  if (lotSearchInput.trim()) setSelectedLotNumber(lotSearchInput.trim().toUpperCase());
+                }}
+                className="px-3 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-black text-xs transition-all shrink-0"
+              >
+                {isAr ? 'تتبع' : 'Track'}
+              </button>
+              {selectedLotNumber && (
+                <button
+                  onClick={() => {
+                    setSelectedLotNumber(null);
+                    setLotSearchInput('');
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-bold transition-all shrink-0 flex items-center gap-1 border border-slate-700"
+                  title={isAr ? 'إلغاء التتبع والعودة للمسار الشامل' : 'Reset Traceability'}
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>{isAr ? 'إلغاء' : 'Reset'}</span>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Quick Select Inspected Materials & Lots */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between text-[11px] text-slate-400">
+              <span className="font-bold flex items-center gap-1">
+                <span>📥 {isAr ? 'الخامات والتشغيلات المفحوصة (اضغط لتتبع المسار فوراً):' : 'Inspected Lots (Click to trace):'}</span>
+              </span>
+              <button
+                onClick={() => navigate('/compliance/hub/inspection')}
+                className="text-cyan-400 hover:text-cyan-300 font-bold flex items-center gap-1"
+              >
+                <span>{isAr ? 'فتح شاشة فحص الاستلام IQC ↗' : 'Open IQC Inspection ↗'}</span>
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+              {allTrackableLots.length === 0 ? (
+                <span className="text-xs text-slate-500 py-1">
+                  {isAr ? 'لا توجد شحنات مفحوصة مسجلة حالياً — قم بتسجيل فحص استلام جديد في IQC لتتبعه' : 'No inspected lots recorded yet — add receiving inspections in IQC to trace'}
+                </span>
+              ) : (
+                allTrackableLots.map((lot) => {
+                  const isSelected = selectedLotNumber === lot.lotNumber;
+                  return (
+                    <button
+                      key={lot.lotNumber}
+                      onClick={() => {
+                        setSelectedLotNumber(lot.lotNumber);
+                        if (lot.status === 'quarantined') {
+                          scrollToStage('DEPT-STAGE-RESOLUTION', true);
+                        } else if (lot.currentStageNumber === 2) {
+                          scrollToStage('DEPT-STAGE-INPROCESS', true);
+                        } else {
+                          scrollToLotStopStage();
+                        }
+                      }}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-2 border ${
+                        isSelected
+                          ? 'bg-cyan-500 text-slate-950 border-cyan-300 shadow-lg shadow-cyan-500/30 scale-105'
+                          : 'bg-black/50 hover:bg-white/10 text-slate-200 border-white/10'
+                      }`}
+                    >
+                      <span className="font-mono font-black">{lot.lotNumber}</span>
+                      <span className="text-[10px] opacity-80">({isAr ? lot.materialNameAr.split(' ')[0] : lot.materialCode})</span>
+                      <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-black ${
+                        lot.status === 'quarantined'
+                          ? 'bg-rose-500 text-white'
+                          : lot.status === 'completed'
+                            ? 'bg-emerald-500 text-slate-950'
+                            : lot.status === 'hold'
+                              ? 'bg-indigo-500 text-white'
+                              : 'bg-amber-500 text-slate-950'
+                      }`}>
+                        {lot.status === 'quarantined' ? '🛑 حجز NCR' : lot.status === 'completed' ? '🏁 مكتمل' : lot.status === 'hold' ? '⚠️ شكوى' : '🟢 صالة الإنتاج'}
+                      </span>
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </div>
+
+          {/* ACTIVE TRACEABILITY HUD / JOURNEY CALLOUT BANNER */}
+          {trackedLot && (
+            <div className="mt-3 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-slate-900 via-[#0e172a] to-slate-900 border-2 border-cyan-400 shadow-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 animate-in fade-in duration-300">
+              <div className="flex items-start gap-3.5">
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border-2 ${
+                  trackedLot.status === 'quarantined' 
+                    ? 'bg-rose-500/20 text-rose-400 border-rose-500 shadow-lg shadow-rose-500/20 animate-pulse' 
+                    : trackedLot.status === 'completed'
+                      ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500'
+                      : 'bg-amber-500/20 text-amber-400 border-amber-500'
+                }`}>
+                  <MapPin className="w-6 h-6" />
+                </div>
+
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-base font-black text-white font-mono tracking-wide">
+                      {trackedLot.lotNumber}
+                    </span>
+                    <span className="text-xs font-bold text-cyan-300">
+                      • {isAr ? trackedLot.materialNameAr : trackedLot.materialNameEn}
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full bg-white/10 text-slate-300 text-[10px] font-mono">
+                      {isAr ? trackedLot.categoryAr : trackedLot.categoryEn}
+                    </span>
+                    {trackedLot.isLiveInspection && (
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[10px] font-bold">
+                        {isAr ? '🔴 فحص حي من IQC' : 'Live IQC'}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Narrative path */}
+                  <div className="mt-1 text-xs text-slate-300 font-medium leading-relaxed">
+                    <b className="text-amber-400 font-black">{isAr ? 'مسار الحركة على الفلو شارت:' : 'Journey:'}</b> {isAr ? trackedLot.flowNarrativeAr : trackedLot.flowNarrativeEn}
+                  </div>
+
+                  {/* Where it stopped */}
+                  <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs">
+                    <span className="px-2.5 py-0.5 rounded-lg bg-rose-500/20 text-rose-300 border border-rose-500/40 font-bold flex items-center gap-1">
+                      <AlertOctagon className="w-3.5 h-3.5 text-rose-400" />
+                      <span>{isAr ? `الموقع الحالي: ${trackedLot.currentStageNameAr}` : `Stopped at: ${trackedLot.currentStageNameEn}`}</span>
+                    </span>
+                    <span className="text-slate-400 text-xs">
+                      {isAr ? trackedLot.stopReasonAr : trackedLot.stopReasonEn}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2 shrink-0 w-full md:w-auto pt-2 md:pt-0 border-t md:border-t-0 border-white/10">
+                <button
+                  onClick={scrollToLotStopStage}
+                  className="flex-1 md:flex-none px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-xs flex items-center justify-center gap-2 transition-all shadow-lg shadow-cyan-500/20 hover:scale-105 active:scale-95"
+                >
+                  <MapPin className="w-4 h-4 fill-slate-950" />
+                  <span>{isAr ? 'القفز لموقع التوقف 🎯' : 'Jump to Current Station'}</span>
+                </button>
+
+                {trackedLot.relatedRecordUrl && (
+                  <button
+                    onClick={() => navigate(trackedLot.relatedRecordUrl!)}
+                    className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-bold text-xs flex items-center gap-1.5 border border-slate-700 transition-all"
+                  >
+                    <span>{trackedLot.relatedRecordCode}</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* 3. THE DEVELOPED FLOWCHART LAYOUT: SEQUENTIAL (1 ➔ 2 ➔ 3 ➔ 4 ➔ 5 ➔ 6 ➔ 7) */}
+      <div className="max-w-[1440px] mx-auto w-full p-3 sm:p-6 lg:p-8 space-y-5 pb-24">
+
+        {/* GLOBAL FACTORY QUALITY BALANCE STRIP (TOTAL, ACCEPTED, REJECTED) */}
+        <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-slate-900 via-slate-950 to-slate-900 border-2 border-cyan-500/30 shadow-2xl space-y-3">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-white/10 pb-2.5">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping" />
+              <h3 className="text-sm sm:text-base font-black text-white flex items-center gap-2">
+                <span>📊 {isAr ? 'ميزان الجودة ومطابقة التسجيلات في المصنع بالكامل:' : 'Plant-Wide Quality & Inspection Balance:'}</span>
+              </h3>
+            </div>
+            <span className="text-xs text-slate-400 font-mono">
+              {isAr ? 'مُحدث لحظياً لجميع المراحل الـ 7' : 'Live across all 7 stages'}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {/* Total Records */}
+            <div className="p-3 rounded-2xl bg-black/50 border border-white/10 flex flex-col justify-between shadow-sm">
+              <span className="text-xs text-slate-400 font-bold flex items-center gap-1.5">
+                <span>📋</span>
+                <span>{isAr ? 'إجمالي التسجيلات' : 'Total Records'}</span>
+              </span>
+              <div className="flex items-baseline justify-between mt-1.5">
+                <span className="font-mono font-black text-2xl text-white">{globalFactoryStats.total}</span>
+                <span className="text-xs text-slate-400 font-bold">{isAr ? 'سجل' : 'items'}</span>
+              </div>
+            </div>
+
+            {/* Total Conforming / Accepted */}
+            <div className="p-3 rounded-2xl bg-emerald-950/40 border border-emerald-500/40 flex flex-col justify-between shadow-sm">
+              <span className="text-xs text-emerald-400 font-bold flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <span>{isAr ? 'المقبول والمطابق' : 'Accepted (Pass)'}</span>
+              </span>
+              <div className="flex items-baseline justify-between mt-1.5">
+                <span className="font-mono font-black text-2xl text-emerald-400">{globalFactoryStats.pass}</span>
+                <span className="font-mono text-xs font-bold text-emerald-300 bg-emerald-500/20 px-2 py-0.5 rounded-full border border-emerald-500/30">
+                  {globalFactoryStats.acceptanceRate}% FPY
+                </span>
+              </div>
+            </div>
+
+            {/* Total Non-Conforming / Quarantined */}
+            <div className="p-3 rounded-2xl bg-rose-950/40 border border-rose-500/40 flex flex-col justify-between shadow-sm">
+              <span className="text-xs text-rose-400 font-bold flex items-center gap-1.5">
+                <AlertOctagon className="w-4 h-4 text-rose-400" />
+                <span>{isAr ? 'المرفوض والمحجوز' : 'Rejected (Fail)'}</span>
+              </span>
+              <div className="flex items-baseline justify-between mt-1.5">
+                <span className="font-mono font-black text-2xl text-rose-400">{globalFactoryStats.fail}</span>
+                <span className="font-mono text-xs font-bold text-rose-300 bg-rose-500/20 px-2 py-0.5 rounded-full border border-rose-500/30">
+                  {Math.round((globalFactoryStats.fail / Math.max(1, globalFactoryStats.total)) * 100)}%
+                </span>
+              </div>
+            </div>
+
+            {/* Containment & Problem Solving */}
+            <div className="p-3 rounded-2xl bg-amber-950/40 border border-amber-500/40 flex flex-col justify-between shadow-sm">
+              <span className="text-xs text-amber-400 font-bold flex items-center gap-1.5">
+                <Workflow className="w-4 h-4 text-amber-400" />
+                <span>{isAr ? 'قيد الحجر والـ NCR' : 'In Resolution'}</span>
+              </span>
+              <div className="flex items-baseline justify-between mt-1.5">
+                <span className="font-mono font-black text-2xl text-amber-400">{getStageRecordStats('DEPT-STAGE-RESOLUTION').fail}</span>
+                <span className="text-xs text-amber-300 font-bold">{isAr ? 'حالات نشطة' : 'active'}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+                {/* DUAL SWIMLANES VS LINEAR ARCHITECTURE */}
+        {flowchartLayoutMode === 'dual' ? (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* ========================================================================= */}
+            {/* LANE 1: PRODUCTION & CONFORMANCE STREAM (المسار الأخضر - مسار الإنتاج المطابق) */}
+            {/* ========================================================================= */}
+            <div className="lg:col-span-7 space-y-4">
+              {/* Lane 1 Header Banner */}
+              <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-emerald-950/80 via-slate-900 to-teal-950/80 border-2 border-emerald-500/50 shadow-2xl flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center shrink-0 shadow-lg shadow-emerald-500/20">
+                    <CheckCircle2 className="w-6 h-6 text-emerald-400" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 font-mono font-black text-xs border border-emerald-500/40">
+                        LANE 1 • PRODUCTION
+                      </span>
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                    </div>
+                    <h3 className="text-base font-black text-white mt-0.5">
+                      {isAr ? '🟢 مسار الإنتاج والتدفق المطابق (Production Stream)' : 'Conforming Production & Release Stream'}
+                    </h3>
+                    <p className="text-xs text-slate-300">
+                      {isAr 
+                        ? 'مسار التصنيع والتدفق الانسيابي خطوة بخطوة من استلام الخامات حتى الإفراج للعميل' 
+                        : 'Compliant production flow from raw receiving to customer shipping'}
+                    </p>
+                  </div>
+                </div>
+                <span className="hidden sm:inline-flex px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 font-mono text-xs font-bold border border-emerald-500/30">
+                  {globalFactoryStats.pass} {isAr ? 'عملية مطابقة' : 'Pass'}
+                </span>
+              </div>
+
+              {renderStartTerminal()}
+              {renderStage1()}
+              {renderGate1()}
+              {renderStage2()}
+              {renderGate2()}
+              {/* Stage 3 lives exclusively in Lane 2 as the Containment Hub; production continues to Stage 4 */}
+              {renderStage4()}
+              {renderGate4()}
+              {renderStage5()}
+              {renderGate5()}
+              {renderStage6()}
+              {renderFlowPipe('#3b82f6', 'تحديث وثائق النظام والبيانات', 'Update Master Data')}
+              {renderStage7()}
+              {renderClosedLoopFeedbackBanner()}
+              {renderEndTerminal()}
+            </div>
+
+            {/* ========================================================================= */}
+            {/* LANE 2: QUARANTINE & NCR RESOLUTION HUB (المسار الأحمر - الحجر وحل المشكلات) */}
+            {/* ========================================================================= */}
+            <div className="lg:col-span-5 space-y-4">
+              {/* Lane 2 Header Banner */}
+              <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-rose-950/90 via-slate-900 to-amber-950/80 border-2 border-rose-500/50 shadow-2xl flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-rose-500/20 text-rose-400 border border-rose-500/40 flex items-center justify-center shrink-0 shadow-lg shadow-rose-500/20">
+                    <AlertOctagon className="w-6 h-6 text-rose-400 animate-pulse" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 rounded-md bg-rose-500/20 text-rose-300 font-mono font-black text-xs border border-rose-500/40">
+                        LANE 2 • RESOLUTION HUB
+                      </span>
+                      <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
+                    </div>
+                    <h3 className="text-base font-black text-rose-400 mt-0.5">
+                      {isAr ? '🛑 مسار الحجر والـ NCR وحل المشكلات' : 'Quarantine & Problem Solving Hub'}
+                    </h3>
+                    <p className="text-xs text-slate-300">
+                      {isAr 
+                        ? 'مركز عزل العيوب والتحقيق الجذري 8D وإجراءات تصحيح CAPA وفك الحجر' 
+                        : 'Defect containment, 8D investigations, CAPA closed-loop & MRB'}
+                    </p>
+                  </div>
+                </div>
+                <span className="px-3 py-1 rounded-full bg-rose-500/20 text-rose-300 font-mono text-xs font-bold border border-rose-500/30 shrink-0">
+                  {globalFactoryStats.fail} {isAr ? 'حجر نشط' : 'Holds'}
+                </span>
+              </div>
+
+              {/* 1. Raw Materials Receiving Quarantine Dock (QRN-01) */}
+              {renderRawQuarantineDock()}
+
+              {renderFlowPipe('#f43f5e', 'تحويل لتقارير عدم المطابقة والتحقيق الجذري', 'Escalate to NCR & 8D')}
+
+              {/* 2. Stage 3 (NCR, 8D, CAPA, Deviation, Change Control) */}
+              {renderStage3()}
+
+              {/* 3. Gate 3 (MRB / CAPA Resolution Verification) */}
+              {renderGate3()}
+
+              {/* 4. Closed Loop Return Card (Loop-back arrow to Production in Lane 1) */}
+              {renderClosedLoopCard()}
+            </div>
+          </div>
+        ) : (
+          /* LINEAR MODE: SEQUENTIAL 1 to 7 */
+          <div className="space-y-4">
+            {renderStartTerminal()}
+            {renderStage1()}
+            {renderGate1()}
+            {renderStage2()}
+            {renderGate2()}
+            {renderStage3()}
+            {renderGate3()}
+            {renderStage4()}
+            {renderGate4()}
+            {renderStage5()}
+            {renderGate5()}
+            {renderStage6()}
+            {renderFlowPipe('#3b82f6', 'تحديث وثائق النظام والبيانات', 'Update Master Data')}
+            {renderStage7()}
+            {renderClosedLoopFeedbackBanner()}
+            {renderEndTerminal()}
+          </div>
+        )}
+      </div>
+
+{/* DRILL-DOWN RECORD MODAL & LOT JOURNEY INSPECTOR */}
       {renderStationDrilldownModal()}
     </div>
   );
