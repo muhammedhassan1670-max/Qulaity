@@ -1644,163 +1644,139 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
           <div className="w-2.5 h-2.5 rounded-full animate-ping -mt-1" style={{ backgroundColor: accentColor }} />
         </div>
 
-        {/* DECISION GATE CONTAINER: 2-COLUMN FLOWCHART BRANCHING (Main Spine vs Lateral Rejection Path) */}
-        <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
-          
-          {/* ============================================================== */}
-          {/* COLUMN 1: THE DECISION DIAMOND & YES PASS CONDUIT (7 Cols)     */}
-          {/* ============================================================== */}
-          <div className="lg:col-span-7 flex flex-col justify-between p-5 sm:p-6 rounded-3xl bg-slate-900/95 border-2 shadow-2xl backdrop-blur-md relative"
-            style={{ borderColor: `${accentColor}70` }}
-          >
-            {/* Diamond Header */}
-            <div>
-              <div className="flex items-center justify-between gap-3 border-b border-white/10 pb-3">
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm rotate-45 border-2 shrink-0 shadow-md"
-                    style={{
-                      backgroundColor: `${accentColor}20`,
-                      borderColor: accentColor,
-                      color: accentColor
-                    }}
-                  >
-                    <span className="-rotate-45">◆</span>
-                  </div>
-                  <div>
-                    <span
-                      className="text-[10px] font-mono font-black uppercase px-2 py-0.5 rounded border"
-                      style={{
-                        backgroundColor: `${accentColor}15`,
-                        color: accentColor,
-                        borderColor: `${accentColor}40`
-                      }}
-                    >
-                      {isAr ? `معين اتخاذ القرار #${gateNumber}` : `Decision Gateway #${gateNumber}`}
-                    </span>
-                    <h4 className="text-xs sm:text-sm font-black text-white mt-1 leading-snug">
-                      {isAr ? questionAr : questionEn}
-                    </h4>
-                  </div>
-                </div>
-                <span className="text-[10px] font-mono text-slate-400 hidden sm:inline">
-                  ISO / IATF Gate
+        {/* DECISION GATE CONTAINER: 2-COLUMN BRANCHING (50/50 Symmetrical Split) */}
+        <div
+          className={`w-full max-w-2xl mx-auto p-4 sm:p-5 rounded-3xl bg-slate-900/95 border-2 shadow-xl transition-all ${
+            isSimAtGate ? 'ring-2 ring-amber-400/80 shadow-2xl' : ''
+          }`}
+          style={{ borderColor: `${accentColor}60` }}
+        >
+          {/* Header Banner: Question only (Clean & Punchy) */}
+          <div className="flex items-center justify-between gap-3 pb-3 border-b border-white/10">
+            <div className="flex items-center gap-2.5">
+              <div
+                className="w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs rotate-45 border shrink-0 shadow-sm"
+                style={{
+                  backgroundColor: `${accentColor}20`,
+                  borderColor: accentColor,
+                  color: accentColor
+                }}
+              >
+                <span className="-rotate-45">◆</span>
+              </div>
+              <div>
+                <span
+                  className="text-[10px] font-mono font-black uppercase px-2 py-0.5 rounded border"
+                  style={{
+                    backgroundColor: `${accentColor}15`,
+                    color: accentColor,
+                    borderColor: `${accentColor}40`
+                  }}
+                >
+                  {isAr ? `قرار فحص #${gateNumber}` : `Decision Gate #${gateNumber}`}
                 </span>
-              </div>
-
-              {/* SEPARATE PASS BOX (GREEN) */}
-              <div className={`mt-4 p-4 rounded-2xl border-2 transition-all ${
-                isPassBranchSim
-                  ? 'bg-emerald-950/90 border-emerald-400 ring-4 ring-emerald-400 shadow-xl shadow-emerald-500/40 animate-pulse'
-                  : 'bg-emerald-950/30 border-emerald-500/50 hover:border-emerald-400'
-              }`}>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="px-3 py-1 rounded-xl bg-emerald-500/20 text-emerald-300 font-black text-xs border border-emerald-500/40 flex items-center gap-1.5 shadow-sm">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>{isAr ? '🟢 [ نعم / YES ] — مقبولة ومطابقة' : '🟢 [ YES ] — Conforming'}</span>
-                  </span>
-                  <span className="font-mono text-xs font-black text-emerald-300 bg-emerald-950/80 px-2.5 py-1 rounded-lg border border-emerald-500/30">
-                    {stageStats.pass} {isAr ? 'مجاز' : 'Pass'}
-                  </span>
-                </div>
-                <h5 className="text-xs sm:text-sm font-black text-emerald-300 mt-1">
-                  {isAr ? `لو مقبولة: تروح للمحطة التالية (${stageNamesAr[passTargetStageNumber] || `المرحلة ${passTargetStageNumber}`}) ⬇` : `If Pass: Advances to ${stageNamesEn[passTargetStageNumber] || `Stage ${passTargetStageNumber}`} ⬇`}
-                </h5>
-                <p className="text-xs text-slate-300 mt-1 font-medium leading-relaxed">
-                  {isAr ? passLabelAr : passLabelEn}
-                </p>
+                <h4 className="text-xs sm:text-sm font-black text-white mt-1">
+                  {isAr ? questionAr : questionEn}
+                </h4>
               </div>
             </div>
-
-            {/* SEPARATE PASS DOWNWARD CONDUIT ARROW */}
-            <div className="mt-4 pt-3 border-t border-emerald-500/20 flex items-center justify-between text-xs font-bold text-emerald-300">
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
-                <span>{isAr ? `مسار التدفق المباشر للأمام ➔ المرحلة ${passTargetStageNumber}` : `Forward Flow ➔ Stage ${passTargetStageNumber}`}</span>
-              </div>
-              <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-mono font-black text-xs">
-                <span>{isAr ? 'نعم (نزول)' : 'YES ⬇'}</span>
-                <ArrowDown className={`w-4 h-4 text-emerald-400 ${isPassBranchSim ? 'animate-bounce' : ''}`} />
-              </div>
-            </div>
+            <span className="text-[10px] font-mono text-slate-400 hidden sm:inline">
+              ISO / IATF
+            </span>
           </div>
 
-          {/* ============================================================== */}
-          {/* COLUMN 2: THE LATERAL REJECTION DOCK & NCR PATHWAY (5 Cols)     */}
-          {/* ============================================================== */}
-          <div className={`lg:col-span-5 flex flex-col justify-between p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-rose-950/70 via-slate-900 to-slate-950 border-2 shadow-2xl transition-all relative ${
-            isFailBranchSim
-              ? 'border-rose-400 ring-4 ring-rose-500 shadow-xl shadow-rose-500/50 scale-[1.01]'
-              : 'border-rose-500/60 hover:border-rose-400'
-          }`}>
-            <div>
-              {/* Lateral Branch Connecting Header */}
-              <div className="flex items-center justify-between gap-2 border-b border-rose-500/20 pb-3">
-                <span className="px-3 py-1 rounded-xl bg-rose-500/20 text-rose-300 font-black text-xs border border-rose-500/40 flex items-center gap-1.5 shadow-sm">
+          {/* CRISP, COMPACT 50/50 SPREAD: PASS (YES) VS FAIL (NO) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+            
+            {/* 🟢 PASS BOX: Direct, Zero Fluff */}
+            <div className={`p-3.5 rounded-2xl border-2 flex flex-col justify-between transition-all ${
+              isPassBranchSim
+                ? 'bg-emerald-950/90 border-emerald-400 ring-4 ring-emerald-400 shadow-xl shadow-emerald-500/40 animate-pulse'
+                : 'bg-emerald-950/30 border-emerald-500/50 hover:border-emerald-400'
+            }`}>
+              <div className="flex items-center justify-between">
+                <span className="px-2.5 py-1 rounded-xl bg-emerald-500/20 text-emerald-300 font-black text-xs border border-emerald-500/40 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span>{isAr ? '🟢 نعم / YES' : '🟢 YES (Pass)'}</span>
+                </span>
+                <span className="font-mono text-xs font-black text-emerald-300 bg-emerald-950/80 px-2 py-0.5 rounded-lg border border-emerald-500/30">
+                  {stageStats.pass} {isAr ? 'مجاز' : 'Pass'}
+                </span>
+              </div>
+
+              <div className="my-2.5">
+                <div className="text-xs font-black text-emerald-200">
+                  {isAr ? `إجازة وصرف للمرحلة ${passTargetStageNumber} ⬇` : `Advance to Stage ${passTargetStageNumber} ⬇`}
+                </div>
+                <div className="text-[11px] text-slate-400 mt-0.5">
+                  {isAr ? stageNamesAr[passTargetStageNumber] : stageNamesEn[passTargetStageNumber]}
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-emerald-500/20 flex items-center justify-between text-[11px] font-bold text-emerald-300">
+                <span>{isAr ? 'مسار القبول' : 'Conforming Stream'}</span>
+                <ArrowDown className={`w-3.5 h-3.5 text-emerald-400 ${isPassBranchSim ? 'animate-bounce' : ''}`} />
+              </div>
+            </div>
+
+            {/* 🛑 FAIL BOX: Direct, Actionable */}
+            <div className={`p-3.5 rounded-2xl border-2 flex flex-col justify-between transition-all ${
+              isFailBranchSim
+                ? 'bg-rose-950/90 border-rose-400 ring-4 ring-rose-500 shadow-xl shadow-rose-500/50 animate-pulse'
+                : 'bg-rose-950/30 border-rose-500/50 hover:border-rose-400'
+            }`}>
+              <div className="flex items-center justify-between">
+                <span className="px-2.5 py-1 rounded-xl bg-rose-500/20 text-rose-300 font-black text-xs border border-rose-500/40 flex items-center gap-1.5">
                   <AlertOctagon className="w-4 h-4 text-rose-400 shrink-0" />
-                  <span>{isAr ? '🛑 [ لا / NO ] — تفريعة المرفوضات' : '🛑 [ NO ] — Rejection Branch'}</span>
+                  <span>{isAr ? '🛑 لا / NO' : '🛑 NO (Fail)'}</span>
                 </span>
-                <span className="font-mono text-xs font-black text-rose-300 bg-rose-950/80 px-2.5 py-1 rounded-lg border border-rose-500/30">
-                  {stageStats.fail} {isAr ? 'محجوز' : 'Held'}
+                <span className="font-mono text-xs font-black text-rose-300 bg-rose-950/80 px-2 py-0.5 rounded-lg border border-rose-500/30">
+                  {stageStats.fail} {isAr ? 'محجوز' : 'Hold'}
                 </span>
               </div>
 
-              {/* Destination Rejection & NCR Title */}
-              <div className="mt-3">
-                <span className="text-[10px] font-mono text-rose-400 font-black uppercase tracking-wider">
-                  QRN-0{gateNumber} • REJECTS TRACK
-                </span>
-                <h5 className="text-xs sm:text-sm font-black text-rose-200 mt-0.5">
-                  {isAr ? `لو مرفوضة: يتعمل بيها NCR وحجز وارتجاع` : `If Fail: Issue NCR, Quarantine & Return`}
-                </h5>
-                <p className="text-xs text-rose-300/90 mt-1 font-medium leading-relaxed">
-                  {isAr ? `وجهة العزل: ${rejectTitlesAr[gateNumber]}` : `Destination: ${rejectTitlesEn[gateNumber]}`}
-                </p>
-                <div className="mt-2.5 p-2.5 rounded-xl bg-black/40 border border-rose-500/20 text-[11px] text-slate-300 space-y-1">
-                  <div className="flex items-center gap-1.5 text-rose-300 font-bold">
-                    <span>•</span>
-                    <span>{isAr ? 'عزل فيزيائي وتثبيت بطاقة الحجر الحمراء' : 'Physical quarantine tag applied'}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-rose-300 font-bold">
-                    <span>•</span>
-                    <span>{isAr ? 'فتح تقرير عدم مطابقة (NCR) وتكلفة الجودة' : 'Instant electronic NCR report logged'}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-rose-300 font-bold">
-                    <span>•</span>
-                    <span>{isAr ? 'تفعيل مسار الارتجاع أو فحص لجنة MRB' : 'Supplier return or MRB disposition'}</span>
-                  </div>
+              <div className="my-2.5">
+                <div className="text-xs font-black text-rose-200">
+                  {isAr ? 'حجز وتقرير عدم مطابقة 🛑 ➔' : 'Quarantine & Issue NCR 🛑 ➔'}
                 </div>
+                <div className="text-[11px] text-slate-400 mt-0.5">
+                  {isAr ? rejectTitlesAr[gateNumber] : rejectTitlesEn[gateNumber]}
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-rose-500/20 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const route = gateNumber === 2 ? '/d8' : gateNumber === 5 ? '/complaints' : '/ncr';
+                    navigate(route);
+                  }}
+                  className="flex-1 py-1.5 px-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-[11px] flex items-center justify-center gap-1 transition-all shadow-sm active:scale-95 cursor-pointer"
+                >
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>{isAr ? 'فتح NCR ➔' : 'Open NCR ➔'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const target = rejectTargetId[gateNumber] || 'DEPT-STAGE-RESOLUTION';
+                    scrollToStage(target, true);
+                  }}
+                  className="p-1.5 rounded-xl bg-black/40 hover:bg-rose-950/40 text-rose-300 border border-rose-500/30 text-[11px] transition-all cursor-pointer"
+                  title={isAr ? 'فحص تفاصيل الحجر' : 'Quarantine Details'}
+                >
+                  <ShieldAlert className="w-3.5 h-3.5" />
+                </button>
               </div>
             </div>
 
-            {/* SEPARATE FAIL ACTION BUTTON & SIDE ARROW */}
-            <div className="mt-4 pt-3 border-t border-rose-500/20">
-              <button
-                type="button"
-                onClick={() => {
-                  const target = rejectTargetId[gateNumber] || 'DEPT-STAGE-RESOLUTION';
-                  scrollToStage(target, true);
-                }}
-                className={`w-full py-2.5 px-3 rounded-xl font-black text-xs flex items-center justify-between transition-all shadow-lg active:scale-95 cursor-pointer ${
-                  isFailBranchSim
-                    ? 'bg-rose-500 text-white animate-bounce shadow-rose-500/50'
-                    : 'bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white shadow-rose-950/40'
-                }`}
-              >
-                <div className="flex items-center gap-1.5">
-                  <FileText className="w-4 h-4" />
-                  <span>{isAr ? `فتح تقرير NCR وسجل الحجر [QRN-0${gateNumber}]` : `Open NCR & Quarantine [QRN-0${gateNumber}]`}</span>
-                </div>
-                <ArrowUpRight className="w-4 h-4" />
-              </button>
-            </div>
           </div>
         </div>
 
         {/* Downward Pass Conduit to Next Station */}
-        <div className="flex flex-col items-center mt-3">
-          <div className="w-1.5 h-7 rounded-full bg-gradient-to-b from-emerald-500 via-emerald-400 to-transparent" />
-          <div className="text-emerald-400 text-xs font-black -mt-2 animate-bounce">▼</div>
+        <div className="flex flex-col items-center mt-2">
+          <div className="w-1.5 h-6 rounded-full bg-gradient-to-b from-emerald-500 to-cyan-500" />
+          <div className="text-emerald-400 text-xs font-black -mt-1.5 animate-bounce">▼</div>
         </div>
       </div>
     );
@@ -3654,7 +3630,7 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
     );
   };
 
-  // Clean, Professional 2-Column Decision Gateway with explicit 🟢 PASS ⬇️ vs 🛑 FAIL ➔ branching
+  // Clean, Minimal, High-Precision Decision Gateway (Zero Fluff, Pure Industrial Logic)
   const renderVisualDecisionGateway = (props: {
     gateNumber: number;
     questionAr: string;
@@ -3686,217 +3662,138 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
     const isPassBranchSim = isSimAtGate && simulationType === 'pass';
     const isFailBranchSim = isSimAtGate && simulationType === 'fail';
 
-    const stageNamesAr: Record<number, string> = {
-      2: 'المرحلة 2: صالة الإنتاج والتصنيع (IPQC)',
-      3: 'المرحلة 3: مركز احتواء عدم المطابقة والـ 8D',
-      4: 'المرحلة 4: التفتيش النهائي للمنتج التام (OQC)',
-      5: 'المرحلة 5: الشحن وشكاوى العملاء (CSM)',
-      6: 'المرحلة 6: المختبر والتدقيق الهندسي',
-    };
-    const stageNamesEn: Record<number, string> = {
-      2: 'Stage 2: In-Process Manufacturing (IPQC)',
-      3: 'Stage 3: NCR & 8D Problem Solving Hub',
-      4: 'Stage 4: Outgoing Final Quality (OQC)',
-      5: 'Stage 5: Customer Delivery & Claims (CSM)',
-      6: 'Stage 6: Engineering Lab & Audits',
-    };
-
-    const targetStageAr = props.nextStageNameAr || stageNamesAr[props.nextStageNumber] || `المرحلة ${props.nextStageNumber}`;
-    const targetStageEn = props.nextStageNameEn || stageNamesEn[props.nextStageNumber] || `Stage ${props.nextStageNumber}`;
-
     return (
-      <div id={`GATEWAY-${props.gateNumber}`} className="my-5 w-full max-w-4xl mx-auto flex flex-col items-center">
-        {/* Downward Pipe from previous station into Gateway */}
-        <div className="flex flex-col items-center">
-          <div className="w-1.5 h-6 rounded-full" style={{ backgroundColor: props.accentColor }} />
-          <div className="w-2.5 h-2.5 rounded-full animate-ping -mt-1" style={{ backgroundColor: props.accentColor }} />
-        </div>
+      <div id={`GATEWAY-${props.gateNumber}`} className="my-4 w-full max-w-2xl mx-auto flex flex-col items-center">
+        {/* Downward Pipe into Gateway */}
+        <div className="w-1.5 h-5 rounded-full" style={{ backgroundColor: props.accentColor }} />
 
-        {/* DECISION GATE CONTAINER: 2-COLUMN BRANCHING (Pass Box vs Fail Box) */}
-        <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch mt-1">
-          
-          {/* ========================================================================= */}
-          {/* COLUMN 1: THE DECISION QUESTION & PASS SPINE [نعم / YES] (7 Cols)         */}
-          {/* ========================================================================= */}
-          <div 
-            className={`lg:col-span-7 flex flex-col justify-between p-5 sm:p-6 rounded-3xl bg-gradient-to-b from-slate-900 via-[#0a1122] to-slate-950 border-2 shadow-2xl transition-all relative ${
-              isSimAtGate ? 'ring-2 ring-amber-400/80' : ''
-            }`}
-            style={{ borderColor: `${props.accentColor}70` }}
-          >
-            <div>
-              {/* Diamond Header & Question */}
-              <div className="flex items-center justify-between gap-3 border-b border-white/10 pb-3">
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm rotate-45 border-2 shrink-0 shadow-md"
-                    style={{
-                      backgroundColor: `${props.accentColor}20`,
-                      borderColor: props.accentColor,
-                      color: props.accentColor
-                    }}
-                  >
-                    <span className="-rotate-45">◆</span>
-                  </div>
-                  <div>
-                    <span
-                      className="text-[10px] font-mono font-black uppercase px-2 py-0.5 rounded border"
-                      style={{
-                        backgroundColor: `${props.accentColor}15`,
-                        color: props.accentColor,
-                        borderColor: `${props.accentColor}40`
-                      }}
-                    >
-                      {isAr ? `معين اتخاذ القرار #${props.gateNumber}` : `Decision Gateway #${props.gateNumber}`}
-                    </span>
-                    <h4 className="text-xs sm:text-sm font-black text-white mt-1 leading-snug">
-                      {isAr ? props.questionAr : props.questionEn}
-                    </h4>
-                  </div>
-                </div>
-                <span className="text-[10px] font-mono text-slate-400 hidden sm:inline">
-                  ISO / IATF Gate
+        {/* DECISION GATEWAY CARD: Full-width Header with 50/50 Symmetrical Split */}
+        <div
+          className={`w-full p-4 sm:p-5 rounded-3xl bg-slate-900/95 border-2 shadow-xl transition-all ${
+            isSimAtGate ? 'ring-2 ring-amber-400/80 shadow-2xl' : ''
+          }`}
+          style={{ borderColor: `${props.accentColor}60` }}
+        >
+          {/* Header Banner: Question only (Clean & Punchy) */}
+          <div className="flex items-center justify-between gap-3 pb-3 border-b border-white/10">
+            <div className="flex items-center gap-2.5">
+              <div
+                className="w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs rotate-45 border shrink-0 shadow-sm"
+                style={{
+                  backgroundColor: `${props.accentColor}20`,
+                  borderColor: props.accentColor,
+                  color: props.accentColor
+                }}
+              >
+                <span className="-rotate-45">◆</span>
+              </div>
+              <div>
+                <span
+                  className="text-[10px] font-mono font-black uppercase px-2 py-0.5 rounded border"
+                  style={{
+                    backgroundColor: `${props.accentColor}15`,
+                    color: props.accentColor,
+                    borderColor: `${props.accentColor}40`
+                  }}
+                >
+                  {isAr ? `قرار فحص #${props.gateNumber}` : `Decision Gate #${props.gateNumber}`}
                 </span>
-              </div>
-
-              {/* SEPARATE PASS BOX (GREEN) */}
-              <div className={`mt-4 p-4 rounded-2xl border-2 transition-all ${
-                isPassBranchSim
-                  ? 'bg-emerald-950/90 border-emerald-400 ring-4 ring-emerald-400 shadow-xl shadow-emerald-500/40 animate-pulse'
-                  : 'bg-emerald-950/30 border-emerald-500/50 hover:border-emerald-400'
-              }`}>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="px-3 py-1 rounded-xl bg-emerald-500/20 text-emerald-300 font-black text-xs border border-emerald-500/40 flex items-center gap-1.5 shadow-sm">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>{isAr ? '🟢 [ نعم / YES ] — مقبولة ومطابقة' : '🟢 [ YES ] — Conforming'}</span>
-                  </span>
-                  <span className="font-mono text-xs font-black text-emerald-300 bg-emerald-950/80 px-2.5 py-1 rounded-lg border border-emerald-500/30">
-                    {props.passCount} {isAr ? 'مجاز' : 'Pass'}
-                  </span>
-                </div>
-                <h5 className="text-xs sm:text-sm font-black text-emerald-300 mt-1">
-                  {isAr ? `لو مقبولة: تروح للمحطة التالية (${targetStageAr}) ⬇` : `If Pass: Advances to ${targetStageEn} ⬇`}
-                </h5>
-                <p className="text-xs text-slate-300 mt-1 font-medium leading-relaxed">
-                  {isAr 
-                    ? 'الخامة أو اللوط مطابق للمواصفات 100% ➔ إجازة وصرف مباشر لمسار الإنتاج التالي' 
-                    : '100% conforming lot ➔ instant release and forward advancement to next station'}
-                </p>
+                <h4 className="text-xs sm:text-sm font-black text-white mt-1">
+                  {isAr ? props.questionAr : props.questionEn}
+                </h4>
               </div>
             </div>
-
-            {/* SEPARATE PASS ARROW BOX (pointing DOWN) */}
-            <div className="mt-4 pt-3 border-t border-emerald-500/20">
-              <div className="p-3 rounded-2xl bg-emerald-950/70 border border-emerald-500/40 flex items-center justify-between text-xs font-bold text-emerald-300 shadow-md">
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping shrink-0" />
-                  <span className="font-black text-xs">
-                    {isAr ? `مسار [نعم / YES]: انتقال وصرف للمحطة التالية ⬇` : `[YES] Path: Direct Advance to Next Station ⬇`}
-                  </span>
-                </div>
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-500/20 border border-emerald-500/40 font-mono font-black text-xs text-emerald-300 shrink-0">
-                  <span>{isAr ? 'إجازة ⬇' : 'Pass ⬇'}</span>
-                  <ArrowDown className={`w-4 h-4 text-emerald-400 ${isPassBranchSim ? 'animate-bounce' : ''}`} />
-                </div>
-              </div>
-            </div>
+            <span className="text-[10px] font-mono text-slate-400 hidden sm:inline">
+              ISO / IATF
+            </span>
           </div>
 
-          {/* ========================================================================= */}
-          {/* COLUMN 2: THE REJECTION TRACK [لا / NO] & NCR / QUARANTINE ACTIONS (5 Cols) */}
-          {/* ========================================================================= */}
-          <div 
-            className={`lg:col-span-5 flex flex-col justify-between p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-rose-950/70 via-slate-900 to-slate-950 border-2 shadow-2xl transition-all relative ${
-              isFailBranchSim
-                ? 'border-rose-400 ring-4 ring-rose-500 shadow-xl shadow-rose-500/50 scale-[1.01]'
-                : 'border-rose-500/60 hover:border-rose-400'
-            }`}
-          >
-            <div>
-              {/* Rejection Header */}
-              <div className="flex items-center justify-between gap-2 border-b border-rose-500/20 pb-3">
-                <span className="px-3 py-1 rounded-xl bg-rose-500/20 text-rose-300 font-black text-xs border border-rose-500/40 flex items-center gap-1.5 shadow-sm">
-                  <AlertOctagon className="w-4 h-4 text-rose-400 shrink-0" />
-                  <span>{isAr ? '🛑 [ لا / NO ] — تفريعة المرفوضات' : '🛑 [ NO ] — Rejection Branch'}</span>
+          {/* CRISP, COMPACT 50/50 SPREAD: PASS (YES) VS FAIL (NO) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+            
+            {/* 🟢 PASS BOX: Direct, Zero Fluff */}
+            <div className={`p-3.5 rounded-2xl border-2 flex flex-col justify-between transition-all ${
+              isPassBranchSim
+                ? 'bg-emerald-950/90 border-emerald-400 ring-4 ring-emerald-400 shadow-xl shadow-emerald-500/40 animate-pulse'
+                : 'bg-emerald-950/30 border-emerald-500/50 hover:border-emerald-400'
+            }`}>
+              <div className="flex items-center justify-between">
+                <span className="px-2.5 py-1 rounded-xl bg-emerald-500/20 text-emerald-300 font-black text-xs border border-emerald-500/40 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span>{isAr ? '🟢 نعم / YES' : '🟢 YES (Pass)'}</span>
                 </span>
-                <span className="font-mono text-xs font-black text-rose-300 bg-rose-950/80 px-2.5 py-1 rounded-lg border border-rose-500/30">
-                  {props.failCount} {isAr ? 'محجوز' : 'Held'}
+                <span className="font-mono text-xs font-black text-emerald-300 bg-emerald-950/80 px-2 py-0.5 rounded-lg border border-emerald-500/30">
+                  {props.passCount} {isAr ? 'مجاز' : 'Pass'}
                 </span>
               </div>
 
-              {/* Destination & Action Checklist */}
-              <div className="mt-3">
-                <span className="text-[10px] font-mono text-rose-400 font-black uppercase tracking-wider">
-                  QRN-0{props.gateNumber} • REJECTS TRACK
-                </span>
-                <h5 className="text-xs sm:text-sm font-black text-rose-200 mt-0.5">
-                  {isAr ? 'لو مرفوضة: يتعمل بيها NCR وحجز وارتجاع 🛑 ➔' : 'If Fail: Issue NCR, Quarantine & Return 🛑 ➔'}
-                </h5>
-                <p className="text-xs text-rose-300/90 mt-1 font-medium leading-relaxed">
-                  {isAr ? `طريق المرفوضات: ${props.failTitleAr}` : `Rejection Path: ${props.failTitleEn}`}
-                </p>
-
-                {/* 3-Step Clear Action Protocol */}
-                <div className="mt-2.5 p-2.5 rounded-xl bg-black/40 border border-rose-500/20 text-[11px] text-slate-300 space-y-1.5">
-                  <div className="flex items-center gap-1.5 text-rose-300 font-bold">
-                    <span>1.</span>
-                    <span>{isAr ? 'عزل فيزيائي وتثبيت بطاقة الحجر الحمراء 🔒' : 'Physical quarantine tag applied 🔒'}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-rose-300 font-bold">
-                    <span>2.</span>
-                    <span>{isAr ? 'إصدار تقرير عدم مطابقة (NCR) وتكلفة العيب 📋' : 'Electronic NCR report logged 📋'}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-rose-300 font-bold">
-                    <span>3.</span>
-                    <span>{isAr ? 'ارتجاع للمورد / تحقيق 8D / قرار لجنة MRB ↩️' : 'Supplier return / 8D team / MRB review ↩️'}</span>
-                  </div>
+              <div className="my-2.5">
+                <div className="text-xs font-black text-emerald-200">
+                  {isAr ? `إجازة وصرف للمرحلة ${props.nextStageNumber} ⬇` : `Advance to Stage ${props.nextStageNumber} ⬇`}
                 </div>
+                <div className="text-[11px] text-slate-400 mt-0.5">
+                  {isAr ? props.nextStageNameAr : props.nextStageNameEn}
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-emerald-500/20 flex items-center justify-between text-[11px] font-bold text-emerald-300">
+                <span>{isAr ? 'مسار القبول' : 'Conforming Stream'}</span>
+                <ArrowDown className={`w-3.5 h-3.5 text-emerald-400 ${isPassBranchSim ? 'animate-bounce' : ''}`} />
               </div>
             </div>
 
-            {/* SEPARATE FAIL ARROW BOX (pointing SIDEWAYS) & ACTION BUTTONS */}
-            <div className="mt-4 pt-3 border-t border-rose-500/20 space-y-2.5">
-              {/* Separate Fail Arrow Box */}
-              <div className="p-3 rounded-2xl bg-rose-950/70 border border-rose-500/40 flex items-center justify-between text-xs font-bold text-rose-300 shadow-md">
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-rose-400 animate-ping shrink-0" />
-                  <span className="font-black text-xs">
-                    {isAr ? '➔ سهم تحويل طريق المرفوضات [لا / NO]' : '➔ [NO] Diversion to Rejection Track'}
-                  </span>
+            {/* 🛑 FAIL BOX: Direct, Actionable */}
+            <div className={`p-3.5 rounded-2xl border-2 flex flex-col justify-between transition-all ${
+              isFailBranchSim
+                ? 'bg-rose-950/90 border-rose-400 ring-4 ring-rose-500 shadow-xl shadow-rose-500/50 animate-pulse'
+                : 'bg-rose-950/30 border-rose-500/50 hover:border-rose-400'
+            }`}>
+              <div className="flex items-center justify-between">
+                <span className="px-2.5 py-1 rounded-xl bg-rose-500/20 text-rose-300 font-black text-xs border border-rose-500/40 flex items-center gap-1.5">
+                  <AlertOctagon className="w-4 h-4 text-rose-400 shrink-0" />
+                  <span>{isAr ? '🛑 لا / NO' : '🛑 NO (Fail)'}</span>
+                </span>
+                <span className="font-mono text-xs font-black text-rose-300 bg-rose-950/80 px-2 py-0.5 rounded-lg border border-rose-500/30">
+                  {props.failCount} {isAr ? 'محجوز' : 'Hold'}
+                </span>
+              </div>
+
+              <div className="my-2.5">
+                <div className="text-xs font-black text-rose-200">
+                  {isAr ? 'حجز وتقرير عدم مطابقة 🛑 ➔' : 'Quarantine & Issue NCR 🛑 ➔'}
                 </div>
-                <div className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-rose-500/20 border border-rose-500/40 font-mono font-black text-xs text-rose-300 shrink-0">
-                  <span>{isAr ? 'حجز 🛑' : 'Hold 🛑'}</span>
-                  <ArrowUpRight className="w-3.5 h-3.5 text-rose-400 animate-pulse" />
+                <div className="text-[11px] text-slate-400 mt-0.5">
+                  {isAr ? props.failTitleAr : props.failTitleEn}
                 </div>
               </div>
 
-              {/* Action Buttons: Open NCR + Inspect Quarantine */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div className="pt-2 border-t border-rose-500/20 flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => navigate(props.failNcrRoute || '/ncr')}
-                  className="py-2.5 px-3 rounded-xl bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white font-black text-xs flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-95 cursor-pointer"
+                  className="flex-1 py-1.5 px-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-[11px] flex items-center justify-center gap-1 transition-all shadow-sm active:scale-95 cursor-pointer"
                 >
-                  <FileText className="w-4 h-4 shrink-0" />
-                  <span>{isAr ? 'فتح تقرير NCR ➔' : 'Open NCR ➔'}</span>
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>{isAr ? 'فتح NCR ➔' : 'Open NCR ➔'}</span>
                 </button>
                 <button
                   type="button"
                   onClick={props.failTargetAction}
-                  className="py-2.5 px-3 rounded-xl bg-black/40 hover:bg-rose-950/40 text-rose-200 border border-rose-500/40 font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer"
+                  className="p-1.5 rounded-xl bg-black/40 hover:bg-rose-950/40 text-rose-300 border border-rose-500/30 text-[11px] transition-all cursor-pointer"
+                  title={isAr ? 'فحص تفاصيل الحجر' : 'Quarantine Details'}
                 >
-                  <ShieldAlert className="w-4 h-4 shrink-0 text-rose-400" />
-                  <span>{isAr ? 'فحص الحجر 👁️' : 'Quarantine 👁️'}</span>
+                  <ShieldAlert className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
+
           </div>
         </div>
 
         {/* Downward Pass Conduit to Next Station */}
-        <div className="flex flex-col items-center mt-3">
-          <div className="w-1.5 h-7 rounded-full bg-gradient-to-b from-emerald-500 via-emerald-400 to-transparent" />
-          <div className="text-emerald-400 text-xs font-black -mt-2 animate-bounce">▼</div>
+        <div className="flex flex-col items-center mt-2">
+          <div className="w-1.5 h-6 rounded-full bg-gradient-to-b from-emerald-500 to-cyan-500" />
+          <div className="text-emerald-400 text-xs font-black -mt-1.5 animate-bounce">▼</div>
         </div>
       </div>
     );
