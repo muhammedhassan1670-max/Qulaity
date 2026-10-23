@@ -66,6 +66,7 @@ const QualitySlidesPage = lazy(() => import('../pages/quality/QualitySlides'));
 const QualityDashboardPage = lazy(() => import('../pages/quality/QualityDashboard'));
 const OfflineSyncManagerPage = lazy(() => import('../pages/quality/OfflineSyncManager'));
 const QualityControlTowerPage = lazy(() => import('../pages/quality/QualityControlTower'));
+const ModelBOMComparisonPage = lazy(() => import('../pages/quality/ModelBOMComparison'));
 
 // Admin Pages
 const UsersPage = lazy(() => import('../pages/admin/Users'));
@@ -199,6 +200,8 @@ const routes: RouteObject[] = [
       { path: 'quality-dashboard', element: <ProtectedRoute requiredPermissions={['analytics.dashboard', 'spc.view', 'ncr.create', 'admin.access']}><LazyWrapper><QualityDashboardPage /></LazyWrapper></ProtectedRoute> },
       { path: 'quality-sync-manager', element: <LazyWrapper><OfflineSyncManagerPage /></LazyWrapper> },
       { path: 'quality-control-tower', element: <LazyWrapper><QualityControlTowerPage /></LazyWrapper> },
+      { path: 'model-bom-comparison', element: <LazyWrapper><ModelBOMComparisonPage /></LazyWrapper> },
+      { path: 'bom-comparison', element: <Navigate to="/model-bom-comparison" replace /> },
       { path: 'plant-map', element: <Navigate to="/quality-control-tower" replace /> },
       { path: 'factory-map', element: <Navigate to="/quality-control-tower" replace /> },
       { path: 'plant-layout', element: <Navigate to="/quality-control-tower" replace /> },

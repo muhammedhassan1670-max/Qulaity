@@ -1,10 +1,12 @@
 import { useMemo, useRef, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   AlertTriangle,
   CheckCircle2,
   Database,
   Download,
   Edit3,
+  GitCompare,
   Plus,
   Power,
   Search,
@@ -45,6 +47,7 @@ function recordText(record: QualityMasterRecord): string {
 }
 
 export default function QualityMasterData() {
+  const navigate = useNavigate();
   const [activeTable, setActiveTable] = useState<QualityMasterTableId | 'defect-records'>('parts');
   const [records, setRecords] = useState<Record<QualityMasterTableId, QualityMasterRecord[]>>(() => (
     qualityMasterTableConfigs.reduce((acc, table) => {
@@ -230,6 +233,16 @@ export default function QualityMasterData() {
       <PageHeader
         title="Quality Master Data"
         subtitle="Controlled local master data for defect recording, routing, lookups, rules, and historical snapshots"
+        actions={{
+          custom: [
+            {
+              label: 'مقارنة أشجار الموديلات (BOM Matrix)',
+              icon: <GitCompare className="w-4 h-4" />,
+              onClick: () => navigate('/model-bom-comparison'),
+              variant: 'primary',
+            },
+          ],
+        }}
       />
 
       <PageSection>

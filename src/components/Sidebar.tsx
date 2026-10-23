@@ -29,7 +29,8 @@ import {
   Target,
   Smartphone,
   Info,
-  X
+  X,
+  GitCompare
 } from 'lucide-react';
 import { useConfigStore } from '../stores/configStore';
 import { useAppStore } from '../stores/appStore';
@@ -231,6 +232,7 @@ export function Sidebar({ isOpen, onClose, onSectionChange }: SidebarProps) {
         icon: Settings,
         children: [
           { id: 'quality-master-data', labelKey: 'quality-master-data', labelEn: 'Quality Master Data', labelAr: 'البيانات الرئيسية (قطع/موديلات)', icon: Database, permission: 'master_data.edit' },
+          { id: 'model-bom-comparison', labelKey: 'model-bom-comparison', labelEn: 'Model BOM Comparison & Matrix', labelAr: 'مقارنة أشجار الموديلات (BOM Matrix)', icon: GitCompare, badge: 'BOM 4.0', badgeColor: 'bg-indigo-500', permission: 'master_data.edit' },
           { id: 'quality-form-designer', labelKey: 'quality-form-designer', labelEn: 'Inspection Form Designer', labelAr: 'مصمم نماذج الفحص', icon: Blocks, permission: ['forms.designer', 'master_data.edit'] },
           { id: 'quality-knowledge-base', labelKey: 'quality-knowledge-base', labelEn: 'Lessons Learned Knowledge Base', labelAr: 'قاعدة الدروس المستفادة', icon: Library, permission: ['knowledge.view', 'master_data.edit'] },
           {
@@ -321,6 +323,7 @@ export function Sidebar({ isOpen, onClose, onSectionChange }: SidebarProps) {
     'quality-execution-board': '/quality-execution-board',
     'quality-layered-audits': '/quality-audits',
     'quality-master-data': '/quality-master-data',
+    'model-bom-comparison': '/model-bom-comparison',
     'quality-form-designer': '/quality-form-designer',
     'quality-rules-sla': '/defect-log',
     'quality-backup-sync': '/quality-command-center',
