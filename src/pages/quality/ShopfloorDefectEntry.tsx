@@ -207,6 +207,7 @@ export default function ShopfloorDefectEntry() {
   const [lastImpact, setLastImpact] = useState<string[]>([]);
   const [inspectionRun, setInspectionRun] = useState<QualityInspectionRun | null>(null);
   const [checkResults, setCheckResults] = useState<Record<string, QualityInspectionCheckResult>>({});
+  const [preparedCheckId, setPreparedCheckId] = useState('');
   const [formKey, setFormKey] = useState(0);
   const [matchedPart, setMatchedPart] = useState<Record<string, unknown> | null>(() => {
     const initCode = String(todaySeed().partNumber || todaySeed().partId || '');
