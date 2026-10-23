@@ -12,6 +12,7 @@ import { useAppStore } from './stores/appStore';
 import { FullPageLoader } from './components/Loading';
 import { toast } from 'sonner';
 import { useWebSocketAutoConnect, useWebSocketStatus } from './services/websocket';
+import { purgeAllDemoSimulationData } from './services/cleanDemoData';
 
 function App() {
   const location = useLocation();
@@ -20,6 +21,11 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   
   const { user, theme, language, initializeApp } = useAppStore();
+
+  // Purge any stale mock/demo seed records automatically on app startup
+  useEffect(() => {
+    purgeAllDemoSimulationData();
+  }, []);
 
   // Real-time WebSocket connection with auto-reconnect.
   useWebSocketAutoConnect();

@@ -15,6 +15,7 @@ import {
   getDepartmentForStation 
 } from '../../services/enterpriseDepartmentsEngine';
 import { unifiedInspectionApi } from '../../api/unified-api';
+import { isDemoRecord } from '../../services/cleanDemoData';
 import type { ScadaEquipment } from '../../pages/quality/QualityControlTower';
 
 export interface ModernQualityFlowchartProps {
@@ -83,11 +84,7 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
   const filterRealOnly = (items: any[]) => {
     if (!Array.isArray(items)) return [];
     return items.filter(item => {
-      const id = String(item.id || '');
-      const num = String(item.inspectionNumber || '');
-      const prod = String(item.productName || item.product || '');
-      if (id.startsWith('INS-2026-RM-') || num.startsWith('INS-2026-RM-')) return false;
-      if (prod.includes('سبائك ألمونيوم') || prod.includes('حلقات إحكام مطاطية') || prod.includes('صمامات بلانجر')) return false;
+      if (isDemoRecord(item)) return false;
       const t = (item.type || '').toLowerCase();
       return t === 'incoming' || t === 'iqc' || !item.type;
     });
@@ -100,7 +97,10 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
         const raw = localStorage.getItem(k);
         if (raw) {
           const parsed = JSON.parse(raw);
-          if (Array.isArray(parsed)) return parsed;
+          if (Array.isArray(parsed)) {
+            const clean = parsed.filter(item => !isDemoRecord(item));
+            if (clean.length > 0) return clean;
+          }
         }
       } catch {}
     }

@@ -123,18 +123,18 @@ export function ComplianceHub() {
     return forms.find(f => f.type === activeType && f.isActive) || getFormByType(activeType);
   }, [forms, activeType, getFormByType]);
 
-  // Initial Form Data builders with unique auto-generated reference IDs
+  // Initial Form Data builders with clean empty fields
   const createInitialAuditData = useCallback(() => ({
     auditNumber: `AUD-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`,
     title: '',
     type: 'Internal',
     standard: 'ISO 9001:2015',
-    scope: 'Full Quality Management System',
-    department: 'Quality Assurance',
-    auditor: 'Lead Auditor',
-    auditee: 'Operations Manager',
+    scope: '',
+    department: '',
+    auditor: '',
+    auditee: '',
     scheduledDate: new Date().toISOString().split('T')[0],
-    duration: '1 Day',
+    duration: '',
     status: 'Planned',
     supplierId: '',
     findingsSummary: '',
@@ -143,16 +143,16 @@ export function ComplianceHub() {
   const createInitialInspectionData = useCallback(() => ({
     inspectionNumber: `INS-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`,
     productName: '',
-    batchNumber: `LOT-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
+    batchNumber: '',
     type: 'incoming',
-    inspectedBy: 'Lead Inspector',
+    inspectedBy: '',
     inspectionDate: new Date().toISOString().split('T')[0],
-    sampleSize: 50,
+    sampleSize: 0,
     defectCount: 0,
-    inspectionPoints: 5,
+    inspectionPoints: 0,
     result: 'pass',
     supplierId: '',
-    productionLine: 'Line 1 - Primary Assembly',
+    productionLine: '',
     autoCreateNcr: false,
   }), []);
 
@@ -164,17 +164,17 @@ export function ComplianceHub() {
       itemCode: `CAL-GAUGE-${Math.floor(1000 + Math.random() * 9000)}`,
       description: '',
       category: 'Caliper',
-      serialNumber: `SN-${Math.floor(10000 + Math.random() * 90000)}`,
-      manufacturer: 'Mitutoyo',
-      location: 'Metrology Lab',
+      serialNumber: '',
+      manufacturer: '',
+      location: '',
       intervalMonths: 12,
       lastCalibrationDate: today.toISOString().split('T')[0],
       nextCalibrationDate: nextYear.toISOString().split('T')[0],
-      calibratedBy: 'Calibration Specialist',
+      calibratedBy: '',
       standard: 'ISO/IEC 17025 Certified',
       status: 'calibrated',
-      uncertainty: '±0.02 mm',
-      linkedMachine: 'CNC Station 1',
+      uncertainty: '',
+      linkedMachine: '',
     };
   }, []);
 
@@ -199,12 +199,7 @@ export function ComplianceHub() {
           })));
         }
       } catch {
-        // Fallback default suppliers
-        setSuppliers([
-          { id: 'SUP-001', name: 'Precision Castings Ltd' },
-          { id: 'SUP-002', name: 'Global Fasteners Co' },
-          { id: 'SUP-003', name: 'Apex Electronics Inc' },
-        ]);
+        setSuppliers([]);
       }
     };
     fetchSuppliers();

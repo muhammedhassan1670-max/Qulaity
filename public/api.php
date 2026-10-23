@@ -71,6 +71,48 @@ if (empty($safeModule)) {
 
 $dataFile = $dataDir . '/' . $safeModule . '.json';
 
+// Helper: Check if record is fake or mock data
+function isServerMockRecord($item) {
+    if (!is_array($item)) return false;
+    $id = strval($item['id'] ?? '');
+    $num = strval($item['inspectionNumber'] ?? ($item['ncrNumber'] ?? ($item['capaNumber'] ?? ($item['auditNumber'] ?? ($item['code'] ?? '')))));
+    $lot = strval($item['batchNumber'] ?? ($item['batch'] ?? ($item['lotNumber'] ?? '')));
+    $prod = strval($item['productName'] ?? ($item['product'] ?? ($item['title'] ?? ($item['name'] ?? ''))));
+    $supp = strval($item['supplierName'] ?? ($item['supplier'] ?? ''));
+    $inspectedBy = strval($item['inspectedBy'] ?? '');
+
+    if (strpos($id, 'INS-2026-RM-') === 0 || strpos($num, 'INS-2026-RM-') === 0) return true;
+    if (strpos($id, 'INS-2026-OQC-') === 0 || strpos($num, 'INS-2026-OQC-') === 0) return true;
+    if (strpos($id, 'NCR-SUP-') === 0 || strpos($num, 'NCR-SUP-') === 0) return true;
+    if (strpos($id, 'DEF-2026-901') === 0 || strpos($num, 'DEF-2026-901') === 0) return true;
+    if ($id === 'NCR-2026-901' || $num === 'NCR-2026-901') return true;
+    if ($id === 'CAPA-2026-901' || $num === 'CAPA-2026-901') return true;
+    if ($id === 'AUD-2026-901' || $num === 'AUD-2026-901') return true;
+    if ($id === 'CP-PUMP-01' || $num === 'CP-PUMP-01') return true;
+    if ($id === 'CMP-2026-101' || $num === 'CMP-2026-101') return true;
+    if (in_array($id, ['SUP-001', 'SUP-002', 'SUP-003', 'SUP-004', 'SUP-005'])) return true;
+
+    if (in_array($lot, ['LOT-2026-AL-01', 'LOT-2026-OR-02', 'LOT-2026-VL-03', 'LOT-2026-OL-05', 'BATCH-2026-901'])) return true;
+
+    if (strpos($prod, 'سبائك ألمونيوم') !== false) return true;
+    if (strpos($prod, 'حلقات إحكام مطاطية') !== false) return true;
+    if (strpos($prod, 'صمامات بلانجر') !== false) return true;
+    if (strpos($prod, 'مضخات هيدروليكية') !== false) return true;
+    if (strpos($prod, 'مجموعات تروس صناعية') !== false) return true;
+
+    if (strpos($supp, 'Precision Metals') !== false) return true;
+    if (strpos($supp, 'Apex Polymer') !== false) return true;
+    if (strpos($supp, 'Delta Precision') !== false) return true;
+    if (strpos($supp, 'Titan Fasteners') !== false) return true;
+    if (strpos($supp, 'Precision Castings') !== false) return true;
+    if (strpos($supp, 'Global Fasteners') !== false) return true;
+    if (strpos($supp, 'Apex Electronics') !== false) return true;
+
+    if ($inspectedBy === 'م. مصطفى رفعت') return true;
+
+    return false;
+}
+
 // Helper: Read JSON Data from server file
 function readDataFile($file, $module) {
     if (!file_exists($file)) {
@@ -81,15 +123,9 @@ function readDataFile($file, $module) {
     $parsed = @json_decode($raw, true);
     if (!is_array($parsed)) return [];
 
-    // Purge any legacy fake/seed records (e.g. INS-2026-RM-*)
+    // Purge any legacy fake/seed records
     $cleaned = array_values(array_filter($parsed, function($item) {
-        $id = $item['id'] ?? '';
-        $num = $item['inspectionNumber'] ?? '';
-        $product = $item['productName'] ?? ($item['product'] ?? '');
-        if (strpos($id, 'INS-2026-RM-') === 0 || strpos($num, 'INS-2026-RM-') === 0) return false;
-        if (strpos($product, 'سبائك ألمونيوم') !== false) return false;
-        if (strpos($product, 'حلقات إحكام مطاطية') !== false) return false;
-        return true;
+        return !isServerMockRecord($item);
     }));
 
     if (count($cleaned) !== count($parsed)) {
@@ -101,7 +137,11 @@ function readDataFile($file, $module) {
 
 // Helper: Write JSON Data safely to server file
 function writeDataFile($file, $data) {
-    $json = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    // Filter out any mock records before saving
+    $cleanData = array_values(array_filter($data, function($item) {
+        return !isServerMockRecord($item);
+    }));
+    $json = json_encode($cleanData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
     return @file_put_contents($file, $json, LOCK_EX) !== false;
 }
 

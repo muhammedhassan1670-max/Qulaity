@@ -6,6 +6,7 @@ import {
   mergeDefectRecordSets,
   safeWriteLocalDefectRecords,
 } from '@/services/safeDefectStorage';
+import { isDemoRecord } from '@/services/cleanDemoData';
 
 const resolveApiPrefix = (): string => {
   if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
@@ -344,12 +345,18 @@ function createModuleApi<T, Q extends BaseQueryParams>(endpoint: string) {
         }
       }
     }
-    return Array.from(itemsMap.values());
+    const rawItems = Array.from(itemsMap.values());
+    const realItems = rawItems.filter((item: any) => !isDemoRecord(item));
+    if (realItems.length !== rawItems.length) {
+      writeLocalItems(realItems, 'purge-mock-items', true);
+    }
+    return realItems;
   };
 
   const writeLocalItems = (items: T[], reason: string, allowEmptyOverwrite = false): void => {
+    const cleanItems = (items || []).filter((item: any) => !isDemoRecord(item));
     if (isDefectLogsEndpoint) {
-      const result = safeWriteLocalDefectRecords(items as DefectLogData[], {
+      const result = safeWriteLocalDefectRecords(cleanItems as DefectLogData[], {
         reason,
         allowEmptyOverwrite,
       });
@@ -358,7 +365,7 @@ function createModuleApi<T, Q extends BaseQueryParams>(endpoint: string) {
       }
       return;
     }
-    localStorage.setItem(`qms_local_${endpoint}`, JSON.stringify(items));
+    localStorage.setItem(`qms_local_${endpoint}`, JSON.stringify(cleanItems));
   };
 
   return {
@@ -374,7 +381,13 @@ function createModuleApi<T, Q extends BaseQueryParams>(endpoint: string) {
         });
 
         const body = await parseJson(res);
-        const serverResult = normalizeListBody(body, query);
+        const rawServerResult = normalizeListBody(body, query);
+        const serverFilteredData = (rawServerResult.data || []).filter((item: any) => !isDemoRecord(item));
+        const serverResult = {
+          ...rawServerResult,
+          data: serverFilteredData,
+          total: serverFilteredData.length,
+        };
 
         // Merge with local storage results for offline-first experience
         const localItems = readLocalItems();
