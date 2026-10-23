@@ -3713,19 +3713,22 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
                 <div className="flex items-center justify-between mb-2">
                   <span className="px-2.5 py-1 rounded-xl bg-emerald-500/20 text-emerald-300 font-black text-xs border border-emerald-500/40 flex items-center gap-1.5 shadow-sm">
                     <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>{isAr ? '✓ مطابق (PASS)' : '✓ Pass'}</span>
+                    <span>{isAr ? '✓ مقبولة (PASS)' : '✓ Pass'}</span>
                   </span>
                   <span className="font-mono text-xs font-black text-emerald-300 bg-emerald-950/80 px-2.5 py-1 rounded-lg border border-emerald-500/30">
                     {props.passCount} {isAr ? 'مجاز' : 'Pass'}
                   </span>
                 </div>
-                <p className="text-xs text-slate-300 mt-2 font-medium leading-relaxed">
-                  {isAr ? `مطابق: يستمر مباشرة للمرحلة ${props.nextStageNumber}` : `Conforming: Advances to Stage ${props.nextStageNumber}`}
+                <h5 className="text-xs sm:text-sm font-black text-emerald-300 mt-1">
+                  {isAr ? `🟢 لو مقبولة: تروح للمحطة التالية (المرحلة ${props.nextStageNumber})` : `Pass: Advances to Next Station (Stage ${props.nextStageNumber})`}
+                </h5>
+                <p className="text-xs text-slate-300 mt-1 font-medium leading-relaxed">
+                  {isAr ? `الخامة أو اللوط مطابق للمواصفة 100% ➔ تدفق وإجازة مباشرة للأمام` : `100% Conforming lot ➔ Advances directly to production stream`}
                 </p>
               </div>
 
               <div className="mt-4 pt-3 border-t border-emerald-500/20 flex items-center justify-between text-xs font-bold text-emerald-300">
-                <span>{isAr ? `مسار الإنتاج المعتمد` : `Production Stream`}</span>
+                <span>{isAr ? `الذهاب للمحطة التالية ⬇` : `Advances to Next Station ⬇`}</span>
                 <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 font-mono text-[11px] font-black flex items-center gap-1 border border-emerald-500/30">
                   <span>إجازة</span>
                   <ArrowDown className={`w-3.5 h-3.5 text-emerald-400 ${isPassBranchSim ? 'animate-bounce' : ''}`} />
@@ -3743,14 +3746,17 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
                 <div className="flex items-center justify-between mb-2">
                   <span className="px-2.5 py-1 rounded-xl bg-rose-500/20 text-rose-300 font-black text-xs border border-rose-500/40 flex items-center gap-1.5 shadow-sm">
                     <AlertOctagon className="w-4 h-4 text-rose-400 shrink-0" />
-                    <span>{isAr ? '✕ غير مطابق (FAIL)' : '✕ Fail'}</span>
+                    <span>{isAr ? '✕ مرفوضة (FAIL)' : '✕ Fail'}</span>
                   </span>
                   <span className="font-mono text-xs font-black text-rose-300 bg-rose-950/80 px-2.5 py-1 rounded-lg border border-rose-500/30">
                     {props.failCount} {isAr ? 'محجوز' : 'Hold'}
                   </span>
                 </div>
-                <p className="text-xs text-slate-300 mt-2 font-medium leading-relaxed">
-                  {isAr ? `حظر وتحويل إلى: ${props.failTitleAr}` : `Diverted to: ${props.failTitleEn}`}
+                <h5 className="text-xs sm:text-sm font-black text-rose-300 mt-1">
+                  {isAr ? `🛑 لو مرفوضة: يتعمل بيها NCR وحجز وارتجاع` : `Fail: Issue NCR, Quarantine & Return`}
+                </h5>
+                <p className="text-xs text-slate-300 mt-1 font-medium leading-relaxed">
+                  {isAr ? `رُصد عيب أو خلل ➔ عزل فوري، فتح تقرير عدم مطابقة NCR، وتحويل لطريق المرفوضات` : `Defect detected ➔ Instant isolation, NCR issuance & diversion to Rejects Track`}
                 </p>
               </div>
 
@@ -3764,7 +3770,7 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
                       : 'bg-rose-600 hover:bg-rose-500 text-white'
                   }`}
                 >
-                  <span>{isAr ? `تفرع لـ [${props.failTitleAr}]` : `Divert to [${props.failTitleEn}]`}</span>
+                  <span>{isAr ? `إصدار تقرير NCR وحجز وارتجاع [${props.failTitleAr}] 🛑 ➔` : `Issue NCR & Divert to [${props.failTitleEn}] 🛑 ➔`}</span>
                   <ArrowUpRight className="w-4 h-4" />
                 </button>
               </div>
@@ -3792,11 +3798,11 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
                 </div>
                 <div>
                   <div className="font-black text-emerald-300 text-xs flex items-center gap-1.5">
-                    <span>{isAr ? `سهم المقبول ➔ المرحلة ${props.nextStageNumber}` : `Pass Arrow ➔ Stage ${props.nextStageNumber}`}</span>
+                    <span>{isAr ? `سهم المقبول ➔ تروح للمحطة التالية (${props.nextStageNumber}) ⬇` : `Pass Arrow ➔ Advances to Stage ${props.nextStageNumber} ⬇`}</span>
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                   </div>
                   <div className="text-[10px] text-slate-300 mt-0.5">
-                    {isAr ? 'إفراج مباشر وصرف لصالة الإنتاج' : 'Approved direct flow to next stage'}
+                    {isAr ? 'إفراج مباشر وصرف سليم للأمام في خط الإنتاج' : 'Approved direct forward flow to next production stage'}
                   </div>
                 </div>
               </div>
@@ -3821,7 +3827,7 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
               type="button"
               onClick={props.failTargetAction}
               className="mt-1 w-full p-3 rounded-2xl bg-gradient-to-r from-rose-950/70 to-slate-900 hover:from-rose-900/80 hover:to-slate-900 border-2 border-rose-500/50 flex items-center justify-between text-xs shadow-lg shadow-rose-950/40 transition-all group/failarrow text-start cursor-pointer hover:scale-[1.01]"
-              title={isAr ? 'اضغط لفتح مسار الحجر وتقارير NCR' : 'Click to inspect NCR quarantine path'}
+              title={isAr ? 'اضغط لفتح مسار الحجر وتقارير NCR والارتجاع' : 'Click to inspect NCR quarantine & return path'}
             >
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 rounded-xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center shrink-0">
@@ -3829,11 +3835,11 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
                 </div>
                 <div>
                   <div className="font-black text-rose-300 text-xs flex items-center gap-1.5 group-hover/failarrow:text-rose-200">
-                    <span>{isAr ? `سهم المرفوض ➔ رصيف الحجر و NCR` : `Fail Arrow ➔ Quarantine & NCR`}</span>
+                    <span>{isAr ? `سهم المرفوض ➔ إصدار NCR وحجز وارتجاع 🛑 ➔` : `Fail Arrow ➔ Issue NCR, Quarantine & Return 🛑 ➔`}</span>
                     <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping" />
                   </div>
                   <div className="text-[10px] text-slate-300 mt-0.5">
-                    {isAr ? 'عزل فوري، فحص MRB وإجراء 8D' : 'Quarantine hold, MRB & 8D actions'}
+                    {isAr ? `عزل فوري، إصدار تقرير عدم مطابقة، وتحويل لـ [${props.failTitleAr}]` : `Instant isolation, NCR issuance & routing to [${props.failTitleEn}]`}
                   </div>
                 </div>
               </div>
