@@ -1551,6 +1551,7 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
   };
 
   // ADVANCED GEOMETRIC DECISION DIAMOND WITH DUAL-BRANCH CORRIDORS & QUARANTINE DOCK
+  // ULTRA-PROFESSIONAL INDUSTRIAL FLOWCHART DECISION NODE (EXPLICIT YES / NO SPLIT WITH LATERAL REJECTION DOCK)
   const renderDecisionDiamond = ({
     gateNumber,
     questionAr,
@@ -1574,7 +1575,6 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
     accentColor?: string;
     targetNcr?: boolean;
   }) => {
-    // Check if tracked lot took the fail/branch path at this specific gateway
     const isLotDivertedHere = trackedLot && (
       (gateNumber === 1 && trackedLot.status === 'quarantined') ||
       (gateNumber === 2 && trackedLot.currentStageNumber === 3)
@@ -1591,350 +1591,216 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
     const stageStats = getStageRecordStats(gateDeptId);
 
     const stageNamesAr: Record<number, string> = {
-      2: 'المرحلة 2: جودة التصنيع والعمليات (IPQC)',
-      3: 'المرحلة 3: عدم المطابقة وحل المشكلات (NCR)',
-      4: 'المرحلة 4: فحص وخروج المنتج النهائي (OQC)',
-      5: 'المرحلة 5: شكاوى العملاء والميدان (Customer QA)',
+      2: 'المرحلة 2: صالة الإنتاج والتصنيع (IPQC)',
+      3: 'المرحلة 3: مركز عدم المطابقة والـ 8D',
+      4: 'المرحلة 4: التفتيش النهائي للمنتج التام (OQC)',
+      5: 'المرحلة 5: الشحن وشكاوى العملاء (CSM)',
       6: 'المرحلة 6: المختبر والتدقيق الهندسي',
     };
     const stageNamesEn: Record<number, string> = {
-      2: 'Stage 2: In-Process Quality (IPQC)',
-      3: 'Stage 3: Problem Solving & NCR',
-      4: 'Stage 4: Outgoing Quality (OQC)',
-      5: 'Stage 5: Customer Quality & Complaints',
+      2: 'Stage 2: In-Process Manufacturing (IPQC)',
+      3: 'Stage 3: NCR & 8D Problem Solving Hub',
+      4: 'Stage 4: Outgoing Final Quality (OQC)',
+      5: 'Stage 5: Customer Delivery & Claims (CSM)',
       6: 'Stage 6: Engineering Lab & Audits',
     };
 
+    const rejectTitlesAr: Record<number, string> = {
+      1: 'رصيف حجر الخامات (QRN-01) وارتجاع المورد',
+      2: 'محطة عزل الإنتاج وإصدار تقرير NCR وتحقيق 8D',
+      3: 'مركز مراجعة قرارات الحجر ولجنة MRB',
+      4: 'رصيف حجر المنتج التام (QRN-04) ولجنة MRB',
+      5: 'مركز شكاوى العملاء ومرتجعات الضمان RMA',
+    };
+    const rejectTitlesEn: Record<number, string> = {
+      1: 'Raw Materials Quarantine (QRN-01) & Supplier Return',
+      2: 'In-Process Containment, NCR & 8D Investigation',
+      3: 'Quarantine Review & MRB Disposition',
+      4: 'Finished Goods Quarantine (QRN-04) & MRB',
+      5: 'Customer Complaints & Warranty RMA Returns',
+    };
+
+    const rejectTargetId: Record<number, string> = {
+      1: 'LANE-RED-QUARANTINE-IQC',
+      2: 'DEPT-STAGE-RESOLUTION',
+      3: 'DEPT-STAGE-RESOLUTION',
+      4: 'LANE-RED-QUARANTINE-OQC',
+      5: 'LANE-RED-RETURNS-RMA',
+    };
+
+    const isSimAtGate = simulationActive && (
+      (simulationStep === 2 && gateNumber === 1) ||
+      (simulationStep === 4 && gateNumber === 2) ||
+      (simulationStep === 6 && gateNumber === 4)
+    );
+    const isPassBranchSim = isSimAtGate && simulationType === 'pass';
+    const isFailBranchSim = isSimAtGate && simulationType === 'fail';
+
     return (
-      <div className="relative my-7 flex flex-col items-center w-full">
-        {/* Incoming Flow Pipe from Stage */}
+      <div id={`GATEWAY-${gateNumber}`} className="relative my-6 w-full flex flex-col items-center">
+        {/* Incoming Flow Pipe from previous stage */}
         <div className="flex flex-col items-center">
-          <div className="w-1.5 h-7 rounded-full" style={{ backgroundColor: accentColor }} />
+          <div className="w-1.5 h-6 rounded-full" style={{ backgroundColor: accentColor }} />
           <div className="w-2.5 h-2.5 rounded-full animate-ping -mt-1" style={{ backgroundColor: accentColor }} />
         </div>
 
-        {/* The Diamond Decision Gateway Box */}
-        <div className={`relative w-full max-w-4xl mt-3 p-5 sm:p-7 rounded-3xl bg-gradient-to-b from-slate-900 via-[#0a101f] to-slate-950 border-2 shadow-2xl backdrop-blur-md transition-all group ${
-          isLotDivertedHere ? 'border-rose-500 ring-4 ring-rose-500/40 shadow-rose-950/60' : ''
-        }`}
-          style={{ borderColor: isLotDivertedHere ? '#f43f5e' : `${accentColor}60` }}
-        >
-          {/* Top Diamond Identity */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-4 border-b border-white/10">
-            <div className="flex items-center gap-4">
-              {/* Geometric Diamond Symbol */}
-              <div className="relative w-12 h-12 flex items-center justify-center shrink-0">
-                <div 
-                  className="absolute inset-0 rotate-45 rounded-xl border-2 shadow-lg transition-transform duration-500 group-hover:rotate-90 group-hover:scale-110"
-                  style={{ 
-                    backgroundColor: `${accentColor}20`,
-                    borderColor: accentColor,
-                    boxShadow: `0 0 20px ${accentColor}40`
-                  }} 
-                />
-                <span className="relative font-black text-sm z-10" style={{ color: accentColor }}>
-                  ◆
+        {/* DECISION GATE CONTAINER: 2-COLUMN FLOWCHART BRANCHING (Main Spine vs Lateral Rejection Path) */}
+        <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+          
+          {/* ============================================================== */}
+          {/* COLUMN 1: THE DECISION DIAMOND & YES PASS CONDUIT (7 Cols)     */}
+          {/* ============================================================== */}
+          <div className="lg:col-span-7 flex flex-col justify-between p-5 sm:p-6 rounded-3xl bg-slate-900/95 border-2 shadow-2xl backdrop-blur-md relative"
+            style={{ borderColor: `${accentColor}70` }}
+          >
+            {/* Diamond Header */}
+            <div>
+              <div className="flex items-center justify-between gap-3 border-b border-white/10 pb-3">
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm rotate-45 border-2 shrink-0 shadow-md"
+                    style={{
+                      backgroundColor: `${accentColor}20`,
+                      borderColor: accentColor,
+                      color: accentColor
+                    }}
+                  >
+                    <span className="-rotate-45">◆</span>
+                  </div>
+                  <div>
+                    <span
+                      className="text-[10px] font-mono font-black uppercase px-2 py-0.5 rounded border"
+                      style={{
+                        backgroundColor: `${accentColor}15`,
+                        color: accentColor,
+                        borderColor: `${accentColor}40`
+                      }}
+                    >
+                      {isAr ? `معين اتخاذ القرار #${gateNumber}` : `Decision Gateway #${gateNumber}`}
+                    </span>
+                    <h4 className="text-xs sm:text-sm font-black text-white mt-1 leading-snug">
+                      {isAr ? questionAr : questionEn}
+                    </h4>
+                  </div>
+                </div>
+                <span className="text-[10px] font-mono text-slate-400 hidden sm:inline">
+                  ISO / IATF Gate
                 </span>
               </div>
 
-              <div>
-                <div className="flex items-center gap-2">
-                  <span 
-                    className="text-[10px] font-mono font-black uppercase tracking-wider px-2 py-0.5 rounded-md border"
-                    style={{ 
-                      backgroundColor: `${accentColor}15`, 
-                      color: accentColor,
-                      borderColor: `${accentColor}40`
-                    }}
-                  >
-                    {isAr ? 'بوابة اتخاذ القرار الهندسية' : 'Engineering Decision Gateway'}
-                  </span>
-                  <span className="text-[11px] text-slate-400 font-mono font-bold">
-                    GATEWAY #{gateNumber}
-                  </span>
-                  {isLotDivertedHere && (
-                    <span className="px-2 py-0.5 rounded-full bg-rose-500 text-slate-950 text-[10px] font-black animate-pulse">
-                      {isAr ? `مسار ${trackedLot.lotNumber}: انحراف لـ NCR ⚠️` : `Lot Path: Diverted to NCR`}
-                    </span>
-                  )}
-                </div>
-                <h4 className="text-sm sm:text-base font-black text-white mt-1">
-                  {isAr ? questionAr : questionEn}
-                </h4>
-              </div>
-            </div>
-
-            <div className="text-[11px] font-mono text-slate-400 hidden md:block">
-              ISO 9001 / IATF Gate
-            </div>
-          </div>
-
-          {/* DUAL BRANCH CORRIDORS (Pass ⬇️ vs Fail ➡️) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5">
-            {/* PASS BRANCH (GREEN) */}
-            <div className={`p-4 rounded-2xl border-2 transition-all flex flex-col justify-between group/pass ${
-              isLotDivertedHere 
-                ? 'opacity-40 bg-slate-900/50 border-slate-800' 
-                : 'bg-emerald-950/25 border-emerald-500/50 hover:border-emerald-400'
-            }`}>
-              <div>
+              {/* SEPARATE PASS BOX (GREEN) */}
+              <div className={`mt-4 p-4 rounded-2xl border-2 transition-all ${
+                isPassBranchSim
+                  ? 'bg-emerald-950/90 border-emerald-400 ring-4 ring-emerald-400 shadow-xl shadow-emerald-500/40 animate-pulse'
+                  : 'bg-emerald-950/30 border-emerald-500/50 hover:border-emerald-400'
+              }`}>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="px-2.5 py-1 rounded-xl bg-emerald-500/20 text-emerald-300 font-black text-xs border border-emerald-500/40 flex items-center gap-1.5">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                    <span>{isAr ? 'نعم • مطابق للمواصفة' : 'YES • Conforming'}</span>
+                  <span className="px-3 py-1 rounded-xl bg-emerald-500/20 text-emerald-300 font-black text-xs border border-emerald-500/40 flex items-center gap-1.5 shadow-sm">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>{isAr ? '🟢 [ نعم / YES ] — مقبولة ومطابقة' : '🟢 [ YES ] — Conforming'}</span>
                   </span>
-                  <span className="text-[11px] font-mono text-emerald-400 font-black">PASS ⬇️</span>
+                  <span className="font-mono text-xs font-black text-emerald-300 bg-emerald-950/80 px-2.5 py-1 rounded-lg border border-emerald-500/30">
+                    {stageStats.pass} {isAr ? 'مجاز' : 'Pass'}
+                  </span>
                 </div>
-                <p className="text-xs text-slate-300 font-medium leading-relaxed">
+                <h5 className="text-xs sm:text-sm font-black text-emerald-300 mt-1">
+                  {isAr ? `لو مقبولة: تروح للمحطة التالية (${stageNamesAr[passTargetStageNumber] || `المرحلة ${passTargetStageNumber}`}) ⬇` : `If Pass: Advances to ${stageNamesEn[passTargetStageNumber] || `Stage ${passTargetStageNumber}`} ⬇`}
+                </h5>
+                <p className="text-xs text-slate-300 mt-1 font-medium leading-relaxed">
                   {isAr ? passLabelAr : passLabelEn}
                 </p>
               </div>
-
-              <div className="mt-4 pt-3 border-t border-emerald-500/20 flex items-center justify-between text-xs font-bold text-emerald-300">
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span>{isAr ? `ينتقل للمرحلة التالية (${passTargetStageNumber})` : `Advances to Stage ${passTargetStageNumber}`}</span>
-                </div>
-                <ArrowDown className="w-4 h-4 text-emerald-400" />
-              </div>
             </div>
 
-            {/* FAIL / NON-CONFORMANCE BRANCH (RED/ROSE WITH DIRECT LINKAGE TO STAGE 3) */}
-            <div className={`p-4 rounded-2xl border-2 transition-all flex flex-col justify-between group/fail shadow-lg ${
-              isLotDivertedHere
-                ? 'bg-rose-950/60 border-rose-400 ring-2 ring-rose-400/50 shadow-rose-900/40'
-                : 'bg-rose-950/25 border-rose-500/60 hover:border-rose-400 shadow-rose-950/20'
-            }`}>
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="px-2.5 py-1 rounded-xl bg-rose-500/20 text-rose-300 font-black text-xs border border-rose-500/40 flex items-center gap-1.5">
-                    <AlertTriangle className="w-4 h-4 text-rose-400" />
-                    <span>{isAr ? 'لا • غير مطابق أو رُصد خلل' : 'NO • Non-Conformance'}</span>
-                  </span>
-                  <span className="text-[11px] font-mono text-rose-400 font-black">FAIL ⬇️</span>
-                </div>
-                <p className="text-xs text-slate-300 font-medium leading-relaxed">
-                  {isAr ? failLabelAr : failLabelEn}
-                </p>
-              </div>
-
-              <div className="mt-4 pt-3 border-t border-rose-500/20">
-                {targetNcr ? (
-                  <button
-                    onClick={() => scrollToStage('DEPT-STAGE-RESOLUTION', true)}
-                    className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white font-black text-xs flex items-center justify-center gap-2 transition-all shadow-md shadow-rose-950/40 hover:scale-[1.02] active:scale-[0.98]"
-                  >
-                    <span>{isAr ? '⚠️ تفرع فوري لـ المرحلة 3 (تقارير عدم المطابقة NCR)' : 'Branch to Stage 3 (NCR & 8D)'}</span>
-                    <ArrowUpRight className="w-4 h-4" />
-                  </button>
-                ) : (
-                  <span className="text-xs text-rose-300 font-bold flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
-                    <span>{isAr ? 'حجز وتصعيد للجنة الجودة MRB' : 'Quarantine & Escalate to MRB'}</span>
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* DUAL-BRANCH OUTGOING CONDUITS (Pass ⬇️ vs Fail ⬇️) */}
-        <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 px-1">
-          {/* 1. PASS CONDUIT (المسار المعتمد والمطابق) */}
-          <div className="flex flex-col items-center">
-            {/* Animated Pipe */}
-            <div className="flex flex-col items-center">
-              <div className="w-2 h-10 rounded-full bg-gradient-to-b from-emerald-500 via-emerald-400 to-emerald-500 relative shadow-lg shadow-emerald-500/50">
-                <div className="w-3 h-3 rounded-full bg-emerald-300 absolute -top-1 -left-0.5 animate-ping" />
-              </div>
-              <div className="text-emerald-400 text-base font-black -mt-1 animate-bounce">▼</div>
-            </div>
-
-            {/* Path Route Indicator Card */}
-            <div className="mt-2 w-full p-3.5 rounded-2xl bg-gradient-to-r from-emerald-950/40 to-slate-900 border-2 border-emerald-500/50 flex items-center justify-between shadow-xl shadow-emerald-950/30">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                </div>
-                <div>
-                  <div className="text-xs font-black text-emerald-300 flex items-center gap-1.5">
-                    <span>{isAr ? 'مسار الإفراج والاعتماد المباشر (PASS)' : 'Approved Production Path (PASS)'}</span>
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  </div>
-                  <div className="text-[11px] text-slate-300 mt-0.5">
-                    {isAr 
-                      ? `يتدفق مباشرة إلى ${stageNamesAr[passTargetStageNumber] || `المرحلة ${passTargetStageNumber}`}` 
-                      : `Flows directly to ${stageNamesEn[passTargetStageNumber] || `Stage ${passTargetStageNumber}`}`}
-                  </div>
-                </div>
-              </div>
-              <span className="px-2.5 py-1 rounded-xl bg-emerald-500/20 text-emerald-300 font-mono font-black text-xs border border-emerald-500/40 shrink-0">
-                {stageStats.pass} {isAr ? 'مجاز' : 'Pass'} ⬇
-              </span>
-            </div>
-          </div>
-
-          {/* 2. FAIL CONDUIT (مسار عدم المطابقة والحجر) */}
-          <div className="flex flex-col items-center">
-            {/* Animated Pipe */}
-            <div className="flex flex-col items-center">
-              <div className="w-2 h-10 rounded-full bg-gradient-to-b from-rose-500 via-rose-400 to-rose-600 relative shadow-lg shadow-rose-500/50">
-                <div className="w-3 h-3 rounded-full bg-rose-400 absolute -top-1 -left-0.5 animate-ping" />
-              </div>
-              <div className="text-rose-400 text-base font-black -mt-1 animate-bounce">▼</div>
-            </div>
-
-            {/* Path Route Indicator Card */}
-            <div className="mt-2 w-full p-3.5 rounded-2xl bg-gradient-to-r from-rose-950/40 to-slate-900 border-2 border-rose-500/50 flex items-center justify-between shadow-xl shadow-rose-950/30">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center shrink-0">
-                  <AlertOctagon className="w-4 h-4 text-rose-400" />
-                </div>
-                <div>
-                  <div className="text-xs font-black text-rose-300 flex items-center gap-1.5">
-                    <span>{isAr ? 'مسار الحجر وعدم المطابقة (FAIL)' : 'Quarantine & Containment Path (FAIL)'}</span>
-                    <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
-                  </div>
-                  <div className="text-[11px] text-slate-300 mt-0.5">
-                    {isAr ? 'عزل فوري وإجراءات الحظر ورصيف الحجر' : 'Instant Isolation & Quarantine Actions'}
-                  </div>
-                </div>
-              </div>
-              <span className="px-2.5 py-1 rounded-xl bg-rose-500/20 text-rose-300 font-mono font-black text-xs border border-rose-500/40 shrink-0">
-                {stageStats.fail} {isAr ? 'محجوز' : 'Quarantined'} ⬇
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* DEDICATED QUARANTINE & IMMEDIATE CONTAINMENT DOCK (رصيف حجر المرفوض وإجراءات الـ NCR) */}
-        {targetNcr && (
-          <div className="w-full max-w-4xl mt-3 p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-rose-950/60 via-slate-900/95 to-slate-950 border-2 border-rose-500/50 shadow-2xl backdrop-blur-md">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-rose-500/20">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center shrink-0">
-                  <AlertOctagon className="w-5 h-5 text-rose-400" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-mono font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-rose-500/20 text-rose-300 border border-rose-500/40">
-                      {isAr ? 'رصيف العزل والحجر الفوري' : 'Quarantine Containment Dock'}
-                    </span>
-                    <span className="text-[11px] text-rose-400 font-mono font-bold">
-                      QRN-0{gateNumber}
-                    </span>
-                    {isLotDivertedHere && (
-                      <span className="px-2 py-0.5 rounded-full bg-rose-500 text-slate-950 text-[10px] font-black animate-pulse">
-                        {isAr ? `اللوط ${trackedLot.lotNumber} متوقف هنا` : `Lot Stopped Here`}
-                      </span>
-                    )}
-                  </div>
-                  <h4 className="text-sm font-black text-white mt-0.5">
-                    {isAr ? `إجراءات حظر وعزل الشحنات غير المطابقة (بوابة #${gateNumber})` : `Immediate Quarantine & Non-Conformance Actions (Gate #${gateNumber})`}
-                  </h4>
-                </div>
-              </div>
-
+            {/* SEPARATE PASS DOWNWARD CONDUIT ARROW */}
+            <div className="mt-4 pt-3 border-t border-emerald-500/20 flex items-center justify-between text-xs font-bold text-emerald-300">
               <div className="flex items-center gap-2">
-                <span className="px-3 py-1 rounded-full bg-rose-950/80 border border-rose-500/40 text-xs font-mono font-black text-rose-300">
-                  {stageStats.fail} {isAr ? 'شحنات محجوزة' : 'Quarantined'}
-                </span>
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
+                <span>{isAr ? `مسار التدفق المباشر للأمام ➔ المرحلة ${passTargetStageNumber}` : `Forward Flow ➔ Stage ${passTargetStageNumber}`}</span>
               </div>
-            </div>
-
-            {/* 3 Immediate Industrial Quality Actions */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
-              {/* Action 1: Physical Quarantine Tag */}
-              <div className="p-3.5 rounded-2xl bg-slate-950/70 border border-white/5 flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center gap-2 text-rose-400 text-xs font-bold mb-1">
-                    <Lock className="w-4 h-4 shrink-0" />
-                    <span>{isAr ? '1. الحظر والعزل الفيزيائي' : '1. Physical Quarantine'}</span>
-                  </div>
-                  <p className="text-[11px] text-slate-300 leading-relaxed">
-                    {isAr ? 'وضع علامة الحجر الحمراء لمنع خلط الشحنة أو دخولها لخط الإنتاج.' : 'Apply red quarantine tag to isolate material from production lines.'}
-                  </p>
-                </div>
-                <div className="mt-3 flex items-center gap-1.5 text-[10px] font-mono text-emerald-400 font-bold">
-                  <Check className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>{isAr ? 'منطقة العزل مؤمنة (Active Hold)' : 'Quarantine Zone Active'}</span>
-                </div>
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-mono font-black text-xs">
+                <span>{isAr ? 'نعم (نزول)' : 'YES ⬇'}</span>
+                <ArrowDown className={`w-4 h-4 text-emerald-400 ${isPassBranchSim ? 'animate-bounce' : ''}`} />
               </div>
-
-              {/* Action 2: Open Electronic NCR Form */}
-              <div className="p-3.5 rounded-2xl bg-slate-950/70 border border-white/5 flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center gap-2 text-rose-400 text-xs font-bold mb-1">
-                    <FileText className="w-4 h-4 shrink-0" />
-                    <span>{isAr ? '2. تقرير عدم مطابقة NCR' : '2. Electronic NCR Report'}</span>
-                  </div>
-                  <p className="text-[11px] text-slate-300 leading-relaxed">
-                    {isAr ? 'توثيق حالة عدم المطابقة إلكترونياً وتحديد السبب المبدئي.' : 'Log instant electronic non-conformance report to track cost of quality.'}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => navigate('/ncr')}
-                  className="mt-3 w-full py-1.5 px-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-md shadow-rose-950/40 hover:scale-[1.02]"
-                >
-                  <PlusCircle className="w-3.5 h-3.5" />
-                  <span>{isAr ? 'فتح نموذج NCR جديد' : 'Create NCR Report'}</span>
-                </button>
-              </div>
-
-              {/* Action 3: Branch to Stage 3 Problem Solving Hub */}
-              <div className="p-3.5 rounded-2xl bg-gradient-to-br from-rose-900/30 to-slate-950/80 border border-rose-500/40 flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center gap-2 text-rose-300 text-xs font-bold mb-1">
-                    <Workflow className="w-4 h-4 shrink-0 text-rose-400" />
-                    <span>{isAr ? '3. التحويل للمرحلة 3 (NCR & 8D)' : '3. Escalate to Stage 3'}</span>
-                  </div>
-                  <p className="text-[11px] text-slate-300 leading-relaxed">
-                    {isAr ? 'تصعيد الشحنة لمركز حل المشكلات 8D ولجنة MRB لتحديد المصير.' : 'Direct hydraulic branch pipeline connected to Stage 3 resolution center.'}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => scrollToStage('DEPT-STAGE-RESOLUTION', true)}
-                  className="mt-3 w-full py-2 px-3 rounded-xl bg-gradient-to-r from-rose-600 via-rose-700 to-rose-800 hover:from-rose-500 hover:to-rose-600 text-white font-black text-xs flex items-center justify-center gap-1.5 transition-all shadow-md shadow-rose-950/50 hover:scale-[1.02] active:scale-[0.98]"
-                >
-                  <span>{isAr ? '⚡ انتقال للمرحلة 3 (NCR & 8D)' : 'Branch to Stage 3'}</span>
-                  <ArrowUpRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-
-            {/* Diverted Lot Specific Notice */}
-            {isLotDivertedHere && (
-              <div className="mt-3 p-3 rounded-xl bg-rose-950/80 border border-rose-500/60 flex items-center justify-between text-xs text-rose-200">
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-rose-400 animate-ping" />
-                  <span className="font-bold">{isAr ? `تنبيه خاص باللوط المتتبع ${trackedLot.lotNumber}:` : `Tracked Lot Alert:`}</span>
-                  <span>{isAr ? trackedLot.stopReasonAr : trackedLot.stopReasonEn}</span>
-                </div>
-                <span className="px-2 py-0.5 rounded-md bg-rose-500 text-slate-950 font-black text-[10px]">
-                  {isAr ? 'محجوز هنا' : 'Held Here'}
-                </span>
-              </div>
-            )}
-
-            {/* Bottom Pipeline Notification */}
-            <div className="pt-2.5 mt-2.5 border-t border-rose-500/20 flex flex-wrap items-center justify-between text-[11px] text-rose-300/80 font-mono gap-2">
-              <span className="flex items-center gap-1.5">
-                <GitFork className="w-3.5 h-3.5 text-rose-400 rotate-90" />
-                <span>{isAr ? 'مسار تفريع المرفوض: مربوط مباشرة بمركز المرحلة 3 لحل المشكلات' : 'Rejection Branch: Connected directly to Stage 3 Resolution Center'}</span>
-              </span>
-              <span className="text-[10px] text-slate-400 font-bold">
-                IATF 16949 §8.7 • Control of Nonconforming Outputs
-              </span>
             </div>
           </div>
-        )}
 
-        {/* Final Outgoing Flow Pipe to Next Stage */}
+          {/* ============================================================== */}
+          {/* COLUMN 2: THE LATERAL REJECTION DOCK & NCR PATHWAY (5 Cols)     */}
+          {/* ============================================================== */}
+          <div className={`lg:col-span-5 flex flex-col justify-between p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-rose-950/70 via-slate-900 to-slate-950 border-2 shadow-2xl transition-all relative ${
+            isFailBranchSim
+              ? 'border-rose-400 ring-4 ring-rose-500 shadow-xl shadow-rose-500/50 scale-[1.01]'
+              : 'border-rose-500/60 hover:border-rose-400'
+          }`}>
+            <div>
+              {/* Lateral Branch Connecting Header */}
+              <div className="flex items-center justify-between gap-2 border-b border-rose-500/20 pb-3">
+                <span className="px-3 py-1 rounded-xl bg-rose-500/20 text-rose-300 font-black text-xs border border-rose-500/40 flex items-center gap-1.5 shadow-sm">
+                  <AlertOctagon className="w-4 h-4 text-rose-400 shrink-0" />
+                  <span>{isAr ? '🛑 [ لا / NO ] — تفريعة المرفوضات' : '🛑 [ NO ] — Rejection Branch'}</span>
+                </span>
+                <span className="font-mono text-xs font-black text-rose-300 bg-rose-950/80 px-2.5 py-1 rounded-lg border border-rose-500/30">
+                  {stageStats.fail} {isAr ? 'محجوز' : 'Held'}
+                </span>
+              </div>
+
+              {/* Destination Rejection & NCR Title */}
+              <div className="mt-3">
+                <span className="text-[10px] font-mono text-rose-400 font-black uppercase tracking-wider">
+                  QRN-0{gateNumber} • REJECTS TRACK
+                </span>
+                <h5 className="text-xs sm:text-sm font-black text-rose-200 mt-0.5">
+                  {isAr ? `لو مرفوضة: يتعمل بيها NCR وحجز وارتجاع` : `If Fail: Issue NCR, Quarantine & Return`}
+                </h5>
+                <p className="text-xs text-rose-300/90 mt-1 font-medium leading-relaxed">
+                  {isAr ? `وجهة العزل: ${rejectTitlesAr[gateNumber]}` : `Destination: ${rejectTitlesEn[gateNumber]}`}
+                </p>
+                <div className="mt-2.5 p-2.5 rounded-xl bg-black/40 border border-rose-500/20 text-[11px] text-slate-300 space-y-1">
+                  <div className="flex items-center gap-1.5 text-rose-300 font-bold">
+                    <span>•</span>
+                    <span>{isAr ? 'عزل فيزيائي وتثبيت بطاقة الحجر الحمراء' : 'Physical quarantine tag applied'}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-rose-300 font-bold">
+                    <span>•</span>
+                    <span>{isAr ? 'فتح تقرير عدم مطابقة (NCR) وتكلفة الجودة' : 'Instant electronic NCR report logged'}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-rose-300 font-bold">
+                    <span>•</span>
+                    <span>{isAr ? 'تفعيل مسار الارتجاع أو فحص لجنة MRB' : 'Supplier return or MRB disposition'}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* SEPARATE FAIL ACTION BUTTON & SIDE ARROW */}
+            <div className="mt-4 pt-3 border-t border-rose-500/20">
+              <button
+                type="button"
+                onClick={() => {
+                  const target = rejectTargetId[gateNumber] || 'DEPT-STAGE-RESOLUTION';
+                  scrollToStage(target, true);
+                }}
+                className={`w-full py-2.5 px-3 rounded-xl font-black text-xs flex items-center justify-between transition-all shadow-lg active:scale-95 cursor-pointer ${
+                  isFailBranchSim
+                    ? 'bg-rose-500 text-white animate-bounce shadow-rose-500/50'
+                    : 'bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white shadow-rose-950/40'
+                }`}
+              >
+                <div className="flex items-center gap-1.5">
+                  <FileText className="w-4 h-4" />
+                  <span>{isAr ? `فتح تقرير NCR وسجل الحجر [QRN-0${gateNumber}]` : `Open NCR & Quarantine [QRN-0${gateNumber}]`}</span>
+                </div>
+                <ArrowUpRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Downward Pass Conduit to Next Station */}
         <div className="flex flex-col items-center mt-3">
-          <div className="w-1.5 h-8 rounded-full bg-gradient-to-b from-emerald-500 via-emerald-400 to-transparent" />
-          <div className="text-emerald-400 text-xs font-bold -mt-2">▼</div>
+          <div className="w-1.5 h-7 rounded-full bg-gradient-to-b from-emerald-500 via-emerald-400 to-transparent" />
+          <div className="text-emerald-400 text-xs font-black -mt-2 animate-bounce">▼</div>
         </div>
       </div>
     );
@@ -2695,108 +2561,87 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
   );
 
   const renderGate1 = () => (
-    <div className="space-y-3">
+    <div className="w-full">
       {renderDecisionDiamond({
-          gateNumber: 1,
-          questionAr: 'هل المواد الخام والشحنات الواردة مطابقة للمواصفات وخطط الفحص؟',
-          questionEn: 'Are incoming raw materials compliant with quality specs & receiving plans?',
-          passLabelAr: `مطابق: تم إجازة ${getStageRecordStats('DEPT-STAGE-INCOMING').pass} شحنة لدخول صالة الإنتاج والتصنيع ⬇️`,
-          passLabelEn: `Conforming: ${getStageRecordStats('DEPT-STAGE-INCOMING').pass} lots cleared & released for shopfloor production entry ⬇️`,
-          passTargetStageNumber: 2,
-          failLabelAr: `غير مطابق: تم حجز ${getStageRecordStats('DEPT-STAGE-INCOMING').fail} شحنة وتحويلها فوراً للمرحلة 3 (NCR) ➡️`,
-          failLabelEn: `Non-Conforming: ${getStageRecordStats('DEPT-STAGE-INCOMING').fail} lots quarantined and escalated to Stage 3 NCR ➡️`,
-          accentColor: '#f59e0b',
-          targetNcr: true
-        })}
-      {flowchartLayoutMode === "dual" && renderCrossLaneShunt(
-        'رصيف الحجر QRN-01 والـ NCR بالمسار الأحمر',
-        'Quarantine Dock QRN-01 in Red Lane',
-        'LANE-RED-QUARANTINE-IQC',
-        'الشحنات المرفوضة في فحص الاستلام تنحرف عرضياً إلى رصيف الحجر الصحي QRN-01 في المسار الأحمر',
-        'Rejected incoming lots shunt across to Quarantine Dock QRN-01 in the Red Lane'
-      )}
+        gateNumber: 1,
+        questionAr: 'هل المواد الخام والشحنات الواردة مقبولة ومطابقة للمواصفات وخطط الفحص؟',
+        questionEn: 'Are incoming raw materials compliant with quality specs & receiving plans?',
+        passLabelAr: 'الخامة مطابقة 100% ➔ تدفق وإجازة مباشرة لدخول صالة الإنتاج والتصنيع (المرحلة 2) ⬇',
+        passLabelEn: '100% Conforming lot ➔ Released for Shopfloor Production Entry (Stage 2) ⬇',
+        passTargetStageNumber: 2,
+        failLabelAr: 'رُصد عيب بالخامة ➔ عزل فوري، إصدار تقرير عدم مطابقة (NCR)، وحجز وارتجاع للمورد 🛑 ➔',
+        failLabelEn: 'Defect detected ➔ Instant isolation, NCR issuance & supplier return 🛑 ➔',
+        accentColor: '#f59e0b',
+        targetNcr: true
+      })}
     </div>
   );
 
   const renderGate2 = () => (
-    <div className="space-y-3">
+    <div className="w-full">
       {renderDecisionDiamond({
-          gateNumber: 2,
-          questionAr: 'هل عينات التشغيل والقياسات ضمن حدود الضبط SPC وخالية من العيوب الحرجة؟',
-          questionEn: 'Are in-process samples within SPC control limits & free of critical defects?',
-          passLabelAr: `مطابق ومستقر: ${getStageRecordStats('DEPT-STAGE-INPROCESS').pass} عملية إنتاج سليمة ومجازة للمرحلة 4 (فحص المنتج النهائي OQC) ⬇️`,
-          passLabelEn: `Conforming: ${getStageRecordStats('DEPT-STAGE-INPROCESS').pass} conforming processes cleared for Stage 4 (Outgoing OQC) ⬇️`,
-          passTargetStageNumber: 4,
-          failLabelAr: `خلل أو أندون: ${getStageRecordStats('DEPT-STAGE-INPROCESS').fail} عيوب استدعت حجز الإنتاج والتصعيد لـ NCR و 8D ⬇️`,
-          failLabelEn: `Alert / Out of Control: ${getStageRecordStats('DEPT-STAGE-INPROCESS').fail} defects escalated to NCR & 8D ⬇️`,
-          accentColor: '#06b6d4',
-          targetNcr: true
-        })}
-      {flowchartLayoutMode === "dual" && renderCrossLaneShunt(
-        'مركز حل المشكلات 8D و CAPA بالمسار الأحمر',
-        'Problem Solving 8D & CAPA in Red Lane',
-        'DEPT-STAGE-RESOLUTION',
-        'انحرافات وعيوب خط الإنتاج والأندون تنحرف عرضياً نحو المسار الأحمر للتحليل الجذري 8D',
-        'In-process defects & Andon alerts shunt across to Red Lane for 8D root-cause resolution'
-      )}
+        gateNumber: 2,
+        questionAr: 'هل عينات التشغيل والقياسات مقبولة وضمن حدود الضبط SPC وخالية من العيوب الحرجة؟',
+        questionEn: 'Are in-process samples within SPC control limits & free of critical defects?',
+        passLabelAr: 'العمليات مستقرة ومطابقة ➔ إجازة فورية للانتقال إلى التفتيش النهائي للمنتج التام (المرحلة 4) ⬇',
+        passLabelEn: 'Stable & Conforming process ➔ Cleared for Outgoing Final Quality Inspection (Stage 4) ⬇',
+        passTargetStageNumber: 4,
+        failLabelAr: 'خلل أو إنذار أندون ➔ عزل الخط، إصدار تقرير عدم مطابقة (NCR)، وتفعيل مسار التحقيق 8D و CAPA 🛑 ➔',
+        failLabelEn: 'Out-of-control defect / Andon ➔ Line containment, NCR report & 8D / CAPA investigation 🛑 ➔',
+        accentColor: '#06b6d4',
+        targetNcr: true
+      })}
     </div>
   );
 
   const renderGate3 = () => (
     <div className="w-full">
       {renderDecisionDiamond({
-          gateNumber: 3,
-          questionAr: 'هل تم حصر الخلل، إغلاق السبب الجذري 8D، وتأكيد فعالية الإجراء التصحيحي CAPA؟',
-          questionEn: 'Has the root cause been contained, 8D verified & CAPA corrective action closed?',
-          passLabelAr: `تم الحل والاعتماد: ${getStageRecordStats('DEPT-STAGE-RESOLUTION').pass} تقرير وإجراء تم إغلاقه وفك الحجر الصحي ⬇️`,
-          passLabelEn: `Resolved & Verified: ${getStageRecordStats('DEPT-STAGE-RESOLUTION').pass} closed reports, quarantine lifted ⬇️`,
-          passTargetStageNumber: 4,
-          failLabelAr: `قيد التحقيق: ${getStageRecordStats('DEPT-STAGE-RESOLUTION').fail} حالات عزل قيد التحليل الجذري والمتابعة ➡️`,
-          failLabelEn: `Under Investigation: ${getStageRecordStats('DEPT-STAGE-RESOLUTION').fail} containment actions under review ➡️`,
-          accentColor: '#f43f5e',
-          targetNcr: false
-        })}
+        gateNumber: 3,
+        questionAr: 'هل تم حصر الخلل، إغلاق السبب الجذري 8D، وتأكيد فعالية الإجراء التصحيحي CAPA؟',
+        questionEn: 'Has the root cause been contained, 8D verified & CAPA corrective action closed?',
+        passLabelAr: 'تم إغلاق السبب الجذري بنجاح ➔ فك الحجر الصحي وإعادة توجيه الدفعة لمسار الإنتاج المعتمد ⬇',
+        passLabelEn: 'Root cause resolved & CAPA closed ➔ Quarantine lifted, lot returned to production ⬇',
+        passTargetStageNumber: 4,
+        failLabelAr: 'قيد التحقيق ➔ استمرار العزل والمتابعة في مركز الـ 8D ولجنة MRB حتى تأكيد الحل الجذري 🛑 ➔',
+        failLabelEn: 'Under investigation ➔ Containment active until permanent corrective action verified 🛑 ➔',
+        accentColor: '#f43f5e',
+        targetNcr: false
+      })}
     </div>
   );
 
   const renderGate4 = () => (
-    <div className="space-y-3">
+    <div className="w-full">
       {renderDecisionDiamond({
-          gateNumber: 4,
-          questionAr: 'هل شحنة المنتج التام مطابقة لمعايير قبول عينات AQL؟',
-          questionEn: 'Are finished goods lots fully compliant with AQL acceptance criteria?',
-          passLabelAr: `مطابق ومجاز: ${getStageRecordStats('DEPT-STAGE-OUTGOING').pass} لوط تم إصدار شهادة المطابقة COC والترخيص بالشحن ⬇️`,
-          passLabelEn: `Compliant: ${getStageRecordStats('DEPT-STAGE-OUTGOING').pass} lots issued COC and cleared for shipping ⬇️`,
-          passTargetStageNumber: 5,
-          failLabelAr: `مرفوض: ${getStageRecordStats('DEPT-STAGE-OUTGOING').fail} شحنة محجوزة ومحالة فوراً إلى المرحلة 3 لإعادة الفرز أو NCR ➡️`,
-          failLabelEn: `Rejected: ${getStageRecordStats('DEPT-STAGE-OUTGOING').fail} lot quarantined and escalated to Stage 3 NCR ➡️`,
-          accentColor: '#10b981',
-          targetNcr: true
-        })}
-      {flowchartLayoutMode === "dual" && renderCrossLaneShunt(
-        'حجر المنتجات التامة ولجنة MRB بالمسار الأحمر',
-        'Finished Goods Quarantine & MRB in Red Lane',
-        'DEPT-STAGE-RESOLUTION',
-        'شحنات المنتج النهائي المرفوضة في فحص الخروج تنحرف للمسار الأحمر لإعادة الفرز أو التكهين',
-        'Rejected finished goods lots shunt across to Red Lane for sorting or scrap disposition'
-      )}
+        gateNumber: 4,
+        questionAr: 'هل شحنة المنتج التام مقبولة ومطابقة لمعايير قبول عينات AQL؟',
+        questionEn: 'Are finished goods lots fully compliant with AQL acceptance criteria?',
+        passLabelAr: 'المنتج النهائي مطابق 100% ➔ إصدار شهادة المطابقة COC والترخيص بالشحن والتسليم للعميل (المرحلة 5) ⬇',
+        passLabelEn: 'Finished goods compliant ➔ Issue COC certificate & dispatch clearance to Logistics (Stage 5) ⬇',
+        passTargetStageNumber: 5,
+        failLabelAr: 'عينات معيبة تجاوزت AQL ➔ حظر الشحنة في رصيف حجر المنتج التام ولجنة MRB (إعادة فرز أو تكهين) 🛑 ➔',
+        failLabelEn: 'AQL rejected ➔ Instant containment at Finished Goods Quarantine & MRB Committee disposition 🛑 ➔',
+        accentColor: '#10b981',
+        targetNcr: true
+      })}
     </div>
   );
 
   const renderGate5 = () => (
     <div className="w-full">
       {renderDecisionDiamond({
-          gateNumber: 5,
-          questionAr: 'هل تم حل شكوى العميل، تسوية المرتجع RMA، واستخلاص السبب الفني؟',
-          questionEn: 'Has customer claim been settled, RMA processed & technical feedback extracted?',
-          passLabelAr: `نعم: تم إغلاق ${getStageRecordStats('DEPT-STAGE-CUSTOMER').pass} شكوى وتمرير الملاحظات للمختبر والتدقيق لتحديث FMEA ⬇️`,
-          passLabelEn: `Yes: ${getStageRecordStats('DEPT-STAGE-CUSTOMER').pass} claims resolved & fed back to Lab & FMEA ⬇️`,
-          passTargetStageNumber: 6,
-          failLabelAr: `شكوى حرجة مفتوحة: ${getStageRecordStats('DEPT-STAGE-CUSTOMER').fail} بلاغات قيد التحقيق والمتابعة الطارئة ➡️`,
-          failLabelEn: `Open Claim: ${getStageRecordStats('DEPT-STAGE-CUSTOMER').fail} claims under emergency review ➡️`,
-          accentColor: '#6366f1',
-          targetNcr: true
-        })}
+        gateNumber: 5,
+        questionAr: 'هل تم حل شكوى العميل، تسوية المرتجع RMA، واستخلاص السبب الفني؟',
+        questionEn: 'Has customer claim been settled, RMA processed & technical feedback extracted?',
+        passLabelAr: 'التسليم سليم وخالي من الشكاوى ➔ استمرار التدفق إلى المختبر الهندسي والبيانات وتأكيد الجودة الشاملة ⬇',
+        passLabelEn: 'Delivery accepted without claims ➔ Continue to Engineering Lab & Quality Master Data ⬇',
+        passTargetStageNumber: 6,
+        failLabelAr: 'رصد شكوى أو مرتجع ضمان ➔ فتح إذن استرداد المواد RMA، تسجيل تكلفة العيب، وتحديث FMEA 🛑 ➔',
+        failLabelEn: 'Customer claim / warranty return ➔ Open RMA authorization, log quality cost & update FMEA 🛑 ➔',
+        accentColor: '#6366f1',
+        targetNcr: true
+      })}
     </div>
   );
 
@@ -3626,18 +3471,21 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
     );
   };
 
-  // Clean Decision Gateway with explicit 🟢 PASS ⬇️ vs 🛑 FAIL ➡️ branching
+  // Clean, Professional 2-Column Decision Gateway with explicit 🟢 PASS ⬇️ vs 🛑 FAIL ➔ branching
   const renderVisualDecisionGateway = (props: {
     gateNumber: number;
     questionAr: string;
     questionEn: string;
     accentColor: string;
     nextStageNumber: number;
+    nextStageNameAr?: string;
+    nextStageNameEn?: string;
     passCount: number;
     failCount: number;
     failTitleAr: string;
     failTitleEn: string;
     failTargetAction: () => void;
+    failNcrRoute?: string;
   }) => {
     // Dynamic Simulation Gateway Active Check
     const isSimAtGate = simulationActive && (
@@ -3655,200 +3503,217 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
     const isPassBranchSim = isSimAtGate && simulationType === 'pass';
     const isFailBranchSim = isSimAtGate && simulationType === 'fail';
 
+    const stageNamesAr: Record<number, string> = {
+      2: 'المرحلة 2: صالة الإنتاج والتصنيع (IPQC)',
+      3: 'المرحلة 3: مركز احتواء عدم المطابقة والـ 8D',
+      4: 'المرحلة 4: التفتيش النهائي للمنتج التام (OQC)',
+      5: 'المرحلة 5: الشحن وشكاوى العملاء (CSM)',
+      6: 'المرحلة 6: المختبر والتدقيق الهندسي',
+    };
+    const stageNamesEn: Record<number, string> = {
+      2: 'Stage 2: In-Process Manufacturing (IPQC)',
+      3: 'Stage 3: NCR & 8D Problem Solving Hub',
+      4: 'Stage 4: Outgoing Final Quality (OQC)',
+      5: 'Stage 5: Customer Delivery & Claims (CSM)',
+      6: 'Stage 6: Engineering Lab & Audits',
+    };
+
+    const targetStageAr = props.nextStageNameAr || stageNamesAr[props.nextStageNumber] || `المرحلة ${props.nextStageNumber}`;
+    const targetStageEn = props.nextStageNameEn || stageNamesEn[props.nextStageNumber] || `Stage ${props.nextStageNumber}`;
+
     return (
-      <div id={`GATEWAY-${props.gateNumber}`} className="my-5 w-full max-w-3xl mx-auto flex flex-col items-center">
-        {/* Downward Pipe into Gateway */}
-        <div className="w-1.5 h-6 rounded-full" style={{ backgroundColor: props.accentColor }} />
+      <div id={`GATEWAY-${props.gateNumber}`} className="my-5 w-full max-w-4xl mx-auto flex flex-col items-center">
+        {/* Downward Pipe from previous station into Gateway */}
+        <div className="flex flex-col items-center">
+          <div className="w-1.5 h-6 rounded-full" style={{ backgroundColor: props.accentColor }} />
+          <div className="w-2.5 h-2.5 rounded-full animate-ping -mt-1" style={{ backgroundColor: props.accentColor }} />
+        </div>
 
-        {/* Diamond Header Banner Box */}
-        <div
-          className={`relative w-full p-4 sm:p-5 rounded-3xl bg-gradient-to-b from-slate-900 via-[#0a1122] to-slate-950 border-2 shadow-xl transition-all ${
-            isSimAtGate ? 'ring-2 ring-amber-400/80 shadow-2xl' : ''
-          }`}
-          style={{ borderColor: `${props.accentColor}60` }}
-        >
-          {/* Header */}
-          <div className="flex items-center justify-between gap-3 border-b border-white/10 pb-3">
-            <div className="flex items-center gap-3">
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm rotate-45 border-2 shrink-0 shadow-md"
-                style={{
-                  backgroundColor: `${props.accentColor}20`,
-                  borderColor: props.accentColor,
-                  color: props.accentColor
-                }}
-              >
-                <span className="-rotate-45">◆</span>
-              </div>
-              <div>
-                <span
-                  className="text-[10px] font-mono font-black uppercase px-2 py-0.5 rounded border"
-                  style={{
-                    backgroundColor: `${props.accentColor}15`,
-                    color: props.accentColor,
-                    borderColor: `${props.accentColor}40`
-                  }}
-                >
-                  {isAr ? `بوابة اتخاذ القرار #${props.gateNumber}` : `Decision Gateway #${props.gateNumber}`}
+        {/* DECISION GATE CONTAINER: 2-COLUMN BRANCHING (Pass Box vs Fail Box) */}
+        <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch mt-1">
+          
+          {/* ========================================================================= */}
+          {/* COLUMN 1: THE DECISION QUESTION & PASS SPINE [نعم / YES] (7 Cols)         */}
+          {/* ========================================================================= */}
+          <div 
+            className={`lg:col-span-7 flex flex-col justify-between p-5 sm:p-6 rounded-3xl bg-gradient-to-b from-slate-900 via-[#0a1122] to-slate-950 border-2 shadow-2xl transition-all relative ${
+              isSimAtGate ? 'ring-2 ring-amber-400/80' : ''
+            }`}
+            style={{ borderColor: `${props.accentColor}70` }}
+          >
+            <div>
+              {/* Diamond Header & Question */}
+              <div className="flex items-center justify-between gap-3 border-b border-white/10 pb-3">
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm rotate-45 border-2 shrink-0 shadow-md"
+                    style={{
+                      backgroundColor: `${props.accentColor}20`,
+                      borderColor: props.accentColor,
+                      color: props.accentColor
+                    }}
+                  >
+                    <span className="-rotate-45">◆</span>
+                  </div>
+                  <div>
+                    <span
+                      className="text-[10px] font-mono font-black uppercase px-2 py-0.5 rounded border"
+                      style={{
+                        backgroundColor: `${props.accentColor}15`,
+                        color: props.accentColor,
+                        borderColor: `${props.accentColor}40`
+                      }}
+                    >
+                      {isAr ? `معين اتخاذ القرار #${props.gateNumber}` : `Decision Gateway #${props.gateNumber}`}
+                    </span>
+                    <h4 className="text-xs sm:text-sm font-black text-white mt-1 leading-snug">
+                      {isAr ? props.questionAr : props.questionEn}
+                    </h4>
+                  </div>
+                </div>
+                <span className="text-[10px] font-mono text-slate-400 hidden sm:inline">
+                  ISO / IATF Gate
                 </span>
-                <h4 className="text-xs sm:text-sm font-black text-white mt-1">
-                  {isAr ? props.questionAr : props.questionEn}
-                </h4>
               </div>
-            </div>
-            <span className="text-[10px] font-mono text-slate-400 hidden sm:inline">
-              ISO / IATF
-            </span>
-          </div>
 
-          {/* TWO SEPARATED DEDICATED PATHWAY BOXES (Pass Box vs Fail Box) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-            {/* 1. GREEN PASS BOX */}
-            <div className={`p-4 rounded-2xl border-2 flex flex-col justify-between shadow-md transition-all ${
-              isPassBranchSim 
-                ? 'bg-emerald-950/90 border-emerald-400 ring-4 ring-emerald-400 shadow-xl shadow-emerald-500/40 scale-[1.02] animate-pulse'
-                : 'bg-emerald-950/40 border-emerald-500/50 hover:border-emerald-400'
-            }`}>
-              <div>
+              {/* SEPARATE PASS BOX (GREEN) */}
+              <div className={`mt-4 p-4 rounded-2xl border-2 transition-all ${
+                isPassBranchSim
+                  ? 'bg-emerald-950/90 border-emerald-400 ring-4 ring-emerald-400 shadow-xl shadow-emerald-500/40 animate-pulse'
+                  : 'bg-emerald-950/30 border-emerald-500/50 hover:border-emerald-400'
+              }`}>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="px-2.5 py-1 rounded-xl bg-emerald-500/20 text-emerald-300 font-black text-xs border border-emerald-500/40 flex items-center gap-1.5 shadow-sm">
+                  <span className="px-3 py-1 rounded-xl bg-emerald-500/20 text-emerald-300 font-black text-xs border border-emerald-500/40 flex items-center gap-1.5 shadow-sm">
                     <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>{isAr ? '🟢 [نعم / YES] — مقبولة' : '🟢 [YES] — Pass'}</span>
+                    <span>{isAr ? '🟢 [ نعم / YES ] — مقبولة ومطابقة' : '🟢 [ YES ] — Conforming'}</span>
                   </span>
                   <span className="font-mono text-xs font-black text-emerald-300 bg-emerald-950/80 px-2.5 py-1 rounded-lg border border-emerald-500/30">
                     {props.passCount} {isAr ? 'مجاز' : 'Pass'}
                   </span>
                 </div>
                 <h5 className="text-xs sm:text-sm font-black text-emerald-300 mt-1">
-                  {isAr ? `🟢 نعم (لو مقبولة): تروح للمحطة التالية (المرحلة ${props.nextStageNumber}) ⬇` : `YES (Pass): Advances to Next Station (Stage ${props.nextStageNumber}) ⬇`}
+                  {isAr ? `لو مقبولة: تروح للمحطة التالية (${targetStageAr}) ⬇` : `If Pass: Advances to ${targetStageEn} ⬇`}
                 </h5>
                 <p className="text-xs text-slate-300 mt-1 font-medium leading-relaxed">
-                  {isAr ? `الخامة أو اللوط مطابق للمواصفة 100% ➔ تدفق وإجازة مباشرة للأمام` : `100% Conforming lot ➔ Advances directly to production stream`}
+                  {isAr 
+                    ? 'الخامة أو اللوط مطابق للمواصفات 100% ➔ إجازة وصرف مباشر لمسار الإنتاج التالي' 
+                    : '100% conforming lot ➔ instant release and forward advancement to next station'}
                 </p>
-              </div>
-
-              <div className="mt-4 pt-3 border-t border-emerald-500/20 flex items-center justify-between text-xs font-bold text-emerald-300">
-                <span>{isAr ? `مسار [نعم / YES] ➔ تروح للمحطة التالية ⬇` : `YES Path ➔ Advances to Next Station ⬇`}</span>
-                <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 font-mono text-[11px] font-black flex items-center gap-1 border border-emerald-500/30">
-                  <span>إجازة</span>
-                  <ArrowDown className={`w-3.5 h-3.5 text-emerald-400 ${isPassBranchSim ? 'animate-bounce' : ''}`} />
-                </span>
               </div>
             </div>
 
-            {/* 2. RED FAIL BOX */}
-            <div className={`p-4 rounded-2xl border-2 flex flex-col justify-between shadow-md transition-all ${
-              isFailBranchSim
-                ? 'bg-rose-950/90 border-rose-400 ring-4 ring-rose-500 shadow-xl shadow-rose-500/50 scale-[1.02] animate-pulse'
-                : 'bg-rose-950/40 border-rose-500/50 hover:border-rose-400'
-            }`}>
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="px-2.5 py-1 rounded-xl bg-rose-500/20 text-rose-300 font-black text-xs border border-rose-500/40 flex items-center gap-1.5 shadow-sm">
-                    <AlertOctagon className="w-4 h-4 text-rose-400 shrink-0" />
-                    <span>{isAr ? '🛑 [لا / NO] — مرفوضة' : '🛑 [NO] — Fail'}</span>
-                  </span>
-                  <span className="font-mono text-xs font-black text-rose-300 bg-rose-950/80 px-2.5 py-1 rounded-lg border border-rose-500/30">
-                    {props.failCount} {isAr ? 'محجوز' : 'Hold'}
+            {/* SEPARATE PASS ARROW BOX (pointing DOWN) */}
+            <div className="mt-4 pt-3 border-t border-emerald-500/20">
+              <div className="p-3 rounded-2xl bg-emerald-950/70 border border-emerald-500/40 flex items-center justify-between text-xs font-bold text-emerald-300 shadow-md">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping shrink-0" />
+                  <span className="font-black text-xs">
+                    {isAr ? `مسار [نعم / YES]: انتقال وصرف للمحطة التالية ⬇` : `[YES] Path: Direct Advance to Next Station ⬇`}
                   </span>
                 </div>
-                <h5 className="text-xs sm:text-sm font-black text-rose-300 mt-1">
-                  {isAr ? `🛑 لا (لو مرفوضة): يتعمل بيها NCR وحجز وارتجاع 🛑 ➔` : `NO (Fail): Issue NCR, Quarantine & Return 🛑 ➔`}
-                </h5>
-                <p className="text-xs text-slate-300 mt-1 font-medium leading-relaxed">
-                  {isAr ? `رُصد عيب أو خلل ➔ عزل فوري، فتح تقرير عدم مطابقة NCR، وتحويل لطريق المرفوضات` : `Defect detected ➔ Instant isolation, NCR issuance & diversion to Rejects Track`}
-                </p>
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-500/20 border border-emerald-500/40 font-mono font-black text-xs text-emerald-300 shrink-0">
+                  <span>{isAr ? 'إجازة ⬇' : 'Pass ⬇'}</span>
+                  <ArrowDown className={`w-4 h-4 text-emerald-400 ${isPassBranchSim ? 'animate-bounce' : ''}`} />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ========================================================================= */}
+          {/* COLUMN 2: THE REJECTION TRACK [لا / NO] & NCR / QUARANTINE ACTIONS (5 Cols) */}
+          {/* ========================================================================= */}
+          <div 
+            className={`lg:col-span-5 flex flex-col justify-between p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-rose-950/70 via-slate-900 to-slate-950 border-2 shadow-2xl transition-all relative ${
+              isFailBranchSim
+                ? 'border-rose-400 ring-4 ring-rose-500 shadow-xl shadow-rose-500/50 scale-[1.01]'
+                : 'border-rose-500/60 hover:border-rose-400'
+            }`}
+          >
+            <div>
+              {/* Rejection Header */}
+              <div className="flex items-center justify-between gap-2 border-b border-rose-500/20 pb-3">
+                <span className="px-3 py-1 rounded-xl bg-rose-500/20 text-rose-300 font-black text-xs border border-rose-500/40 flex items-center gap-1.5 shadow-sm">
+                  <AlertOctagon className="w-4 h-4 text-rose-400 shrink-0" />
+                  <span>{isAr ? '🛑 [ لا / NO ] — تفريعة المرفوضات' : '🛑 [ NO ] — Rejection Branch'}</span>
+                </span>
+                <span className="font-mono text-xs font-black text-rose-300 bg-rose-950/80 px-2.5 py-1 rounded-lg border border-rose-500/30">
+                  {props.failCount} {isAr ? 'محجوز' : 'Held'}
+                </span>
               </div>
 
-              <div className="mt-4 pt-3 border-t border-rose-500/20">
+              {/* Destination & Action Checklist */}
+              <div className="mt-3">
+                <span className="text-[10px] font-mono text-rose-400 font-black uppercase tracking-wider">
+                  QRN-0{props.gateNumber} • REJECTS TRACK
+                </span>
+                <h5 className="text-xs sm:text-sm font-black text-rose-200 mt-0.5">
+                  {isAr ? 'لو مرفوضة: يتعمل بيها NCR وحجز وارتجاع 🛑 ➔' : 'If Fail: Issue NCR, Quarantine & Return 🛑 ➔'}
+                </h5>
+                <p className="text-xs text-rose-300/90 mt-1 font-medium leading-relaxed">
+                  {isAr ? `طريق المرفوضات: ${props.failTitleAr}` : `Rejection Path: ${props.failTitleEn}`}
+                </p>
+
+                {/* 3-Step Clear Action Protocol */}
+                <div className="mt-2.5 p-2.5 rounded-xl bg-black/40 border border-rose-500/20 text-[11px] text-slate-300 space-y-1.5">
+                  <div className="flex items-center gap-1.5 text-rose-300 font-bold">
+                    <span>1.</span>
+                    <span>{isAr ? 'عزل فيزيائي وتثبيت بطاقة الحجر الحمراء 🔒' : 'Physical quarantine tag applied 🔒'}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-rose-300 font-bold">
+                    <span>2.</span>
+                    <span>{isAr ? 'إصدار تقرير عدم مطابقة (NCR) وتكلفة العيب 📋' : 'Electronic NCR report logged 📋'}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-rose-300 font-bold">
+                    <span>3.</span>
+                    <span>{isAr ? 'ارتجاع للمورد / تحقيق 8D / قرار لجنة MRB ↩️' : 'Supplier return / 8D team / MRB review ↩️'}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* SEPARATE FAIL ARROW BOX (pointing SIDEWAYS) & ACTION BUTTONS */}
+            <div className="mt-4 pt-3 border-t border-rose-500/20 space-y-2.5">
+              {/* Separate Fail Arrow Box */}
+              <div className="p-3 rounded-2xl bg-rose-950/70 border border-rose-500/40 flex items-center justify-between text-xs font-bold text-rose-300 shadow-md">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-rose-400 animate-ping shrink-0" />
+                  <span className="font-black text-xs">
+                    {isAr ? '➔ سهم تحويل طريق المرفوضات [لا / NO]' : '➔ [NO] Diversion to Rejection Track'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-rose-500/20 border border-rose-500/40 font-mono font-black text-xs text-rose-300 shrink-0">
+                  <span>{isAr ? 'حجز 🛑' : 'Hold 🛑'}</span>
+                  <ArrowUpRight className="w-3.5 h-3.5 text-rose-400 animate-pulse" />
+                </div>
+              </div>
+
+              {/* Action Buttons: Open NCR + Inspect Quarantine */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => navigate(props.failNcrRoute || '/ncr')}
+                  className="py-2.5 px-3 rounded-xl bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white font-black text-xs flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-95 cursor-pointer"
+                >
+                  <FileText className="w-4 h-4 shrink-0" />
+                  <span>{isAr ? 'فتح تقرير NCR ➔' : 'Open NCR ➔'}</span>
+                </button>
                 <button
                   type="button"
                   onClick={props.failTargetAction}
-                  className={`w-full py-2 px-3 rounded-xl font-black text-xs flex items-center justify-center gap-2 transition-all shadow-md active:scale-95 cursor-pointer ${
-                    isFailBranchSim
-                      ? 'bg-rose-500 text-white animate-bounce shadow-lg shadow-rose-500/50'
-                      : 'bg-rose-600 hover:bg-rose-500 text-white'
-                  }`}
+                  className="py-2.5 px-3 rounded-xl bg-black/40 hover:bg-rose-950/40 text-rose-200 border border-rose-500/40 font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer"
                 >
-                  <span>{isAr ? `تفريعة [لا / NO] ➔ إصدار NCR وحجز [${props.failTitleAr}] 🛑 ➔` : `[NO Branch] ➔ Issue NCR & Divert to [${props.failTitleEn}] 🛑 ➔`}</span>
-                  <ArrowUpRight className="w-4 h-4" />
+                  <ShieldAlert className="w-4 h-4 shrink-0 text-rose-400" />
+                  <span>{isAr ? 'فحص الحجر 👁️' : 'Quarantine 👁️'}</span>
                 </button>
               </div>
             </div>
           </div>
         </div>
 
-        {/* TWO SEPARATED ARROWS IN TWO SEPARATED CONDUIT BOXES */}
-        <div className="w-full max-w-3xl grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2 px-1">
-          {/* 1. SEPARATE PASS ARROW & EXIT CONDUIT BOX */}
-          <div className="flex flex-col items-center">
-            {/* Animated Green Flow Pipe & Down Arrow */}
-            <div className="flex flex-col items-center">
-              <div className="w-2 h-8 rounded-full bg-gradient-to-b from-emerald-500 via-emerald-400 to-emerald-500 relative shadow-md shadow-emerald-500/50">
-                <div className="w-2.5 h-2.5 rounded-full bg-emerald-300 absolute -top-1 -left-0.5 animate-ping" />
-              </div>
-              <div className="text-emerald-400 text-base font-black -mt-1.5 animate-bounce">▼</div>
-            </div>
-
-            {/* Separate Pass Output Indicator Box */}
-            <div className="mt-1 w-full p-3 rounded-2xl bg-gradient-to-r from-emerald-950/70 to-slate-900 border-2 border-emerald-500/50 flex items-center justify-between text-xs shadow-lg shadow-emerald-950/40">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                </div>
-                <div>
-                  <div className="font-black text-emerald-300 text-xs flex items-center gap-1.5">
-                    <span>{isAr ? `مسار [نعم / YES] ➔ تروح للمحطة التالية (${props.nextStageNumber}) ⬇` : `YES Path ➔ Advances to Stage ${props.nextStageNumber} ⬇`}</span>
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  </div>
-                  <div className="text-[10px] text-slate-300 mt-0.5">
-                    {isAr ? 'إفراج مباشر وصرف سليم للأمام في خط الإنتاج' : 'Approved direct forward flow to next production stage'}
-                  </div>
-                </div>
-              </div>
-              <span className="px-2 py-0.5 rounded-lg bg-emerald-500/20 text-emerald-300 font-mono font-black text-xs border border-emerald-500/40 shrink-0">
-                {props.passCount} ⬇
-              </span>
-            </div>
-          </div>
-
-          {/* 2. SEPARATE FAIL ARROW & EXIT CONDUIT BOX */}
-          <div className="flex flex-col items-center">
-            {/* Animated Red Flow Pipe & Down Arrow */}
-            <div className="flex flex-col items-center">
-              <div className="w-2 h-8 rounded-full bg-gradient-to-b from-rose-500 via-rose-400 to-rose-600 relative shadow-md shadow-rose-500/50">
-                <div className="w-2.5 h-2.5 rounded-full bg-rose-400 absolute -top-1 -left-0.5 animate-ping" />
-              </div>
-              <div className="text-rose-400 text-base font-black -mt-1.5 animate-bounce">▼</div>
-            </div>
-
-            {/* Separate Fail Output Indicator Box */}
-            <button
-              type="button"
-              onClick={props.failTargetAction}
-              className="mt-1 w-full p-3 rounded-2xl bg-gradient-to-r from-rose-950/70 to-slate-900 hover:from-rose-900/80 hover:to-slate-900 border-2 border-rose-500/50 flex items-center justify-between text-xs shadow-lg shadow-rose-950/40 transition-all group/failarrow text-start cursor-pointer hover:scale-[1.01]"
-              title={isAr ? 'اضغط لفتح مسار الحجر وتقارير NCR والارتجاع' : 'Click to inspect NCR quarantine & return path'}
-            >
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center shrink-0">
-                  <AlertOctagon className="w-4 h-4 text-rose-400" />
-                </div>
-                <div>
-                  <div className="font-black text-rose-300 text-xs flex items-center gap-1.5 group-hover/failarrow:text-rose-200">
-                    <span>{isAr ? `تفريعة [لا / NO] ➔ إصدار NCR وحجز وارتجاع 🛑 ➔` : `NO Branch ➔ Issue NCR, Quarantine & Return 🛑 ➔`}</span>
-                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping" />
-                  </div>
-                  <div className="text-[10px] text-slate-300 mt-0.5">
-                    {isAr ? `عزل فوري، إصدار تقرير عدم مطابقة، وتحويل لـ [${props.failTitleAr}]` : `Instant isolation, NCR issuance & routing to [${props.failTitleEn}]`}
-                  </div>
-                </div>
-              </div>
-              <span className="px-2 py-0.5 rounded-lg bg-rose-500/20 text-rose-300 font-mono font-black text-xs border border-rose-500/40 shrink-0 flex items-center gap-1">
-                <span>{props.failCount}</span>
-                <ArrowUpRight className="w-3 h-3 group-hover/failarrow:translate-x-0.5 transition-transform" />
-              </span>
-            </button>
-          </div>
+        {/* Downward Pass Conduit to Next Station */}
+        <div className="flex flex-col items-center mt-3">
+          <div className="w-1.5 h-7 rounded-full bg-gradient-to-b from-emerald-500 via-emerald-400 to-transparent" />
+          <div className="text-emerald-400 text-xs font-black -mt-2 animate-bounce">▼</div>
         </div>
       </div>
     );
@@ -4055,38 +3920,17 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
         questionEn: 'Are incoming raw materials compliant with quality specs & receiving plans?',
         accentColor: '#f59e0b',
         nextStageNumber: 2,
+        nextStageNameAr: 'المرحلة 2: صالة الإنتاج والتصنيع (IPQC)',
+        nextStageNameEn: 'Stage 2: In-Process Manufacturing (IPQC)',
         passCount: getStageRecordStats('DEPT-STAGE-INCOMING').pass,
         failCount: getStageRecordStats('DEPT-STAGE-INCOMING').fail,
         failTitleAr: 'رصيف حجر الخامات QRN-01 وارتجاع المورد',
         failTitleEn: 'Quarantine Dock QRN-01 & Supplier Return',
+        failNcrRoute: '/ncr',
         failTargetAction: () => {
-          scrollToStage('LANE-RED-QUARANTINE-IQC', true);
+          setActiveStageDrawer({ stageNumber: 1, stageId: 'DEPT-STAGE-INCOMING' });
         }
       })}
-
-      {/* DEDICATED INLINE REJECTION DOCK FOR GATE 1 (تفريعة لا / NO) */}
-      <div className="w-full max-w-3xl mx-auto -mt-2 mb-3 p-4 sm:p-5 rounded-3xl bg-slate-900/95 border-2 border-dashed border-rose-500/60 shadow-xl space-y-3">
-        <div className="flex items-center justify-between pb-2.5 border-b border-rose-500/20">
-          <span className="px-3 py-1 rounded-xl bg-rose-500/20 text-rose-300 font-mono font-black text-xs border border-rose-500/40 flex items-center gap-2">
-            <AlertOctagon className="w-4 h-4 text-rose-400" />
-            <span>{isAr ? '🛑 تفريعة [لا / NO]: رصيف حجر الوارد (QRN-01) وإصدار تقرير عدم مطابقة (NCR) وارتجاع للمورد' : '🛑 [NO Branch]: Raw Materials Quarantine (QRN-01), NCR & Supplier Return'}</span>
-          </span>
-          <span className="text-xs text-rose-300 font-mono font-black">
-            {getStageRecordStats('DEPT-STAGE-INCOMING').fail} {isAr ? 'حجز نشط' : 'Held'}
-          </span>
-        </div>
-        {renderRawQuarantineDock()}
-      </div>
-
-      {/* CONFORMING MATERIAL FORWARD FLOW CONNECTOR (مسار نعم / YES) */}
-      <div className="flex flex-col items-center my-3">
-        <div className="px-4 py-1.5 rounded-full bg-emerald-500/20 border-2 border-emerald-500/40 text-emerald-300 text-xs font-black flex items-center gap-2 shadow-lg shadow-emerald-950/40">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-          <span>{isAr ? '⬇ مسار [نعم / YES]: انتقال الخامات المقبولة إلى صالة الإنتاج والتصنيع (المرحلة 2)' : '⬇ [YES Branch]: Conforming Raw Materials Advance to In-Process (Stage 2)'}</span>
-          <ArrowDown className="w-4 h-4 text-emerald-400 animate-bounce" />
-        </div>
-        <div className="w-1.5 h-6 bg-gradient-to-b from-emerald-500 via-teal-500 to-cyan-500 rounded-full" />
-      </div>
 
       {/* STAGE 2: IPQC */}
       {renderProcessNode({
@@ -4109,38 +3953,17 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
         questionEn: 'Are in-process samples within SPC control limits & free of critical defects?',
         accentColor: '#06b6d4',
         nextStageNumber: 4,
+        nextStageNameAr: 'المرحلة 4: التفتيش النهائي للمنتج التام (OQC)',
+        nextStageNameEn: 'Stage 4: Outgoing Final Quality (OQC)',
         passCount: getStageRecordStats('DEPT-STAGE-INPROCESS').pass,
         failCount: getStageRecordStats('DEPT-STAGE-INPROCESS').fail,
-        failTitleAr: 'المرحلة 3: مركز تقارير عدم المطابقة NCR والتحقيق 8D',
-        failTitleEn: 'Stage 3: NCR & 8D Problem Solving Hub',
+        failTitleAr: 'المرحلة 3: مركز تقارير عدم المطابقة NCR وعزل الخط والتحقيق 8D و CAPA',
+        failTitleEn: 'Stage 3: NCR, Line Containment & 8D / CAPA Investigation Hub',
+        failNcrRoute: '/d8',
         failTargetAction: () => {
-          scrollToStage('DEPT-STAGE-RESOLUTION', true);
+          setActiveStageDrawer({ stageNumber: 3, stageId: 'DEPT-STAGE-RESOLUTION' });
         }
       })}
-
-      {/* DEDICATED INLINE REJECTION DOCK FOR GATE 2 (تفريعة لا / NO) */}
-      <div className="w-full max-w-3xl mx-auto -mt-2 mb-3 p-4 sm:p-5 rounded-3xl bg-slate-900/95 border-2 border-dashed border-rose-500/60 shadow-xl space-y-3">
-        <div className="flex items-center justify-between pb-2.5 border-b border-rose-500/20">
-          <span className="px-3 py-1 rounded-xl bg-rose-500/20 text-rose-300 font-mono font-black text-xs border border-rose-500/40 flex items-center gap-2">
-            <AlertOctagon className="w-4 h-4 text-rose-400" />
-            <span>{isAr ? '🛑 تفريعة [لا / NO]: المرحلة 3 - مركز تقارير عدم المطابقة (NCR)، عزل الخط، وتحقيق 8D / CAPA' : '🛑 [NO Branch]: Stage 3 - NCR Resolution Hub, Containment & 8D / CAPA'}</span>
-          </span>
-          <span className="text-xs text-rose-300 font-mono font-black">
-            {getStageRecordStats('DEPT-STAGE-RESOLUTION').fail} {isAr ? 'حالة نشطة' : 'Active'}
-          </span>
-        </div>
-        {renderResolutionHubNode()}
-      </div>
-
-      {/* CONFORMING MATERIAL FORWARD FLOW CONNECTOR (مسار نعم / YES) */}
-      <div className="flex flex-col items-center my-3">
-        <div className="px-4 py-1.5 rounded-full bg-emerald-500/20 border-2 border-emerald-500/40 text-emerald-300 text-xs font-black flex items-center gap-2 shadow-lg shadow-emerald-950/40">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-          <span>{isAr ? '⬇ مسار [نعم / YES]: انتقال المنتجات المقبولة إلى التفتيش النهائي (المرحلة 4)' : '⬇ [YES Branch]: Conforming Parts Advance to Final Inspection (Stage 4)'}</span>
-          <ArrowDown className="w-4 h-4 text-emerald-400 animate-bounce" />
-        </div>
-        <div className="w-1.5 h-6 bg-gradient-to-b from-cyan-500 via-emerald-500 to-emerald-400 rounded-full" />
-      </div>
 
       {/* STAGE 4: OQC */}
       {renderProcessNode({
@@ -4163,38 +3986,17 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
         questionEn: 'Are finished goods lots fully compliant with AQL acceptance criteria?',
         accentColor: '#10b981',
         nextStageNumber: 5,
+        nextStageNameAr: 'المرحلة 5: تسليمات العملاء وشكاوى الميدان (CSM)',
+        nextStageNameEn: 'Stage 5: Customer Delivery & Claims (CSM)',
         passCount: getStageRecordStats('DEPT-STAGE-OUTGOING').pass,
         failCount: getStageRecordStats('DEPT-STAGE-OUTGOING').fail,
-        failTitleAr: 'رصيف حجر المنتج النهائي ولجنة MRB',
-        failTitleEn: 'Finished Goods Quarantine & MRB',
+        failTitleAr: 'رصيف حجر المنتج النهائي QRN-04 ولجنة مراجعة المواد MRB',
+        failTitleEn: 'Finished Goods Quarantine QRN-04 & MRB Disposition',
+        failNcrRoute: '/ncr',
         failTargetAction: () => {
-          scrollToStage('LANE-RED-QUARANTINE-OQC', true);
+          setActiveStageDrawer({ stageNumber: 4, stageId: 'DEPT-STAGE-OUTGOING' });
         }
       })}
-
-      {/* DEDICATED INLINE REJECTION DOCK FOR GATE 4 (تفريعة لا / NO) */}
-      <div className="w-full max-w-3xl mx-auto -mt-2 mb-3 p-4 sm:p-5 rounded-3xl bg-slate-900/95 border-2 border-dashed border-rose-500/60 shadow-xl space-y-3">
-        <div className="flex items-center justify-between pb-2.5 border-b border-rose-500/20">
-          <span className="px-3 py-1 rounded-xl bg-rose-500/20 text-rose-300 font-mono font-black text-xs border border-rose-500/40 flex items-center gap-2">
-            <AlertOctagon className="w-4 h-4 text-rose-400" />
-            <span>{isAr ? '🛑 تفريعة [لا / NO]: رصيف حجر المنتج النهائي (QRN-04) ولجنة مراجعة المواد MRB (فرز/تكهين)' : '🛑 [NO Branch]: Finished Goods Quarantine (QRN-04) & MRB Disposition'}</span>
-          </span>
-          <span className="text-xs text-rose-300 font-mono font-black">
-            {getStageRecordStats('DEPT-STAGE-OUTGOING').fail} {isAr ? 'محجوز' : 'Held'}
-          </span>
-        </div>
-        {renderFinishedQuarantineDock()}
-      </div>
-
-      {/* CONFORMING MATERIAL FORWARD FLOW CONNECTOR (مسار نعم / YES) */}
-      <div className="flex flex-col items-center my-3">
-        <div className="px-4 py-1.5 rounded-full bg-emerald-500/20 border-2 border-emerald-500/40 text-emerald-300 text-xs font-black flex items-center gap-2 shadow-lg shadow-emerald-950/40">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-          <span>{isAr ? '⬇ مسار [نعم / YES]: إجازة الشحن والتسليم للمستودعات والعملاء (المرحلة 5)' : '⬇ [YES Branch]: Final Clearance to Logistics & Customer Delivery (Stage 5)'}</span>
-          <ArrowDown className="w-4 h-4 text-emerald-400 animate-bounce" />
-        </div>
-        <div className="w-1.5 h-6 bg-gradient-to-b from-emerald-500 to-indigo-500 rounded-full" />
-      </div>
 
       {/* STAGE 5: CUSTOMER QA */}
       {renderProcessNode({
@@ -4217,38 +4019,17 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
         questionEn: 'Are customer deliveries accepted without warranty claims or field defects?',
         accentColor: '#6366f1',
         nextStageNumber: 6,
+        nextStageNameAr: 'المرحلة 6: المختبر الهندسي والتدقيق (LAB)',
+        nextStageNameEn: 'Stage 6: Engineering Lab & Audits (LAB)',
         passCount: getStageRecordStats('DEPT-STAGE-CUSTOMER').pass,
         failCount: getStageRecordStats('DEPT-STAGE-CUSTOMER').fail,
-        failTitleAr: 'مركز تسوية مرتجعات الضمان RMA',
-        failTitleEn: 'Warranty Returns RMA Center',
+        failTitleAr: 'مركز تسوية مرتجعات الضمان RMA واستخلاص الأسباب لـ FMEA',
+        failTitleEn: 'Warranty Returns RMA Center & FMEA Root-Cause',
+        failNcrRoute: '/complaints',
         failTargetAction: () => {
-          scrollToStage('LANE-RED-RETURNS-RMA', true);
+          setActiveStageDrawer({ stageNumber: 5, stageId: 'DEPT-STAGE-CUSTOMER' });
         }
       })}
-
-      {/* DEDICATED INLINE REJECTION DOCK FOR GATE 5 (تفريعة لا / NO) */}
-      <div className="w-full max-w-3xl mx-auto -mt-2 mb-3 p-4 sm:p-5 rounded-3xl bg-slate-900/95 border-2 border-dashed border-rose-500/60 shadow-xl space-y-3">
-        <div className="flex items-center justify-between pb-2.5 border-b border-rose-500/20">
-          <span className="px-3 py-1 rounded-xl bg-rose-500/20 text-rose-300 font-mono font-black text-xs border border-rose-500/40 flex items-center gap-2">
-            <AlertOctagon className="w-4 h-4 text-rose-400" />
-            <span>{isAr ? '🛑 تفريعة [لا / NO]: مركز تسوية مرتجعات الضمان (RMA) واستخلاص الأسباب الجذرية لـ FMEA' : '🛑 [NO Branch]: Warranty Returns RMA Center & Root-Cause'}</span>
-          </span>
-          <span className="text-xs text-rose-300 font-mono font-black">
-            {getStageRecordStats('DEPT-STAGE-CUSTOMER').fail} {isAr ? 'مرتجع' : 'RMA'}
-          </span>
-        </div>
-        {renderReturnsQuarantineDock()}
-      </div>
-
-      {/* CONFORMING MATERIAL FORWARD FLOW CONNECTOR (مسار نعم / YES) */}
-      <div className="flex flex-col items-center my-3">
-        <div className="px-4 py-1.5 rounded-full bg-emerald-500/20 border-2 border-emerald-500/40 text-emerald-300 text-xs font-black flex items-center gap-2 shadow-lg shadow-emerald-950/40">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-          <span>{isAr ? '⬇ مسار [نعم / YES]: استمرار التدفق إلى المختبر الهندسي واعتماد البيانات' : '⬇ [YES Branch]: Continue to Engineering Lab & Master Data'}</span>
-          <ArrowDown className="w-3.5 h-3.5 text-emerald-400 animate-bounce" />
-        </div>
-        <div className="w-1.5 h-6 bg-gradient-to-b from-indigo-500 to-purple-500 rounded-full" />
-      </div>
 
       {/* STAGE 6: LAB & AUDITS */}
       {renderProcessNode({
