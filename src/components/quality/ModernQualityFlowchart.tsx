@@ -1363,7 +1363,10 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
                       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                       <span>{isAr ? 'مقبول (Pass)' : 'Pass'}</span>
                     </span>
-                    <span className="text-[9px] text-emerald-400/70 font-mono opacity-0 group-hover/pass:opacity-100 transition-opacity">↗</span>
+                    <span className="px-1.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 text-[10px] font-mono font-black flex items-center gap-0.5 border border-emerald-500/30 shrink-0" title={isAr ? 'سهم مسار المقبول' : 'Pass Arrow'}>
+                      <span>إجازة</span>
+                      <ArrowDown className="w-2.5 h-2.5 text-emerald-400" />
+                    </span>
                   </div>
 
                   <div className="flex items-baseline justify-between mt-1.5">
@@ -1384,7 +1387,7 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
                   </div>
                 </div>
 
-                {/* 2. SEPARATE FAIL BOX (مربع المرفوض المستقل) */}
+                {/* 2. SEPARATE FAIL BOX (مربع المرفوض المستقل مع سهم الحجز) */}
                 <div 
                   onClick={(e) => {
                     e.stopPropagation();
@@ -1404,7 +1407,14 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
                       <AlertOctagon className={`w-3.5 h-3.5 shrink-0 ${cardStats.fail > 0 ? 'text-rose-400' : 'text-slate-500'}`} />
                       <span>{isAr ? 'مرفوض (Fail)' : 'Fail'}</span>
                     </span>
-                    <span className="text-[9px] text-rose-400/70 font-mono opacity-0 group-hover/fail:opacity-100 transition-opacity">↗</span>
+                    <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-mono font-black flex items-center gap-0.5 border shrink-0 ${
+                      cardStats.fail > 0 
+                        ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' 
+                        : 'bg-black/30 text-slate-500 border-slate-800'
+                    }`} title={isAr ? 'سهم مسار الحجر' : 'Hold Arrow'}>
+                      <span>حجز</span>
+                      <ArrowUpRight className="w-2.5 h-2.5" />
+                    </span>
                   </div>
 
                   <div className="flex items-baseline justify-between mt-1.5">
@@ -1444,7 +1454,7 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
                 <b className="text-white text-xs">{cardStats.total}</b> {isAr ? 'سجل' : 'items'} ↗
               </button>
 
-              {/* TWO SEPARATED BOXES */}
+              {/* TWO SEPARATED BOXES WITH EXPLICIT ARROWS */}
               <div className="flex items-center gap-1.5 font-mono text-[10px] font-bold">
                 {/* Separate Pass Box */}
                 <button
@@ -1454,11 +1464,12 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
                     handleOpenDrilldown(station, stageNumber, 'pass');
                   }}
                   className="px-2 py-0.5 rounded-lg bg-emerald-950/60 hover:bg-emerald-900/80 text-emerald-300 border border-emerald-500/40 transition-all cursor-pointer flex items-center gap-1 shadow-sm"
-                  title={isAr ? 'اضغط لفتح السجلات المقبولة' : 'Click to view accepted records'}
+                  title={isAr ? 'اضغط لفتح السجلات المقبولة وسهم الإجازة' : 'Click to view accepted records'}
                 >
                   <CheckCircle2 className="w-3 h-3 text-emerald-400" />
                   <span>{cardStats.pass}</span>
                   <span className="text-[9px] font-sans text-emerald-400/80">{isAr ? 'مقبول' : 'Pass'}</span>
+                  <ArrowDown className="w-2.5 h-2.5 text-emerald-400 shrink-0" />
                 </button>
 
                 {/* Separate Fail Box */}
@@ -1473,13 +1484,14 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
                       ? 'bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 border-rose-500/40' 
                       : 'bg-black/40 text-slate-500 border-slate-800'
                   }`}
-                  title={isAr ? 'اضغط لفتح السجلات المرفوضة ومسار الحجز' : 'Click to view rejected records'}
+                  title={isAr ? 'اضغط لفتح السجلات المرفوضة وسهم مسار الحجز' : 'Click to view rejected records'}
                 >
                   <AlertOctagon className={`w-3 h-3 ${cardStats.fail > 0 ? 'text-rose-400' : 'text-slate-500'}`} />
                   <span>{cardStats.fail}</span>
                   <span className={`text-[9px] font-sans ${cardStats.fail > 0 ? 'text-rose-400/80' : 'text-slate-500'}`}>
                     {isAr ? 'مرفوض' : 'Fail'}
                   </span>
+                  <ArrowUpRight className="w-2.5 h-2.5 shrink-0" />
                 </button>
               </div>
             </div>
@@ -3472,31 +3484,39 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
             </div>
           </div>
 
-          {/* Quick Metrics and Action Pill - Two Separated Boxes */}
+          {/* Quick Metrics and Action Pill - Two Separated Boxes with Explicit Directional Arrows */}
           <div className="flex items-center gap-2 self-end sm:self-auto shrink-0 flex-wrap">
-            {/* Separate Pass Box */}
+            {/* Separate Pass Box with Pass Arrow */}
             <div 
               className="px-2.5 py-1.5 rounded-xl bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 text-xs font-mono font-black flex items-center gap-1.5 shadow-sm"
-              title={isAr ? 'عدد السجلات المطابقة المقبولة (Pass)' : 'Conforming Pass Records'}
+              title={isAr ? 'عدد السجلات المطابقة المقبولة وسهم الإجازة (Pass)' : 'Conforming Pass Records & Arrow'}
             >
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
               <span>{stats.pass}</span>
               <span className="text-[10px] font-sans font-bold text-emerald-400/80">{isAr ? 'مقبول' : 'Pass'}</span>
+              <span className="px-1 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-mono flex items-center gap-0.5" title={isAr ? 'سهم الإجازة للإنتاج' : 'Pass Flow Arrow'}>
+                <ArrowDown className="w-2.5 h-2.5 text-emerald-400" />
+              </span>
             </div>
 
-            {/* Separate Fail Box */}
+            {/* Separate Fail Box with Fail Arrow */}
             <div 
               className={`px-2.5 py-1.5 rounded-xl border text-xs font-mono font-black flex items-center gap-1.5 shadow-sm ${
                 stats.fail > 0
                   ? 'bg-rose-950/70 border-rose-500/50 text-rose-300'
                   : 'bg-black/40 border-slate-700/40 text-slate-500'
               }`}
-              title={isAr ? 'عدد السجلات المرفوضة والمحجوزة (Fail)' : 'Non-Conforming Fail Records'}
+              title={isAr ? 'عدد السجلات المرفوضة والمحجوزة وسهم التحويل لـ NCR (Fail)' : 'Non-Conforming Fail Records & Arrow'}
             >
               <AlertOctagon className={`w-3.5 h-3.5 shrink-0 ${stats.fail > 0 ? 'text-rose-400' : 'text-slate-500'}`} />
               <span>{stats.fail}</span>
               <span className={`text-[10px] font-sans font-bold ${stats.fail > 0 ? 'text-rose-400/80' : 'text-slate-500'}`}>
                 {isAr ? 'مرفوض' : 'Fail'}
+              </span>
+              <span className={`px-1 py-0.5 rounded text-[10px] font-mono flex items-center gap-0.5 ${
+                stats.fail > 0 ? 'bg-rose-500/20 text-rose-300' : 'bg-black/30 text-slate-500'
+              }`} title={isAr ? 'سهم الحجز للـ NCR' : 'Quarantine Arrow'}>
+                <ArrowUpRight className="w-2.5 h-2.5" />
               </span>
             </div>
 
@@ -3543,11 +3563,11 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
     const isFailBranchSim = isSimAtGate && simulationType === 'fail';
 
     return (
-      <div id={`GATEWAY-${props.gateNumber}`} className="my-3.5 w-full max-w-2xl mx-auto flex flex-col items-center">
+      <div id={`GATEWAY-${props.gateNumber}`} className="my-5 w-full max-w-3xl mx-auto flex flex-col items-center">
         {/* Downward Pipe into Gateway */}
-        <div className="w-1 h-5 rounded-full" style={{ backgroundColor: props.accentColor }} />
+        <div className="w-1.5 h-6 rounded-full" style={{ backgroundColor: props.accentColor }} />
 
-        {/* Diamond Card Container */}
+        {/* Diamond Header Banner Box */}
         <div
           className={`relative w-full p-4 sm:p-5 rounded-3xl bg-gradient-to-b from-slate-900 via-[#0a1122] to-slate-950 border-2 shadow-xl transition-all ${
             isSimAtGate ? 'ring-2 ring-amber-400/80 shadow-2xl' : ''
@@ -3558,7 +3578,7 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
           <div className="flex items-center justify-between gap-3 border-b border-white/10 pb-3">
             <div className="flex items-center gap-3">
               <div
-                className="w-9 h-9 rounded-xl flex items-center justify-center font-black text-xs rotate-45 border-2 shrink-0 shadow-md"
+                className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm rotate-45 border-2 shrink-0 shadow-md"
                 style={{
                   backgroundColor: `${props.accentColor}20`,
                   borderColor: props.accentColor,
@@ -3588,72 +3608,148 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
             </span>
           </div>
 
-          {/* TWO DIRECT EXPLICIT BRANCHES */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3.5">
-            {/* 1. GREEN PASS BRANCH ⬇️ */}
-            <div className={`p-3 rounded-2xl border flex flex-col justify-between shadow-sm transition-all ${
+          {/* TWO SEPARATED DEDICATED PATHWAY BOXES (Pass Box vs Fail Box) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+            {/* 1. GREEN PASS BOX */}
+            <div className={`p-4 rounded-2xl border-2 flex flex-col justify-between shadow-md transition-all ${
               isPassBranchSim 
-                ? 'bg-emerald-950/80 border-emerald-400 ring-4 ring-emerald-400 shadow-xl shadow-emerald-500/40 scale-[1.02] animate-pulse'
-                : 'bg-emerald-950/30 border-emerald-500/40'
+                ? 'bg-emerald-950/90 border-emerald-400 ring-4 ring-emerald-400 shadow-xl shadow-emerald-500/40 scale-[1.02] animate-pulse'
+                : 'bg-emerald-950/40 border-emerald-500/50 hover:border-emerald-400'
             }`}>
-              <div className="flex items-center justify-between">
-                <span className="px-2 py-0.5 rounded-lg bg-emerald-500/20 text-emerald-300 font-black text-[11px] border border-emerald-500/40 flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                  <span>{isAr ? '✓ مطابق (PASS)' : '✓ Pass'}</span>
-                </span>
-                <span className="font-mono text-xs font-black text-emerald-300">
-                  {props.passCount} {isAr ? 'مجاز' : 'Pass'}
-                </span>
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="px-2.5 py-1 rounded-xl bg-emerald-500/20 text-emerald-300 font-black text-xs border border-emerald-500/40 flex items-center gap-1.5 shadow-sm">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>{isAr ? '✓ مطابق (PASS)' : '✓ Pass'}</span>
+                  </span>
+                  <span className="font-mono text-xs font-black text-emerald-300 bg-emerald-950/80 px-2.5 py-1 rounded-lg border border-emerald-500/30">
+                    {props.passCount} {isAr ? 'مجاز' : 'Pass'}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-300 mt-2 font-medium leading-relaxed">
+                  {isAr ? `مطابق: يستمر مباشرة للمرحلة ${props.nextStageNumber}` : `Conforming: Advances to Stage ${props.nextStageNumber}`}
+                </p>
               </div>
-              <p className="text-[11px] text-slate-300 mt-2">
-                {isAr ? `مطابق: يستمر مباشرة للمرحلة ${props.nextStageNumber}` : `Conforming: Advances to Stage ${props.nextStageNumber}`}
-              </p>
-              <div className="mt-2.5 pt-2 border-t border-emerald-500/20 flex items-center justify-between text-xs font-bold text-emerald-300">
-                <span>{isAr ? `مسار الإنتاج ⬇` : `Production Stream ⬇`}</span>
-                <ArrowDown className={`w-3.5 h-3.5 text-emerald-400 ${isPassBranchSim ? 'animate-bounce' : ''}`} />
+
+              <div className="mt-4 pt-3 border-t border-emerald-500/20 flex items-center justify-between text-xs font-bold text-emerald-300">
+                <span>{isAr ? `مسار الإنتاج المعتمد` : `Production Stream`}</span>
+                <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 font-mono text-[11px] font-black flex items-center gap-1 border border-emerald-500/30">
+                  <span>إجازة</span>
+                  <ArrowDown className={`w-3.5 h-3.5 text-emerald-400 ${isPassBranchSim ? 'animate-bounce' : ''}`} />
+                </span>
               </div>
             </div>
 
-            {/* 2. RED FAIL BRANCH ➡️ */}
-            <div className={`p-3 rounded-2xl border flex flex-col justify-between shadow-sm transition-all ${
+            {/* 2. RED FAIL BOX */}
+            <div className={`p-4 rounded-2xl border-2 flex flex-col justify-between shadow-md transition-all ${
               isFailBranchSim
                 ? 'bg-rose-950/90 border-rose-400 ring-4 ring-rose-500 shadow-xl shadow-rose-500/50 scale-[1.02] animate-pulse'
-                : 'bg-rose-950/30 border-rose-500/40'
+                : 'bg-rose-950/40 border-rose-500/50 hover:border-rose-400'
             }`}>
-              <div className="flex items-center justify-between">
-                <span className="px-2 py-0.5 rounded-lg bg-rose-500/20 text-rose-300 font-black text-[11px] border border-rose-500/40 flex items-center gap-1">
-                  <AlertOctagon className="w-3 h-3 text-rose-400" />
-                  <span>{isAr ? '✕ غير مطابق (FAIL)' : '✕ Fail'}</span>
-                </span>
-                <span className="font-mono text-xs font-black text-rose-300">
-                  {props.failCount} {isAr ? 'محجوز' : 'Hold'}
-                </span>
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="px-2.5 py-1 rounded-xl bg-rose-500/20 text-rose-300 font-black text-xs border border-rose-500/40 flex items-center gap-1.5 shadow-sm">
+                    <AlertOctagon className="w-4 h-4 text-rose-400 shrink-0" />
+                    <span>{isAr ? '✕ غير مطابق (FAIL)' : '✕ Fail'}</span>
+                  </span>
+                  <span className="font-mono text-xs font-black text-rose-300 bg-rose-950/80 px-2.5 py-1 rounded-lg border border-rose-500/30">
+                    {props.failCount} {isAr ? 'محجوز' : 'Hold'}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-300 mt-2 font-medium leading-relaxed">
+                  {isAr ? `حظر وتحويل إلى: ${props.failTitleAr}` : `Diverted to: ${props.failTitleEn}`}
+                </p>
               </div>
-              <p className="text-[11px] text-slate-300 mt-2">
-                {isAr ? `حظر وتحويل إلى: ${props.failTitleAr}` : `Diverted to: ${props.failTitleEn}`}
-              </p>
-              <div className="mt-2.5 pt-2 border-t border-rose-500/20">
+
+              <div className="mt-4 pt-3 border-t border-rose-500/20">
                 <button
                   type="button"
                   onClick={props.failTargetAction}
-                  className={`w-full py-1 px-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95 ${
+                  className={`w-full py-2 px-3 rounded-xl font-black text-xs flex items-center justify-center gap-2 transition-all shadow-md active:scale-95 cursor-pointer ${
                     isFailBranchSim
                       ? 'bg-rose-500 text-white animate-bounce shadow-lg shadow-rose-500/50'
                       : 'bg-rose-600 hover:bg-rose-500 text-white'
                   }`}
                 >
-                  <span>{isAr ? `تفرع لـ [${props.failTitleAr}] ➡️` : `Divert to [${props.failTitleEn}] ➡️`}</span>
-                  <ArrowUpRight className="w-3 h-3" />
+                  <span>{isAr ? `تفرع لـ [${props.failTitleAr}]` : `Divert to [${props.failTitleEn}]`}</span>
+                  <ArrowUpRight className="w-4 h-4" />
                 </button>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Downward Pipe out to next stage */}
-        <div className="flex flex-col items-center mt-1.5">
-          <div className="w-1.5 h-5 rounded-full bg-gradient-to-b from-emerald-500 to-emerald-400" />
-          <div className="text-emerald-400 text-xs font-bold -mt-1.5">▼</div>
+        {/* TWO SEPARATED ARROWS IN TWO SEPARATED CONDUIT BOXES */}
+        <div className="w-full max-w-3xl grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2 px-1">
+          {/* 1. SEPARATE PASS ARROW & EXIT CONDUIT BOX */}
+          <div className="flex flex-col items-center">
+            {/* Animated Green Flow Pipe & Down Arrow */}
+            <div className="flex flex-col items-center">
+              <div className="w-2 h-8 rounded-full bg-gradient-to-b from-emerald-500 via-emerald-400 to-emerald-500 relative shadow-md shadow-emerald-500/50">
+                <div className="w-2.5 h-2.5 rounded-full bg-emerald-300 absolute -top-1 -left-0.5 animate-ping" />
+              </div>
+              <div className="text-emerald-400 text-base font-black -mt-1.5 animate-bounce">▼</div>
+            </div>
+
+            {/* Separate Pass Output Indicator Box */}
+            <div className="mt-1 w-full p-3 rounded-2xl bg-gradient-to-r from-emerald-950/70 to-slate-900 border-2 border-emerald-500/50 flex items-center justify-between text-xs shadow-lg shadow-emerald-950/40">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                </div>
+                <div>
+                  <div className="font-black text-emerald-300 text-xs flex items-center gap-1.5">
+                    <span>{isAr ? `سهم المقبول ➔ المرحلة ${props.nextStageNumber}` : `Pass Arrow ➔ Stage ${props.nextStageNumber}`}</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  </div>
+                  <div className="text-[10px] text-slate-300 mt-0.5">
+                    {isAr ? 'إفراج مباشر وصرف لصالة الإنتاج' : 'Approved direct flow to next stage'}
+                  </div>
+                </div>
+              </div>
+              <span className="px-2 py-0.5 rounded-lg bg-emerald-500/20 text-emerald-300 font-mono font-black text-xs border border-emerald-500/40 shrink-0">
+                {props.passCount} ⬇
+              </span>
+            </div>
+          </div>
+
+          {/* 2. SEPARATE FAIL ARROW & EXIT CONDUIT BOX */}
+          <div className="flex flex-col items-center">
+            {/* Animated Red Flow Pipe & Down Arrow */}
+            <div className="flex flex-col items-center">
+              <div className="w-2 h-8 rounded-full bg-gradient-to-b from-rose-500 via-rose-400 to-rose-600 relative shadow-md shadow-rose-500/50">
+                <div className="w-2.5 h-2.5 rounded-full bg-rose-400 absolute -top-1 -left-0.5 animate-ping" />
+              </div>
+              <div className="text-rose-400 text-base font-black -mt-1.5 animate-bounce">▼</div>
+            </div>
+
+            {/* Separate Fail Output Indicator Box */}
+            <button
+              type="button"
+              onClick={props.failTargetAction}
+              className="mt-1 w-full p-3 rounded-2xl bg-gradient-to-r from-rose-950/70 to-slate-900 hover:from-rose-900/80 hover:to-slate-900 border-2 border-rose-500/50 flex items-center justify-between text-xs shadow-lg shadow-rose-950/40 transition-all group/failarrow text-start cursor-pointer hover:scale-[1.01]"
+              title={isAr ? 'اضغط لفتح مسار الحجر وتقارير NCR' : 'Click to inspect NCR quarantine path'}
+            >
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center shrink-0">
+                  <AlertOctagon className="w-4 h-4 text-rose-400" />
+                </div>
+                <div>
+                  <div className="font-black text-rose-300 text-xs flex items-center gap-1.5 group-hover/failarrow:text-rose-200">
+                    <span>{isAr ? `سهم المرفوض ➔ رصيف الحجر و NCR` : `Fail Arrow ➔ Quarantine & NCR`}</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping" />
+                  </div>
+                  <div className="text-[10px] text-slate-300 mt-0.5">
+                    {isAr ? 'عزل فوري، فحص MRB وإجراء 8D' : 'Quarantine hold, MRB & 8D actions'}
+                  </div>
+                </div>
+              </div>
+              <span className="px-2 py-0.5 rounded-lg bg-rose-500/20 text-rose-300 font-mono font-black text-xs border border-rose-500/40 shrink-0 flex items-center gap-1">
+                <span>{props.failCount}</span>
+                <ArrowUpRight className="w-3 h-3 group-hover/failarrow:translate-x-0.5 transition-transform" />
+              </span>
+            </button>
+          </div>
         </div>
       </div>
     );
