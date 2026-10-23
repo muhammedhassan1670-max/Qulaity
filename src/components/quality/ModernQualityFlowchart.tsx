@@ -1218,7 +1218,7 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
     );
   };
 
-  // ADVANCED GEOMETRIC DECISION DIAMOND WITH DUAL-BRANCH CORRIDORS
+  // ADVANCED GEOMETRIC DECISION DIAMOND WITH DUAL-BRANCH CORRIDORS & QUARANTINE DOCK
   const renderDecisionDiamond = ({
     gateNumber,
     questionAr,
@@ -1248,11 +1248,36 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
       (gateNumber === 2 && trackedLot.currentStageNumber === 3)
     );
 
+    const deptIdForGate: Record<number, string> = {
+      1: 'DEPT-STAGE-INCOMING',
+      2: 'DEPT-STAGE-INPROCESS',
+      3: 'DEPT-STAGE-RESOLUTION',
+      4: 'DEPT-STAGE-OUTGOING',
+      5: 'DEPT-STAGE-CUSTOMER',
+    };
+    const gateDeptId = deptIdForGate[gateNumber] || 'DEPT-STAGE-INCOMING';
+    const stageStats = getStageRecordStats(gateDeptId);
+
+    const stageNamesAr: Record<number, string> = {
+      2: 'المرحلة 2: جودة التصنيع والعمليات (IPQC)',
+      3: 'المرحلة 3: عدم المطابقة وحل المشكلات (NCR)',
+      4: 'المرحلة 4: فحص وخروج المنتج النهائي (OQC)',
+      5: 'المرحلة 5: شكاوى العملاء والميدان (Customer QA)',
+      6: 'المرحلة 6: المختبر والتدقيق الهندسي',
+    };
+    const stageNamesEn: Record<number, string> = {
+      2: 'Stage 2: In-Process Quality (IPQC)',
+      3: 'Stage 3: Problem Solving & NCR',
+      4: 'Stage 4: Outgoing Quality (OQC)',
+      5: 'Stage 5: Customer Quality & Complaints',
+      6: 'Stage 6: Engineering Lab & Audits',
+    };
+
     return (
       <div className="relative my-7 flex flex-col items-center w-full">
         {/* Incoming Flow Pipe from Stage */}
         <div className="flex flex-col items-center">
-          <div className="w-1 h-6 rounded-full" style={{ backgroundColor: accentColor }} />
+          <div className="w-1.5 h-7 rounded-full" style={{ backgroundColor: accentColor }} />
           <div className="w-2.5 h-2.5 rounded-full animate-ping -mt-1" style={{ backgroundColor: accentColor }} />
         </div>
 
@@ -1354,7 +1379,7 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
                     <AlertTriangle className="w-4 h-4 text-rose-400" />
                     <span>{isAr ? 'لا • غير مطابق أو رُصد خلل' : 'NO • Non-Conformance'}</span>
                   </span>
-                  <span className="text-[11px] font-mono text-rose-400 font-black">FAIL ➡️</span>
+                  <span className="text-[11px] font-mono text-rose-400 font-black">FAIL ⬇️</span>
                 </div>
                 <p className="text-xs text-slate-300 font-medium leading-relaxed">
                   {isAr ? failLabelAr : failLabelEn}
@@ -1381,9 +1406,202 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
           </div>
         </div>
 
-        {/* Outgoing Flow Pipe to Next Stage */}
+        {/* DUAL-BRANCH OUTGOING CONDUITS (Pass ⬇️ vs Fail ⬇️) */}
+        <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 px-1">
+          {/* 1. PASS CONDUIT (المسار المعتمد والمطابق) */}
+          <div className="flex flex-col items-center">
+            {/* Animated Pipe */}
+            <div className="flex flex-col items-center">
+              <div className="w-2 h-10 rounded-full bg-gradient-to-b from-emerald-500 via-emerald-400 to-emerald-500 relative shadow-lg shadow-emerald-500/50">
+                <div className="w-3 h-3 rounded-full bg-emerald-300 absolute -top-1 -left-0.5 animate-ping" />
+              </div>
+              <div className="text-emerald-400 text-base font-black -mt-1 animate-bounce">▼</div>
+            </div>
+
+            {/* Path Route Indicator Card */}
+            <div className="mt-2 w-full p-3.5 rounded-2xl bg-gradient-to-r from-emerald-950/40 to-slate-900 border-2 border-emerald-500/50 flex items-center justify-between shadow-xl shadow-emerald-950/30">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                </div>
+                <div>
+                  <div className="text-xs font-black text-emerald-300 flex items-center gap-1.5">
+                    <span>{isAr ? 'مسار الإفراج والاعتماد المباشر (PASS)' : 'Approved Production Path (PASS)'}</span>
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  </div>
+                  <div className="text-[11px] text-slate-300 mt-0.5">
+                    {isAr 
+                      ? `يتدفق مباشرة إلى ${stageNamesAr[passTargetStageNumber] || `المرحلة ${passTargetStageNumber}`}` 
+                      : `Flows directly to ${stageNamesEn[passTargetStageNumber] || `Stage ${passTargetStageNumber}`}`}
+                  </div>
+                </div>
+              </div>
+              <span className="px-2.5 py-1 rounded-xl bg-emerald-500/20 text-emerald-300 font-mono font-black text-xs border border-emerald-500/40 shrink-0">
+                {stageStats.pass} {isAr ? 'مجاز' : 'Pass'} ⬇
+              </span>
+            </div>
+          </div>
+
+          {/* 2. FAIL CONDUIT (مسار عدم المطابقة والحجر) */}
+          <div className="flex flex-col items-center">
+            {/* Animated Pipe */}
+            <div className="flex flex-col items-center">
+              <div className="w-2 h-10 rounded-full bg-gradient-to-b from-rose-500 via-rose-400 to-rose-600 relative shadow-lg shadow-rose-500/50">
+                <div className="w-3 h-3 rounded-full bg-rose-400 absolute -top-1 -left-0.5 animate-ping" />
+              </div>
+              <div className="text-rose-400 text-base font-black -mt-1 animate-bounce">▼</div>
+            </div>
+
+            {/* Path Route Indicator Card */}
+            <div className="mt-2 w-full p-3.5 rounded-2xl bg-gradient-to-r from-rose-950/40 to-slate-900 border-2 border-rose-500/50 flex items-center justify-between shadow-xl shadow-rose-950/30">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center shrink-0">
+                  <AlertOctagon className="w-4 h-4 text-rose-400" />
+                </div>
+                <div>
+                  <div className="text-xs font-black text-rose-300 flex items-center gap-1.5">
+                    <span>{isAr ? 'مسار الحجر وعدم المطابقة (FAIL)' : 'Quarantine & Containment Path (FAIL)'}</span>
+                    <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
+                  </div>
+                  <div className="text-[11px] text-slate-300 mt-0.5">
+                    {isAr ? 'عزل فوري وإجراءات الحظر ورصيف الحجر' : 'Instant Isolation & Quarantine Actions'}
+                  </div>
+                </div>
+              </div>
+              <span className="px-2.5 py-1 rounded-xl bg-rose-500/20 text-rose-300 font-mono font-black text-xs border border-rose-500/40 shrink-0">
+                {stageStats.fail} {isAr ? 'محجوز' : 'Quarantined'} ⬇
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* DEDICATED QUARANTINE & IMMEDIATE CONTAINMENT DOCK (رصيف حجر المرفوض وإجراءات الـ NCR) */}
+        {targetNcr && (
+          <div className="w-full max-w-4xl mt-3 p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-rose-950/60 via-slate-900/95 to-slate-950 border-2 border-rose-500/50 shadow-2xl backdrop-blur-md">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-rose-500/20">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center shrink-0">
+                  <AlertOctagon className="w-5 h-5 text-rose-400" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-mono font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-rose-500/20 text-rose-300 border border-rose-500/40">
+                      {isAr ? 'رصيف العزل والحجر الفوري' : 'Quarantine Containment Dock'}
+                    </span>
+                    <span className="text-[11px] text-rose-400 font-mono font-bold">
+                      QRN-0{gateNumber}
+                    </span>
+                    {isLotDivertedHere && (
+                      <span className="px-2 py-0.5 rounded-full bg-rose-500 text-slate-950 text-[10px] font-black animate-pulse">
+                        {isAr ? `اللوط ${trackedLot.lotNumber} متوقف هنا` : `Lot Stopped Here`}
+                      </span>
+                    )}
+                  </div>
+                  <h4 className="text-sm font-black text-white mt-0.5">
+                    {isAr ? `إجراءات حظر وعزل الشحنات غير المطابقة (بوابة #${gateNumber})` : `Immediate Quarantine & Non-Conformance Actions (Gate #${gateNumber})`}
+                  </h4>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="px-3 py-1 rounded-full bg-rose-950/80 border border-rose-500/40 text-xs font-mono font-black text-rose-300">
+                  {stageStats.fail} {isAr ? 'شحنات محجوزة' : 'Quarantined'}
+                </span>
+              </div>
+            </div>
+
+            {/* 3 Immediate Industrial Quality Actions */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
+              {/* Action 1: Physical Quarantine Tag */}
+              <div className="p-3.5 rounded-2xl bg-slate-950/70 border border-white/5 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center gap-2 text-rose-400 text-xs font-bold mb-1">
+                    <Lock className="w-4 h-4 shrink-0" />
+                    <span>{isAr ? '1. الحظر والعزل الفيزيائي' : '1. Physical Quarantine'}</span>
+                  </div>
+                  <p className="text-[11px] text-slate-300 leading-relaxed">
+                    {isAr ? 'وضع علامة الحجر الحمراء لمنع خلط الشحنة أو دخولها لخط الإنتاج.' : 'Apply red quarantine tag to isolate material from production lines.'}
+                  </p>
+                </div>
+                <div className="mt-3 flex items-center gap-1.5 text-[10px] font-mono text-emerald-400 font-bold">
+                  <Check className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>{isAr ? 'منطقة العزل مؤمنة (Active Hold)' : 'Quarantine Zone Active'}</span>
+                </div>
+              </div>
+
+              {/* Action 2: Open Electronic NCR Form */}
+              <div className="p-3.5 rounded-2xl bg-slate-950/70 border border-white/5 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center gap-2 text-rose-400 text-xs font-bold mb-1">
+                    <FileText className="w-4 h-4 shrink-0" />
+                    <span>{isAr ? '2. تقرير عدم مطابقة NCR' : '2. Electronic NCR Report'}</span>
+                  </div>
+                  <p className="text-[11px] text-slate-300 leading-relaxed">
+                    {isAr ? 'توثيق حالة عدم المطابقة إلكترونياً وتحديد السبب المبدئي.' : 'Log instant electronic non-conformance report to track cost of quality.'}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => navigate('/ncr')}
+                  className="mt-3 w-full py-1.5 px-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-md shadow-rose-950/40 hover:scale-[1.02]"
+                >
+                  <PlusCircle className="w-3.5 h-3.5" />
+                  <span>{isAr ? 'فتح نموذج NCR جديد' : 'Create NCR Report'}</span>
+                </button>
+              </div>
+
+              {/* Action 3: Branch to Stage 3 Problem Solving Hub */}
+              <div className="p-3.5 rounded-2xl bg-gradient-to-br from-rose-900/30 to-slate-950/80 border border-rose-500/40 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center gap-2 text-rose-300 text-xs font-bold mb-1">
+                    <Workflow className="w-4 h-4 shrink-0 text-rose-400" />
+                    <span>{isAr ? '3. التحويل للمرحلة 3 (NCR & 8D)' : '3. Escalate to Stage 3'}</span>
+                  </div>
+                  <p className="text-[11px] text-slate-300 leading-relaxed">
+                    {isAr ? 'تصعيد الشحنة لمركز حل المشكلات 8D ولجنة MRB لتحديد المصير.' : 'Direct hydraulic branch pipeline connected to Stage 3 resolution center.'}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => scrollToStage('DEPT-STAGE-RESOLUTION', true)}
+                  className="mt-3 w-full py-2 px-3 rounded-xl bg-gradient-to-r from-rose-600 via-rose-700 to-rose-800 hover:from-rose-500 hover:to-rose-600 text-white font-black text-xs flex items-center justify-center gap-1.5 transition-all shadow-md shadow-rose-950/50 hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  <span>{isAr ? '⚡ انتقال للمرحلة 3 (NCR & 8D)' : 'Branch to Stage 3'}</span>
+                  <ArrowUpRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Diverted Lot Specific Notice */}
+            {isLotDivertedHere && (
+              <div className="mt-3 p-3 rounded-xl bg-rose-950/80 border border-rose-500/60 flex items-center justify-between text-xs text-rose-200">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-rose-400 animate-ping" />
+                  <span className="font-bold">{isAr ? `تنبيه خاص باللوط المتتبع ${trackedLot.lotNumber}:` : `Tracked Lot Alert:`}</span>
+                  <span>{isAr ? trackedLot.stopReasonAr : trackedLot.stopReasonEn}</span>
+                </div>
+                <span className="px-2 py-0.5 rounded-md bg-rose-500 text-slate-950 font-black text-[10px]">
+                  {isAr ? 'محجوز هنا' : 'Held Here'}
+                </span>
+              </div>
+            )}
+
+            {/* Bottom Pipeline Notification */}
+            <div className="pt-2.5 mt-2.5 border-t border-rose-500/20 flex flex-wrap items-center justify-between text-[11px] text-rose-300/80 font-mono gap-2">
+              <span className="flex items-center gap-1.5">
+                <GitFork className="w-3.5 h-3.5 text-rose-400 rotate-90" />
+                <span>{isAr ? 'مسار تفريع المرفوض: مربوط مباشرة بمركز المرحلة 3 لحل المشكلات' : 'Rejection Branch: Connected directly to Stage 3 Resolution Center'}</span>
+              </span>
+              <span className="text-[10px] text-slate-400 font-bold">
+                IATF 16949 §8.7 • Control of Nonconforming Outputs
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Final Outgoing Flow Pipe to Next Stage */}
         <div className="flex flex-col items-center mt-3">
-          <div className="w-1 h-6 rounded-full bg-gradient-to-b from-emerald-500 to-transparent" />
+          <div className="w-1.5 h-8 rounded-full bg-gradient-to-b from-emerald-500 via-emerald-400 to-transparent" />
           <div className="text-emerald-400 text-xs font-bold -mt-2">▼</div>
         </div>
       </div>
@@ -2729,11 +2947,11 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
           gateNumber: 2,
           questionAr: 'هل عينات التشغيل والقياسات ضمن حدود الضبط SPC وخالية من العيوب الحرجة؟',
           questionEn: 'Are in-process samples within SPC control limits & free of critical defects?',
-          passLabelAr: `مطابق ومستقر: ${getStageRecordStats('DEPT-STAGE-INPROCESS').pass} عملية إنتاج سليمة ومجازة للمرحلة التالية ⬇️`,
-          passLabelEn: `Conforming: ${getStageRecordStats('DEPT-STAGE-INPROCESS').pass} conforming processes cleared for next step ⬇️`,
-          passTargetStageNumber: 3,
-          failLabelAr: `خلل أو أندون: ${getStageRecordStats('DEPT-STAGE-INPROCESS').fail} عيوب استدعت حجز الإنتاج والتصعيد لـ NCR و 8D ➡️`,
-          failLabelEn: `Alert / Out of Control: ${getStageRecordStats('DEPT-STAGE-INPROCESS').fail} defects escalated to NCR & 8D ➡️`,
+          passLabelAr: `مطابق ومستقر: ${getStageRecordStats('DEPT-STAGE-INPROCESS').pass} عملية إنتاج سليمة ومجازة للمرحلة 4 (فحص المنتج النهائي OQC) ⬇️`,
+          passLabelEn: `Conforming: ${getStageRecordStats('DEPT-STAGE-INPROCESS').pass} conforming processes cleared for Stage 4 (Outgoing OQC) ⬇️`,
+          passTargetStageNumber: 4,
+          failLabelAr: `خلل أو أندون: ${getStageRecordStats('DEPT-STAGE-INPROCESS').fail} عيوب استدعت حجز الإنتاج والتصعيد لـ NCR و 8D ⬇️`,
+          failLabelEn: `Alert / Out of Control: ${getStageRecordStats('DEPT-STAGE-INPROCESS').fail} defects escalated to NCR & 8D ⬇️`,
           accentColor: '#06b6d4',
           targetNcr: true
         })}
@@ -2766,7 +2984,12 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-slate-300">
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="px-2 py-0.5 rounded-md bg-rose-500/20 border border-rose-500/30 text-[10px] font-bold text-rose-300">
+                        {isAr ? '🔄 مركز الاستقبال والتفريغ المباشر لكافة بوابات القرار (Gateways 1, 2, 4)' : 'Central Receiving Hub for Rejections from Gateways 1, 2, 4'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-300 mt-1">
                       {isAr 
                         ? 'مركز احتواء العيوب: تقارير NCR، الإجراءات التصحيحية CAPA، مشاريع 8D، تصاريح الحيود، وضبط التغيير الهندسي' 
                         : 'NCR reports, CAPA actions, 8D root-cause investigations, concessions & engineering change control'}
