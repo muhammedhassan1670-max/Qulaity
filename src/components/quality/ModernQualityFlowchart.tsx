@@ -2425,6 +2425,186 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
     );
   };
 
+  // DEDICATED INDUSTRIAL CUSTOMER RETURNED DEVICES FACTORY RE-ENTRY PIPELINE
+  // مسار وخط دخول أجهزة العميل المرتجعة إلى المصنع
+  const renderCustomerReturnedDevicesReentry = () => {
+    const stageStats = getStageRecordStats('DEPT-STAGE-CUSTOMER');
+    return (
+      <div 
+        id="CUSTOMER-DEVICES-REENTRY-PIPELINE"
+        className="my-5 w-full max-w-4xl mx-auto p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-slate-900 via-[#0a1128] to-slate-950 border-2 border-indigo-500/60 shadow-2xl space-y-4"
+      >
+        {/* Banner Header */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-indigo-500/20">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 border-2 border-indigo-500 text-indigo-400 flex items-center justify-center shrink-0 shadow-lg shadow-indigo-500/20">
+              <RotateCcw className="w-6 h-6 animate-spin" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-lg text-xs font-mono font-black bg-indigo-500/20 text-indigo-300 border border-indigo-500/40">
+                  PHYSICAL RMA RE-ENTRY • مسار دخول الأجهزة للمصنع
+                </span>
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+              </div>
+              <h3 className="text-base sm:text-lg font-black text-white mt-0.5">
+                {isAr 
+                  ? '🔄 مسار وخط دخول أجهزة العميل المرتجعة إلى المصنع (Customer RMA Intake & Rework Line)' 
+                  : 'Customer Devices Physical Re-Entry & Factory Rework Pipeline'}
+              </h3>
+              <p className="text-xs text-slate-300 mt-0.5">
+                {isAr 
+                  ? 'خطوات عودة الأجهزة المعيبة فيزيائياً: من رصيف استلام RMA، ثم مختبر فحص وتفكيك الجهاز، ثم الدخول المباشر لخط صيانة المصنع وإعادة الاختبار' 
+                  : 'Physical journey of returned units: RMA intake dock ➔ Teardown & diagnostic lab ➔ Factory rework line ➔ Final OQC re-test'}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="px-3 py-1 rounded-full bg-rose-500/20 text-rose-300 font-mono text-xs font-bold border border-rose-500/30">
+              {stageStats.fail} {isAr ? 'أجهزة قيد المعالجة' : 'In Rework'}
+            </span>
+          </div>
+        </div>
+
+        {/* 4-STEP CONNECTED PHYSICAL PIPELINE GRID */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+          {/* Station 1: RMA Inward Dock */}
+          <div className="p-3.5 rounded-2xl bg-slate-950/70 border border-indigo-500/30 hover:border-indigo-400 transition-all flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="px-2 py-0.5 rounded-lg bg-indigo-500/20 text-indigo-300 font-mono text-[10px] font-black border border-indigo-500/30">
+                  RMA-01
+                </span>
+                <span className="text-[10px] text-slate-400 font-mono">1. رصيف الاستلام</span>
+              </div>
+              <h5 className="text-xs sm:text-sm font-black text-indigo-200">
+                {isAr ? 'استلام وحجر أجهزة RMA' : 'RMA Intake & Quarantine Dock'}
+              </h5>
+              <p className="text-[11px] text-slate-300 mt-1.5 leading-relaxed">
+                {isAr 
+                  ? 'وصول الجهاز المعيب من العميل ➔ تسجيل رقم السيريال ➔ تثبيت كارت الحجر الأحمر 🔒 لمنع الصرف أو الاستخدام الخاطئ.' 
+                  : 'Receives returned device, logs serial number & attaches physical red quarantine tag 🔒.'}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate('/complaints')}
+              className="mt-3 w-full py-1.5 px-2.5 rounded-xl bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-500/30 font-bold text-[11px] flex items-center justify-center gap-1 transition-all cursor-pointer"
+            >
+              <span>{isAr ? 'سجل استلام RMA ➔' : 'View RMA Dock ➔'}</span>
+              <ArrowUpRight className="w-3 h-3" />
+            </button>
+          </div>
+
+          {/* Station 2: Teardown & Failure Analysis Lab */}
+          <div className="p-3.5 rounded-2xl bg-slate-950/70 border border-purple-500/30 hover:border-purple-400 transition-all flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="px-2 py-0.5 rounded-lg bg-purple-500/20 text-purple-300 font-mono text-[10px] font-black border border-purple-500/30">
+                  FA-01
+                </span>
+                <span className="text-[10px] text-slate-400 font-mono">2. مختبر التشخيص</span>
+              </div>
+              <h5 className="text-xs sm:text-sm font-black text-purple-200">
+                {isAr ? 'مختبر فحص وتفكيك الجهاز' : 'Teardown & Diagnostics Lab'}
+              </h5>
+              <p className="text-[11px] text-slate-300 mt-1.5 leading-relaxed">
+                {isAr 
+                  ? 'تفكيك الجهاز بالكامل وتشخيصه لتحديد مصدر الخلل: (عيب تجميع بالإنتاج / عيب خامة من مورد / سوء استخدام عميل).' 
+                  : 'Device teardown and diagnostic tests to pinpoint root failure: assembly, supplier part, or field abuse.'}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate('/d8')}
+              className="mt-3 w-full py-1.5 px-2.5 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/30 font-bold text-[11px] flex items-center justify-center gap-1 transition-all cursor-pointer"
+            >
+              <span>{isAr ? 'تقرير فحص العطل FA ➔' : 'Teardown Report ➔'}</span>
+              <ArrowUpRight className="w-3 h-3" />
+            </button>
+          </div>
+
+          {/* Station 3: Factory Rework & Refurbishment Line (The Main Entry Line!) */}
+          <div className="p-3.5 rounded-2xl bg-cyan-950/40 border-2 border-cyan-400/80 hover:border-cyan-300 transition-all flex flex-col justify-between shadow-lg shadow-cyan-950/50">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="px-2 py-0.5 rounded-lg bg-cyan-500/30 text-cyan-200 font-mono text-[10px] font-black border border-cyan-400/50 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
+                  <span>RWK-01 • خط المصنع</span>
+                </span>
+                <span className="text-[10px] text-cyan-300 font-mono font-bold">3. خط الدخول</span>
+              </div>
+              <h5 className="text-xs sm:text-sm font-black text-white">
+                {isAr ? '🏭 خط صيانة وإصلاح الأجهزة بالمصنع' : 'Factory Rework & Repair Line'}
+              </h5>
+              <p className="text-[11px] text-cyan-100 mt-1.5 leading-relaxed font-medium">
+                {isAr 
+                  ? 'تدخل الأجهزة لخط صيانة المصنع ➔ استبدال الأجزاء المعيبة وإعادة تجميع وضبط الجهاز ➔ تحويله لفحص OQC النهائي للاعتماد.' 
+                  : 'Enters plant rework line ➔ replaces defective sub-assemblies ➔ re-calibrates ➔ routes to final OQC for re-clearance.'}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => scrollToStage('DEPT-STAGE-INPROCESS', true)}
+              className="mt-3 w-full py-1.5 px-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-[11px] flex items-center justify-center gap-1 transition-all shadow-md cursor-pointer"
+            >
+              <span>{isAr ? 'دخول خط الإنتاج والصيانة ⤴' : 'Enter Plant Rework Line ⤴'}</span>
+              <ArrowUpRight className="w-3 h-3" />
+            </button>
+          </div>
+
+          {/* Station 4: Final Settlement & Replacement */}
+          <div className="p-3.5 rounded-2xl bg-slate-950/70 border border-emerald-500/30 hover:border-emerald-400 transition-all flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="px-2 py-0.5 rounded-lg bg-emerald-500/20 text-emerald-300 font-mono text-[10px] font-black border border-emerald-500/30">
+                  DSP-01
+                </span>
+                <span className="text-[10px] text-slate-400 font-mono">4. التصرف والتعويض</span>
+              </div>
+              <h5 className="text-xs sm:text-sm font-black text-emerald-200">
+                {isAr ? 'صرف جهاز بديل وإغلاق البلاغ' : 'Replacement & Claim Settlement'}
+              </h5>
+              <p className="text-[11px] text-slate-300 mt-1.5 leading-relaxed">
+                {isAr 
+                  ? 'صرف فوري لجهاز جديد مطابق للعميل من مستودع المنتج التام دون انتظار انتهاء الإصلاح، مع ارتجاع القطعة التالفة للمورد SCAR.' 
+                  : 'Dispatches instant replacement unit to customer from finished stock, and issues supplier chargeback for bad parts.'}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate('/outgoing-quality')}
+              className="mt-3 w-full py-1.5 px-2.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 font-bold text-[11px] flex items-center justify-center gap-1 transition-all cursor-pointer"
+            >
+              <span>{isAr ? 'صرف بديل من OQC ➔' : 'Release Replacement ➔'}</span>
+              <ArrowUpRight className="w-3 h-3" />
+            </button>
+          </div>
+        </div>
+
+        {/* Visual Animated Re-Entry Conduit Banner */}
+        <div className="p-3 rounded-2xl bg-cyan-950/30 border border-cyan-500/30 flex flex-col sm:flex-row items-center justify-between gap-2.5 text-xs">
+          <div className="flex items-center gap-2 text-cyan-300 font-bold">
+            <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping shrink-0" />
+            <span>
+              {isAr 
+                ? '🔄 خط السير الفيزيائي: العميل ➔ رصيف استلام RMA ➔ مختبر تفكيك FA ➔ خط صيانة المصنع RWK ➔ فحص OQC ➔ جهاز سليم 100%' 
+                : '🔄 Physical Route: Customer ➔ RMA Inward ➔ Teardown FA Lab ➔ Factory Rework Line ➔ Final OQC ➔ 100% Conforming'}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => scrollToStage('DEPT-STAGE-OUTGOING', true)}
+            className="px-2.5 py-1 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-black text-[11px] flex items-center gap-1 shrink-0 cursor-pointer"
+          >
+            <span>{isAr ? 'الفحص النهائي OQC ⤴' : 'Final OQC ⤴'}</span>
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   // DEDICATED INDUSTRIAL CUSTOMER-TO-FACTORY CLOSED-LOOP LINKAGE CARD
   // شبكة ربط العميل النهائي بالمصنع (Customer ➔ Factory Closed Loop)
   const renderCustomerToFactoryLoop = () => {
@@ -2788,13 +2968,13 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
     <div className="w-full">
       {renderDecisionDiamond({
         gateNumber: 5,
-        questionAr: 'هل تم حل شكوى العميل، تسوية المرتجع RMA، واستخلاص السبب الفني؟',
-        questionEn: 'Has customer claim been settled, RMA processed & technical feedback extracted?',
-        passLabelAr: 'التسليم سليم وخالي من الشكاوى ➔ استمرار التدفق إلى المختبر الهندسي والبيانات وتأكيد الجودة الشاملة ⬇',
-        passLabelEn: 'Delivery accepted without claims ➔ Continue to Engineering Lab & Quality Master Data ⬇',
+        questionAr: 'هل تسليمات المنتجات للعميل مقبولة 100% بدون أي مردودات أجهزة أو بلاغات ضمان؟',
+        questionEn: 'Are finished deliveries accepted by customer without claims or warranty returns?',
+        passLabelAr: 'إجازة التسليم للعميل بنجاح ➔ إغلاق أمر التوريد والبيع ⬇',
+        passLabelEn: 'Conforming Delivery ➔ Complete Dispatch Cycle ⬇',
         passTargetStageNumber: 6,
-        failLabelAr: 'رصد شكوى أو مرتجع ضمان ➔ فتح إذن استرداد المواد RMA، تسجيل تكلفة العيب، وتحديث FMEA 🛑 ➔',
-        failLabelEn: 'Customer claim / warranty return ➔ Open RMA authorization, log quality cost & update FMEA 🛑 ➔',
+        failLabelAr: 'مسار دخول أجهزة RMA المرتجعة ➔ رصيف الاستلام ومختبر التفكيك وخط صيانة المصنع 🛑 ➔',
+        failLabelEn: 'Customer RMA Returns ➔ Teardown & Factory Rework Line 🛑 ➔',
         accentColor: '#6366f1',
         targetNcr: true
       })}
@@ -3368,10 +3548,10 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
                   </span>
                   <div>
                     <h3 className="text-sm sm:text-base font-black text-white">
-                      {isAr ? 'المرحلة 5: العميل النهائي والتسليم للميدان (End Customer & Delivery)' : 'Stage 5: End Customer Delivery & Field QA'}
+                      {isAr ? 'المرحلة 5: العميل النهائي ومردودات الميدان (Customer & RMA Field)' : 'Stage 5: End Customer & RMA Field Returns'}
                     </h3>
                     <p className="text-xs text-slate-400">
-                      {isAr ? 'تسليم المنتج التام للعميل، شهادات المطابقة COC، قياس رضاء العميل CSAT، والربط المغلق بالمصنع' : 'Customer dispatch, COC certificates, CSAT satisfaction & closed-loop factory linkage'}
+                      {isAr ? 'تسليم المنتجات، خدمة العملاء، رصيف استلام أجهزة RMA، مختبر تفكيك وتشخيص العطل، وخط إعادة تشغيل وصيانة الأجهزة بالمصنع' : 'Customer dispatch, service desk, RMA device intake, teardown diagnostics & factory rework line'}
                     </p>
                   </div>
                 </div>
@@ -3379,7 +3559,7 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
                 <div className="flex items-center gap-2">
                   {trackStyle.badge}
                   <span className="text-xs text-indigo-400 font-mono font-bold bg-indigo-950 px-3 py-1 rounded-full border border-indigo-500/30 shrink-0">
-                    1 Tab
+                    {isAr ? '4 محطات متكاملة' : '4 Stations'}
                   </span>
                 </div>
               </div>
@@ -3390,6 +3570,9 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {(stationsByDept.get('DEPT-STAGE-CUSTOMER') || []).map(st => renderCard(st, '#6366f1', 5))}
               </div>
+
+              {/* Customer Devices Physical Re-entry Pipeline */}
+              {renderCustomerReturnedDevicesReentry()}
 
               {/* Customer-to-Factory Closed Loop Network */}
               {renderCustomerToFactoryLoop()}
@@ -4082,34 +4265,37 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
       {renderProcessNode({
         stageNumber: 5,
         stageId: 'DEPT-STAGE-CUSTOMER',
-        code: 'CSM-01',
-        titleAr: 'المرحلة 5: العميل النهائي والتسليم للميدان (End Customer & Delivery)',
-        titleEn: 'Stage 5: End Customer Delivery & Field QA',
-        descAr: 'تسليم المنتج التام للعميل، شهادات المطابقة COC، قياس رضاء العميل CSAT، والربط المغلق بالمصنع',
-        descEn: 'Customer dispatch, COC certificates, CSAT satisfaction & closed-loop factory linkage',
+        code: 'CSM / RMA',
+        titleAr: 'المرحلة 5: العميل النهائي ومردودات الميدان (Customer & RMA Field)',
+        titleEn: 'Stage 5: End Customer Delivery & RMA Field Returns',
+        descAr: 'تسليم المنتجات، خدمة العملاء، رصيف استلام أجهزة RMA، مختبر تفكيك العطل، وخط إعادة التشغيل بالمصنع',
+        descEn: 'Customer dispatch, service desk, RMA device intake, teardown diagnostics & factory rework line',
         accentColor: '#6366f1',
-        stationCount: 1,
+        stationCount: 4,
         icon: <Users className="w-5 h-5" />
       })}
 
       {/* GATEWAY 5 */}
       {renderVisualDecisionGateway({
         gateNumber: 5,
-        questionAr: 'هل تسليمات المنتجات للعميل النهائي مقبولة 100% ومطابقة للطلب بدون أي شكاوى أو مطالبات ضمان؟',
+        questionAr: 'هل تسليمات المنتجات للعميل مقبولة 100% بدون أي مردودات أجهزة أو بلاغات ضمان؟',
         questionEn: 'Are finished goods deliveries accepted by customer without claims or warranty returns?',
         accentColor: '#6366f1',
         nextStageNumber: 6,
-        nextStageNameAr: 'المرحلة 6: المختبر الهندسي والتدقيق (LAB)',
-        nextStageNameEn: 'Stage 6: Engineering Lab & Audits (LAB)',
+        nextStageNameAr: '🏆 إتمام التسليم النهائي بنجاح وتميز تام',
+        nextStageNameEn: '100% Conforming Delivery Completed',
         passCount: getStageRecordStats('DEPT-STAGE-CUSTOMER').pass,
         failCount: getStageRecordStats('DEPT-STAGE-CUSTOMER').fail,
-        failTitleAr: 'شبكة الربط بالمصنع ➔ حجر الإنتاج وتحقيق 8D وتحديث FMEA ومرتجع RMA',
-        failTitleEn: 'Customer-to-Factory Closed Loop ➔ Production Containment, 8D, FMEA & RMA',
+        failTitleAr: 'مسار دخول أجهزة العميل المرتجعة ➔ رصيف RMA ومختبر التفكيك وخط صيانة المصنع 🛑 ➔',
+        failTitleEn: 'Customer RMA Returns Re-Entry to Factory Rework Line 🛑 ➔',
         failNcrRoute: '/complaints',
         failTargetAction: () => {
           setActiveStageDrawer({ stageNumber: 5, stageId: 'DEPT-STAGE-CUSTOMER' });
         }
       })}
+
+      {/* DEDICATED PHYSICAL RE-ENTRY PIPELINE FOR CUSTOMER RETURNED DEVICES */}
+      {renderCustomerReturnedDevicesReentry()}
 
       {/* DEDICATED CUSTOMER-TO-FACTORY LINKAGE NETWORK (شبكة ربط العميل النهائي بالمصنع) */}
       {renderCustomerToFactoryLoop()}
@@ -5290,6 +5476,12 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
 
               {/* 4. Closed Loop Return Card (Loop-back arrow to Production in Lane 1) */}
               {renderClosedLoopCard()}
+
+              {/* 5. Finished Goods OQC Quarantine Dock (QRN-04) */}
+              {renderFinishedQuarantineDock()}
+
+              {/* 6. Customer RMA Returns & Claims Intake Dock (RMA-01) */}
+              {renderReturnsQuarantineDock()}
             </div>
           </div>
         ) : (

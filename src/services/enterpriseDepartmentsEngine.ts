@@ -247,9 +247,17 @@ export const ENTERPRISE_DEPARTMENTS: PlantDepartment[] = [
     inputDescriptionEn: 'Customer feedback, warranty claims & RMA return logs',
     outputDescriptionAr: 'إغلاق شكاوى العملاء وتحويل الخلل المتكرر لمشاريع 8D وإجراءات وقائية',
     outputDescriptionEn: 'Customer claim settlements & closed-loop 8D escalation',
-    stationIds: ['STATION-CUSTOMER-COMPLAINTS'],
+    stationIds: [
+      'STATION-CUSTOMER-COMPLAINTS',
+      'STATION-CUSTOMER-RMA',
+      'STATION-CUSTOMER-FA',
+      'STATION-CUSTOMER-REWORK'
+    ],
     linkedModules: [
-      { id: 'quality-complaint', labelAr: 'سجل شكاوى العملاء', labelEn: 'Customer Complaints Log', path: '/quality/records/complaint', icon: 'AlertCircle', badgeCountKey: 'complaint' },
+      { id: 'quality-complaint', labelAr: 'سجل شكاوى العملاء والـ CSAT', labelEn: 'Customer Complaints Log & CSAT', path: '/complaints', icon: 'AlertCircle', badgeCountKey: 'complaint' },
+      { id: 'quality-rma', labelAr: 'رصيف استلام وتتبع مرتجعات RMA', labelEn: 'Customer RMA Returns Intake', path: '/ncr', icon: 'Truck', badgeCountKey: 'ncr' },
+      { id: 'quality-fa', labelAr: 'مختبر فحص وتفكيك الأجهزة (FA)', labelEn: 'Teardown & Failure Analysis Lab', path: '/d8', icon: 'Brain' },
+      { id: 'quality-rework', labelAr: 'خط صيانة وإعادة تشغيل الأجهزة بالمصنع', labelEn: 'Factory Rework & Repair Line', path: '/quality-shopfloor', icon: 'RotateCcw' },
     ],
     primaryKpiAr: 'معدل شكاوى العملاء بالمليون (Customer PPM)',
     primaryKpiEn: 'Customer Complaints Rate (PPM)',
