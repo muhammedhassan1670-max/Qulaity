@@ -3713,14 +3713,14 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
                 <div className="flex items-center justify-between mb-2">
                   <span className="px-2.5 py-1 rounded-xl bg-emerald-500/20 text-emerald-300 font-black text-xs border border-emerald-500/40 flex items-center gap-1.5 shadow-sm">
                     <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>{isAr ? '✓ مقبولة (PASS)' : '✓ Pass'}</span>
+                    <span>{isAr ? '🟢 [نعم / YES] — مقبولة' : '🟢 [YES] — Pass'}</span>
                   </span>
                   <span className="font-mono text-xs font-black text-emerald-300 bg-emerald-950/80 px-2.5 py-1 rounded-lg border border-emerald-500/30">
                     {props.passCount} {isAr ? 'مجاز' : 'Pass'}
                   </span>
                 </div>
                 <h5 className="text-xs sm:text-sm font-black text-emerald-300 mt-1">
-                  {isAr ? `🟢 لو مقبولة: تروح للمحطة التالية (المرحلة ${props.nextStageNumber})` : `Pass: Advances to Next Station (Stage ${props.nextStageNumber})`}
+                  {isAr ? `🟢 نعم (لو مقبولة): تروح للمحطة التالية (المرحلة ${props.nextStageNumber}) ⬇` : `YES (Pass): Advances to Next Station (Stage ${props.nextStageNumber}) ⬇`}
                 </h5>
                 <p className="text-xs text-slate-300 mt-1 font-medium leading-relaxed">
                   {isAr ? `الخامة أو اللوط مطابق للمواصفة 100% ➔ تدفق وإجازة مباشرة للأمام` : `100% Conforming lot ➔ Advances directly to production stream`}
@@ -3728,7 +3728,7 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
               </div>
 
               <div className="mt-4 pt-3 border-t border-emerald-500/20 flex items-center justify-between text-xs font-bold text-emerald-300">
-                <span>{isAr ? `الذهاب للمحطة التالية ⬇` : `Advances to Next Station ⬇`}</span>
+                <span>{isAr ? `مسار [نعم / YES] ➔ تروح للمحطة التالية ⬇` : `YES Path ➔ Advances to Next Station ⬇`}</span>
                 <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 font-mono text-[11px] font-black flex items-center gap-1 border border-emerald-500/30">
                   <span>إجازة</span>
                   <ArrowDown className={`w-3.5 h-3.5 text-emerald-400 ${isPassBranchSim ? 'animate-bounce' : ''}`} />
@@ -3746,14 +3746,14 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
                 <div className="flex items-center justify-between mb-2">
                   <span className="px-2.5 py-1 rounded-xl bg-rose-500/20 text-rose-300 font-black text-xs border border-rose-500/40 flex items-center gap-1.5 shadow-sm">
                     <AlertOctagon className="w-4 h-4 text-rose-400 shrink-0" />
-                    <span>{isAr ? '✕ مرفوضة (FAIL)' : '✕ Fail'}</span>
+                    <span>{isAr ? '🛑 [لا / NO] — مرفوضة' : '🛑 [NO] — Fail'}</span>
                   </span>
                   <span className="font-mono text-xs font-black text-rose-300 bg-rose-950/80 px-2.5 py-1 rounded-lg border border-rose-500/30">
                     {props.failCount} {isAr ? 'محجوز' : 'Hold'}
                   </span>
                 </div>
                 <h5 className="text-xs sm:text-sm font-black text-rose-300 mt-1">
-                  {isAr ? `🛑 لو مرفوضة: يتعمل بيها NCR وحجز وارتجاع` : `Fail: Issue NCR, Quarantine & Return`}
+                  {isAr ? `🛑 لا (لو مرفوضة): يتعمل بيها NCR وحجز وارتجاع 🛑 ➔` : `NO (Fail): Issue NCR, Quarantine & Return 🛑 ➔`}
                 </h5>
                 <p className="text-xs text-slate-300 mt-1 font-medium leading-relaxed">
                   {isAr ? `رُصد عيب أو خلل ➔ عزل فوري، فتح تقرير عدم مطابقة NCR، وتحويل لطريق المرفوضات` : `Defect detected ➔ Instant isolation, NCR issuance & diversion to Rejects Track`}
@@ -3770,7 +3770,7 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
                       : 'bg-rose-600 hover:bg-rose-500 text-white'
                   }`}
                 >
-                  <span>{isAr ? `إصدار تقرير NCR وحجز وارتجاع [${props.failTitleAr}] 🛑 ➔` : `Issue NCR & Divert to [${props.failTitleEn}] 🛑 ➔`}</span>
+                  <span>{isAr ? `تفريعة [لا / NO] ➔ إصدار NCR وحجز [${props.failTitleAr}] 🛑 ➔` : `[NO Branch] ➔ Issue NCR & Divert to [${props.failTitleEn}] 🛑 ➔`}</span>
                   <ArrowUpRight className="w-4 h-4" />
                 </button>
               </div>
@@ -3798,7 +3798,7 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
                 </div>
                 <div>
                   <div className="font-black text-emerald-300 text-xs flex items-center gap-1.5">
-                    <span>{isAr ? `سهم المقبول ➔ تروح للمحطة التالية (${props.nextStageNumber}) ⬇` : `Pass Arrow ➔ Advances to Stage ${props.nextStageNumber} ⬇`}</span>
+                    <span>{isAr ? `مسار [نعم / YES] ➔ تروح للمحطة التالية (${props.nextStageNumber}) ⬇` : `YES Path ➔ Advances to Stage ${props.nextStageNumber} ⬇`}</span>
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                   </div>
                   <div className="text-[10px] text-slate-300 mt-0.5">
@@ -3835,7 +3835,7 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
                 </div>
                 <div>
                   <div className="font-black text-rose-300 text-xs flex items-center gap-1.5 group-hover/failarrow:text-rose-200">
-                    <span>{isAr ? `سهم المرفوض ➔ إصدار NCR وحجز وارتجاع 🛑 ➔` : `Fail Arrow ➔ Issue NCR, Quarantine & Return 🛑 ➔`}</span>
+                    <span>{isAr ? `تفريعة [لا / NO] ➔ إصدار NCR وحجز وارتجاع 🛑 ➔` : `NO Branch ➔ Issue NCR, Quarantine & Return 🛑 ➔`}</span>
                     <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping" />
                   </div>
                   <div className="text-[10px] text-slate-300 mt-0.5">
@@ -3995,299 +3995,300 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
     );
   };
 
-  // THE FULL CLEAN PROCESS DIAGRAM FLOW - TWO PARALLEL LANES (PASS TRACK vs FAIL & QUARANTINE TRACK)
+  // THE FULL CLEAN PROCESS DIAGRAM FLOW - UNIFIED INDUSTRIAL FLOWCHART WITH EXPLICIT YES / NO GATEWAYS
   const renderCleanProcessDiagram = () => (
-    <div className="space-y-4 py-4">
-      {/* Visual Dual-Track Grid Layout: Pass Track (7 cols) vs Rejects Track (5 cols) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* ========================================================================= */}
-        {/* TRACK 1: 🟢 طريق الإنتاج والمقبول (Production & Conforming Pass Track) */}
-        {/* ========================================================================= */}
-        <div className="lg:col-span-7 space-y-4">
-          {/* Track 1 Header Banner */}
-          <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-emerald-950/80 via-slate-900 to-teal-950/80 border-2 border-emerald-500/50 shadow-2xl flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center shrink-0 shadow-lg shadow-emerald-500/20">
-                <CheckCircle2 className="w-6 h-6 text-emerald-400" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 font-mono font-black text-xs border border-emerald-500/40">
-                    PASS TRACK • CONFORMING STREAM
-                  </span>
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                </div>
-                <h3 className="text-base font-black text-emerald-400 mt-0.5">
-                  {isAr ? '🟢 طريق الإنتاج والمقبول (المسار المعتمد)' : 'Approved Production Stream (Pass Track)'}
-                </h3>
-                <p className="text-xs text-slate-300">
-                  {isAr 
-                    ? 'تدفق الخامات والأجزاء المجازة (Pass) من الاستلام إلى خروج المنتج التام' 
-                    : 'Uninterrupted conforming flow from incoming dock to finished goods delivery'}
-                </p>
-              </div>
+    <div className="w-full max-w-4xl mx-auto space-y-4 py-4">
+      {/* Integrated Process Diagram Header Banner */}
+      <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-slate-900 via-slate-950 to-slate-900 border-2 border-cyan-500/40 shadow-2xl flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 flex items-center justify-center shrink-0 shadow-lg shadow-cyan-500/20">
+            <Workflow className="w-6 h-6 text-cyan-400" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="px-2 py-0.5 rounded-md bg-cyan-500/20 text-cyan-300 font-mono font-black text-xs border border-cyan-500/40">
+                INTEGRATED PROCESS FLOWCHART
+              </span>
+              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
             </div>
-            <span className="hidden sm:inline-flex px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 font-mono text-xs font-bold border border-emerald-500/30">
-              {globalFactoryStats.pass} {isAr ? 'عملية مطابقة' : 'Pass'}
-            </span>
+            <h3 className="text-base sm:text-lg font-black text-white mt-0.5">
+              {isAr ? '🗺️ خريطة العمليات الموحدة: مسار التدفق الصناعي وقرارات (YES / NO)' : 'Integrated Process Flowchart: Industrial Stream & YES/NO Gates'}
+            </h3>
+            <p className="text-xs text-slate-300">
+              {isAr 
+                ? 'الخامة تدخل وتتفحص ➔ لو [نعم / YES] تروح للمحطة التالية ⬇ | لو [لا / NO] تخرج فوراً لـ NCR وحجز وارتجاع 🛑 ➔' 
+                : 'Incoming material inspected ➔ [YES] flows down to next station ⬇ | [NO] branches to NCR, quarantine & return 🛑 ➔'}
+            </p>
           </div>
-
-          {/* Start Terminal */}
-          {renderStartTerminal()}
-
-          {/* STAGE 1: IQC */}
-          {renderProcessNode({
-            stageNumber: 1,
-            stageId: 'DEPT-STAGE-INCOMING',
-            code: 'IQC-01',
-            titleAr: 'المرحلة 1: استلام وتفتيش الخامات والموردين (IQC)',
-            titleEn: 'Stage 1: Incoming & Supplier Quality (IQC)',
-            descAr: 'تفتيش الشحنات الواردة، تقييم الموردين، وتحليل شهادات التحليل COA',
-            descEn: 'Receiving inspection, supplier scorecards & COA verification',
-            accentColor: '#f59e0b',
-            stationCount: 3,
-            icon: <Truck className="w-5 h-5" />
-          })}
-
-          {/* GATEWAY 1 */}
-          {renderVisualDecisionGateway({
-            gateNumber: 1,
-            questionAr: 'هل المواد الخام والشحنات الواردة مطابقة للمواصفات وخطط الفحص؟',
-            questionEn: 'Are incoming raw materials compliant with quality specs & receiving plans?',
-            accentColor: '#f59e0b',
-            nextStageNumber: 2,
-            passCount: getStageRecordStats('DEPT-STAGE-INCOMING').pass,
-            failCount: getStageRecordStats('DEPT-STAGE-INCOMING').fail,
-            failTitleAr: 'رصيف حجر الخامات QRN-01 في طريق المرفوضات',
-            failTitleEn: 'Quarantine Dock QRN-01 in Fail Track',
-            failTargetAction: () => {
-              scrollToStage('LANE-RED-QUARANTINE-IQC', true);
-            }
-          })}
-
-          {/* Horizontal Cross Shunt Arrow to Red Track */}
-          {renderCrossLaneShunt(
-            'رصيف حجر الخامات QRN-01 بطريق المرفوضات ➡️',
-            'Quarantine Dock QRN-01 in Rejects Track ➡️',
-            'LANE-RED-QUARANTINE-IQC',
-            'الشحنات المرفوضة في فحص الاستلام تنحرف عرضياً نحو رصيف الحجر الصحي QRN-01 في طريق المرفوضات',
-            'Rejected incoming lots shunt across into Quarantine Dock QRN-01 in the Rejects Track'
-          )}
-
-          {/* STAGE 2: IPQC */}
-          {renderProcessNode({
-            stageNumber: 2,
-            stageId: 'DEPT-STAGE-INPROCESS',
-            code: 'IPQC-01',
-            titleAr: 'المرحلة 2: جودة صالة الإنتاج والتحكم الإحصائي (IPQC)',
-            titleEn: 'Stage 2: In-Process Quality & SPC (IPQC)',
-            descAr: 'تسجيل صالة الإنتاج، قائمة العيوب اليومية، كارتات ضبط SPC، وبوابات الخلوص',
-            descEn: 'Shopfloor fast entry, daily defect logs, SPC control charts & clearance gates',
-            accentColor: '#06b6d4',
-            stationCount: 4,
-            icon: <Activity className="w-5 h-5" />
-          })}
-
-          {/* GATEWAY 2 */}
-          {renderVisualDecisionGateway({
-            gateNumber: 2,
-            questionAr: 'هل عينات التشغيل والقياسات ضمن حدود الضبط SPC وخالية من العيوب الحرجة؟',
-            questionEn: 'Are in-process samples within SPC control limits & free of critical defects?',
-            accentColor: '#06b6d4',
-            nextStageNumber: 4,
-            passCount: getStageRecordStats('DEPT-STAGE-INPROCESS').pass,
-            failCount: getStageRecordStats('DEPT-STAGE-INPROCESS').fail,
-            failTitleAr: 'المرحلة 3: مركز عدم المطابقة والـ 8D بطريق المرفوضات',
-            failTitleEn: 'Stage 3: NCR & 8D in Fail Track',
-            failTargetAction: () => {
-              scrollToStage('DEPT-STAGE-RESOLUTION', true);
-            }
-          })}
-
-          {/* Horizontal Cross Shunt Arrow to Red Track */}
-          {renderCrossLaneShunt(
-            'المرحلة 3: مركز الـ NCR والتحقيق 8D بطريق المرفوضات ➡️',
-            'Stage 3: Problem Solving 8D & CAPA in Rejects Track ➡️',
-            'DEPT-STAGE-RESOLUTION',
-            'انحرافات وعيوب خط الإنتاج والأندون تنحرف عرضياً نحو طريق المرفوضات للتحليل الجذري 8D',
-            'In-process defects & Andon alerts shunt across to Rejects Track for 8D root-cause resolution'
-          )}
-
-          {/* STAGE 4: OQC */}
-          {renderProcessNode({
-            stageNumber: 4,
-            stageId: 'DEPT-STAGE-OUTGOING',
-            code: 'OQC-01',
-            titleAr: 'المرحلة 4: فحص وخروج المنتج النهائي (OQC)',
-            titleEn: 'Stage 4: Outgoing Quality & Release (OQC)',
-            descAr: 'فحص عينات القبول AQL للشحنات التامة الصنع قبل التحميل وإصدار شهادات المطابقة COC',
-            descEn: 'Pre-shipment AQL sampling, COC certificates & final release authorization',
-            accentColor: '#10b981',
-            stationCount: 1,
-            icon: <PackageCheck className="w-5 h-5" />
-          })}
-
-          {/* GATEWAY 4 */}
-          {renderVisualDecisionGateway({
-            gateNumber: 4,
-            questionAr: 'هل شحنة المنتج التام مطابقة لمعايير قبول عينات AQL؟',
-            questionEn: 'Are finished goods lots fully compliant with AQL acceptance criteria?',
-            accentColor: '#10b981',
-            nextStageNumber: 5,
-            passCount: getStageRecordStats('DEPT-STAGE-OUTGOING').pass,
-            failCount: getStageRecordStats('DEPT-STAGE-OUTGOING').fail,
-            failTitleAr: 'رصيف حجر المنتج النهائي ولجنة MRB بطريق المرفوضات',
-            failTitleEn: 'Finished Goods Quarantine & MRB in Fail Track',
-            failTargetAction: () => {
-              scrollToStage('LANE-RED-QUARANTINE-OQC', true);
-            }
-          })}
-
-          {/* Horizontal Cross Shunt Arrow to Red Track */}
-          {renderCrossLaneShunt(
-            'رصيف حجر المنتج النهائي ولجنة MRB بطريق المرفوضات ➡️',
-            'Finished Goods Quarantine QRN-04 & MRB in Rejects Track ➡️',
-            'LANE-RED-QUARANTINE-OQC',
-            'شحنات المنتج النهائي المرفوضة في فحص الخروج تنحرف لطريق المرفوضات لإعادة الفرز أو التكهين',
-            'Rejected finished goods lots shunt across to Rejects Track for sorting or scrap disposition'
-          )}
-
-          {/* STAGE 5: CUSTOMER QA */}
-          {renderProcessNode({
-            stageNumber: 5,
-            stageId: 'DEPT-STAGE-CUSTOMER',
-            code: 'CSM-01',
-            titleAr: 'المرحلة 5: شكاوى العملاء والميدان (Customer Quality)',
-            titleEn: 'Stage 5: Customer Complaints & Field QA',
-            descAr: 'استقبال بلاغات العملاء ومطالبات الضمان ومرتجعات RMA وتحويل الملاحظات للهندسة',
-            descEn: 'Customer claims, warranty returns RMA & field feedback loops',
-            accentColor: '#6366f1',
-            stationCount: 1,
-            icon: <Users className="w-5 h-5" />
-          })}
-
-          {/* GATEWAY 5 */}
-          {renderVisualDecisionGateway({
-            gateNumber: 5,
-            questionAr: 'هل تم حل شكوى العميل، تسوية المرتجع RMA، واستخلاص السبب الفني؟',
-            questionEn: 'Has customer claim been settled, RMA processed & technical feedback extracted?',
-            accentColor: '#6366f1',
-            nextStageNumber: 6,
-            passCount: getStageRecordStats('DEPT-STAGE-CUSTOMER').pass,
-            failCount: getStageRecordStats('DEPT-STAGE-CUSTOMER').fail,
-            failTitleAr: 'مركز تسوية مرتجعات الضمان RMA بطريق المرفوضات',
-            failTitleEn: 'Warranty Returns RMA in Fail Track',
-            failTargetAction: () => {
-              scrollToStage('LANE-RED-RETURNS-RMA', true);
-            }
-          })}
-
-          {/* Horizontal Cross Shunt Arrow to Red Track */}
-          {renderCrossLaneShunt(
-            'مركز تسوية مرتجعات الضمان RMA بطريق المرفوضات ➡️',
-            'Warranty Returns RMA Center in Rejects Track ➡️',
-            'LANE-RED-RETURNS-RMA',
-            'شكاوى العملاء المعيبة تنحرف لطريق المرفوضات لاستخلاص السبب الفني وتحديث خطط FMEA',
-            'Customer claims shunt across to Rejects Track for warranty RMA settlement & root cause analysis'
-          )}
-
-          {/* STAGE 6: LAB & AUDITS */}
-          {renderProcessNode({
-            stageNumber: 6,
-            stageId: 'DEPT-STAGE-COMPLIANCE',
-            code: 'LAB-01',
-            titleAr: 'المرحلة 6: المختبر الهندسي والتدقيق (Lab & Audits)',
-            titleEn: 'Stage 6: Engineering Lab & Audits',
-            descAr: 'خطط التحكم Control Plan، تحليل المخاطر FMEA، معايرة الأجهزة MSA، والتدقيق الداخلي',
-            descEn: 'Control Plans, FMEA risk analysis, gage calibration MSA & ISO audits',
-            accentColor: '#a855f7',
-            stationCount: 5,
-            icon: <ShieldCheck className="w-5 h-5" />
-          })}
-
-          <div className="flex flex-col items-center my-3">
-            {renderFlowPipe('#3b82f6', 'تحديث وثائق النظام والبيانات', 'Update Master Data')}
-          </div>
-
-          {/* STAGE 7: MASTER DATA */}
-          {renderProcessNode({
-            stageNumber: 7,
-            stageId: 'DEPT-STAGE-SETUP',
-            code: 'MST-01',
-            titleAr: 'المرحلة 7: تهيئة المصنع والبيانات (Setup & Master Data)',
-            titleEn: 'Stage 7: Factory Setup & Master Data',
-            descAr: 'البيانات الرئيسية للأجزاء والموديلات، مصمم نماذج الفحص، وقاعدة الدروس المستفادة',
-            descEn: 'Parts catalog, form designer & lessons learned repository',
-            accentColor: '#3b82f6',
-            stationCount: 3,
-            icon: <Database className="w-5 h-5" />
-          })}
-
-          {/* FEEDBACK LOOP BANNER */}
-          <div className="pt-2">
-            {renderClosedLoopFeedbackBanner()}
-          </div>
-
-          {/* END TERMINAL */}
-          {renderEndTerminal()}
         </div>
-
-        {/* ========================================================================= */}
-        {/* TRACK 2: 🛑 طريق المرفوضات والحجر الصحي (Quarantine & Rejections Fail Track) */}
-        {/* ========================================================================= */}
-        <div className="lg:col-span-5 space-y-4 lg:sticky lg:top-4">
-          {/* Track 2 Header Banner */}
-          <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-rose-950/90 via-slate-900 to-amber-950/80 border-2 border-rose-500/50 shadow-2xl flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-rose-500/20 text-rose-400 border border-rose-500/40 flex items-center justify-center shrink-0 shadow-lg shadow-rose-500/20">
-                <AlertOctagon className="w-6 h-6 text-rose-400 animate-pulse" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 rounded-md bg-rose-500/20 text-rose-300 font-mono font-black text-xs border border-rose-500/40">
-                    FAIL & QUARANTINE TRACK
-                  </span>
-                  <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
-                </div>
-                <h3 className="text-base font-black text-rose-400 mt-0.5">
-                  {isAr ? '🛑 طريق المرفوضات والحجر الصحي والـ NCR' : 'Quarantine & Problem Solving Track'}
-                </h3>
-                <p className="text-xs text-slate-300">
-                  {isAr 
-                    ? 'مسار عزل العيوب، التحقيق الجذري 8D، إجراءات تصحيح CAPA، وفك الحجر' 
-                    : 'Defect containment, 8D investigations, CAPA closed-loop & MRB'}
-                </p>
-              </div>
-            </div>
-            <span className="px-3 py-1 rounded-full bg-rose-500/20 text-rose-300 font-mono text-xs font-bold border border-rose-500/30 shrink-0">
-              {globalFactoryStats.fail} {isAr ? 'حجر نشط' : 'Holds'}
-            </span>
-          </div>
-
-          {/* 1. Raw Materials Receiving Quarantine Dock (QRN-01) */}
-          {renderRawQuarantineDock()}
-
-          {renderFlowPipe('#f43f5e', 'تحويل لتقارير عدم المطابقة والتحقيق الجذري', 'Escalate to NCR & 8D')}
-
-          {/* 2. Stage 3 (NCR, 8D, CAPA, Deviation, Change Control Hub) */}
-          {renderResolutionHubNode()}
-
-          {renderFlowPipe('#f43f5e', 'حجر المنتج النهائي ولجنة MRB', 'Finished Goods MRB Quarantine')}
-
-          {/* 3. Finished Goods Quarantine Dock (QRN-04) */}
-          {renderFinishedQuarantineDock()}
-
-          {renderFlowPipe('#f43f5e', 'تسوية مرتجعات الضمان والعملاء RMA', 'Warranty RMA Settlement')}
-
-          {/* 4. Customer Claims & RMA Return Dock */}
-          {renderReturnsQuarantineDock()}
-
-          {renderFlowPipe('#10b981', 'اعتماد لجنة MRB وإغلاق الـ CAPA', 'MRB Approval & CAPA Closure')}
-
-          {/* 5. Closed Loop Return Card (Loop-back arrow to Production in Lane 1) */}
-          {renderClosedLoopCard()}
+        <div className="hidden sm:flex items-center gap-2">
+          <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 font-mono text-xs font-bold border border-emerald-500/30">
+            {globalFactoryStats.pass} {isAr ? 'مجاز' : 'Pass'}
+          </span>
+          <span className="px-3 py-1 rounded-full bg-rose-500/20 text-rose-300 font-mono text-xs font-bold border border-rose-500/30">
+            {globalFactoryStats.fail} {isAr ? 'حجز نشط' : 'Holds'}
+          </span>
         </div>
       </div>
+
+      {/* Start Terminal: Material Inflow */}
+      {renderStartTerminal()}
+
+      {/* STAGE 1: IQC */}
+      {renderProcessNode({
+        stageNumber: 1,
+        stageId: 'DEPT-STAGE-INCOMING',
+        code: 'IQC-01',
+        titleAr: 'المرحلة 1: استلام وتفتيش الخامات والموردين (IQC)',
+        titleEn: 'Stage 1: Incoming & Supplier Quality (IQC)',
+        descAr: 'تفتيش الشحنات الواردة، تقييم الموردين، وتحليل شهادات التحليل COA',
+        descEn: 'Receiving inspection, supplier scorecards & COA verification',
+        accentColor: '#f59e0b',
+        stationCount: 3,
+        icon: <Truck className="w-5 h-5" />
+      })}
+
+      {/* GATEWAY 1 */}
+      {renderVisualDecisionGateway({
+        gateNumber: 1,
+        questionAr: 'هل المواد الخام والشحنات الواردة مقبولة ومطابقة للمواصفات وخطط الفحص؟',
+        questionEn: 'Are incoming raw materials compliant with quality specs & receiving plans?',
+        accentColor: '#f59e0b',
+        nextStageNumber: 2,
+        passCount: getStageRecordStats('DEPT-STAGE-INCOMING').pass,
+        failCount: getStageRecordStats('DEPT-STAGE-INCOMING').fail,
+        failTitleAr: 'رصيف حجر الخامات QRN-01 وارتجاع المورد',
+        failTitleEn: 'Quarantine Dock QRN-01 & Supplier Return',
+        failTargetAction: () => {
+          scrollToStage('LANE-RED-QUARANTINE-IQC', true);
+        }
+      })}
+
+      {/* DEDICATED INLINE REJECTION DOCK FOR GATE 1 (تفريعة لا / NO) */}
+      <div className="w-full max-w-3xl mx-auto -mt-2 mb-3 p-4 sm:p-5 rounded-3xl bg-slate-900/95 border-2 border-dashed border-rose-500/60 shadow-xl space-y-3">
+        <div className="flex items-center justify-between pb-2.5 border-b border-rose-500/20">
+          <span className="px-3 py-1 rounded-xl bg-rose-500/20 text-rose-300 font-mono font-black text-xs border border-rose-500/40 flex items-center gap-2">
+            <AlertOctagon className="w-4 h-4 text-rose-400" />
+            <span>{isAr ? '🛑 تفريعة [لا / NO]: رصيف حجر الوارد (QRN-01) وإصدار تقرير عدم مطابقة (NCR) وارتجاع للمورد' : '🛑 [NO Branch]: Raw Materials Quarantine (QRN-01), NCR & Supplier Return'}</span>
+          </span>
+          <span className="text-xs text-rose-300 font-mono font-black">
+            {getStageRecordStats('DEPT-STAGE-INCOMING').fail} {isAr ? 'حجز نشط' : 'Held'}
+          </span>
+        </div>
+        {renderRawQuarantineDock()}
+      </div>
+
+      {/* CONFORMING MATERIAL FORWARD FLOW CONNECTOR (مسار نعم / YES) */}
+      <div className="flex flex-col items-center my-3">
+        <div className="px-4 py-1.5 rounded-full bg-emerald-500/20 border-2 border-emerald-500/40 text-emerald-300 text-xs font-black flex items-center gap-2 shadow-lg shadow-emerald-950/40">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+          <span>{isAr ? '⬇ مسار [نعم / YES]: انتقال الخامات المقبولة إلى صالة الإنتاج والتصنيع (المرحلة 2)' : '⬇ [YES Branch]: Conforming Raw Materials Advance to In-Process (Stage 2)'}</span>
+          <ArrowDown className="w-4 h-4 text-emerald-400 animate-bounce" />
+        </div>
+        <div className="w-1.5 h-6 bg-gradient-to-b from-emerald-500 via-teal-500 to-cyan-500 rounded-full" />
+      </div>
+
+      {/* STAGE 2: IPQC */}
+      {renderProcessNode({
+        stageNumber: 2,
+        stageId: 'DEPT-STAGE-INPROCESS',
+        code: 'IPQC-01',
+        titleAr: 'المرحلة 2: جودة صالة الإنتاج والتحكم الإحصائي (IPQC)',
+        titleEn: 'Stage 2: In-Process Quality & SPC (IPQC)',
+        descAr: 'تسجيل صالة الإنتاج، قائمة العيوب اليومية، كارتات ضبط SPC، وبوابات الخلوص',
+        descEn: 'Shopfloor fast entry, daily defect logs, SPC control charts & clearance gates',
+        accentColor: '#06b6d4',
+        stationCount: 4,
+        icon: <Activity className="w-5 h-5" />
+      })}
+
+      {/* GATEWAY 2 */}
+      {renderVisualDecisionGateway({
+        gateNumber: 2,
+        questionAr: 'هل عينات التشغيل والقياسات مقبولة وضمن حدود ضبط SPC وخالية من العيوب الحرجة؟',
+        questionEn: 'Are in-process samples within SPC control limits & free of critical defects?',
+        accentColor: '#06b6d4',
+        nextStageNumber: 4,
+        passCount: getStageRecordStats('DEPT-STAGE-INPROCESS').pass,
+        failCount: getStageRecordStats('DEPT-STAGE-INPROCESS').fail,
+        failTitleAr: 'المرحلة 3: مركز تقارير عدم المطابقة NCR والتحقيق 8D',
+        failTitleEn: 'Stage 3: NCR & 8D Problem Solving Hub',
+        failTargetAction: () => {
+          scrollToStage('DEPT-STAGE-RESOLUTION', true);
+        }
+      })}
+
+      {/* DEDICATED INLINE REJECTION DOCK FOR GATE 2 (تفريعة لا / NO) */}
+      <div className="w-full max-w-3xl mx-auto -mt-2 mb-3 p-4 sm:p-5 rounded-3xl bg-slate-900/95 border-2 border-dashed border-rose-500/60 shadow-xl space-y-3">
+        <div className="flex items-center justify-between pb-2.5 border-b border-rose-500/20">
+          <span className="px-3 py-1 rounded-xl bg-rose-500/20 text-rose-300 font-mono font-black text-xs border border-rose-500/40 flex items-center gap-2">
+            <AlertOctagon className="w-4 h-4 text-rose-400" />
+            <span>{isAr ? '🛑 تفريعة [لا / NO]: المرحلة 3 - مركز تقارير عدم المطابقة (NCR)، عزل الخط، وتحقيق 8D / CAPA' : '🛑 [NO Branch]: Stage 3 - NCR Resolution Hub, Containment & 8D / CAPA'}</span>
+          </span>
+          <span className="text-xs text-rose-300 font-mono font-black">
+            {getStageRecordStats('DEPT-STAGE-RESOLUTION').fail} {isAr ? 'حالة نشطة' : 'Active'}
+          </span>
+        </div>
+        {renderResolutionHubNode()}
+      </div>
+
+      {/* CONFORMING MATERIAL FORWARD FLOW CONNECTOR (مسار نعم / YES) */}
+      <div className="flex flex-col items-center my-3">
+        <div className="px-4 py-1.5 rounded-full bg-emerald-500/20 border-2 border-emerald-500/40 text-emerald-300 text-xs font-black flex items-center gap-2 shadow-lg shadow-emerald-950/40">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+          <span>{isAr ? '⬇ مسار [نعم / YES]: انتقال المنتجات المقبولة إلى التفتيش النهائي (المرحلة 4)' : '⬇ [YES Branch]: Conforming Parts Advance to Final Inspection (Stage 4)'}</span>
+          <ArrowDown className="w-4 h-4 text-emerald-400 animate-bounce" />
+        </div>
+        <div className="w-1.5 h-6 bg-gradient-to-b from-cyan-500 via-emerald-500 to-emerald-400 rounded-full" />
+      </div>
+
+      {/* STAGE 4: OQC */}
+      {renderProcessNode({
+        stageNumber: 4,
+        stageId: 'DEPT-STAGE-OUTGOING',
+        code: 'OQC-01',
+        titleAr: 'المرحلة 4: فحص وخروج المنتج النهائي (OQC)',
+        titleEn: 'Stage 4: Outgoing Quality & Release (OQC)',
+        descAr: 'فحص عينات القبول AQL للشحنات التامة الصنع قبل التحميل وإصدار شهادات المطابقة COC',
+        descEn: 'Pre-shipment AQL sampling, COC certificates & final release authorization',
+        accentColor: '#10b981',
+        stationCount: 1,
+        icon: <PackageCheck className="w-5 h-5" />
+      })}
+
+      {/* GATEWAY 4 */}
+      {renderVisualDecisionGateway({
+        gateNumber: 4,
+        questionAr: 'هل شحنة المنتج التام مقبولة ومطابقة لمعايير قبول عينات AQL؟',
+        questionEn: 'Are finished goods lots fully compliant with AQL acceptance criteria?',
+        accentColor: '#10b981',
+        nextStageNumber: 5,
+        passCount: getStageRecordStats('DEPT-STAGE-OUTGOING').pass,
+        failCount: getStageRecordStats('DEPT-STAGE-OUTGOING').fail,
+        failTitleAr: 'رصيف حجر المنتج النهائي ولجنة MRB',
+        failTitleEn: 'Finished Goods Quarantine & MRB',
+        failTargetAction: () => {
+          scrollToStage('LANE-RED-QUARANTINE-OQC', true);
+        }
+      })}
+
+      {/* DEDICATED INLINE REJECTION DOCK FOR GATE 4 (تفريعة لا / NO) */}
+      <div className="w-full max-w-3xl mx-auto -mt-2 mb-3 p-4 sm:p-5 rounded-3xl bg-slate-900/95 border-2 border-dashed border-rose-500/60 shadow-xl space-y-3">
+        <div className="flex items-center justify-between pb-2.5 border-b border-rose-500/20">
+          <span className="px-3 py-1 rounded-xl bg-rose-500/20 text-rose-300 font-mono font-black text-xs border border-rose-500/40 flex items-center gap-2">
+            <AlertOctagon className="w-4 h-4 text-rose-400" />
+            <span>{isAr ? '🛑 تفريعة [لا / NO]: رصيف حجر المنتج النهائي (QRN-04) ولجنة مراجعة المواد MRB (فرز/تكهين)' : '🛑 [NO Branch]: Finished Goods Quarantine (QRN-04) & MRB Disposition'}</span>
+          </span>
+          <span className="text-xs text-rose-300 font-mono font-black">
+            {getStageRecordStats('DEPT-STAGE-OUTGOING').fail} {isAr ? 'محجوز' : 'Held'}
+          </span>
+        </div>
+        {renderFinishedQuarantineDock()}
+      </div>
+
+      {/* CONFORMING MATERIAL FORWARD FLOW CONNECTOR (مسار نعم / YES) */}
+      <div className="flex flex-col items-center my-3">
+        <div className="px-4 py-1.5 rounded-full bg-emerald-500/20 border-2 border-emerald-500/40 text-emerald-300 text-xs font-black flex items-center gap-2 shadow-lg shadow-emerald-950/40">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+          <span>{isAr ? '⬇ مسار [نعم / YES]: إجازة الشحن والتسليم للمستودعات والعملاء (المرحلة 5)' : '⬇ [YES Branch]: Final Clearance to Logistics & Customer Delivery (Stage 5)'}</span>
+          <ArrowDown className="w-4 h-4 text-emerald-400 animate-bounce" />
+        </div>
+        <div className="w-1.5 h-6 bg-gradient-to-b from-emerald-500 to-indigo-500 rounded-full" />
+      </div>
+
+      {/* STAGE 5: CUSTOMER QA */}
+      {renderProcessNode({
+        stageNumber: 5,
+        stageId: 'DEPT-STAGE-CUSTOMER',
+        code: 'CSM-01',
+        titleAr: 'المرحلة 5: شكاوى العملاء والميدان (Customer Quality)',
+        titleEn: 'Stage 5: Customer Complaints & Field QA',
+        descAr: 'استقبال بلاغات العملاء ومطالبات الضمان ومرتجعات RMA وتحويل الملاحظات للهندسة',
+        descEn: 'Customer claims, warranty returns RMA & field feedback loops',
+        accentColor: '#6366f1',
+        stationCount: 1,
+        icon: <Users className="w-5 h-5" />
+      })}
+
+      {/* GATEWAY 5 */}
+      {renderVisualDecisionGateway({
+        gateNumber: 5,
+        questionAr: 'هل تسليمات المنتجات للعملاء مقبولة وبدون بلاغات أو شكاوى جودة أو مطالبات ضمان؟',
+        questionEn: 'Are customer deliveries accepted without warranty claims or field defects?',
+        accentColor: '#6366f1',
+        nextStageNumber: 6,
+        passCount: getStageRecordStats('DEPT-STAGE-CUSTOMER').pass,
+        failCount: getStageRecordStats('DEPT-STAGE-CUSTOMER').fail,
+        failTitleAr: 'مركز تسوية مرتجعات الضمان RMA',
+        failTitleEn: 'Warranty Returns RMA Center',
+        failTargetAction: () => {
+          scrollToStage('LANE-RED-RETURNS-RMA', true);
+        }
+      })}
+
+      {/* DEDICATED INLINE REJECTION DOCK FOR GATE 5 (تفريعة لا / NO) */}
+      <div className="w-full max-w-3xl mx-auto -mt-2 mb-3 p-4 sm:p-5 rounded-3xl bg-slate-900/95 border-2 border-dashed border-rose-500/60 shadow-xl space-y-3">
+        <div className="flex items-center justify-between pb-2.5 border-b border-rose-500/20">
+          <span className="px-3 py-1 rounded-xl bg-rose-500/20 text-rose-300 font-mono font-black text-xs border border-rose-500/40 flex items-center gap-2">
+            <AlertOctagon className="w-4 h-4 text-rose-400" />
+            <span>{isAr ? '🛑 تفريعة [لا / NO]: مركز تسوية مرتجعات الضمان (RMA) واستخلاص الأسباب الجذرية لـ FMEA' : '🛑 [NO Branch]: Warranty Returns RMA Center & Root-Cause'}</span>
+          </span>
+          <span className="text-xs text-rose-300 font-mono font-black">
+            {getStageRecordStats('DEPT-STAGE-CUSTOMER').fail} {isAr ? 'مرتجع' : 'RMA'}
+          </span>
+        </div>
+        {renderReturnsQuarantineDock()}
+      </div>
+
+      {/* CONFORMING MATERIAL FORWARD FLOW CONNECTOR (مسار نعم / YES) */}
+      <div className="flex flex-col items-center my-3">
+        <div className="px-4 py-1.5 rounded-full bg-emerald-500/20 border-2 border-emerald-500/40 text-emerald-300 text-xs font-black flex items-center gap-2 shadow-lg shadow-emerald-950/40">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+          <span>{isAr ? '⬇ مسار [نعم / YES]: استمرار التدفق إلى المختبر الهندسي واعتماد البيانات' : '⬇ [YES Branch]: Continue to Engineering Lab & Master Data'}</span>
+          <ArrowDown className="w-3.5 h-3.5 text-emerald-400 animate-bounce" />
+        </div>
+        <div className="w-1.5 h-6 bg-gradient-to-b from-indigo-500 to-purple-500 rounded-full" />
+      </div>
+
+      {/* STAGE 6: LAB & AUDITS */}
+      {renderProcessNode({
+        stageNumber: 6,
+        stageId: 'DEPT-STAGE-COMPLIANCE',
+        code: 'LAB-01',
+        titleAr: 'المرحلة 6: المختبر الهندسي والتدقيق (Lab & Audits)',
+        titleEn: 'Stage 6: Engineering Lab & Audits',
+        descAr: 'خطط التحكم Control Plan، تحليل المخاطر FMEA، معايرة الأجهزة MSA، والتدقيق الداخلي',
+        descEn: 'Control Plans, FMEA risk analysis, gage calibration MSA & ISO audits',
+        accentColor: '#a855f7',
+        stationCount: 5,
+        icon: <ShieldCheck className="w-5 h-5" />
+      })}
+
+      <div className="flex flex-col items-center my-3">
+        {renderFlowPipe('#3b82f6', 'تحديث وثائق النظام والبيانات', 'Update Master Data')}
+      </div>
+
+      {/* STAGE 7: MASTER DATA */}
+      {renderProcessNode({
+        stageNumber: 7,
+        stageId: 'DEPT-STAGE-SETUP',
+        code: 'MST-01',
+        titleAr: 'المرحلة 7: تهيئة المصنع والبيانات (Setup & Master Data)',
+        titleEn: 'Stage 7: Factory Setup & Master Data',
+        descAr: 'البيانات الرئيسية للأجزاء والموديلات، مصمم نماذج الفحص، وقاعدة الدروس المستفادة',
+        descEn: 'Parts catalog, form designer & lessons learned repository',
+        accentColor: '#3b82f6',
+        stationCount: 3,
+        icon: <Database className="w-5 h-5" />
+      })}
+
+      {/* FEEDBACK LOOP BANNER */}
+      <div className="pt-2">
+        {renderClosedLoopFeedbackBanner()}
+      </div>
+
+      {/* END TERMINAL */}
+      {renderEndTerminal()}
     </div>
   );
 
