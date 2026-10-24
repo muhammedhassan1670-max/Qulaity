@@ -495,7 +495,19 @@ export function calculateXbarR(subgroups: SpcSubgroup[]): SpcControlChartResult 
   const n = Math.min(25, Math.max(2, avgN));
   
   const means = validSubgroups.map(sg => mathHelper.mean(sg.values));
-  const ranges = validSubgroups.map(sg => mathHelper.range(sg.values));
+  const ranges = validSubgroups.map((sg, i) => {
+    if (sg.values.length > 1) {
+      return mathHelper.range(sg.values);
+    }
+    // If subgroup has n=1, estimate range from consecutive subgroup means so it doesn't collapse to 0
+    if (i > 0) {
+      return Math.abs(means[i] - means[i - 1]);
+    }
+    if (validSubgroups.length > 1) {
+      return Math.abs(means[1] - means[0]);
+    }
+    return 0;
+  });
   
   const xDoubleBar = mathHelper.mean(means);
   const rBar = mathHelper.mean(ranges);

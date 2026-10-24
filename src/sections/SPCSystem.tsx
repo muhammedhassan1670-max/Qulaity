@@ -174,6 +174,14 @@ export default function SPCSystem() {
     toast.success(isAr ? 'تم حذف القراءة' : 'Measurement removed');
   };
 
+  // Undo / Delete last measurement row
+  const handleUndoLast = () => {
+    if (data.length === 0) return;
+    const updated = data.slice(0, -1);
+    saveData(updated);
+    toast.info(isAr ? 'تم حذف آخر قراءة مسجلة والتراجع عنها' : 'Last measurement removed');
+  };
+
   // Add Measurement Handler
   const handleAddMeasurement = () => {
     const defaultLabel = `${isAr ? 'عينة' : 'Sample'}-${data.length + 1}`;
@@ -327,7 +335,7 @@ export default function SPCSystem() {
     };
   }, [data, chartType, calculations, usl, lsl, target]);
 
-  // Helper to calculate safe Y-axis domain with breathing room
+  // Helper to calculate safe Y-axis domain with generous breathing room
   const getYDomain = (chartData: any[], limits: any) => {
     if (!chartData || chartData.length === 0) return [0, 10];
     const vals: number[] = [];
@@ -344,7 +352,8 @@ export default function SPCSystem() {
     const min = Math.min(...vals);
     const max = Math.max(...vals);
     if (min === max) return [Number((min - 1).toFixed(2)), Number((max + 1).toFixed(2))];
-    const pad = Math.max(0.1, (max - min) * 0.15);
+    const span = max - min;
+    const pad = Math.max(0.6, span * 0.22);
     return [Number((min - pad).toFixed(2)), Number((max + pad).toFixed(2))];
   };
 
@@ -429,7 +438,7 @@ export default function SPCSystem() {
         
         <div className="h-[320px] w-full" style={{ touchAction: 'pan-y' }}>
           <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={chartData} margin={{ top: 20, right: 30, left: 10, bottom: 10 }}>
+            <ComposedChart data={chartData} margin={{ top: 25, right: 35, left: 15, bottom: 15 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.4} vertical={false} />
               <XAxis 
                 dataKey="label" 
@@ -445,14 +454,20 @@ export default function SPCSystem() {
               />
               <Tooltip content={<CustomTooltip />} />
               
-              {/* Control Limits Reference Lines */}
+              {/* Control Limits Reference Lines - CL on opposite side to avoid overlap */}
               {typeof limits?.ucl === 'number' && isFinite(limits.ucl) && (
                 <ReferenceLine 
                   y={limits.ucl} 
                   stroke="#ef4444" 
                   strokeDasharray="6 4" 
                   strokeWidth={1.5}
-                  label={{ value: `UCL (${limits.ucl.toFixed(2)})`, position: isAr ? 'insideTopLeft' : 'insideTopRight', fill: '#ef4444', fontSize: 11, fontWeight: 'bold' }} 
+                  label={{ 
+                    value: `UCL (${limits.ucl.toFixed(2)})`, 
+                    position: isAr ? 'insideTopLeft' : 'insideTopRight', 
+                    fill: '#ef4444', 
+                    fontSize: 11, 
+                    fontWeight: 'bold' 
+                  }} 
                 />
               )}
               {typeof limits?.cl === 'number' && isFinite(limits.cl) && (
@@ -461,7 +476,13 @@ export default function SPCSystem() {
                   stroke="#22c55e" 
                   strokeDasharray="4 4" 
                   strokeWidth={1.5}
-                  label={{ value: `CL (${limits.cl.toFixed(2)})`, position: isAr ? 'insideTopLeft' : 'insideTopRight', fill: '#22c55e', fontSize: 11, fontWeight: 'bold' }} 
+                  label={{ 
+                    value: `CL (${limits.cl.toFixed(2)})`, 
+                    position: isAr ? 'insideTopRight' : 'insideTopLeft', 
+                    fill: '#22c55e', 
+                    fontSize: 11, 
+                    fontWeight: 'bold' 
+                  }} 
                 />
               )}
               {typeof limits?.lcl === 'number' && isFinite(limits.lcl) && (
@@ -470,16 +491,22 @@ export default function SPCSystem() {
                   stroke="#ef4444" 
                   strokeDasharray="6 4" 
                   strokeWidth={1.5}
-                  label={{ value: `LCL (${limits.lcl.toFixed(2)})`, position: isAr ? 'insideBottomLeft' : 'insideBottomRight', fill: '#ef4444', fontSize: 11, fontWeight: 'bold' }} 
+                  label={{ 
+                    value: `LCL (${limits.lcl.toFixed(2)})`, 
+                    position: isAr ? 'insideBottomLeft' : 'insideBottomRight', 
+                    fill: '#ef4444', 
+                    fontSize: 11, 
+                    fontWeight: 'bold' 
+                  }} 
                 />
               )}
               
-              {/* Data Line with safe Dot rendering */}
+              {/* Data Line: Straight linear line per standard SPC guidelines (no spline overshoot) */}
               <Line 
-                type="monotone" 
+                type="linear" 
                 dataKey="value" 
                 stroke={strokeColor} 
-                strokeWidth={2.5}
+                strokeWidth={2}
                 connectNulls={true}
                 isAnimationActive={false}
                 dot={(props: any) => {
@@ -499,7 +526,7 @@ export default function SPCSystem() {
                     />
                   );
                 }}
-                activeDot={{ r: 8, stroke: '#ffffff', strokeWidth: 2 }} 
+                activeDot={{ r: 7, stroke: '#ffffff', strokeWidth: 2 }} 
               />
             </ComposedChart>
           </ResponsiveContainer>
@@ -607,12 +634,24 @@ export default function SPCSystem() {
                   </select>
                 </div>
 
-                {/* Helpful Tip about Chart Type */}
+                {/* Helpful Tip about Chart Type & Quick Switch to I-MR */}
                 <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 text-xs text-slate-400 flex items-start gap-2">
                   <Info className="w-4 h-4 text-sky-400 shrink-0 mt-0.5" />
-                  <div>
+                  <div className="w-full">
                     {chartType === 'xbar-r' && (
-                      <p>{isAr ? 'أدخل عدة قراءات لنفس العينة (مثال: 5 قياسات لنفس الدفعة) لحساب المتوسط والمدى.' : 'Enter multiple readings per subgroup to track mean and range.'}</p>
+                      <div className="space-y-2">
+                        <p className="text-[11px] leading-relaxed">
+                          {isAr 
+                            ? 'شارت X-bar & R يتطلب عدة قياسات لكل عينة لحساب مدى التباين (R). إذا كنت تسجل قطعة واحدة فقط كل مرة، استخدم شارت الأفراد (I-MR).' 
+                            : 'X-bar & R requires multiple readings per sample. If recording 1 piece at a time, switch to I-MR.'}
+                        </p>
+                        <button
+                          onClick={() => setChartType('i-mr')}
+                          className="w-full py-1.5 bg-sky-500/15 hover:bg-sky-500/25 text-sky-400 border border-sky-500/30 rounded-lg text-[11px] font-bold transition-colors flex items-center justify-center gap-1"
+                        >
+                          <span>{isAr ? 'التبديل إلى شارت الأفراد (I-MR)' : 'Switch to I-MR Chart'}</span>
+                        </button>
+                      </div>
                     )}
                     {chartType === 'i-mr' && (
                       <p>{isAr ? 'شارت الأفراد مخصص للقياسات الفردية؛ يتم رسم كل قراءة فور تسجيلها وحساب المدى المتحرك تلقائياً.' : 'Designed for individual measurements. Plots each reading immediately with moving range.'}</p>
@@ -657,7 +696,7 @@ export default function SPCSystem() {
                         className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-600 outline-none focus:border-sky-500 font-mono"
                       />
                       <p className="text-[10px] text-slate-500 mt-1">
-                        {isAr ? 'ملاحظة: يمكنك إدخال من 2 إلى 5 قراءات أو رقماً واحداً' : 'Enter 2 to 5 values separated by space or comma'}
+                        {isAr ? 'ملاحظة: أدخل من 2 إلى 5 قراءات للعينة الواحدة' : 'Enter 2 to 5 values per subgroup'}
                       </p>
                     </div>
                   )}
@@ -746,24 +785,35 @@ export default function SPCSystem() {
                     <span>{isAr ? 'تسجيل القراءة ورسمها' : 'Record & Plot Reading'}</span>
                   </button>
 
-                  {/* Quick Action Buttons */}
-                  <div className="grid grid-cols-2 gap-2 pt-2">
+                  {/* Quick Action Buttons (Demo, Undo, Clear) */}
+                  <div className="grid grid-cols-3 gap-2 pt-2">
                     <button
                       onClick={handleLoadDemoData}
-                      className="py-2 bg-slate-800 hover:bg-slate-700 text-sky-400 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 transition-colors border border-slate-700/60"
+                      className="py-2 bg-slate-800 hover:bg-slate-700 text-sky-400 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1 transition-colors border border-slate-700/60"
                       title={isAr ? 'تحميل 20 عينة حقيقية لرؤية الشارت' : 'Load 20 demo samples to see chart'}
                     >
                       <Sparkles className="w-3.5 h-3.5" />
-                      <span>{isAr ? 'عينة تجريبية' : 'Demo Data'}</span>
+                      <span>{isAr ? 'تجريبي' : 'Demo'}</span>
+                    </button>
+
+                    <button
+                      onClick={handleUndoLast}
+                      disabled={data.length === 0}
+                      className="py-2 bg-slate-800 hover:bg-slate-700 text-amber-400 disabled:opacity-30 disabled:cursor-not-allowed rounded-xl text-[11px] font-bold flex items-center justify-center gap-1 transition-colors border border-slate-700/60"
+                      title={isAr ? 'حذف آخر قراءة تم تسجيلها' : 'Undo last recorded point'}
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      <span>{isAr ? 'تراجع' : 'Undo'}</span>
                     </button>
 
                     <button
                       onClick={handleClearData}
                       disabled={data.length === 0}
-                      className="py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 disabled:opacity-30 disabled:cursor-not-allowed rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 transition-colors border border-red-500/20"
+                      className="py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 disabled:opacity-30 disabled:cursor-not-allowed rounded-xl text-[11px] font-bold flex items-center justify-center gap-1 transition-colors border border-red-500/20"
+                      title={isAr ? 'مسح كافة القراءات' : 'Clear all'}
                     >
-                      <RotateCcw className="w-3.5 h-3.5" />
-                      <span>{isAr ? 'مسح الكل' : 'Clear All'}</span>
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>{isAr ? 'مسح' : 'Clear'}</span>
                     </button>
                   </div>
                 </div>
