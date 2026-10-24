@@ -33,6 +33,7 @@ import { AIVisionScanner, type AIVisionResult } from '@/components/AIVisionScann
 import QualityKnowledgeSuggestions from '@/components/QualityKnowledgeSuggestions';
 import { unifiedDefectLogApi, type DefectLogData } from '@/api/unified-api';
 import useAuthStore from '@/stores/authStore';
+import { useAppStore } from '@/stores/appStore';
 import {
   buildDefectTemplateValues,
   evaluateDefectRecordIntelligence,
@@ -169,6 +170,8 @@ function evidenceKind(file: File): EvidenceAttachment['kind'] {
 
 export default function ShopfloorDefectEntry() {
   const authUser = useAuthStore((state) => state.user);
+  const { language } = useAppStore();
+  const isAr = language === 'ar';
   const fileInputRef = useRef<HTMLInputElement>(null);
   const barcodeInputRef = useRef<HTMLInputElement>(null);
   const [workflowRole] = useState<QualityWorkflowRole>(() => loadLocalWorkflowRole());
@@ -703,15 +706,15 @@ export default function ShopfloorDefectEntry() {
           />
         )}
 
-        <section className="rounded-3xl border border-white/10 bg-white/5 px-3 py-4 sm:px-6">
+        <section className="rounded-3xl border border-slate-700/80 bg-slate-900 px-4 py-5 sm:px-6 shadow-xl">
           <div className="mb-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-[#00A3E0]/10 border border-[#00A3E0]/30 flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-2xl bg-[#00A3E0]/20 border border-[#00A3E0]/40 flex items-center justify-center shrink-0">
               <Barcode className="h-5 w-5 sm:h-6 sm:w-6 text-[#00A3E0]" />
             </div>
             <div>
-              <h2 className="text-base sm:text-xl font-black text-white">Barcode / Part</h2>
-              <p className="text-xs text-white/45">
-                مسح أو إدخال كود القطعة / الباركود. اضغط Enter أو Lookup للمطابقة.
+              <h2 className="text-base sm:text-xl font-black text-white">{isAr ? 'الباركود / كود القطعة' : 'Barcode / Part'}</h2>
+              <p className="text-xs text-slate-400">
+                {isAr ? 'امسح بالباركود أو اكتب الكود ثم اضغط Enter أو Lookup للمطابقة' : 'Scan barcode or enter part code, then press Enter or Lookup'}
               </p>
             </div>
           </div>
@@ -733,121 +736,136 @@ export default function ShopfloorDefectEntry() {
                   applyBarcodeLookup(String(formDraft.partId || formDraft.partNumber || ''));
                 }
               }}
-              placeholder="Scan or type part barcode / كود القطعة أو الباركود"
-              className="h-12 sm:h-14 w-full rounded-2xl border border-white/10 bg-black/20 px-4 sm:px-5 text-base sm:text-lg font-black text-white outline-none focus:border-[#00A3E0]/60"
+              placeholder={isAr ? 'امسح الباركود أو اكتب كود القطعة هنا...' : 'Scan or type part barcode...'}
+              className="h-12 sm:h-14 w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 sm:px-5 text-base sm:text-lg font-black text-white placeholder:text-slate-500 outline-none focus:border-[#00A3E0] focus:ring-2 focus:ring-[#00A3E0]/20 shadow-inner font-mono"
             />
             <Button
               type="button"
               onClick={() => applyBarcodeLookup(String(formDraft.partId || formDraft.partNumber || ''))}
-              className="h-12 sm:h-14 w-full sm:w-auto rounded-2xl px-6 text-base font-black shrink-0"
+              className="h-12 sm:h-14 w-full sm:w-auto rounded-2xl px-6 text-base font-black bg-[#00A3E0] hover:bg-[#008fbd] text-white shrink-0 shadow-lg shadow-[#00A3E0]/20 flex items-center justify-center gap-2"
             >
-              Lookup
+              <Search className="w-4 h-4" />
+              <span>{isAr ? 'مطابقة' : 'Lookup'}</span>
             </Button>
           </div>
           {Boolean(formDraft.partName) && (
-            <div className="mt-3 flex items-center gap-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 px-3 py-2 text-xs text-cyan-300">
+            <div className="mt-3 flex items-center gap-2 rounded-xl bg-cyan-500/10 border border-cyan-500/30 px-3 py-2 text-xs text-cyan-300">
               <CheckCircle2 className="w-4 h-4 shrink-0 text-cyan-400" />
-              <span>القطعة المحددة: <strong className="text-white">{String(formDraft.partName)}</strong> {Boolean(formDraft.model) && `(${formDraft.model})`}</span>
+              <span>{isAr ? 'القطعة المحددة:' : 'Selected Part:'} <strong className="text-white">{String(formDraft.partName)}</strong> {Boolean(formDraft.model) && `(${formDraft.model})`}</span>
             </div>
           )}
         </section>
 
         <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-5">
-          <label className="rounded-3xl border border-white/10 bg-white/5 p-3 sm:p-4">
-            <span className="mb-2 block text-xs font-black uppercase tracking-widest text-white/40">Quantity</span>
+          <label className="rounded-2xl border border-slate-700/80 bg-slate-900 p-3 sm:p-4 shadow-lg flex flex-col justify-between">
+            <span className="mb-2 block text-xs font-black uppercase tracking-wider text-slate-400">{isAr ? 'الكمية المعيبة' : 'Quantity'}</span>
             <div className="flex items-center gap-2">
-              <button type="button" onClick={() => updateDraft({ quantity: Math.max(1, Number(formDraft.quantity || 1) - 1) }, true)} className="h-12 sm:h-14 w-12 sm:w-14 rounded-2xl border border-white/10 bg-white/5 text-2xl font-black text-white">-</button>
+              <button type="button" onClick={() => updateDraft({ quantity: Math.max(1, Number(formDraft.quantity || 1) - 1) }, true)} className="h-12 sm:h-14 w-12 sm:w-14 rounded-2xl border border-slate-700 bg-slate-950 text-2xl font-black text-white hover:bg-slate-800 transition">-</button>
               <input
                 type="number"
                 min={1}
                 value={Number(formDraft.quantity || 1)}
                 onChange={(event) => updateDraft({ quantity: Number(event.target.value) || 1 }, true)}
-                className="h-12 sm:h-14 min-w-0 flex-1 rounded-2xl border border-white/10 bg-black/20 text-center text-xl sm:text-2xl font-black text-white"
+                className="h-12 sm:h-14 min-w-0 flex-1 rounded-2xl border border-slate-700 bg-slate-950 text-center text-xl sm:text-2xl font-black text-white outline-none focus:border-[#00A3E0]"
               />
-              <button type="button" onClick={() => updateDraft({ quantity: Number(formDraft.quantity || 1) + 1 }, true)} className="h-12 sm:h-14 w-12 sm:w-14 rounded-2xl border border-white/10 bg-white/5 text-2xl font-black text-white">+</button>
+              <button type="button" onClick={() => updateDraft({ quantity: Number(formDraft.quantity || 1) + 1 }, true)} className="h-12 sm:h-14 w-12 sm:w-14 rounded-2xl border border-slate-700 bg-slate-950 text-2xl font-black text-white hover:bg-slate-800 transition">+</button>
             </div>
           </label>
 
-          <label className="rounded-3xl border border-white/10 bg-white/5 p-3 sm:p-4">
-            <span className="mb-2 block text-xs font-black uppercase tracking-widest text-white/40">Shift</span>
-            <div className="grid grid-cols-3 gap-2">
-              {['morning', 'afternoon', 'night'].map((shift) => (
+          <label className="rounded-2xl border border-slate-700/80 bg-slate-900 p-3 sm:p-4 shadow-lg flex flex-col justify-between">
+            <span className="mb-2 block text-xs font-black uppercase tracking-wider text-slate-400">{isAr ? 'الوردية' : 'Shift'}</span>
+            <div className="grid grid-cols-3 gap-1.5">
+              {[
+                { key: 'morning', labelAr: 'صباحي', labelEn: 'Morning' },
+                { key: 'afternoon', labelAr: 'مسائي', labelEn: 'Afternoon' },
+                { key: 'night', labelAr: 'ليلي', labelEn: 'Night' },
+              ].map((s) => (
                 <button
-                  key={shift}
+                  key={s.key}
                   type="button"
-                  onClick={() => updateDraft({ shift }, true)}
-                  className={`h-12 sm:h-14 rounded-2xl border text-[10px] sm:text-xs font-black uppercase truncate px-1 ${formDraft.shift === shift ? 'border-[#00A3E0]/50 bg-[#00A3E0]/20 text-white' : 'border-white/10 bg-white/5 text-white/55'}`}
+                  onClick={() => updateDraft({ shift: s.key }, true)}
+                  className={`h-12 sm:h-14 rounded-xl border text-xs font-black transition-all ${
+                    formDraft.shift === s.key
+                      ? 'border-[#00A3E0] bg-[#00A3E0] text-white shadow-md'
+                      : 'border-slate-700 bg-slate-950 text-slate-300 hover:bg-slate-800'
+                  }`}
                 >
-                  {shift}
+                  {isAr ? s.labelAr : s.labelEn}
                 </button>
               ))}
             </div>
           </label>
 
-          <label className="rounded-3xl border border-white/10 bg-white/5 p-3 sm:p-4">
-            <span className="mb-2 block text-xs font-black uppercase tracking-widest text-white/40">Line</span>
+          <label className="rounded-2xl border border-slate-700/80 bg-slate-900 p-3 sm:p-4 shadow-lg flex flex-col justify-between">
+            <span className="mb-2 block text-xs font-black uppercase tracking-wider text-slate-400">{isAr ? 'خط الإنتاج' : 'Line'}</span>
             <input
               value={String(formDraft.productionLine || '')}
               onChange={(event) => updateDraft({ productionLine: event.target.value }, true)}
-              placeholder="Line / خط"
-              className="h-12 sm:h-14 w-full rounded-2xl border border-white/10 bg-black/20 px-4 text-base sm:text-lg font-black text-white"
+              placeholder={isAr ? 'اكتب خط الإنتاج...' : 'Line name...'}
+              className="h-12 sm:h-14 w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 text-base sm:text-lg font-black text-white placeholder:text-slate-500 outline-none focus:border-[#00A3E0]"
             />
           </label>
 
-          <label className="rounded-3xl border border-white/10 bg-white/5 p-3 sm:p-4">
-            <span className="mb-2 block text-xs font-black uppercase tracking-widest text-white/40">Model</span>
+          <label className="rounded-2xl border border-slate-700/80 bg-slate-900 p-3 sm:p-4 shadow-lg flex flex-col justify-between">
+            <span className="mb-2 block text-xs font-black uppercase tracking-wider text-slate-400">{isAr ? 'الموديل' : 'Model'}</span>
             <input
               value={String(formDraft.model || '')}
               onChange={(event) => updateDraft({ model: event.target.value }, true)}
-              placeholder="Model"
-              className="h-12 sm:h-14 w-full rounded-2xl border border-white/10 bg-black/20 px-4 text-base sm:text-lg font-black text-white"
+              placeholder={isAr ? 'الموديل...' : 'Model...'}
+              className="h-12 sm:h-14 w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 text-base sm:text-lg font-black text-white placeholder:text-slate-500 outline-none focus:border-[#00A3E0]"
             />
           </label>
 
-          <label className="rounded-3xl border border-white/10 bg-white/5 p-3 sm:p-4">
-            <span className="mb-2 block text-xs font-black uppercase tracking-widest text-white/40">Inspection Point</span>
+          <label className="rounded-2xl border border-slate-700/80 bg-slate-900 p-3 sm:p-4 shadow-lg flex flex-col justify-between">
+            <span className="mb-2 block text-xs font-black uppercase tracking-wider text-slate-400">{isAr ? 'نقطة الفحص' : 'Inspection Point'}</span>
             <input
               value={String(formDraft.defaultInspectionPoint || '')}
               onChange={(event) => updateDraft({ defaultInspectionPoint: event.target.value }, true)}
-              placeholder="Inspection point"
-              className="h-12 sm:h-14 w-full rounded-2xl border border-white/10 bg-black/20 px-4 text-base sm:text-lg font-black text-white"
+              placeholder={isAr ? 'نقطة الفحص...' : 'Inspection point...'}
+              className="h-12 sm:h-14 w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 text-base sm:text-lg font-black text-white placeholder:text-slate-500 outline-none focus:border-[#00A3E0]"
             />
           </label>
         </section>
 
-        <section className="rounded-3xl border border-white/10 bg-white/5 px-3 py-4 sm:px-6">
-          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <section className="rounded-3xl border border-slate-700/80 bg-slate-900 px-4 py-5 sm:px-6 shadow-xl">
+          <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
-              <Sparkles className="h-5 w-5 text-[#00A3E0]" />
-              <h2 className="text-base sm:text-lg font-black text-white">Quick Defect</h2>
+              <div className="w-9 h-9 rounded-xl bg-[#00A3E0]/20 border border-[#00A3E0]/30 flex items-center justify-center shrink-0">
+                <Sparkles className="h-5 w-5 text-[#00A3E0]" />
+              </div>
+              <h2 className="text-base sm:text-lg font-black text-white">{isAr ? 'العيوب السريعة' : 'Quick Defect'}</h2>
             </div>
-            <span className="text-xs font-bold text-white/40">From master data and real history</span>
+            <span className="text-xs font-bold text-slate-400">
+              {isAr ? 'من البيانات المسجلة وتاريخ العيوب الفعلي' : 'From master data and real history'}
+            </span>
           </div>
-          {/* Camera + Hands-Free side by side on mobile */}
+
+          {/* Camera + Hands-Free */}
           <div className="mb-4 grid grid-cols-2 gap-2">
             <button
               onClick={() => setShowAIVision(!showAIVision)}
-              className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-lg ${
+              className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-md ${
                 showAIVision
-                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-blue-500/25 border border-white/10'
-                  : 'bg-[#002B49] text-white/70 hover:bg-[#003B69] hover:text-white border border-[#00A3E0]/20 hover:border-[#00A3E0]/50'
+                  ? 'bg-blue-600 text-white border border-blue-400'
+                  : 'bg-slate-800 text-slate-200 hover:bg-slate-700 border border-slate-700'
               }`}
             >
-              <Camera className={`w-4 h-4 shrink-0 ${showAIVision ? 'animate-pulse text-blue-200' : ''}`} />
-              <span className="truncate">{showAIVision ? 'Camera Active' : 'AI Camera'}</span>
+              <Camera className={`w-4 h-4 shrink-0 ${showAIVision ? 'animate-pulse text-white' : ''}`} />
+              <span className="truncate">{showAIVision ? (isAr ? 'الكاميرا نشطة' : 'Camera Active') : (isAr ? 'كاميرا الذكاء الاصطناعي' : 'AI Camera')}</span>
             </button>
             <button
               onClick={() => setIsHandsFree(!isHandsFree)}
-              className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-lg ${
+              className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-md ${
                 isHandsFree
-                  ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-green-500/25 border border-white/10'
-                  : 'bg-[#002B49] text-white/70 hover:bg-[#003B69] hover:text-white border border-[#00A3E0]/20 hover:border-[#00A3E0]/50'
+                  ? 'bg-emerald-600 text-white border border-emerald-400'
+                  : 'bg-slate-800 text-slate-200 hover:bg-slate-700 border border-slate-700'
               }`}
             >
-              <Mic className={`w-4 h-4 shrink-0 ${isHandsFree ? 'animate-pulse text-green-200' : ''}`} />
-              <span className="truncate">{isHandsFree ? 'Hands-Free ON' : 'Hands-Free'}</span>
+              <Mic className={`w-4 h-4 shrink-0 ${isHandsFree ? 'animate-pulse text-white' : ''}`} />
+              <span className="truncate">{isHandsFree ? (isAr ? 'المسجل الصوتي نشط' : 'Hands-Free ON') : (isAr ? 'تسجيل صوتي' : 'Hands-Free')}</span>
             </button>
           </div>
+
           {quickDefects.length > 0 ? (
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 lg:grid-cols-3">
               {quickDefects.map((defect) => (
@@ -855,31 +873,43 @@ export default function ShopfloorDefectEntry() {
                   key={defect}
                   type="button"
                   onClick={() => setDefectType(defect)}
-                  className={`min-h-12 sm:min-h-14 rounded-2xl border px-3 sm:px-4 py-2.5 sm:py-3 text-left text-xs sm:text-sm font-black transition ${formDraft.defectType === defect ? 'border-[#00A3E0]/60 bg-[#00A3E0]/20 text-white' : 'border-white/10 bg-white/5 text-white/70 hover:bg-white/10'}`}
+                  className={`min-h-12 sm:min-h-14 rounded-2xl border px-3 sm:px-4 py-2.5 sm:py-3 text-left text-xs sm:text-sm font-bold transition-all ${
+                    formDraft.defectType === defect
+                      ? 'border-[#00A3E0] bg-[#00A3E0]/20 text-cyan-300 shadow-md font-black'
+                      : 'border-slate-700 bg-slate-950 text-slate-200 hover:bg-slate-800 hover:border-slate-600'
+                  }`}
                 >
                   {defect}
                 </button>
               ))}
             </div>
           ) : (
-            <div className="rounded-2xl border border-dashed border-white/10 p-4 text-sm text-white/45">
-              No defect master or historical defect options are available yet. Type the defect below.
+            <div className="rounded-2xl border border-dashed border-slate-700 bg-slate-950/50 p-4 text-sm text-slate-400">
+              {isAr ? 'لا توجد عيوب مسجلة مسبقاً لهذا الخط أو الموديل. اكتب نوع العيب في الحقل أدناه.' : 'No defect master or historical defect options yet. Type defect type below.'}
             </div>
           )}
-          <input
-            value={String(formDraft.defectType || '')}
-            onChange={(event) => updateDraft({ defectType: event.target.value }, true)}
-            placeholder="Or type defect type..."
-            className="mt-4 h-12 sm:h-14 w-full rounded-2xl border border-white/10 bg-black/20 px-4 text-base sm:text-lg font-black text-white"
-          />
+
+          <div className="mt-4">
+            <span className="mb-1.5 block text-xs font-bold text-slate-400">
+              {isAr ? 'أو اكتب نوع العيب يدوياً:' : 'Or type defect type manually:'}
+            </span>
+            <input
+              value={String(formDraft.defectType || '')}
+              onChange={(event) => updateDraft({ defectType: event.target.value }, true)}
+              placeholder={isAr ? 'اكتب وصف العيب هنا...' : 'Type defect description...'}
+              className="h-12 sm:h-14 w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 text-base sm:text-lg font-black text-white placeholder:text-slate-500 outline-none focus:border-[#00A3E0]"
+            />
+          </div>
         </section>
 
-        <section className="rounded-3xl border border-white/10 bg-white/5 px-3 py-4 sm:px-6">
+        <section className="rounded-3xl border border-slate-700/80 bg-slate-900 px-4 py-5 sm:px-6 shadow-xl">
           <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
-              <ClipboardCheck className="h-5 w-5 shrink-0 text-[#00A3E0]" />
+              <div className="w-9 h-9 rounded-xl bg-[#00A3E0]/20 border border-[#00A3E0]/30 flex items-center justify-center shrink-0">
+                <ClipboardCheck className="h-5 w-5 text-[#00A3E0]" />
+              </div>
               <div className="min-w-0">
-                <h2 className="text-base sm:text-lg font-black text-white truncate">Inspection Plan Checks</h2>
+                <h2 className="text-base sm:text-lg font-black text-white truncate">{isAr ? 'بنود خطة الفحص النشطة' : 'Inspection Plan Checks'}</h2>
                 <p className="text-xs text-white/45 truncate">
                   {activeInspectionPlan
                     ? `${activeInspectionPlan.planName} v${activeInspectionPlan.version}`
@@ -1043,13 +1073,15 @@ export default function ShopfloorDefectEntry() {
           />
         )}
 
-        <section className="rounded-3xl border border-white/10 bg-white/5 px-3 py-4 sm:px-6">
+        <section className="rounded-3xl border border-slate-700/80 bg-slate-900 px-4 py-5 sm:px-6 shadow-xl">
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Camera className="h-5 w-5 text-[#00A3E0]" />
-              <h2 className="text-base sm:text-lg font-black text-white">Evidence</h2>
+              <div className="w-9 h-9 rounded-xl bg-[#00A3E0]/20 border border-[#00A3E0]/30 flex items-center justify-center shrink-0">
+                <Camera className="h-5 w-5 text-[#00A3E0]" />
+              </div>
+              <h2 className="text-base sm:text-lg font-black text-white">{isAr ? 'الأدلة والمرفقات' : 'Evidence'}</h2>
             </div>
-            <span className="text-xs font-black text-[#00A3E0]">{evidence.length}</span>
+            <span className="text-xs font-black text-[#00A3E0] bg-[#00A3E0]/10 px-2.5 py-1 rounded-lg border border-[#00A3E0]/20">{evidence.length}</span>
           </div>
           <input
             ref={fileInputRef}
@@ -1061,29 +1093,29 @@ export default function ShopfloorDefectEntry() {
             onChange={handleEvidenceFiles}
           />
           <div className="grid grid-cols-1 gap-3">
-            <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} className="h-12 sm:h-14 w-full rounded-2xl">
-              <ImagePlus className="mr-2 h-5 w-5" /> Add Photo / File
+            <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} className="h-12 sm:h-14 w-full rounded-2xl bg-slate-800 hover:bg-slate-700 text-white border-slate-700">
+              <ImagePlus className="mr-2 h-5 w-5 text-[#00A3E0]" /> {isAr ? 'إرفاق صورة أو مستند' : 'Add Photo / File'}
             </Button>
             <div className="flex gap-2">
               <input
                 value={evidenceNote}
                 onChange={(event) => setEvidenceNote(event.target.value)}
-                placeholder="Short note..."
-                className="h-12 sm:h-14 min-w-0 flex-1 rounded-2xl border border-white/10 bg-black/20 px-4 text-white"
+                placeholder={isAr ? 'ملاحظة إضافية على العيب...' : 'Short note...'}
+                className="h-12 sm:h-14 min-w-0 flex-1 rounded-2xl border border-slate-700 bg-slate-950 px-4 text-white placeholder:text-slate-500 outline-none focus:border-[#00A3E0]"
               />
-              <Button type="button" onClick={addEvidenceNote} className="h-12 sm:h-14 rounded-2xl px-5">Add</Button>
+              <Button type="button" onClick={addEvidenceNote} className="h-12 sm:h-14 rounded-2xl px-6 bg-[#00A3E0] hover:bg-[#008fbd] text-white font-bold">{isAr ? 'إضافة' : 'Add'}</Button>
             </div>
           </div>
           {evidence.length > 0 && (
             <div className="mt-4 space-y-2">
               {evidence.map((item) => (
-                <div key={item.id} className="flex items-start justify-between gap-3 rounded-2xl border border-white/10 bg-black/10 p-3">
+                <div key={item.id} className="flex items-start justify-between gap-3 rounded-2xl border border-slate-700 bg-slate-950 p-3">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-bold text-white">{item.name}</p>
-                    <p className="text-xs text-white/40">{item.kind} / {Math.round(item.size / 1024)} KB / {item.storedLocally ? 'stored locally' : 'metadata only'}</p>
+                    <p className="text-xs text-slate-400">{item.kind} / {Math.round(item.size / 1024)} KB / {item.storedLocally ? 'stored locally' : 'metadata only'}</p>
                     {item.warning && <p className="mt-1 text-xs text-amber-300">{item.warning}</p>}
                   </div>
-                  <button type="button" onClick={() => setEvidence((prev) => prev.filter((entry) => entry.id !== item.id))} className="rounded-lg p-2 text-white/40 hover:text-red-300">
+                  <button type="button" onClick={() => setEvidence((prev) => prev.filter((entry) => entry.id !== item.id))} className="rounded-lg p-2 text-slate-400 hover:text-red-300">
                     <X className="h-4 w-4" />
                   </button>
                 </div>
@@ -1092,8 +1124,8 @@ export default function ShopfloorDefectEntry() {
           )}
         </section>
 
-        <details className="rounded-3xl border border-white/10 bg-white/5 px-3 py-4 sm:px-6">
-          <summary className="cursor-pointer text-base sm:text-lg font-black text-white">Template Fields / Advanced</summary>
+        <details className="rounded-3xl border border-slate-700/80 bg-slate-900 px-4 py-5 sm:px-6 shadow-xl">
+          <summary className="cursor-pointer text-base sm:text-lg font-black text-white">{isAr ? 'حقول النموذج المتقدمة / القالب' : 'Template Fields / Advanced'}</summary>
           <div className="mt-5">
             <DynamicFormRenderer
               key={formKey}
@@ -1114,37 +1146,37 @@ export default function ShopfloorDefectEntry() {
           </div>
         </details>
 
-        <section className="rounded-3xl border border-white/10 bg-white/5 px-3 py-4 sm:px-6">
-          <h2 className="mb-4 text-base sm:text-lg font-black text-white">Compact Record Intelligence</h2>
+        <section className="rounded-3xl border border-slate-700/80 bg-slate-900 px-4 py-5 sm:px-6 shadow-xl">
+          <h2 className="mb-4 text-base sm:text-lg font-black text-white">{isAr ? 'تحليل ذكاء السجل' : 'Compact Record Intelligence'}</h2>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-6">
-            <div className="rounded-2xl border border-white/10 bg-black/10 p-3">
+            <div className="rounded-2xl border border-slate-800 bg-slate-950 p-3">
               <Gauge className="mb-2 h-4 w-4 text-[#00A3E0]" />
-              <p className="text-[10px] font-black uppercase text-white/40">Quality</p>
+              <p className="text-[10px] font-black uppercase text-slate-400">Quality</p>
               <p className="text-lg font-black text-white">{intelligence.recordQuality}</p>
             </div>
-            <div className="rounded-2xl border border-white/10 bg-black/10 p-3">
+            <div className="rounded-2xl border border-slate-800 bg-slate-950 p-3">
               <FileText className="mb-2 h-4 w-4 text-[#00A3E0]" />
-              <p className="text-[10px] font-black uppercase text-white/40">Route</p>
+              <p className="text-[10px] font-black uppercase text-slate-400">Route</p>
               <p className="text-sm font-black text-white">{intelligence.routeLabel}</p>
             </div>
-            <div className="rounded-2xl border border-white/10 bg-black/10 p-3">
+            <div className="rounded-2xl border border-slate-800 bg-slate-950 p-3">
               <AlertTriangle className="mb-2 h-4 w-4 text-amber-300" />
-              <p className="text-[10px] font-black uppercase text-white/40">Missing</p>
+              <p className="text-[10px] font-black uppercase text-slate-400">Missing</p>
               <p className="text-lg font-black text-white">{intelligence.missingRequiredFields.length}</p>
             </div>
-            <div className="rounded-2xl border border-white/10 bg-black/10 p-3">
+            <div className="rounded-2xl border border-slate-800 bg-slate-950 p-3">
               <ShieldCheck className="mb-2 h-4 w-4 text-amber-300" />
-              <p className="text-[10px] font-black uppercase text-white/40">NCR</p>
+              <p className="text-[10px] font-black uppercase text-slate-400">NCR</p>
               <p className="text-sm font-black text-white">{intelligence.ncrSuggested ? 'Suggested' : 'Not suggested'}</p>
             </div>
-            <div className="rounded-2xl border border-white/10 bg-black/10 p-3">
+            <div className="rounded-2xl border border-slate-800 bg-slate-950 p-3">
               <CheckCircle2 className="mb-2 h-4 w-4 text-emerald-300" />
-              <p className="text-[10px] font-black uppercase text-white/40">Prediction</p>
+              <p className="text-[10px] font-black uppercase text-slate-400">Prediction</p>
               <p className="text-sm font-black text-white">{intelligence.predictionReady ? 'Ready' : 'Needs fields'}</p>
             </div>
-            <div className={`rounded-2xl border p-3 ${fmeaRiskPreview.shouldSync ? 'border-red-400/20 bg-red-400/10' : 'border-white/10 bg-black/10'}`}>
-              <Gauge className={`mb-2 h-4 w-4 ${fmeaRiskPreview.shouldSync ? 'text-red-300' : 'text-white/40'}`} />
-              <p className="text-[10px] font-black uppercase text-white/40">FMEA RPN</p>
+            <div className={`rounded-2xl border p-3 ${fmeaRiskPreview.shouldSync ? 'border-red-400/40 bg-red-950/40' : 'border-slate-800 bg-slate-950'}`}>
+              <Gauge className={`mb-2 h-4 w-4 ${fmeaRiskPreview.shouldSync ? 'text-red-300' : 'text-slate-400'}`} />
+              <p className="text-[10px] font-black uppercase text-slate-400">FMEA RPN</p>
               <p className="text-sm font-black text-white">{fmeaRiskPreview.rpn} / {fmeaRiskPreview.riskLevel}</p>
             </div>
           </div>
@@ -1160,33 +1192,71 @@ export default function ShopfloorDefectEntry() {
           )}
         </section>
 
-        <section className="sticky bottom-0 sm:bottom-3 z-20 rounded-none sm:rounded-3xl border-t sm:border border-white/10 bg-slate-950/98 px-3 py-3 shadow-2xl backdrop-blur mobile-bottom-tabbar-offset">
+        <section className="rounded-3xl border border-slate-700/80 bg-slate-900 p-4 sm:p-6 shadow-2xl space-y-4 my-6">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+            <div className="flex items-center gap-2">
+              <Save className="h-5 w-5 text-[#00A3E0]" />
+              <h3 className="text-base font-black text-white">{isAr ? 'إجراءات الحفظ والتسجيل' : 'Save & Record Actions'}</h3>
+            </div>
+            <span className="text-xs text-slate-400">{isAr ? 'اختر الإجراء المناسب لإكمال التسجيل' : 'Select action to complete entry'}</span>
+          </div>
+
           {/* Primary actions row */}
-          <div className="grid grid-cols-3 gap-2 mb-2">
-            <Button type="button" onClick={() => saveRecord('save')} disabled={!canCreate || saving} className="h-12 sm:h-14 rounded-2xl font-black text-sm sm:text-base col-span-1">
-              {saving ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Save className="mr-1 h-4 w-4" />}
-              Save
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <Button
+              type="button"
+              onClick={() => saveRecord('save')}
+              disabled={!canCreate || saving}
+              className="h-14 rounded-2xl font-black text-base bg-[#00A3E0] hover:bg-[#008fbd] text-white shadow-lg shadow-[#00A3E0]/20 flex items-center justify-center gap-2"
+            >
+              {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
+              <span>{isAr ? 'حفظ السجل' : 'Save Record'}</span>
             </Button>
-            <Button type="button" onClick={() => saveRecord('save-new')} disabled={!canCreate || saving} className="h-12 sm:h-14 rounded-2xl font-black text-sm sm:text-base col-span-1">
-              <Plus className="mr-1 h-4 w-4" />
-              <span className="hidden sm:inline">Save &amp; </span>New
+            <Button
+              type="button"
+              onClick={() => saveRecord('save-new')}
+              disabled={!canCreate || saving}
+              className="h-14 rounded-2xl font-black text-base bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2"
+            >
+              <Plus className="h-5 w-5" />
+              <span>{isAr ? 'حفظ وإدخال جديد' : 'Save & New'}</span>
             </Button>
-            <Button type="button" variant="outline" onClick={() => saveRecord('draft')} disabled={!canCreate || saving} className="h-12 sm:h-14 rounded-2xl font-black text-sm sm:text-base col-span-1">
-              Draft
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => saveRecord('draft')}
+              disabled={!canCreate || saving}
+              className="h-14 rounded-2xl font-black text-base bg-slate-800 hover:bg-slate-700 text-white border-slate-600"
+            >
+              <span>{isAr ? 'حفظ كمسودة' : 'Save as Draft'}</span>
             </Button>
           </div>
+
           {/* Secondary actions row */}
-          <div className="grid grid-cols-2 gap-2">
-            <Button type="button" variant="outline" onClick={duplicatePrevious} disabled={!canCreate || defects.length === 0} className="h-10 sm:h-12 rounded-2xl font-black text-xs sm:text-sm">
-              <Copy className="mr-1.5 h-4 w-4" /> Duplicate
+          <div className="grid grid-cols-2 gap-3 pt-1">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={duplicatePrevious}
+              disabled={!canCreate || defects.length === 0}
+              className="h-12 rounded-2xl font-bold text-sm bg-slate-800/80 hover:bg-slate-700 text-slate-200 border-slate-700 flex items-center justify-center gap-2"
+            >
+              <Copy className="h-4 w-4" />
+              <span>{isAr ? 'تكرار آخر عيب' : 'Duplicate Previous'}</span>
             </Button>
-            <Button type="button" variant="outline" onClick={resetForNew} className="h-10 sm:h-12 rounded-2xl font-black text-xs sm:text-sm">
-              <RotateCcw className="mr-1.5 h-4 w-4" /> Reset
+            <Button
+              type="button"
+              variant="outline"
+              onClick={resetForNew}
+              className="h-12 rounded-2xl font-bold text-sm bg-slate-800/80 hover:bg-slate-700 text-slate-200 border-slate-700 flex items-center justify-center gap-2"
+            >
+              <RotateCcw className="h-4 w-4" />
+              <span>{isAr ? 'إعادة تعيين النموذج' : 'Reset Form'}</span>
             </Button>
           </div>
         </section>
 
-        <section className="rounded-3xl border border-white/10 bg-white/5 px-3 py-4 sm:px-6 mb-24 sm:mb-0">
+        <section className="rounded-3xl border border-slate-700/80 bg-slate-900 px-4 py-5 sm:px-6 shadow-xl mb-12 sm:mb-0">
           <h2 className="mb-4 text-base sm:text-lg font-black text-white">Recent Entries</h2>
           {recent.length === 0 ? (
             <QualityGuidedEmptyState
@@ -1199,7 +1269,7 @@ export default function ShopfloorDefectEntry() {
           ) : (
             <div className="space-y-2">
               {recent.map((record) => (
-                <div key={record.id} className="flex flex-col justify-between gap-2 rounded-2xl border border-white/10 bg-black/10 p-3 sm:flex-row sm:items-center">
+                <div key={record.id} className="flex flex-col justify-between gap-2 rounded-2xl border border-slate-700 bg-slate-950 p-3 sm:flex-row sm:items-center">
                   <div>
                     <p className="text-sm font-black text-white">{record.defectType || 'Defect record'}</p>
                     <p className="text-xs text-white/45">{record.partId || record.partNumber || 'No part'} / {record.productionLine || 'No line'} / Qty {compactNumber(record.quantity)}</p>
