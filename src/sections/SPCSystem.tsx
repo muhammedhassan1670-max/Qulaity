@@ -1,178 +1,391 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { 
   Activity, BarChart3, LineChart as LineChartIcon, AlertCircle, 
-  Settings2, Plus, Trash2
+  Settings2, Plus, Trash2, CheckCircle2, RotateCcw, Sparkles, 
+  Info, Table as TableIcon
 } from 'lucide-react';
 import {
   ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, 
   ResponsiveContainer, ReferenceLine, Area
 } from 'recharts';
 import { useTranslation } from '@/utils/translations';
+import { useAppStore } from '@/stores/appStore';
 import { toast } from 'sonner';
 
 import { 
   calculateXbarR, calculateIMR, calculatePChart, calculateUChart,
-  calculateCapability, buildHistogramData, type SpcSubgroup
+  calculateCapability, buildHistogramData, type SpcSubgroup,
+  type SpcControlChartResult
 } from '@/services/spcEngine';
 
-type SpcTab = 'control' | 'capability';
+type SpcTab = 'control' | 'capability' | 'data';
 type ChartType = 'xbar-r' | 'i-mr' | 'p' | 'u';
 
 export interface SpcMeasurementRow {
+  id: string;
   label: string;
-  values?: number[]; // For X-bar
-  value?: number; // For I-MR
-  defective?: number; // For P
-  sampleSize?: number; // For P
-  defects?: number; // For U
-  units?: number; // For U
+  timestamp?: string;
+  values?: number[];   // For X-bar & R
+  value?: number;      // For I-MR
+  defective?: number;  // For p-chart
+  sampleSize?: number; // For p-chart
+  defects?: number;    // For u-chart
+  units?: number;      // For u-chart
+}
+
+// Generate realistic demo data for each chart type
+function generateDemoData(type: ChartType): SpcMeasurementRow[] {
+  const now = new Date();
+  if (type === 'xbar-r') {
+    // 20 subgroups of 5 measurements around target = 50.0, sigma = 1.2
+    return Array.from({ length: 20 }, (_, i) => {
+      const baseMean = 50.0 + (i === 14 ? 2.5 : (Math.random() - 0.5) * 0.8);
+      const vals = Array.from({ length: 5 }, () => 
+        Number((baseMean + (Math.random() - 0.5) * 2.2).toFixed(2))
+      );
+      return {
+        id: `sg-${i + 1}`,
+        label: `Lot-${i + 1}`,
+        timestamp: new Date(now.getTime() - (20 - i) * 3600000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        values: vals
+      };
+    });
+  } else if (type === 'i-mr') {
+    // 25 individual readings around 25.0
+    return Array.from({ length: 25 }, (_, i) => {
+      const shift = i === 18 ? 4.2 : (Math.random() - 0.5) * 1.5;
+      const val = Number((25.0 + shift + (Math.random() - 0.5) * 2.0).toFixed(2));
+      return {
+        id: `pt-${i + 1}`,
+        label: `S-${i + 1}`,
+        timestamp: new Date(now.getTime() - (25 - i) * 1800000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        value: val
+      };
+    });
+  } else if (type === 'p') {
+    // 20 lots of 100 parts with defective counts 1-6
+    return Array.from({ length: 20 }, (_, i) => {
+      const def = i === 12 ? 9 : Math.floor(Math.random() * 4) + 1;
+      return {
+        id: `p-${i + 1}`,
+        label: `Batch-${i + 1}`,
+        timestamp: new Date(now.getTime() - (20 - i) * 3600000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        defective: def,
+        sampleSize: 100
+      };
+    });
+  } else {
+    // 20 inspections with defects per 10 units
+    return Array.from({ length: 20 }, (_, i) => {
+      const def = i === 9 ? 12 : Math.floor(Math.random() * 5) + 2;
+      return {
+        id: `u-${i + 1}`,
+        label: `Unit-${i + 1}`,
+        timestamp: new Date(now.getTime() - (20 - i) * 3600000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        defects: def,
+        units: 10
+      };
+    });
+  }
 }
 
 export default function SPCSystem() {
-  const { language } = useTranslation();
+  const { language: langApp } = useAppStore();
+  const { language: langTrans } = useTranslation();
+  const language = langApp || langTrans || 'ar';
+  const isAr = language === 'ar';
   
   const [activeTab, setActiveTab] = useState<SpcTab>('control');
   const [chartType, setChartType] = useState<ChartType>('xbar-r');
+  
+  // Storage key per chart type ensures no cross-type data corruption
+  const getStorageKey = (type: ChartType) => `qms_spc_v3_${type}`;
+
   const [data, setData] = useState<SpcMeasurementRow[]>(() => {
     try {
-      const saved = localStorage.getItem('qms_spc_real_measurements');
+      const saved = localStorage.getItem(getStorageKey('xbar-r'));
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       }
     } catch {}
-    return [];
+    // Default demo data so the page opens immediately with visible charts
+    return generateDemoData('xbar-r');
   });
-  const [inputValuesText, setInputValuesText] = useState('');
+
+  // Switch dataset when chartType changes
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(getStorageKey(chartType));
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setData(parsed);
+          return;
+        }
+      }
+    } catch {}
+    // If no saved data for this type, initialize with realistic demo data
+    const initial = generateDemoData(chartType);
+    setData(initial);
+    try {
+      localStorage.setItem(getStorageKey(chartType), JSON.stringify(initial));
+    } catch {}
+  }, [chartType]);
+
+  // Save changes to current chart storage
+  const saveData = (updated: SpcMeasurementRow[]) => {
+    setData(updated);
+    try {
+      localStorage.setItem(getStorageKey(chartType), JSON.stringify(updated));
+    } catch {}
+  };
+
+  // Form Inputs State
   const [inputLabel, setInputLabel] = useState('');
-  const subgroupSize = 5;
-  
-  // Capability specs
+  const [inputValuesText, setInputValuesText] = useState('');
+  const [inputDefective, setInputDefective] = useState('2');
+  const [inputSampleSize, setInputSampleSize] = useState('100');
+  const [inputDefects, setInputDefects] = useState('3');
+  const [inputUnits, setInputUnits] = useState('10');
+
+  // Capability specs state
   const [usl, setUsl] = useState<number>(55);
   const [lsl, setLsl] = useState<number>(45);
   const [target, setTarget] = useState<number>(50);
 
-  const handleAddMeasurement = () => {
-    if (!inputValuesText.trim()) {
-      toast.error(language === 'ar' ? 'يرجى إدخال قيم القياس' : 'Please enter measurement values');
-      return;
-    }
+  // Load Demo Data for active chart
+  const handleLoadDemoData = () => {
+    const demo = generateDemoData(chartType);
+    saveData(demo);
+    toast.success(isAr ? 'تم تحميل بيانات تجريبية مطابقة للمواصفات بنجاح' : 'Standard demo data loaded successfully');
+  };
 
-    const label = inputLabel.trim() || `Sample-${data.length + 1}`;
-    let newRow: SpcMeasurementRow;
+  // Clear all data
+  const handleClearData = () => {
+    saveData([]);
+    toast.info(isAr ? 'تم مسح سجل القياسات للشارت الحالي' : 'Measurements cleared for active chart');
+  };
+
+  // Delete single measurement row
+  const handleDeleteRow = (id: string) => {
+    const updated = data.filter(d => d.id !== id);
+    saveData(updated);
+    toast.success(isAr ? 'تم حذف القراءة' : 'Measurement removed');
+  };
+
+  // Add Measurement Handler
+  const handleAddMeasurement = () => {
+    const defaultLabel = `${isAr ? 'عينة' : 'Sample'}-${data.length + 1}`;
+    const label = inputLabel.trim() || defaultLabel;
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const id = `rec-${Date.now()}`;
 
     if (chartType === 'xbar-r') {
+      if (!inputValuesText.trim()) {
+        toast.error(isAr ? 'يرجى إدخال قيم القياس (مثال: 50.2, 49.8, 50.1)' : 'Please enter measurement values (e.g. 50.2, 49.8, 50.1)');
+        return;
+      }
       const numbers = inputValuesText
         .split(/[\s,]+/)
         .map(v => parseFloat(v))
         .filter(v => !isNaN(v));
 
       if (numbers.length === 0) {
-        toast.error(language === 'ar' ? 'أرقام غير صالحة' : 'Invalid numbers');
+        toast.error(isAr ? 'يرجى إدخال أرقام صحيحة' : 'Invalid numbers entered');
         return;
       }
-      newRow = { label, values: numbers };
+
+      const newRow: SpcMeasurementRow = {
+        id,
+        label,
+        timestamp: timeStr,
+        values: numbers
+      };
+      saveData([...data, newRow]);
+      setInputValuesText('');
+      setInputLabel('');
+      toast.success(isAr ? `تمت إضافة العينة (${numbers.length} قياسات) بنجاح` : `Sample added (${numbers.length} readings)`);
+
     } else if (chartType === 'i-mr') {
+      if (!inputValuesText.trim()) {
+        toast.error(isAr ? 'يرجى إدخال القيمة المقاسة (مثال: 25.4)' : 'Please enter the measured value (e.g. 25.4)');
+        return;
+      }
       const val = parseFloat(inputValuesText.trim());
       if (isNaN(val)) {
-        toast.error(language === 'ar' ? 'قيمة غير صالحة' : 'Invalid value');
+        toast.error(isAr ? 'قيمة رقمية غير صالحة' : 'Invalid numeric value');
         return;
       }
-      newRow = { label, value: val };
+
+      const newRow: SpcMeasurementRow = {
+        id,
+        label,
+        timestamp: timeStr,
+        value: val
+      };
+      saveData([...data, newRow]);
+      setInputValuesText('');
+      setInputLabel('');
+      toast.success(isAr ? 'تم تسجيل القراءة ورسمها على الشارت' : 'Reading recorded and plotted on chart');
+
     } else if (chartType === 'p') {
-      const parts = inputValuesText.split(/[\s,/]+/).map(v => parseFloat(v)).filter(v => !isNaN(v));
-      const defective = parts[0] || 0;
-      const sampleSize = parts[1] || 100;
-      newRow = { label, defective, sampleSize };
+      const defective = parseFloat(inputDefective) || 0;
+      const sampleSize = parseFloat(inputSampleSize) || 100;
+      if (sampleSize <= 0) {
+        toast.error(isAr ? 'حجم العينة يجب أن يكون أكبر من صفر' : 'Sample size must be greater than zero');
+        return;
+      }
+      const newRow: SpcMeasurementRow = {
+        id,
+        label,
+        timestamp: timeStr,
+        defective,
+        sampleSize
+      };
+      saveData([...data, newRow]);
+      setInputLabel('');
+      toast.success(isAr ? 'تمت إضافة عينة الفحص بنجاح' : 'Inspection sample added');
+
     } else {
-      const parts = inputValuesText.split(/[\s,/]+/).map(v => parseFloat(v)).filter(v => !isNaN(v));
-      const defects = parts[0] || 0;
-      const units = parts[1] || 1;
-      newRow = { label, defects, units };
+      const defects = parseFloat(inputDefects) || 0;
+      const units = parseFloat(inputUnits) || 1;
+      if (units <= 0) {
+        toast.error(isAr ? 'عدد الوحدات يجب أن يكون أكبر من صفر' : 'Units count must be greater than zero');
+        return;
+      }
+      const newRow: SpcMeasurementRow = {
+        id,
+        label,
+        timestamp: timeStr,
+        defects,
+        units
+      };
+      saveData([...data, newRow]);
+      setInputLabel('');
+      toast.success(isAr ? 'تمت إضافة فحص العيوب بنجاح' : 'Defect check added');
     }
-
-    const updated = [...data, newRow];
-    setData(updated);
-    try {
-      localStorage.setItem('qms_spc_real_measurements', JSON.stringify(updated));
-    } catch {}
-    setInputValuesText('');
-    setInputLabel('');
-    toast.success(language === 'ar' ? 'تمت إضافة قراءة العينة بنجاح' : 'Measurement added successfully');
   };
 
-  const handleClearData = () => {
-    setData([]);
-    try {
-      localStorage.removeItem('qms_spc_real_measurements');
-    } catch {}
-    toast.info(language === 'ar' ? 'تم مسح سجل القياسات' : 'Measurements cleared');
-  };
+  // Run Statistical Calculations safely
+  const calculations: SpcControlChartResult | null = useMemo(() => {
+    if (!data || data.length === 0) return null;
 
-  // Run Calculations
-  const calculations = useMemo(() => {
-    if (data.length === 0) return null;
     try {
       if (chartType === 'xbar-r') {
         const subgroups: SpcSubgroup[] = data.map((d, i) => ({
-          id: i.toString(), label: d.label, values: d.values || []
+          id: d.id || i.toString(),
+          label: d.label || `S-${i + 1}`,
+          values: d.values && d.values.length > 0 ? d.values : (d.value !== undefined ? [d.value] : [50])
         }));
         return calculateXbarR(subgroups);
       } else if (chartType === 'i-mr') {
-        const mapped = data.map(d => ({ label: d.label, value: d.value || 0 }));
+        const mapped = data.map((d, i) => ({
+          label: d.label || `Pt-${i + 1}`,
+          value: d.value !== undefined ? d.value : (d.values && d.values.length > 0 ? d.values[0] : 0)
+        }));
         return calculateIMR(mapped);
       } else if (chartType === 'p') {
-        const mapped = data.map(d => ({ label: d.label, defective: d.defective || 0, sampleSize: d.sampleSize || 100 }));
+        const mapped = data.map((d, i) => ({
+          label: d.label || `Lot-${i + 1}`,
+          defective: d.defective ?? 0,
+          sampleSize: d.sampleSize ?? 100
+        }));
         return calculatePChart(mapped);
       } else if (chartType === 'u') {
-        const mapped = data.map(d => ({ label: d.label, defects: d.defects || 0, units: d.units || 1 }));
+        const mapped = data.map((d, i) => ({
+          label: d.label || `Insp-${i + 1}`,
+          defects: d.defects ?? 0,
+          units: d.units ?? 1
+        }));
         return calculateUChart(mapped);
       }
-    } catch (err: any) {
-      console.error(err);
+    } catch (err) {
+      console.error('SPC calculation error:', err);
       return null;
     }
     return null;
-  }, [data, chartType, subgroupSize]);
+  }, [data, chartType]);
 
-  // Capability calculations
+  // Capability calculations (for continuous variable charts)
   const capabilityData = useMemo(() => {
     if (chartType !== 'xbar-r' && chartType !== 'i-mr') return null;
-    if (!calculations) return null;
-    
+    if (!calculations || !data || data.length === 0) return null;
+
     let allValues: number[] = [];
     if (chartType === 'xbar-r') {
-      allValues = data.flatMap(d => d.values || []);
+      allValues = data.flatMap(d => d.values && d.values.length > 0 ? d.values : (d.value !== undefined ? [d.value] : []));
     } else {
-      allValues = data.map(d => d.value || 0);
+      allValues = data.map(d => d.value !== undefined ? d.value : (d.values && d.values[0] !== undefined ? d.values[0] : 0));
     }
-    
+
     if (allValues.length === 0) return null;
-    
+
     return {
       indices: calculateCapability(allValues, usl, lsl, target, calculations.withinSigma),
       histogram: buildHistogramData(allValues)
     };
   }, [data, chartType, calculations, usl, lsl, target]);
 
+  // Helper to calculate safe Y-axis domain with breathing room
+  const getYDomain = (chartData: any[], limits: any) => {
+    if (!chartData || chartData.length === 0) return [0, 10];
+    const vals: number[] = [];
+    chartData.forEach(d => {
+      if (typeof d.value === 'number' && !isNaN(d.value) && isFinite(d.value)) {
+        vals.push(d.value);
+      }
+    });
+    if (typeof limits?.ucl === 'number' && isFinite(limits.ucl)) vals.push(limits.ucl);
+    if (typeof limits?.lcl === 'number' && isFinite(limits.lcl)) vals.push(limits.lcl);
+    if (typeof limits?.cl === 'number' && isFinite(limits.cl)) vals.push(limits.cl);
+
+    if (vals.length === 0) return [0, 10];
+    const min = Math.min(...vals);
+    const max = Math.max(...vals);
+    if (min === max) return [Number((min - 1).toFixed(2)), Number((max + 1).toFixed(2))];
+    const pad = Math.max(0.1, (max - min) * 0.15);
+    return [Number((min - pad).toFixed(2)), Number((max + pad).toFixed(2))];
+  };
+
+  // Custom Chart Tooltip
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       const dataPoint = payload[0]?.payload || {};
+      const val = payload[0]?.value;
       return (
-        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-3 rounded-lg shadow-xl">
-          <p className="font-bold mb-2">{label}</p>
-          <div className="space-y-1 text-sm">
-            <p><span className="text-slate-500">Value:</span> {payload[0]?.value?.toFixed(3)}</p>
-            {dataPoint?.ucl !== undefined && <p><span className="text-red-500">UCL:</span> {dataPoint.ucl?.toFixed(3)}</p>}
-            {dataPoint?.cl !== undefined && <p><span className="text-green-500">Center:</span> {dataPoint.cl?.toFixed(3)}</p>}
-            {dataPoint?.lcl !== undefined && <p><span className="text-red-500">LCL:</span> {dataPoint.lcl?.toFixed(3)}</p>}
-            
+        <div className="bg-slate-900 border border-slate-700 p-3.5 rounded-xl shadow-2xl text-xs text-white min-w-[190px]">
+          <p className="font-bold text-sm text-sky-400 mb-2 pb-1 border-b border-slate-800">{label}</p>
+          <div className="space-y-1.5 font-mono">
+            <p className="flex justify-between gap-4">
+              <span className="text-slate-400">{isAr ? 'القيمة المقاسة:' : 'Value:'}</span>
+              <span className="font-bold text-white">{typeof val === 'number' ? val.toFixed(3) : '—'}</span>
+            </p>
+            {dataPoint?.ucl !== undefined && (
+              <p className="flex justify-between gap-4 text-red-400">
+                <span>{isAr ? 'الحد الأعلى (UCL):' : 'UCL:'}</span>
+                <span className="font-bold">{dataPoint.ucl?.toFixed(3)}</span>
+              </p>
+            )}
+            {dataPoint?.cl !== undefined && (
+              <p className="flex justify-between gap-4 text-emerald-400">
+                <span>{isAr ? 'المركز (CL):' : 'CL:'}</span>
+                <span className="font-bold">{dataPoint.cl?.toFixed(3)}</span>
+              </p>
+            )}
+            {dataPoint?.lcl !== undefined && (
+              <p className="flex justify-between gap-4 text-red-400">
+                <span>{isAr ? 'الحد الأدنى (LCL):' : 'LCL:'}</span>
+                <span className="font-bold">{dataPoint.lcl?.toFixed(3)}</span>
+              </p>
+            )}
+
             {dataPoint?.violations && dataPoint.violations.length > 0 && (
-              <div className="mt-2 pt-2 border-t border-slate-200 dark:border-slate-600">
-                <p className="text-red-500 font-bold flex items-center gap-1">
-                  <AlertCircle className="w-3 h-3" /> Violations:
+              <div className="mt-2 pt-2 border-t border-slate-800">
+                <p className="text-red-400 font-bold flex items-center gap-1 mb-1">
+                  <AlertCircle className="w-3.5 h-3.5" /> {isAr ? 'مخالفات نيلسون:' : 'Nelson Rules:'}
                 </p>
-                <ul className="list-disc pl-4 text-xs text-red-400">
+                <ul className="list-disc pr-4 text-[11px] text-red-300 space-y-0.5">
                   {dataPoint.violations.map((v: string, i: number) => <li key={i}>{v}</li>)}
                 </ul>
               </div>
@@ -184,53 +397,109 @@ export default function SPCSystem() {
     return null;
   };
 
-  const renderControlChart = (chartData: any[], limits: any, title: string, dataKey: string = 'value') => {
+  // Render Control Chart (Primary or Secondary)
+  const renderControlChart = (
+    chartData: any[], 
+    limits: any, 
+    title: string, 
+    strokeColor: string = '#0ea5e9'
+  ) => {
     if (!chartData || chartData.length === 0) return null;
-    
-    // Add dummy point for connecting out-of-control dots if needed, but Recharts dot customizer works better
+    const yDomain = getYDomain(chartData, limits);
+
     return (
-      <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 shadow-sm mb-6">
-        <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-          <Activity className="w-5 h-5 text-[var(--industrial-primary)]" />
-          {title}
-        </h3>
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl mb-6">
+        <div className="flex flex-wrap justify-between items-center mb-4 gap-2 border-b border-slate-800/80 pb-3">
+          <h3 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+            <Activity className="w-5 h-5 text-sky-400" />
+            {title}
+          </h3>
+          <div className="flex items-center gap-4 text-xs font-mono">
+            {typeof limits?.ucl === 'number' && isFinite(limits.ucl) && (
+              <span className="text-red-400">UCL: <strong>{limits.ucl.toFixed(2)}</strong></span>
+            )}
+            {typeof limits?.cl === 'number' && isFinite(limits.cl) && (
+              <span className="text-emerald-400">CL: <strong>{limits.cl.toFixed(2)}</strong></span>
+            )}
+            {typeof limits?.lcl === 'number' && isFinite(limits.lcl) && (
+              <span className="text-red-400">LCL: <strong>{limits.lcl.toFixed(2)}</strong></span>
+            )}
+          </div>
+        </div>
         
-        <div className="h-[300px] w-full" style={{ touchAction: 'pan-y' }}>
+        <div className="h-[320px] w-full" style={{ touchAction: 'pan-y' }}>
           <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }} style={{ touchAction: 'pan-y' }}>
-              <CartesianGrid strokeDasharray="3 3" opacity={0.2} vertical={false} />
-              <XAxis dataKey="label" tick={{fontSize: 12}} />
-              <YAxis domain={['auto', 'auto']} tick={{fontSize: 12}} />
+            <ComposedChart data={chartData} margin={{ top: 20, right: 30, left: 10, bottom: 10 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.4} vertical={false} />
+              <XAxis 
+                dataKey="label" 
+                tick={{ fill: '#94a3b8', fontSize: 11 }} 
+                stroke="#475569" 
+                padding={{ left: 20, right: 20 }}
+              />
+              <YAxis 
+                domain={yDomain} 
+                tick={{ fill: '#94a3b8', fontSize: 11 }} 
+                stroke="#475569" 
+                allowDataOverflow={false}
+              />
               <Tooltip content={<CustomTooltip />} />
               
-              {/* Control Limits */}
-              {limits.ucl !== undefined && <ReferenceLine y={limits.ucl} stroke="red" strokeDasharray="5 5" label={{ value: 'UCL', position: 'insideTopRight', fill: 'red' }} />}
-              {limits.cl !== undefined && <ReferenceLine y={limits.cl} stroke="green" strokeDasharray="3 3" label={{ value: 'CL', position: 'insideTopRight', fill: 'green' }} />}
-              {limits.lcl !== undefined && <ReferenceLine y={limits.lcl} stroke="red" strokeDasharray="5 5" label={{ value: 'LCL', position: 'insideBottomRight', fill: 'red' }} />}
+              {/* Control Limits Reference Lines */}
+              {typeof limits?.ucl === 'number' && isFinite(limits.ucl) && (
+                <ReferenceLine 
+                  y={limits.ucl} 
+                  stroke="#ef4444" 
+                  strokeDasharray="6 4" 
+                  strokeWidth={1.5}
+                  label={{ value: `UCL (${limits.ucl.toFixed(2)})`, position: isAr ? 'insideTopLeft' : 'insideTopRight', fill: '#ef4444', fontSize: 11, fontWeight: 'bold' }} 
+                />
+              )}
+              {typeof limits?.cl === 'number' && isFinite(limits.cl) && (
+                <ReferenceLine 
+                  y={limits.cl} 
+                  stroke="#22c55e" 
+                  strokeDasharray="4 4" 
+                  strokeWidth={1.5}
+                  label={{ value: `CL (${limits.cl.toFixed(2)})`, position: isAr ? 'insideTopLeft' : 'insideTopRight', fill: '#22c55e', fontSize: 11, fontWeight: 'bold' }} 
+                />
+              )}
+              {typeof limits?.lcl === 'number' && isFinite(limits.lcl) && (
+                <ReferenceLine 
+                  y={limits.lcl} 
+                  stroke="#ef4444" 
+                  strokeDasharray="6 4" 
+                  strokeWidth={1.5}
+                  label={{ value: `LCL (${limits.lcl.toFixed(2)})`, position: isAr ? 'insideBottomLeft' : 'insideBottomRight', fill: '#ef4444', fontSize: 11, fontWeight: 'bold' }} 
+                />
+              )}
               
-              {/* Data Line */}
+              {/* Data Line with safe Dot rendering */}
               <Line 
                 type="monotone" 
-                dataKey={dataKey} 
-                stroke="var(--industrial-primary)" 
-                strokeWidth={2}
-                dot={((props: any) => {
-                  const { cx, cy, payload } = props;
-                  if (!cx || !cy) return <circle key={`dot-${props.index}`} />;
+                dataKey="value" 
+                stroke={strokeColor} 
+                strokeWidth={2.5}
+                connectNulls={true}
+                isAnimationActive={false}
+                dot={(props: any) => {
+                  const { cx, cy, payload, index } = props;
+                  if (cx === undefined || cy === undefined || isNaN(cx) || isNaN(cy)) return <g key={`dot-empty-${index}`} />;
+                  if (payload?.value === null || payload?.value === undefined) return <g key={`dot-null-${index}`} />;
                   const isViolation = payload?.outOfControl || (payload?.violations && payload.violations.length > 0);
                   return (
                     <circle 
                       cx={cx} 
                       cy={cy} 
-                      r={isViolation ? 6 : 4} 
-                      fill={isViolation ? "red" : "var(--industrial-primary)"} 
-                      stroke="white" 
+                      r={isViolation ? 6 : 4.5} 
+                      fill={isViolation ? "#ef4444" : strokeColor} 
+                      stroke="#ffffff" 
                       strokeWidth={2} 
-                      key={`dot-${props.index}`}
+                      key={`dot-${index}`}
                     />
                   );
-                }) as any}
-                activeDot={{ r: 8 }} 
+                }}
+                activeDot={{ r: 8, stroke: '#ffffff', strokeWidth: 2 }} 
               />
             </ComposedChart>
           </ResponsiveContainer>
@@ -240,237 +509,575 @@ export default function SPCSystem() {
   };
 
   const getCapabilityColor = (val: number) => {
-    if (val >= 1.33) return 'text-green-500 bg-green-500/10 border-green-500/20';
-    if (val >= 1.0) return 'text-yellow-500 bg-yellow-500/10 border-yellow-500/20';
-    return 'text-red-500 bg-red-500/10 border-red-500/20';
+    if (val >= 1.33) return 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30';
+    if (val >= 1.0) return 'text-yellow-400 bg-yellow-500/10 border-yellow-500/30';
+    return 'text-red-400 bg-red-500/10 border-red-500/30';
   };
 
   return (
-    <div className="max-w-[1600px] mx-auto p-4 md:p-6 lg:p-8 pt-24 min-h-screen">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+    <div className="max-w-[1600px] mx-auto p-4 sm:p-6 lg:p-8 pt-20 sm:pt-24 min-h-screen text-slate-100">
+      
+      {/* Page Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 border-b border-slate-800 pb-5">
         <div>
-          <h1 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-3">
-            <LineChartIcon className="w-8 h-8 text-[var(--industrial-primary)]" />
-            {language === 'ar' ? 'التحكم الإحصائي (SPC)' : 'Statistical Process Control'}
+          <h1 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tight flex items-center gap-3">
+            <LineChartIcon className="w-8 h-8 text-sky-400" />
+            {isAr ? 'التحكم الإحصائي في العمليات (SPC)' : 'Statistical Process Control (SPC)'}
           </h1>
-          <p className="text-slate-500 dark:text-gray-400 mt-1 font-medium">
-            {language === 'ar' ? 'مراقبة استقرار وقدرة العمليات' : 'Monitor process stability and capability'}
+          <p className="text-slate-400 mt-1 text-sm font-medium">
+            {isAr ? 'رسم ومراقبة استقرار وقدرة خطوط الإنتاج وحساب حدود التحكم بدقة AIAG' : 'Monitor process stability, capability, and real-time AIAG control limits'}
           </p>
         </div>
         
-        <div className="flex bg-slate-100 dark:bg-white/5 p-1 rounded-xl">
+        {/* Navigation Tabs */}
+        <div className="flex bg-slate-900 border border-slate-800 p-1 rounded-xl shadow-lg">
           <button
             onClick={() => setActiveTab('control')}
-            className={`px-6 py-2.5 rounded-lg font-bold text-sm transition-all ${activeTab === 'control' ? 'bg-white dark:bg-[var(--industrial-primary)] text-[var(--industrial-primary)] dark:text-white shadow-sm' : 'text-slate-500 dark:text-gray-400 hover:text-slate-700 dark:hover:text-white'}`}
+            className={`px-4 sm:px-6 py-2 rounded-lg font-bold text-xs sm:text-sm transition-all flex items-center gap-2 ${
+              activeTab === 'control' 
+                ? 'bg-sky-500 text-white shadow-md' 
+                : 'text-slate-400 hover:text-white'
+            }`}
           >
-            {language === 'ar' ? 'شارتات التحكم' : 'Control Charts'}
+            <Activity className="w-4 h-4" />
+            {isAr ? 'شارتات التحكم' : 'Control Charts'}
           </button>
+          
           <button
             onClick={() => setActiveTab('capability')}
             disabled={chartType !== 'xbar-r' && chartType !== 'i-mr'}
-            className={`px-6 py-2.5 rounded-lg font-bold text-sm transition-all disabled:opacity-30 ${activeTab === 'capability' ? 'bg-white dark:bg-[var(--industrial-primary)] text-[var(--industrial-primary)] dark:text-white shadow-sm' : 'text-slate-500 dark:text-gray-400 hover:text-slate-700 dark:hover:text-white'}`}
+            className={`px-4 sm:px-6 py-2 rounded-lg font-bold text-xs sm:text-sm transition-all flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed ${
+              activeTab === 'capability' 
+                ? 'bg-sky-500 text-white shadow-md' 
+                : 'text-slate-400 hover:text-white'
+            }`}
           >
-            {language === 'ar' ? 'تحليل القدرة' : 'Capability Analysis'}
+            <BarChart3 className="w-4 h-4" />
+            {isAr ? 'تحليل القدرة' : 'Capability Analysis'}
+          </button>
+
+          <button
+            onClick={() => setActiveTab('data')}
+            className={`px-4 sm:px-6 py-2 rounded-lg font-bold text-xs sm:text-sm transition-all flex items-center gap-2 ${
+              activeTab === 'data' 
+                ? 'bg-sky-500 text-white shadow-md' 
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <TableIcon className="w-4 h-4" />
+            {isAr ? 'جدول القراءات' : 'Data Table'}
+            <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-slate-800 text-sky-400 font-mono">
+              {data.length}
+            </span>
           </button>
         </div>
       </div>
 
+      {/* Main Content Layout */}
       {activeTab === 'control' && (
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Controls Sidebar */}
+          
+          {/* Controls & Data Entry Sidebar */}
           <div className="lg:col-span-1 space-y-6">
-            <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-5">
-              <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-                <Settings2 className="w-5 h-5 text-[var(--industrial-primary)]" />
-                {language === 'ar' ? 'إعدادات الشارت' : 'Chart Settings'}
+            
+            {/* Chart Type Selector & Input Form */}
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+              <h3 className="font-bold text-base mb-4 flex items-center justify-between text-white">
+                <span className="flex items-center gap-2">
+                  <Settings2 className="w-4 h-4 text-sky-400" />
+                  {isAr ? 'نوع الشارت وإدخال البيانات' : 'Chart & Data Entry'}
+                </span>
+                <span className="text-xs text-sky-400 font-mono">{data.length} {isAr ? 'عينة' : 'samples'}</span>
               </h3>
               
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">
-                    {language === 'ar' ? 'نوع الشارت' : 'Chart Type'}
+                  <label className="block text-xs font-bold text-slate-400 mb-1.5 uppercase tracking-wider">
+                    {isAr ? 'نوع شارت التحكم الإحصائي:' : 'SPC Chart Type:'}
                   </label>
                   <select 
                     value={chartType}
                     onChange={(e) => setChartType(e.target.value as ChartType)}
-                    className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-[var(--industrial-primary)]"
+                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white outline-none focus:border-sky-500 shadow-inner"
                   >
-                    <option value="xbar-r">X-bar & R (Variables)</option>
-                    <option value="i-mr">I-MR (Individual Variables)</option>
-                    <option value="p">p Chart (Proportion Defective)</option>
-                    <option value="u">u Chart (Defects per Unit)</option>
+                    <option value="xbar-r">{isAr ? 'X-bar & R (متوسط ومدى العينات - للمتغيرات)' : 'X-bar & R (Variables)'}</option>
+                    <option value="i-mr">{isAr ? 'I-MR (قراءة فردية ومدى متحرك - قياس تلو الآخر)' : 'I-MR (Individual Readings)'}</option>
+                    <option value="p">{isAr ? 'p-Chart (نسبة الوحدات المعيبة)' : 'p-Chart (Proportion Defective)'}</option>
+                    <option value="u">{isAr ? 'u-Chart (معدل العيوب لكل وحدة)' : 'u-Chart (Defects per Unit)'}</option>
                   </select>
                 </div>
 
-                <div className="pt-2 border-t border-slate-200 dark:border-white/10 space-y-2.5">
-                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
-                    {language === 'ar' ? 'إدخال قياس عينة حقيقية:' : 'Add Real Measurement:'}
-                  </span>
-                  <input
-                    type="text"
-                    value={inputLabel}
-                    onChange={e => setInputLabel(e.target.value)}
-                    placeholder={language === 'ar' ? 'اسم/رقم العينة (مثال: عينة 1)' : 'Sample label (e.g. Lot-01)'}
-                    className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs outline-none focus:border-[var(--industrial-primary)]"
-                  />
-                  <input
-                    type="text"
-                    value={inputValuesText}
-                    onChange={e => setInputValuesText(e.target.value)}
-                    placeholder={
-                      chartType === 'xbar-r'
-                        ? (language === 'ar' ? 'القيم مفصولة بفاصلة: 50.2, 49.8, 50.1' : 'Values e.g. 50.2, 49.8, 50.1')
-                        : chartType === 'i-mr'
-                        ? (language === 'ar' ? 'القيمة المقاسة: 100.5' : 'Value e.g. 100.5')
-                        : chartType === 'p'
-                        ? (language === 'ar' ? 'المعيب / حجم العينة: 5 / 100' : 'Defective / Size: 5 / 100')
-                        : (language === 'ar' ? 'العيوب / عدد الوحدات: 3 / 1' : 'Defects / Units: 3 / 1')
-                    }
-                    className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs outline-none focus:border-[var(--industrial-primary)]"
-                  />
+                {/* Helpful Tip about Chart Type */}
+                <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 text-xs text-slate-400 flex items-start gap-2">
+                  <Info className="w-4 h-4 text-sky-400 shrink-0 mt-0.5" />
+                  <div>
+                    {chartType === 'xbar-r' && (
+                      <p>{isAr ? 'أدخل عدة قراءات لنفس العينة (مثال: 5 قياسات لنفس الدفعة) لحساب المتوسط والمدى.' : 'Enter multiple readings per subgroup to track mean and range.'}</p>
+                    )}
+                    {chartType === 'i-mr' && (
+                      <p>{isAr ? 'شارت الأفراد مخصص للقياسات الفردية؛ يتم رسم كل قراءة فور تسجيلها وحساب المدى المتحرك تلقائياً.' : 'Designed for individual measurements. Plots each reading immediately with moving range.'}</p>
+                    )}
+                    {chartType === 'p' && (
+                      <p>{isAr ? 'تتبع نسبة القطع المعيبة لكل وجبة إنتاج مفحوصة.' : 'Track the proportion of defective items per lot.'}</p>
+                    )}
+                    {chartType === 'u' && (
+                      <p>{isAr ? 'تتبع إجمالي عدد العيوب المقاسة مقسوماً على حجم العينة.' : 'Track defects per unit count across inspection batches.'}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Form Fields Tailored to Chart Type */}
+                <div className="pt-2 border-t border-slate-800 space-y-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-400 mb-1">
+                      {isAr ? 'رقم أو اسم العينة:' : 'Sample / Lot Label:'}
+                    </label>
+                    <input
+                      type="text"
+                      value={inputLabel}
+                      onChange={e => setInputLabel(e.target.value)}
+                      placeholder={`${isAr ? 'مثال: عينة' : 'Sample'} ${data.length + 1}`}
+                      className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-600 outline-none focus:border-sky-500 font-mono"
+                    />
+                  </div>
+
+                  {chartType === 'xbar-r' && (
+                    <div>
+                      <div className="flex justify-between items-center mb-1">
+                        <label className="block text-[11px] font-bold text-slate-400">
+                          {isAr ? 'قيم القياسات داخل العينة:' : 'Subgroup Measurements:'}
+                        </label>
+                      </div>
+                      <input
+                        type="text"
+                        value={inputValuesText}
+                        onChange={e => setInputValuesText(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && handleAddMeasurement()}
+                        placeholder={isAr ? 'أدخل الأرقام مفصولة بفاصلة: 50.2, 49.8, 50.1' : 'Values e.g. 50.2, 49.8, 50.1, 50.4'}
+                        className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-600 outline-none focus:border-sky-500 font-mono"
+                      />
+                      <p className="text-[10px] text-slate-500 mt-1">
+                        {isAr ? 'ملاحظة: يمكنك إدخال من 2 إلى 5 قراءات أو رقماً واحداً' : 'Enter 2 to 5 values separated by space or comma'}
+                      </p>
+                    </div>
+                  )}
+
+                  {chartType === 'i-mr' && (
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-400 mb-1">
+                        {isAr ? 'القيمة المقاسة:' : 'Measured Value:'}
+                      </label>
+                      <input
+                        type="number"
+                        step="any"
+                        value={inputValuesText}
+                        onChange={e => setInputValuesText(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && handleAddMeasurement()}
+                        placeholder={isAr ? 'مثال: 25.4' : 'e.g. 25.4'}
+                        className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-600 outline-none focus:border-sky-500 font-mono"
+                      />
+                    </div>
+                  )}
+
+                  {chartType === 'p' && (
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-400 mb-1">
+                          {isAr ? 'عدد المعيب:' : 'Defectives:'}
+                        </label>
+                        <input
+                          type="number"
+                          value={inputDefective}
+                          onChange={e => setInputDefective(e.target.value)}
+                          placeholder="2"
+                          className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-sky-500 font-mono"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-400 mb-1">
+                          {isAr ? 'حجم العينة:' : 'Sample Size:'}
+                        </label>
+                        <input
+                          type="number"
+                          value={inputSampleSize}
+                          onChange={e => setInputSampleSize(e.target.value)}
+                          placeholder="100"
+                          className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-sky-500 font-mono"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {chartType === 'u' && (
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-400 mb-1">
+                          {isAr ? 'عدد العيوب:' : 'Defects:'}
+                        </label>
+                        <input
+                          type="number"
+                          value={inputDefects}
+                          onChange={e => setInputDefects(e.target.value)}
+                          placeholder="3"
+                          className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-sky-500 font-mono"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-400 mb-1">
+                          {isAr ? 'عدد الوحدات:' : 'Units:'}
+                        </label>
+                        <input
+                          type="number"
+                          value={inputUnits}
+                          onChange={e => setInputUnits(e.target.value)}
+                          placeholder="10"
+                          className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-sky-500 font-mono"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Add Measurement Button */}
                   <button
                     onClick={handleAddMeasurement}
-                    className="w-full py-2 bg-[var(--industrial-primary)] hover:opacity-90 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-md"
+                    className="w-full py-2.5 bg-sky-500 hover:bg-sky-400 active:scale-[0.98] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-lg"
                   >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>{language === 'ar' ? 'تسجيل القراءة' : 'Record Reading'}</span>
+                    <Plus className="w-4 h-4" />
+                    <span>{isAr ? 'تسجيل القراءة ورسمها' : 'Record & Plot Reading'}</span>
                   </button>
 
-                  {data.length > 0 && (
+                  {/* Quick Action Buttons */}
+                  <div className="grid grid-cols-2 gap-2 pt-2">
+                    <button
+                      onClick={handleLoadDemoData}
+                      className="py-2 bg-slate-800 hover:bg-slate-700 text-sky-400 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 transition-colors border border-slate-700/60"
+                      title={isAr ? 'تحميل 20 عينة حقيقية لرؤية الشارت' : 'Load 20 demo samples to see chart'}
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>{isAr ? 'عينة تجريبية' : 'Demo Data'}</span>
+                    </button>
+
                     <button
                       onClick={handleClearData}
-                      className="w-full py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors"
+                      disabled={data.length === 0}
+                      className="py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 disabled:opacity-30 disabled:cursor-not-allowed rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 transition-colors border border-red-500/20"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      <span>{language === 'ar' ? 'مسح كافة القراءات' : 'Clear All Readings'}</span>
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      <span>{isAr ? 'مسح الكل' : 'Clear All'}</span>
                     </button>
-                  )}
+                  </div>
                 </div>
               </div>
             </div>
 
+            {/* Quick Statistical Summary Card */}
             {calculations && (
-              <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-5">
-                <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-                  <BarChart3 className="w-5 h-5 text-[var(--industrial-primary)]" />
-                  {language === 'ar' ? 'ملخص إحصائي' : 'Statistical Summary'}
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-3">
+                <h3 className="font-bold text-sm text-white flex items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <BarChart3 className="w-4 h-4 text-sky-400" />
+                    {isAr ? 'المؤشرات الإحصائية الحالية' : 'Live Statistics'}
+                  </span>
+                  <span className="text-[11px] font-mono text-slate-400">
+                    {data.length} {isAr ? 'نقطة' : 'pts'}
+                  </span>
                 </h3>
                 
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center p-3 rounded-xl bg-slate-50 dark:bg-white/5">
-                    <span className="text-sm text-slate-500">{language === 'ar' ? 'المتوسط الإجمالي' : 'Overall Mean'}</span>
-                    <span className="font-bold">{calculations.overallMean.toFixed(3)}</span>
+                <div className="space-y-2 text-xs font-mono">
+                  <div className="flex justify-between items-center p-2.5 rounded-xl bg-slate-950 border border-slate-800/80">
+                    <span className="text-slate-400">{isAr ? 'المتوسط الإجمالي (Mean):' : 'Overall Mean:'}</span>
+                    <span className="font-bold text-white">{calculations.overallMean.toFixed(3)}</span>
                   </div>
-                  <div className="flex justify-between items-center p-3 rounded-xl bg-slate-50 dark:bg-white/5">
-                    <span className="text-sm text-slate-500">{language === 'ar' ? 'الانحراف (الداخلي)' : 'Within Sigma'}</span>
-                    <span className="font-bold">{calculations.withinSigma.toFixed(3)}</span>
+                  <div className="flex justify-between items-center p-2.5 rounded-xl bg-slate-950 border border-slate-800/80">
+                    <span className="text-slate-400">{isAr ? 'الانحراف المعياري (Sigma):' : 'Within Sigma:'}</span>
+                    <span className="font-bold text-sky-400">{calculations.withinSigma.toFixed(3)}</span>
                   </div>
-                  <div className="flex justify-between items-center p-3 rounded-xl bg-slate-50 dark:bg-white/5">
-                    <span className="text-sm text-slate-500">{language === 'ar' ? 'الانحراف (الكلي)' : 'Overall Sigma'}</span>
-                    <span className="font-bold">{calculations.overallSigma.toFixed(3)}</span>
+                  <div className="flex justify-between items-center p-2.5 rounded-xl bg-slate-950 border border-slate-800/80">
+                    <span className="text-slate-400">{isAr ? 'الحد الأعلى (UCL):' : 'Upper Limit (UCL):'}</span>
+                    <span className="font-bold text-red-400">{calculations.primaryLimits.ucl.toFixed(3)}</span>
                   </div>
-                  
-                  {calculations.primaryChart.some(p => p.outOfControl) && (
-                    <div className="mt-4 p-3 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-red-600 dark:text-red-400 text-sm flex items-start gap-2">
-                      <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
-                      <div>
-                        <strong>{language === 'ar' ? 'تحذير' : 'Warning'}:</strong> 
-                        {language === 'ar' ? ' توجد نقاط خارج حدود التحكم!' : ' Process is out of statistical control!'}
-                      </div>
-                    </div>
-                  )}
+                  <div className="flex justify-between items-center p-2.5 rounded-xl bg-slate-950 border border-slate-800/80">
+                    <span className="text-slate-400">{isAr ? 'الحد الأدنى (LCL):' : 'Lower Limit (LCL):'}</span>
+                    <span className="font-bold text-red-400">{calculations.primaryLimits.lcl.toFixed(3)}</span>
+                  </div>
                 </div>
+
+                {/* Out of Control Warning / Safe Badge */}
+                {calculations.primaryChart.some(p => p.outOfControl) ? (
+                  <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                    <div>
+                      <strong className="block">{isAr ? 'تنبيه جودة:' : 'Quality Alert:'}</strong> 
+                      {isAr ? 'توجد نقاط خارج حدود التحكم الإحصائي المسموحة!' : 'Points detected outside 3-sigma control limits!'}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 shrink-0" />
+                    <span>{isAr ? 'العملية مستقرة وفي حالة تحكم إحصائي' : 'Process is stable and in statistical control'}</span>
+                  </div>
+                )}
               </div>
             )}
           </div>
 
-          {/* Charts Area */}
-          <div className="lg:col-span-3">
-            {calculations ? (
+          {/* Charts Display Area */}
+          <div className="lg:col-span-3 space-y-6">
+            {calculations && calculations.primaryChart.length > 0 ? (
               <>
-                {renderControlChart(calculations.primaryChart, calculations.primaryLimits, calculations.chartType + ' Chart')}
-                {calculations.secondaryChart && (
-                  renderControlChart(calculations.secondaryChart, calculations.secondaryLimits!, chartType === 'xbar-r' ? 'R Chart' : 'MR Chart')
+                {/* Primary Chart */}
+                {renderControlChart(
+                  calculations.primaryChart, 
+                  calculations.primaryLimits, 
+                  `${calculations.chartType} ${isAr ? '— الشارت الأساسي' : '— Primary Chart'}`,
+                  '#0ea5e9'
+                )}
+
+                {/* Secondary Chart (Range or Moving Range) */}
+                {calculations.secondaryChart && calculations.secondaryChart.length > 0 && (
+                  renderControlChart(
+                    calculations.secondaryChart, 
+                    calculations.secondaryLimits || { ucl: 0, cl: 0, lcl: 0 }, 
+                    chartType === 'xbar-r' 
+                      ? (isAr ? 'R-Chart (شارت مدى التباين داخل العينة)' : 'R-Chart (Subgroup Range)')
+                      : (isAr ? 'MR-Chart (شارت المدى المتحرك بين القراءات)' : 'MR-Chart (Moving Range)'),
+                    '#14b8a6'
+                  )
                 )}
               </>
             ) : (
-              <div className="h-[400px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 border-dashed rounded-2xl flex flex-col items-center justify-center text-slate-400 p-6 text-center">
-                <LineChartIcon className="w-16 h-16 mb-4 opacity-50" />
-                <p className="font-bold text-slate-300 mb-1">{language === 'ar' ? 'لا توجد قراءات مسجلة' : 'No measurements recorded'}</p>
-                <p className="text-xs text-slate-500 max-w-sm">{language === 'ar' ? 'قم بإدخال قراءات العينات الحقيقية من صالة الإنتاج لعرض كارتات التحكم الإحصائي ومؤشرات القدرة' : 'Enter genuine sample readings from the shopfloor to display SPC control charts and capability indices'}</p>
+              <div className="h-[420px] bg-slate-900 border border-slate-800 border-dashed rounded-2xl flex flex-col items-center justify-center text-slate-400 p-6 text-center shadow-xl">
+                <LineChartIcon className="w-16 h-16 mb-4 text-sky-400/40" />
+                <p className="font-bold text-white text-lg mb-1">
+                  {isAr ? 'لا توجد قراءات مسجلة حتى الآن' : 'No measurements recorded'}
+                </p>
+                <p className="text-xs text-slate-400 max-w-md mb-6 leading-relaxed">
+                  {isAr 
+                    ? 'قم بإدخال قراءات العينات من خلال النموذج الجانبي، أو اضغط زر "عينة تجريبية" لتحميل 20 عينة فوراً ورسم الشارتات.' 
+                    : 'Enter readings using the form on the left, or click "Demo Data" to immediately load 20 samples and plot the charts.'}
+                </p>
+                <button
+                  onClick={handleLoadDemoData}
+                  className="px-6 py-2.5 bg-sky-500 hover:bg-sky-400 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg transition-transform active:scale-95"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  <span>{isAr ? 'تحميل 20 عينة تجريبية ورسم الشارت فوراً' : 'Load Demo Data & Plot Chart'}</span>
+                </button>
               </div>
             )}
           </div>
         </div>
       )}
 
-      {activeTab === 'capability' && capabilityData && (
+      {/* Capability Analysis Tab */}
+      {activeTab === 'capability' && (
         <div className="space-y-6">
-          {/* Spec Limits Input */}
-          <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-5 flex flex-wrap gap-4 items-end">
+          {/* Spec Limits Input Bar */}
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-wrap gap-6 items-end">
             <div>
-              <label className="block text-xs font-bold text-slate-500 mb-1">LSL</label>
-              <input type="number" value={lsl} onChange={e => setLsl(Number(e.target.value))} className="w-32 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2 outline-none" />
+              <label className="block text-xs font-bold text-slate-400 mb-1.5 font-mono">
+                {isAr ? 'الحد الأدنى للمواصفة (LSL):' : 'Lower Spec Limit (LSL):'}
+              </label>
+              <input 
+                type="number" 
+                value={lsl} 
+                onChange={e => setLsl(Number(e.target.value))} 
+                className="w-36 bg-slate-950 border border-slate-700 text-white rounded-xl px-4 py-2 font-mono text-sm outline-none focus:border-sky-500" 
+              />
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-500 mb-1">Target</label>
-              <input type="number" value={target} onChange={e => setTarget(Number(e.target.value))} className="w-32 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2 outline-none" />
+              <label className="block text-xs font-bold text-slate-400 mb-1.5 font-mono">
+                {isAr ? 'القيمة المستهدفة (Target):' : 'Target Value:'}
+              </label>
+              <input 
+                type="number" 
+                value={target} 
+                onChange={e => setTarget(Number(e.target.value))} 
+                className="w-36 bg-slate-950 border border-slate-700 text-white rounded-xl px-4 py-2 font-mono text-sm outline-none focus:border-sky-500" 
+              />
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-500 mb-1">USL</label>
-              <input type="number" value={usl} onChange={e => setUsl(Number(e.target.value))} className="w-32 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2 outline-none" />
+              <label className="block text-xs font-bold text-slate-400 mb-1.5 font-mono">
+                {isAr ? 'الحد الأعلى للمواصفة (USL):' : 'Upper Spec Limit (USL):'}
+              </label>
+              <input 
+                type="number" 
+                value={usl} 
+                onChange={e => setUsl(Number(e.target.value))} 
+                className="w-36 bg-slate-950 border border-slate-700 text-white rounded-xl px-4 py-2 font-mono text-sm outline-none focus:border-sky-500" 
+              />
             </div>
-          </div>
-
-          {/* KPI Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className={`p-6 rounded-2xl border ${getCapabilityColor(capabilityData.indices.cp)}`}>
-              <p className="text-sm font-bold uppercase opacity-80">Cp</p>
-              <p className="text-3xl font-black mt-2">{capabilityData.indices.cp.toFixed(2)}</p>
-            </div>
-            <div className={`p-6 rounded-2xl border ${getCapabilityColor(capabilityData.indices.cpk)}`}>
-              <p className="text-sm font-bold uppercase opacity-80">Cpk</p>
-              <p className="text-3xl font-black mt-2">{capabilityData.indices.cpk.toFixed(2)}</p>
-            </div>
-            <div className={`p-6 rounded-2xl border ${getCapabilityColor(capabilityData.indices.pp)}`}>
-              <p className="text-sm font-bold uppercase opacity-80">Pp</p>
-              <p className="text-3xl font-black mt-2">{capabilityData.indices.pp.toFixed(2)}</p>
-            </div>
-            <div className={`p-6 rounded-2xl border ${getCapabilityColor(capabilityData.indices.ppk)}`}>
-              <p className="text-sm font-bold uppercase opacity-80">Ppk</p>
-              <p className="text-3xl font-black mt-2">{capabilityData.indices.ppk.toFixed(2)}</p>
-            </div>
-          </div>
-
-          {/* Histogram */}
-          <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-6">
-            <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-[var(--industrial-primary)]" />
-              {language === 'ar' ? 'توزيع القياسات' : 'Measurements Distribution (Histogram)'}
-            </h3>
             
-            <div className="h-[400px] w-full" style={{ touchAction: 'pan-y' }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={capabilityData.histogram} margin={{ top: 20, right: 30, left: 20, bottom: 20 }} style={{ touchAction: 'pan-y' }}>
-                  <CartesianGrid strokeDasharray="3 3" opacity={0.2} vertical={false} />
-                  <XAxis dataKey="binLabel" tick={{fontSize: 12}} />
-                  <YAxis yAxisId="left" domain={['auto', 'auto']} />
-                  <YAxis yAxisId="right" orientation="right" hide />
-                  <Tooltip 
-                    contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.9)', border: 'none', borderRadius: '8px', color: 'white' }}
-                  />
-                  
-                  <ReferenceLine x={lsl.toString()} stroke="red" strokeDasharray="5 5" label={{ value: 'LSL', position: 'insideTopLeft', fill: 'red' }} />
-                  <ReferenceLine x={usl.toString()} stroke="red" strokeDasharray="5 5" label={{ value: 'USL', position: 'insideTopRight', fill: 'red' }} />
-                  {target && <ReferenceLine x={target.toString()} stroke="green" strokeDasharray="3 3" label={{ value: 'Target', position: 'insideTop', fill: 'green' }} />}
-                  
-                  <Bar yAxisId="left" dataKey="frequency" fill="var(--industrial-primary)" opacity={0.6} />
-                  <Area yAxisId="right" type="monotone" dataKey="normalY" stroke="var(--industrial-secondary)" fill="var(--industrial-secondary)" fillOpacity={0.1} strokeWidth={3} />
-                </ComposedChart>
-              </ResponsiveContainer>
+            <div className="text-xs text-slate-400 pb-2">
+              <span className="text-sky-400 font-bold">{isAr ? 'معيار القبول:' : 'Acceptance:'}</span> Cpk &ge; 1.33 {isAr ? 'للعمليات القادرة والمستقرة' : 'for capable processes'}
             </div>
           </div>
+
+          {capabilityData ? (
+            <>
+              {/* Capability KPI Cards */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className={`p-6 rounded-2xl border ${getCapabilityColor(capabilityData.indices.cp)} shadow-lg`}>
+                  <p className="text-xs font-bold uppercase opacity-80">{isAr ? 'مؤشر القدرة المحتملة (Cp)' : 'Potential Capability (Cp)'}</p>
+                  <p className="text-3xl font-black mt-2 font-mono">{capabilityData.indices.cp.toFixed(2)}</p>
+                  <p className="text-[11px] mt-1 opacity-75">{isAr ? 'يقيس تشتت العملية مقارنة بمدى المواصفة' : 'Process spread vs tolerance width'}</p>
+                </div>
+                
+                <div className={`p-6 rounded-2xl border ${getCapabilityColor(capabilityData.indices.cpk)} shadow-lg`}>
+                  <p className="text-xs font-bold uppercase opacity-80">{isAr ? 'مؤشر قدرة العملية الفعلي (Cpk)' : 'Actual Capability (Cpk)'}</p>
+                  <p className="text-3xl font-black mt-2 font-mono">{capabilityData.indices.cpk.toFixed(2)}</p>
+                  <p className="text-[11px] mt-1 opacity-75">
+                    {capabilityData.indices.cpk >= 1.33 
+                      ? (isAr ? 'العملية قادرة ومطابقة للمواصفات' : 'Process is fully capable')
+                      : (isAr ? 'تحتاج لتحسين تقليل التشتت' : 'Action needed to center/reduce variance')}
+                  </p>
+                </div>
+
+                <div className={`p-6 rounded-2xl border ${getCapabilityColor(capabilityData.indices.pp)} shadow-lg`}>
+                  <p className="text-xs font-bold uppercase opacity-80">{isAr ? 'مؤشر الأداء الكلي (Pp)' : 'Overall Performance (Pp)'}</p>
+                  <p className="text-3xl font-black mt-2 font-mono">{capabilityData.indices.pp.toFixed(2)}</p>
+                  <p className="text-[11px] mt-1 opacity-75">{isAr ? 'مبني على الانحراف المعياري الكلي' : 'Based on overall population sigma'}</p>
+                </div>
+
+                <div className={`p-6 rounded-2xl border ${getCapabilityColor(capabilityData.indices.ppk)} shadow-lg`}>
+                  <p className="text-xs font-bold uppercase opacity-80">{isAr ? 'مؤشر أداء العملية الفعلي (Ppk)' : 'Actual Performance (Ppk)'}</p>
+                  <p className="text-3xl font-black mt-2 font-mono">{capabilityData.indices.ppk.toFixed(2)}</p>
+                  <p className="text-[11px] mt-1 opacity-75">{isAr ? 'معدل العيوب المتوقع بالمليون: ' : 'PPM Defect: '} {capabilityData.indices.ppmTotal.toFixed(0)}</p>
+                </div>
+              </div>
+
+              {/* Histogram Distribution Chart */}
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                    <BarChart3 className="w-5 h-5 text-sky-400" />
+                    {isAr ? 'توزيع القياسات والتطابق مع منحنى التوزيع الطبيعي (Histogram)' : 'Measurements Distribution (Histogram)'}
+                  </h3>
+                  <div className="text-xs font-mono text-slate-400">
+                    Mean: <strong>{capabilityData.indices.overallMean.toFixed(2)}</strong> | Sigma: <strong>{capabilityData.indices.withinSigma.toFixed(3)}</strong>
+                  </div>
+                </div>
+                
+                <div className="h-[380px] w-full" style={{ touchAction: 'pan-y' }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <ComposedChart data={capabilityData.histogram} margin={{ top: 20, right: 30, left: 10, bottom: 20 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.3} vertical={false} />
+                      <XAxis dataKey="binLabel" tick={{ fill: '#94a3b8', fontSize: 11 }} stroke="#475569" />
+                      <YAxis yAxisId="left" tick={{ fill: '#94a3b8', fontSize: 11 }} stroke="#475569" />
+                      <YAxis yAxisId="right" orientation="right" hide />
+                      <Tooltip 
+                        contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '12px', color: '#fff' }}
+                      />
+                      
+                      <Bar yAxisId="left" dataKey="count" fill="#0ea5e9" opacity={0.75} radius={[4, 4, 0, 0]} name={isAr ? 'تكرار العينات' : 'Sample Count'} />
+                      <Area yAxisId="right" type="monotone" dataKey="normalY" stroke="#14b8a6" fill="#14b8a6" fillOpacity={0.15} strokeWidth={2.5} name={isAr ? 'التوزيع الطبيعي المتوقع' : 'Normal Curve'} />
+                    </ComposedChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center text-slate-400 shadow-xl">
+              <p className="font-bold text-white mb-2">{isAr ? 'بيانات غير كافية لحساب القدرة' : 'Insufficient data for capability analysis'}</p>
+              <p className="text-xs">{isAr ? 'يرجى تسجيل قراءات في شارت X-bar أو I-MR أولاً.' : 'Please record continuous measurements in X-bar or I-MR chart first.'}</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Data Table Tab (View, inspect, and delete individual rows) */}
+      {activeTab === 'data' && (
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+          <div className="flex flex-wrap justify-between items-center gap-4 border-b border-slate-800 pb-4">
+            <div>
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <TableIcon className="w-5 h-5 text-sky-400" />
+                {isAr ? 'مصفوفة القراءات المسجلة' : 'Recorded Measurements Table'}
+              </h3>
+              <p className="text-xs text-slate-400 mt-0.5">
+                {isAr ? `إجمالي العينات في شارت (${chartType}): ${data.length}` : `Total samples in (${chartType}) chart: ${data.length}`}
+              </p>
+            </div>
+            
+            <div className="flex gap-2">
+              <button
+                onClick={handleLoadDemoData}
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-sky-400 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors border border-slate-700"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>{isAr ? 'تحميل بيانات تجريبية' : 'Load Demo Data'}</span>
+              </button>
+              <button
+                onClick={handleClearData}
+                disabled={data.length === 0}
+                className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 disabled:opacity-30 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors border border-red-500/20"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>{isAr ? 'مسح كافة القراءات' : 'Clear All'}</span>
+              </button>
+            </div>
+          </div>
+
+          {data.length > 0 ? (
+            <div className="overflow-x-auto rounded-xl border border-slate-800">
+              <table className="w-full text-left text-xs font-mono">
+                <thead className="bg-slate-950 text-slate-400 border-b border-slate-800">
+                  <tr>
+                    <th className="p-3 w-12 text-center">#</th>
+                    <th className="p-3">{isAr ? 'اسم العينة' : 'Label'}</th>
+                    <th className="p-3">{isAr ? 'وقت التسجيل' : 'Timestamp'}</th>
+                    <th className="p-3">{isAr ? 'البيانات المسجلة' : 'Recorded Data'}</th>
+                    <th className="p-3">{isAr ? 'المتوسط / القيمة' : 'Mean / Value'}</th>
+                    <th className="p-3 text-center">{isAr ? 'إجراء' : 'Action'}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60">
+                  {data.map((row, idx) => {
+                    let meanVal: number | string = '—';
+                    let dataDisplay: string = '';
+
+                    if (row.values && row.values.length > 0) {
+                      const sum = row.values.reduce((s, v) => s + v, 0);
+                      meanVal = (sum / row.values.length).toFixed(3);
+                      dataDisplay = row.values.join(', ');
+                    } else if (row.value !== undefined) {
+                      meanVal = row.value.toFixed(3);
+                      dataDisplay = row.value.toString();
+                    } else if (row.defective !== undefined) {
+                      meanVal = `${row.defective} / ${row.sampleSize} (${((row.defective / (row.sampleSize || 1)) * 100).toFixed(1)}%)`;
+                      dataDisplay = `Def: ${row.defective}, N: ${row.sampleSize}`;
+                    } else if (row.defects !== undefined) {
+                      meanVal = `${row.defects} / ${row.units} (${(row.defects / (row.units || 1)).toFixed(2)} d/u)`;
+                      dataDisplay = `Defects: ${row.defects}, Units: ${row.units}`;
+                    }
+
+                    return (
+                      <tr key={row.id} className="hover:bg-slate-800/40 transition-colors">
+                        <td className="p-3 text-center text-slate-500">{idx + 1}</td>
+                        <td className="p-3 font-bold text-white">{row.label}</td>
+                        <td className="p-3 text-slate-400">{row.timestamp || '—'}</td>
+                        <td className="p-3 text-sky-400 max-w-xs truncate">{dataDisplay}</td>
+                        <td className="p-3 font-bold text-emerald-400">{meanVal}</td>
+                        <td className="p-3 text-center">
+                          <button
+                            onClick={() => handleDeleteRow(row.id)}
+                            className="p-1.5 rounded-lg hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-colors"
+                            title={isAr ? 'حذف هذه القراءة' : 'Delete this row'}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="py-12 text-center text-slate-400">
+              <p>{isAr ? 'لا توجد قراءات في هذا الجدول حتى الآن.' : 'No rows in this table yet.'}</p>
+            </div>
+          )}
         </div>
       )}
     </div>

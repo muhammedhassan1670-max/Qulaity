@@ -453,40 +453,77 @@ export function checkNelsonRules(points: number[], cl: number, sigma: number): S
 // ==========================================
 
 export function calculateXbarR(subgroups: SpcSubgroup[]): SpcControlChartResult {
-  if (subgroups.length === 0) throw new Error('No data');
+  if (!subgroups || subgroups.length === 0) {
+    return {
+      chartType: 'X-bar / R',
+      primaryChart: [],
+      secondaryChart: [],
+      primaryLimits: { ucl: 0, cl: 0, lcl: 0 },
+      secondaryLimits: { ucl: 0, cl: 0, lcl: 0 },
+      overallMean: 0,
+      overallSigma: 0,
+      withinSigma: 0
+    };
+  }
+
+  const validSubgroups = subgroups.filter(sg => sg.values && sg.values.length > 0);
+  if (validSubgroups.length === 0) {
+    return {
+      chartType: 'X-bar / R',
+      primaryChart: [],
+      secondaryChart: [],
+      primaryLimits: { ucl: 0, cl: 0, lcl: 0 },
+      secondaryLimits: { ucl: 0, cl: 0, lcl: 0 },
+      overallMean: 0,
+      overallSigma: 0,
+      withinSigma: 0
+    };
+  }
+
+  // If every subgroup has n=1, treat as individuals to prevent throwing
+  const maxN = Math.max(...validSubgroups.map(sg => sg.values.length));
+  if (maxN === 1) {
+    const imrData = validSubgroups.map(sg => ({ label: sg.label, value: sg.values[0] }));
+    const imrRes = calculateIMR(imrData);
+    return {
+      ...imrRes,
+      chartType: 'X-bar / R (n=1)'
+    };
+  }
+
+  const avgN = Math.round(validSubgroups.reduce((sum, sg) => sum + sg.values.length, 0) / validSubgroups.length);
+  const n = Math.min(25, Math.max(2, avgN));
   
-  const n = subgroups[0].values.length;
-  if (n < 2 || n > 25) throw new Error('Subgroup size must be between 2 and 25 for X-bar/R charts');
-  
-  const means = subgroups.map(sg => mathHelper.mean(sg.values));
-  const ranges = subgroups.map(sg => mathHelper.range(sg.values));
+  const means = validSubgroups.map(sg => mathHelper.mean(sg.values));
+  const ranges = validSubgroups.map(sg => mathHelper.range(sg.values));
   
   const xDoubleBar = mathHelper.mean(means);
   const rBar = mathHelper.mean(ranges);
   
-  const A2 = SPC_CONSTANTS.A2[n];
-  const D3 = SPC_CONSTANTS.D3[n];
-  const D4 = SPC_CONSTANTS.D4[n];
-  const d2 = SPC_CONSTANTS.d2[n];
+  const A2 = SPC_CONSTANTS.A2[n] || 0.577;
+  const D3 = SPC_CONSTANTS.D3[n] || 0;
+  const D4 = SPC_CONSTANTS.D4[n] || 2.114;
+  const d2 = SPC_CONSTANTS.d2[n] || 2.326;
   
+  const spread = A2 * rBar;
   const xbarLimits: SpcControlLimits = {
-    ucl: xDoubleBar + (A2 * rBar),
+    ucl: xDoubleBar + spread + (spread === 0 ? 0.001 : 0),
     cl: xDoubleBar,
-    lcl: xDoubleBar - (A2 * rBar)
+    lcl: xDoubleBar - spread - (spread === 0 ? 0.001 : 0)
   };
   
   const rLimits: SpcControlLimits = {
-    ucl: D4 * rBar,
+    ucl: D4 * rBar + (rBar === 0 ? 0.001 : 0),
     cl: rBar,
     lcl: D3 * rBar
   };
   
-  const withinSigma = rBar / d2;
-  const allValues = subgroups.flatMap(sg => sg.values);
-  const overallSigma = mathHelper.stdDev(allValues);
+  const withinSigma = rBar > 0 ? rBar / d2 : 0.0001;
+  const allValues = validSubgroups.flatMap(sg => sg.values);
+  const overallSigma = mathHelper.stdDev(allValues) || 0.0001;
   
   const xbarViolations = checkNelsonRules(means, xbarLimits.cl, withinSigma / Math.sqrt(n));
-  const primaryChart = subgroups.map((sg, i) => ({
+  const primaryChart = validSubgroups.map((sg, i) => ({
     label: sg.label,
     value: means[i],
     ...xbarLimits,
@@ -494,8 +531,8 @@ export function calculateXbarR(subgroups: SpcSubgroup[]): SpcControlChartResult 
     violations: xbarViolations.filter(v => v.index === i).map(v => v.description)
   }));
   
-  const rViolations = checkNelsonRules(ranges, rLimits.cl, (D4-1)*rBar/3); // Approximate sigma for R
-  const secondaryChart = subgroups.map((sg, i) => ({
+  const rViolations = checkNelsonRules(ranges, rLimits.cl, Math.max(0.0001, (D4-1)*rBar/3));
+  const secondaryChart = validSubgroups.map((sg, i) => ({
     label: sg.label,
     value: ranges[i],
     ...rLimits,
@@ -516,40 +553,66 @@ export function calculateXbarR(subgroups: SpcSubgroup[]): SpcControlChartResult 
 }
 
 export function calculateXbarS(subgroups: SpcSubgroup[]): SpcControlChartResult {
-  if (subgroups.length === 0) throw new Error('No data provided for X-bar/S chart');
+  if (!subgroups || subgroups.length === 0) {
+    return {
+      chartType: 'X-bar / S',
+      primaryChart: [],
+      secondaryChart: [],
+      primaryLimits: { ucl: 0, cl: 0, lcl: 0 },
+      secondaryLimits: { ucl: 0, cl: 0, lcl: 0 },
+      overallMean: 0,
+      overallSigma: 0,
+      withinSigma: 0
+    };
+  }
   
-  const n = subgroups[0].values.length;
-  if (n < 2 || n > 25) throw new Error('Subgroup size must be between 2 and 25 for X-bar/S charts');
+  const validSubgroups = subgroups.filter(sg => sg.values && sg.values.length > 0);
+  if (validSubgroups.length === 0) {
+    return {
+      chartType: 'X-bar / S',
+      primaryChart: [],
+      secondaryChart: [],
+      primaryLimits: { ucl: 0, cl: 0, lcl: 0 },
+      secondaryLimits: { ucl: 0, cl: 0, lcl: 0 },
+      overallMean: 0,
+      overallSigma: 0,
+      withinSigma: 0
+    };
+  }
+
+  const avgN = Math.round(validSubgroups.reduce((sum, sg) => sum + sg.values.length, 0) / validSubgroups.length);
+  const n = Math.min(25, Math.max(2, avgN));
   
-  const means = subgroups.map(sg => mathHelper.mean(sg.values));
-  const stdDevs = subgroups.map(sg => mathHelper.stdDev(sg.values, false)); // sample std dev s
+  const means = validSubgroups.map(sg => mathHelper.mean(sg.values));
+  const stdDevs = validSubgroups.map(sg => mathHelper.stdDev(sg.values, false));
   
   const xDoubleBar = mathHelper.mean(means);
   const sBar = mathHelper.mean(stdDevs);
   
-  const A3 = SPC_CONSTANTS.A3[n];
-  const B3 = SPC_CONSTANTS.B3[n];
-  const B4 = SPC_CONSTANTS.B4[n];
-  const c4 = SPC_CONSTANTS.c4[n];
+  const A3 = SPC_CONSTANTS.A3[n] || 1.427;
+  const B3 = SPC_CONSTANTS.B3[n] || 0;
+  const B4 = SPC_CONSTANTS.B4[n] || 2.089;
+  const c4 = SPC_CONSTANTS.c4[n] || 0.9400;
   
+  const spread = A3 * sBar;
   const xbarLimits: SpcControlLimits = {
-    ucl: xDoubleBar + (A3 * sBar),
+    ucl: xDoubleBar + spread + (spread === 0 ? 0.001 : 0),
     cl: xDoubleBar,
-    lcl: xDoubleBar - (A3 * sBar)
+    lcl: xDoubleBar - spread - (spread === 0 ? 0.001 : 0)
   };
   
   const sLimits: SpcControlLimits = {
-    ucl: B4 * sBar,
+    ucl: B4 * sBar + (sBar === 0 ? 0.001 : 0),
     cl: sBar,
     lcl: B3 * sBar
   };
   
-  const withinSigma = sBar / c4;
-  const allValues = subgroups.flatMap(sg => sg.values);
-  const overallSigma = mathHelper.stdDev(allValues, false);
+  const withinSigma = sBar > 0 ? sBar / c4 : 0.0001;
+  const allValues = validSubgroups.flatMap(sg => sg.values);
+  const overallSigma = mathHelper.stdDev(allValues, false) || 0.0001;
   
   const xbarViolations = checkNelsonRules(means, xbarLimits.cl, withinSigma / Math.sqrt(n));
-  const primaryChart = subgroups.map((sg, i) => ({
+  const primaryChart = validSubgroups.map((sg, i) => ({
     label: sg.label,
     value: means[i],
     ...xbarLimits,
@@ -557,7 +620,7 @@ export function calculateXbarS(subgroups: SpcSubgroup[]): SpcControlChartResult 
     violations: xbarViolations.filter(v => v.index === i).map(v => v.description)
   }));
   
-  const secondaryChart = subgroups.map((sg, i) => ({
+  const secondaryChart = validSubgroups.map((sg, i) => ({
     label: sg.label,
     value: stdDevs[i],
     ...sLimits,
@@ -578,7 +641,48 @@ export function calculateXbarS(subgroups: SpcSubgroup[]): SpcControlChartResult 
 }
 
 export function calculateIMR(data: {label: string, value: number}[]): SpcControlChartResult {
-  if (data.length < 2) throw new Error('Need at least 2 data points for I-MR chart');
+  if (!data || data.length === 0) {
+    return {
+      chartType: 'I-MR',
+      primaryChart: [],
+      secondaryChart: [],
+      primaryLimits: { ucl: 0, cl: 0, lcl: 0 },
+      secondaryLimits: { ucl: 0, cl: 0, lcl: 0 },
+      overallMean: 0,
+      overallSigma: 0,
+      withinSigma: 0
+    };
+  }
+
+  if (data.length === 1) {
+    const val = data[0].value;
+    const offset = val !== 0 ? Math.abs(val) * 0.05 : 1;
+    const limits: SpcControlLimits = { ucl: val + offset, cl: val, lcl: Math.max(0, val - offset) };
+    return {
+      chartType: 'I-MR',
+      primaryChart: [{
+        label: data[0].label,
+        value: val,
+        ...limits,
+        outOfControl: false,
+        violations: []
+      }],
+      secondaryChart: [{
+        label: data[0].label,
+        value: 0,
+        ucl: offset,
+        cl: 0,
+        lcl: 0,
+        outOfControl: false,
+        violations: []
+      }],
+      primaryLimits: limits,
+      secondaryLimits: { ucl: offset, cl: 0, lcl: 0 },
+      overallMean: val,
+      overallSigma: 0,
+      withinSigma: 0
+    };
+  }
   
   const values = data.map(d => d.value);
   const xBar = mathHelper.mean(values);
@@ -597,17 +701,18 @@ export function calculateIMR(data: {label: string, value: number}[]): SpcControl
   const D4 = 3.267;
   const E2 = 2.66; // 3/d2
   
-  const withinSigma = mrBar / d2;
-  const overallSigma = mathHelper.stdDev(values);
+  const withinSigma = mrBar > 0 ? mrBar / d2 : 0.0001;
+  const overallSigma = mathHelper.stdDev(values) || 0.0001;
   
+  const spread = E2 * mrBar;
   const iLimits: SpcControlLimits = {
-    ucl: xBar + (E2 * mrBar),
+    ucl: xBar + spread + (spread === 0 ? 0.001 : 0),
     cl: xBar,
-    lcl: xBar - (E2 * mrBar)
+    lcl: xBar - spread - (spread === 0 ? 0.001 : 0)
   };
   
   const mrLimits: SpcControlLimits = {
-    ucl: D4 * mrBar,
+    ucl: D4 * mrBar + (mrBar === 0 ? 0.001 : 0),
     cl: mrBar,
     lcl: D3 * mrBar
   };
@@ -626,7 +731,7 @@ export function calculateIMR(data: {label: string, value: number}[]): SpcControl
     value: movingRanges[i],
     ...mrLimits,
     outOfControl: movingRanges[i] !== null && (movingRanges[i]! > mrLimits.ucl || movingRanges[i]! < mrLimits.lcl),
-    violations: [] // Nelson rules usually not applied to MR chart
+    violations: []
   }));
   
   return {
@@ -643,7 +748,14 @@ export function calculateIMR(data: {label: string, value: number}[]): SpcControl
 
 export function calculatePChart(data: {label: string, defective: number, sampleSize: number}[]): SpcControlChartResult {
   if (!data || data.length === 0) {
-    throw new Error('No data provided for p Chart');
+    return {
+      chartType: 'p Chart',
+      primaryChart: [],
+      primaryLimits: { ucl: 0, cl: 0, lcl: 0 },
+      overallMean: 0,
+      overallSigma: 0,
+      withinSigma: 0
+    };
   }
   const totalDefective = data.reduce((sum, d) => sum + (d.defective || 0), 0);
   const totalSample = data.reduce((sum, d) => sum + (d.sampleSize || 0), 0);
@@ -654,7 +766,7 @@ export function calculatePChart(data: {label: string, defective: number, sampleS
     const n = d.sampleSize > 0 ? d.sampleSize : 1;
     const p = d.sampleSize > 0 ? d.defective / d.sampleSize : 0;
     // UCL/LCL are variable based on sample size!
-    const sigma = Math.sqrt((pBar * (1 - pBar)) / n);
+    const sigma = Math.sqrt((pBar * (1 - pBar)) / n) || 0.0001;
     const ucl = Math.min(1, pBar + 3 * sigma);
     const lcl = Math.max(0, pBar - 3 * sigma);
     
@@ -671,7 +783,7 @@ export function calculatePChart(data: {label: string, defective: number, sampleS
   
   // Approximate average limits for the summary
   const avgSampleSize = totalSample > 0 ? totalSample / data.length : 1;
-  const avgSigma = Math.sqrt((pBar * (1 - pBar)) / avgSampleSize);
+  const avgSigma = Math.sqrt((pBar * (1 - pBar)) / avgSampleSize) || 0.0001;
   
   return {
     chartType: 'p Chart',
@@ -689,7 +801,14 @@ export function calculatePChart(data: {label: string, defective: number, sampleS
 
 export function calculateUChart(data: {label: string, defects: number, units: number}[]): SpcControlChartResult {
   if (!data || data.length === 0) {
-    throw new Error('No data provided for u Chart');
+    return {
+      chartType: 'u Chart',
+      primaryChart: [],
+      primaryLimits: { ucl: 0, cl: 0, lcl: 0 },
+      overallMean: 0,
+      overallSigma: 0,
+      withinSigma: 0
+    };
   }
   const totalDefects = data.reduce((sum, d) => sum + (d.defects || 0), 0);
   const totalUnits = data.reduce((sum, d) => sum + (d.units || 0), 0);
