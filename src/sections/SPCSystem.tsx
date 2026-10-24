@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { 
   Activity, BarChart3, LineChart as LineChartIcon, AlertCircle, 
-  Settings2, Plus, Trash2, CheckCircle2, RotateCcw, Sparkles, 
+  Settings2, Plus, Trash2, CheckCircle2, RotateCcw, 
   Info, Table as TableIcon
 } from 'lucide-react';
 import {
@@ -33,60 +33,34 @@ export interface SpcMeasurementRow {
   units?: number;      // For u-chart
 }
 
-// Generate realistic demo data for each chart type
-function generateDemoData(type: ChartType): SpcMeasurementRow[] {
-  const now = new Date();
-  if (type === 'xbar-r') {
-    // 20 subgroups of 5 measurements around target = 50.0, sigma = 1.2
-    return Array.from({ length: 20 }, (_, i) => {
-      const baseMean = 50.0 + (i === 14 ? 2.5 : (Math.random() - 0.5) * 0.8);
-      const vals = Array.from({ length: 5 }, () => 
-        Number((baseMean + (Math.random() - 0.5) * 2.2).toFixed(2))
-      );
-      return {
-        id: `sg-${i + 1}`,
-        label: `Lot-${i + 1}`,
-        timestamp: new Date(now.getTime() - (20 - i) * 3600000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        values: vals
-      };
-    });
-  } else if (type === 'i-mr') {
-    // 25 individual readings around 25.0
-    return Array.from({ length: 25 }, (_, i) => {
-      const shift = i === 18 ? 4.2 : (Math.random() - 0.5) * 1.5;
-      const val = Number((25.0 + shift + (Math.random() - 0.5) * 2.0).toFixed(2));
-      return {
-        id: `pt-${i + 1}`,
-        label: `S-${i + 1}`,
-        timestamp: new Date(now.getTime() - (25 - i) * 1800000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        value: val
-      };
-    });
-  } else if (type === 'p') {
-    // 20 lots of 100 parts with defective counts 1-6
-    return Array.from({ length: 20 }, (_, i) => {
-      const def = i === 12 ? 9 : Math.floor(Math.random() * 4) + 1;
-      return {
-        id: `p-${i + 1}`,
-        label: `Batch-${i + 1}`,
-        timestamp: new Date(now.getTime() - (20 - i) * 3600000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        defective: def,
-        sampleSize: 100
-      };
-    });
-  } else {
-    // 20 inspections with defects per 10 units
-    return Array.from({ length: 20 }, (_, i) => {
-      const def = i === 9 ? 12 : Math.floor(Math.random() * 5) + 2;
-      return {
-        id: `u-${i + 1}`,
-        label: `Unit-${i + 1}`,
-        timestamp: new Date(now.getTime() - (20 - i) * 3600000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        defects: def,
-        units: 10
-      };
-    });
-  }
+// Storage key per chart type ensures no cross-type data corruption
+const getStorageKey = (type: ChartType) => `qms_spc_v3_${type}`;
+
+// Helper to load real user measurements only (strictly filters out any synthetic/demo records)
+function loadUserMeasurements(type: ChartType): SpcMeasurementRow[] {
+  try {
+    const saved = localStorage.getItem(getStorageKey(type));
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed)) {
+        // Exclude any synthetic demo items (ids starting with sg-, pt-, p-, u-, or demo labels like Lot-)
+        const clean = parsed.filter(d => 
+          !d.id?.startsWith('sg-') && 
+          !d.id?.startsWith('pt-') && 
+          !d.id?.startsWith('p-') && 
+          !d.id?.startsWith('u-') &&
+          !d.label?.startsWith('Lot-') &&
+          !d.label?.startsWith('Batch-') &&
+          !d.label?.startsWith('Unit-')
+        );
+        if (clean.length !== parsed.length) {
+          localStorage.setItem(getStorageKey(type), JSON.stringify(clean));
+        }
+        return clean;
+      }
+    }
+  } catch {}
+  return [];
 }
 
 export default function SPCSystem() {
@@ -97,40 +71,23 @@ export default function SPCSystem() {
   
   const [activeTab, setActiveTab] = useState<SpcTab>('control');
   const [chartType, setChartType] = useState<ChartType>('xbar-r');
-  
-  // Storage key per chart type ensures no cross-type data corruption
-  const getStorageKey = (type: ChartType) => `qms_spc_v3_${type}`;
 
-  const [data, setData] = useState<SpcMeasurementRow[]>(() => {
-    try {
-      const saved = localStorage.getItem(getStorageKey('xbar-r'));
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch {}
-    // Default demo data so the page opens immediately with visible charts
-    return generateDemoData('xbar-r');
-  });
-
-  // Switch dataset when chartType changes
+  // Purge any legacy demo keys once on load
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(getStorageKey(chartType));
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setData(parsed);
-          return;
-        }
-      }
+      localStorage.removeItem('qms_spc_real_measurements');
+      (['xbar-r', 'i-mr', 'p', 'u'] as ChartType[]).forEach(t => {
+        loadUserMeasurements(t);
+      });
     } catch {}
-    // If no saved data for this type, initialize with realistic demo data
-    const initial = generateDemoData(chartType);
-    setData(initial);
-    try {
-      localStorage.setItem(getStorageKey(chartType), JSON.stringify(initial));
-    } catch {}
+  }, []);
+
+  // Real user data only — starts strictly empty if no real measurements recorded
+  const [data, setData] = useState<SpcMeasurementRow[]>(() => loadUserMeasurements('xbar-r'));
+
+  // Switch dataset when chartType changes (real data only)
+  useEffect(() => {
+    setData(loadUserMeasurements(chartType));
   }, [chartType]);
 
   // Save changes to current chart storage
@@ -153,13 +110,6 @@ export default function SPCSystem() {
   const [usl, setUsl] = useState<number>(55);
   const [lsl, setLsl] = useState<number>(45);
   const [target, setTarget] = useState<number>(50);
-
-  // Load Demo Data for active chart
-  const handleLoadDemoData = () => {
-    const demo = generateDemoData(chartType);
-    saveData(demo);
-    toast.success(isAr ? 'تم تحميل بيانات تجريبية مطابقة للمواصفات بنجاح' : 'Standard demo data loaded successfully');
-  };
 
   // Clear all data
   const handleClearData = () => {
@@ -785,35 +735,26 @@ export default function SPCSystem() {
                     <span>{isAr ? 'تسجيل القراءة ورسمها' : 'Record & Plot Reading'}</span>
                   </button>
 
-                  {/* Quick Action Buttons (Demo, Undo, Clear) */}
-                  <div className="grid grid-cols-3 gap-2 pt-2">
-                    <button
-                      onClick={handleLoadDemoData}
-                      className="py-2 bg-slate-800 hover:bg-slate-700 text-sky-400 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1 transition-colors border border-slate-700/60"
-                      title={isAr ? 'تحميل 20 عينة حقيقية لرؤية الشارت' : 'Load 20 demo samples to see chart'}
-                    >
-                      <Sparkles className="w-3.5 h-3.5" />
-                      <span>{isAr ? 'تجريبي' : 'Demo'}</span>
-                    </button>
-
+                  {/* Quick Action Buttons (Undo, Clear) */}
+                  <div className="grid grid-cols-2 gap-2 pt-2">
                     <button
                       onClick={handleUndoLast}
                       disabled={data.length === 0}
-                      className="py-2 bg-slate-800 hover:bg-slate-700 text-amber-400 disabled:opacity-30 disabled:cursor-not-allowed rounded-xl text-[11px] font-bold flex items-center justify-center gap-1 transition-colors border border-slate-700/60"
+                      className="py-2.5 bg-slate-800 hover:bg-slate-700 text-amber-400 disabled:opacity-30 disabled:cursor-not-allowed rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors border border-slate-700/60"
                       title={isAr ? 'حذف آخر قراءة تم تسجيلها' : 'Undo last recorded point'}
                     >
                       <RotateCcw className="w-3.5 h-3.5" />
-                      <span>{isAr ? 'تراجع' : 'Undo'}</span>
+                      <span>{isAr ? 'تراجع عن آخر قراءة' : 'Undo Last'}</span>
                     </button>
 
                     <button
                       onClick={handleClearData}
                       disabled={data.length === 0}
-                      className="py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 disabled:opacity-30 disabled:cursor-not-allowed rounded-xl text-[11px] font-bold flex items-center justify-center gap-1 transition-colors border border-red-500/20"
+                      className="py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 disabled:opacity-30 disabled:cursor-not-allowed rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors border border-red-500/20"
                       title={isAr ? 'مسح كافة القراءات' : 'Clear all'}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
-                      <span>{isAr ? 'مسح' : 'Clear'}</span>
+                      <span>{isAr ? 'مسح الكل' : 'Clear All'}</span>
                     </button>
                   </div>
                 </div>
@@ -901,18 +842,11 @@ export default function SPCSystem() {
                 <p className="font-bold text-white text-lg mb-1">
                   {isAr ? 'لا توجد قراءات مسجلة حتى الآن' : 'No measurements recorded'}
                 </p>
-                <p className="text-xs text-slate-400 max-w-md mb-6 leading-relaxed">
+                <p className="text-xs text-slate-400 max-w-md leading-relaxed">
                   {isAr 
-                    ? 'قم بإدخال قراءات العينات من خلال النموذج الجانبي، أو اضغط زر "عينة تجريبية" لتحميل 20 عينة فوراً ورسم الشارتات.' 
-                    : 'Enter readings using the form on the left, or click "Demo Data" to immediately load 20 samples and plot the charts.'}
+                    ? 'ابدأ بتسجيل قراءات العينات الحقيقية من صالة الإنتاج عبر النموذج الجانبي لرسم شارتات التحكم وحساب الحدود الإحصائية.' 
+                    : 'Enter real sample readings from the shopfloor using the form on the left to plot control charts.'}
                 </p>
-                <button
-                  onClick={handleLoadDemoData}
-                  className="px-6 py-2.5 bg-sky-500 hover:bg-sky-400 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg transition-transform active:scale-95"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  <span>{isAr ? 'تحميل 20 عينة تجريبية ورسم الشارت فوراً' : 'Load Demo Data & Plot Chart'}</span>
-                </button>
               </div>
             )}
           </div>
@@ -1050,13 +984,6 @@ export default function SPCSystem() {
             </div>
             
             <div className="flex gap-2">
-              <button
-                onClick={handleLoadDemoData}
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-sky-400 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors border border-slate-700"
-              >
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>{isAr ? 'تحميل بيانات تجريبية' : 'Load Demo Data'}</span>
-              </button>
               <button
                 onClick={handleClearData}
                 disabled={data.length === 0}
