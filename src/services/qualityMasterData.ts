@@ -1,5 +1,3 @@
-import { INITIAL_BOM_PARTS, INITIAL_BOM_MODELS } from './bomInitialData';
-
 export type QualityMasterTableId =
   | 'parts'
   | 'models'
@@ -255,106 +253,21 @@ export function normalizeMasterRow(table: QualityMasterTableId, row: Record<stri
   };
 }
 
-export function getDefaultMasterRecords(table: QualityMasterTableId): QualityMasterRecord[] {
-  if (table === 'parts') {
-    return INITIAL_BOM_PARTS.map((part) => {
-      const code = part.partCode;
-      const name = part.descAr ? `${part.descAr} (${part.descEn})` : part.descEn;
-      const model = (part.models && part.models[0]) || 'R-250MGR-BK2';
-      return {
-        id: `part-${code}`,
-        partNumber: code,
-        partId: code,
-        barcode: code,
-        partName: name,
-        descAr: part.descAr,
-        descEn: part.descEn,
-        uom: part.uom || 'PC',
-        model,
-        models: part.models || [],
-        supplierName: 'ELARABY Component Supplier',
-        unitCost: 120,
-        productFamily: 'Microwave',
-        productionLine: 'Line 1 - Microwave Assembly',
-        defaultInspectionPoint: 'Incoming / Sub-assembly',
-        isActive: true,
-        createdAt: nowIso(),
-        lastUpdatedAt: nowIso(),
-        lastUpdatedBy: 'system-seed',
-      };
-    });
-  }
-
-  if (table === 'models') {
-    return INITIAL_BOM_MODELS.map((model) => ({
-      id: `model-${model.code}`,
-      model: model.code,
-      product: model.name,
-      factory: 'Benha Factory',
-      workshop: 'Microwave Workshop',
-      productionLine: 'Line 1 - Microwave Assembly',
-      capacity: 250,
-      inspectionPlan: 'PLN-MW-GENERAL-01',
-      productFamily: 'Microwave',
-      isActive: true,
-      createdAt: nowIso(),
-      lastUpdatedAt: nowIso(),
-      lastUpdatedBy: 'system-seed',
-    }));
-  }
-
-  if (table === 'lines') {
-    return [
-      { id: 'line-1', productionLine: 'Line 1 - Microwave Assembly', name: 'خط تجميع الميكروويف 1', factory: 'Benha', workshop: 'Assembly', targetPpm: 150, defaultInspectionPoint: 'Final Testing', isActive: true, createdAt: nowIso(), lastUpdatedAt: nowIso(), lastUpdatedBy: 'system-seed' },
-      { id: 'line-2', productionLine: 'Line 2 - Sheet Metal Stamping', name: 'خط كبس وتشكيل الصاج', factory: 'Benha', workshop: 'Stamping', targetPpm: 200, defaultInspectionPoint: 'Stamping QC', isActive: true, createdAt: nowIso(), lastUpdatedAt: nowIso(), lastUpdatedBy: 'system-seed' },
-      { id: 'line-3', productionLine: 'Line 3 - Painting & Powder Coating', name: 'خط الدهان والطلاء', factory: 'Benha', workshop: 'Coating', targetPpm: 180, defaultInspectionPoint: 'Paint Lab', isActive: true, createdAt: nowIso(), lastUpdatedAt: nowIso(), lastUpdatedBy: 'system-seed' },
-      { id: 'line-4', productionLine: 'Line 4 - Sub-Assembly & Wiring', name: 'خط الضفائر والتجميع الفرعي', factory: 'Benha', workshop: 'Sub-assembly', targetPpm: 120, defaultInspectionPoint: 'Electrical Bench', isActive: true, createdAt: nowIso(), lastUpdatedAt: nowIso(), lastUpdatedBy: 'system-seed' },
-      { id: 'line-5', productionLine: 'Line 5 - Final Quality Inspection', name: 'خط الفحص النهائي والتغليف', factory: 'Benha', workshop: 'Packaging', targetPpm: 100, defaultInspectionPoint: 'OQC Gate', isActive: true, createdAt: nowIso(), lastUpdatedAt: nowIso(), lastUpdatedBy: 'system-seed' },
-    ];
-  }
-
-  if (table === 'defects') {
-    return [
-      { id: 'def-1', defectType: 'خدش دهان / Paint Scratch', defectCategory: 'Cosmetic / مظهرية', defaultSeverity: 'minor', defaultCostCategory: 'Rework', suggestedContainment: 'إعادة دهان الجزء الخارجي أو استبدال الغطاء', defaultInspectionPoint: 'Paint Inspection', isActive: true, createdAt: nowIso(), lastUpdatedAt: nowIso(), lastUpdatedBy: 'system-seed' },
-      { id: 'def-2', defectType: 'انبعاج صاج / Dent on Casing', defectCategory: 'Mechanical / ميكانيكية', defaultSeverity: 'major', defaultCostCategory: 'Scrap', suggestedContainment: 'عزل الغلاف واستبداله بصاج سليم من المخزن', defaultInspectionPoint: 'Stamping QC', isActive: true, createdAt: nowIso(), lastUpdatedAt: nowIso(), lastUpdatedBy: 'system-seed' },
-      { id: 'def-3', defectType: 'عطل مغناطيس كهربي / Magnetron Failure', defectCategory: 'Electrical / كهربية', defaultSeverity: 'critical', defaultCostCategory: 'Supplier Claim', suggestedContainment: 'حجز فوري للدفعة وفحص عزل الجهد ومطالبة المورد', defaultInspectionPoint: 'Electrical Bench', isActive: true, createdAt: nowIso(), lastUpdatedAt: nowIso(), lastUpdatedBy: 'system-seed' },
-      { id: 'def-4', defectType: 'تسريب ميكروويف / RF Microwave Leakage', defectCategory: 'Safety / أمان صناعي', defaultSeverity: 'critical', defaultCostCategory: 'Immediate Recall', suggestedContainment: 'إيقاف الخط فوراً وضبط شفة الباب وفحص ميكرو-سويتش الأمان', defaultInspectionPoint: 'Final Testing', isActive: true, createdAt: nowIso(), lastUpdatedAt: nowIso(), lastUpdatedBy: 'system-seed' },
-      { id: 'def-5', defectType: 'صوت غير طبيعي بالموتور / Motor Abnormal Noise', defectCategory: 'Functional / تشغيلية', defaultSeverity: 'major', defaultCostCategory: 'Rework', suggestedContainment: 'تشحيم محور الصينية الدوارة أو تغيير محرك التدوير', defaultInspectionPoint: 'Testing Bench', isActive: true, createdAt: nowIso(), lastUpdatedAt: nowIso(), lastUpdatedBy: 'system-seed' },
-      { id: 'def-6', defectType: 'كسر صينية زجاجية / Broken Glass Turntable', defectCategory: 'Material / خامات', defaultSeverity: 'major', defaultCostCategory: 'Replacement', suggestedContainment: 'تغيير الصينية وفحص سلامة التغليف ومسار النقل', defaultInspectionPoint: 'Packaging', isActive: true, createdAt: nowIso(), lastUpdatedAt: nowIso(), lastUpdatedBy: 'system-seed' },
-      { id: 'def-7', defectType: 'خطأ برمجة لوحة التحكم / PCB Controller Error', defectCategory: 'Electronic / إلكترونية', defaultSeverity: 'critical', defaultCostCategory: 'Rework', suggestedContainment: 'إعادة ضبط سوفتوير الكنترول أو استبدال بوردة PCB', defaultInspectionPoint: 'Testing Bench', isActive: true, createdAt: nowIso(), lastUpdatedAt: nowIso(), lastUpdatedBy: 'system-seed' },
-      { id: 'def-8', defectType: 'خلل سويتش قفل الباب / Door Latch Interlock Defect', defectCategory: 'Safety / أمان صناعي', defaultSeverity: 'critical', defaultCostCategory: 'Rework', suggestedContainment: 'تعديل خلوص ذراع السويتش وتأكيد الإغلاق الميكانيكي', defaultInspectionPoint: 'Door Assembly', isActive: true, createdAt: nowIso(), lastUpdatedAt: nowIso(), lastUpdatedBy: 'system-seed' },
-    ];
-  }
-
-  if (table === 'inspection-points') {
-    return [
-      { id: 'ip-1', inspectionPoint: 'Incoming / Sub-assembly', inspectionArea: 'فحص استلام الخامات والمكونات IQC', process: 'Material Receiving', owner: 'مهندس جودة الواردات', checklist: 'فحص الأبعاد، مطابقة شهادة الجودة، فحص خلو الخدوش', isActive: true, createdAt: nowIso(), lastUpdatedAt: nowIso(), lastUpdatedBy: 'system-seed' },
-      { id: 'ip-2', inspectionPoint: 'Stamping QC', inspectionArea: 'صالة كبس وتشكيل الصاج', process: 'Sheet Metal Stamping', owner: 'مراقب جودة الصاج', checklist: 'فحص سمك الصاج، الزوايا، استواء الحواف', isActive: true, createdAt: nowIso(), lastUpdatedAt: nowIso(), lastUpdatedBy: 'system-seed' },
-      { id: 'ip-3', inspectionPoint: 'Door Assembly', inspectionArea: 'تجميع أبواب الميكروويف', process: 'Door Latch Assembly', owner: 'مفتش جودة الأبواب', checklist: 'قوة القفل، ملامسة السويتشات، سلامة الشبك المانع', isActive: true, createdAt: nowIso(), lastUpdatedAt: nowIso(), lastUpdatedBy: 'system-seed' },
-      { id: 'ip-4', inspectionPoint: 'Electrical Bench', inspectionArea: 'محطة الاختبار الكهربائي', process: 'Hipot & Insulation Test', owner: 'فني جودة الاختبارات', checklist: 'فحص عزل الجهد العالي، استهلاك الأمبير، اختبار التأريض', isActive: true, createdAt: nowIso(), lastUpdatedAt: nowIso(), lastUpdatedBy: 'system-seed' },
-      { id: 'ip-5', inspectionPoint: 'Final Testing & OQC', inspectionArea: 'بوابة الفحص النهائي OQC', process: 'Full Functional & Safety Test', owner: 'مهندس الجودة النهائي', checklist: 'اختبار التسريب RF، التسخين المائي 1 لتر، المظهر الخارجي، التغليف', isActive: true, createdAt: nowIso(), lastUpdatedAt: nowIso(), lastUpdatedBy: 'system-seed' },
-    ];
-  }
-
-  return [];
-}
-
 export function loadQualityMasterTable(table: QualityMasterTableId): QualityMasterRecord[] {
-  if (typeof localStorage === 'undefined') return getDefaultMasterRecords(table);
+  if (typeof localStorage === 'undefined') return [];
   try {
     const raw = localStorage.getItem(storageKey(table));
-    const parsed = raw ? JSON.parse(raw) : [];
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      return parsed;
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    // Automatically purge any previously injected synthetic seeds
+    const cleaned = parsed.filter((r) => r && r.lastUpdatedBy !== 'system-seed');
+    if (cleaned.length !== parsed.length) {
+      saveQualityMasterTable(table, cleaned);
     }
-    const defaults = getDefaultMasterRecords(table);
-    if (defaults.length > 0) {
-      saveQualityMasterTable(table, defaults);
-      return defaults;
-    }
-    return [];
+    return cleaned;
   } catch {
-    return getDefaultMasterRecords(table);
+    return [];
   }
 }
 
