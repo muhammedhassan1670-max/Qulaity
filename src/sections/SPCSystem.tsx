@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { 
   Activity, BarChart3, LineChart as LineChartIcon, AlertCircle, 
   Settings2, Plus, Trash2, CheckCircle2, RotateCcw, 
-  Info, Table as TableIcon
+  Info, Table as TableIcon, Bookmark, X, Edit3
 } from 'lucide-react';
 import {
   ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, 
@@ -21,6 +21,21 @@ import {
 type SpcTab = 'control' | 'capability' | 'data';
 type ChartType = 'xbar-r' | 'i-mr' | 'p' | 'u';
 
+export interface SpcCharacteristic {
+  id: string;
+  name: string;              // e.g. "القطر الخارجي (Outer Diameter)"
+  partName?: string;         // e.g. "غطاء بلاستيك 28مم"
+  productionLine?: string;   // e.g. "خط التشكيل 1"
+  chartType: ChartType;      // 'xbar-r' | 'i-mr' | 'p' | 'u'
+  unit?: string;             // e.g. "mm", "g", "bar", "%"
+  target?: number;           // Target Nominal
+  usl?: number;              // Upper Specification Limit
+  lsl?: number;              // Lower Specification Limit
+  subgroupSize?: number;     // e.g. 5
+  createdAt: string;
+  updatedAt?: string;
+}
+
 export interface SpcMeasurementRow {
   id: string;
   label: string;
@@ -33,13 +48,33 @@ export interface SpcMeasurementRow {
   units?: number;      // For u-chart
 }
 
-// Storage key per chart type ensures no cross-type data corruption
-const getStorageKey = (type: ChartType) => `qms_spc_v3_${type}`;
+const CHARACTERS_STORAGE_KEY = 'qms_spc_characteristics_v1';
+const ACTIVE_CHAR_STORAGE_KEY = 'qms_spc_active_char_id';
+
+// Storage key resolution: dedicated storage per characteristic, or fallback to chart type
+const getStorageKey = (type: ChartType, charId?: string | null) => {
+  if (charId) return `qms_spc_char_${charId}_data`;
+  return `qms_spc_v3_${type}`;
+};
+
+function loadSavedCharacteristics(): SpcCharacteristic[] {
+  try {
+    const raw = localStorage.getItem(CHARACTERS_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return parsed.filter(c => !c.id?.startsWith('demo-'));
+      }
+    }
+  } catch {}
+  return [];
+}
 
 // Helper to load real user measurements only (strictly filters out any synthetic/demo records)
-function loadUserMeasurements(type: ChartType): SpcMeasurementRow[] {
+function loadUserMeasurements(type: ChartType, charId?: string | null): SpcMeasurementRow[] {
   try {
-    const saved = localStorage.getItem(getStorageKey(type));
+    const key = getStorageKey(type, charId);
+    const saved = localStorage.getItem(key);
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed)) {
@@ -54,7 +89,7 @@ function loadUserMeasurements(type: ChartType): SpcMeasurementRow[] {
           !d.label?.startsWith('Unit-')
         );
         if (clean.length !== parsed.length) {
-          localStorage.setItem(getStorageKey(type), JSON.stringify(clean));
+          localStorage.setItem(key, JSON.stringify(clean));
         }
         return clean;
       }
@@ -72,30 +107,220 @@ export default function SPCSystem() {
   const [activeTab, setActiveTab] = useState<SpcTab>('control');
   const [chartType, setChartType] = useState<ChartType>('xbar-r');
 
+  // Capability specs state
+  const [usl, setUsl] = useState<number>(55);
+  const [lsl, setLsl] = useState<number>(45);
+  const [target, setTarget] = useState<number>(50);
+
+  // Characteristics Management state
+  const [characteristics, setCharacteristics] = useState<SpcCharacteristic[]>(() => loadSavedCharacteristics());
+  const [activeCharId, setActiveCharId] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem(ACTIVE_CHAR_STORAGE_KEY) || null;
+    } catch {
+      return null;
+    }
+  });
+
+  const activeChar = useMemo(() => {
+    if (!activeCharId) return null;
+    return characteristics.find(c => c.id === activeCharId) || null;
+  }, [characteristics, activeCharId]);
+
+  // Modal State for Adding / Editing Characteristics
+  const [isCharModalOpen, setIsCharModalOpen] = useState(false);
+  const [editingCharId, setEditingCharId] = useState<string | null>(null);
+  const [charFormName, setCharFormName] = useState('');
+  const [charFormPart, setCharFormPart] = useState('');
+  const [charFormLine, setCharFormLine] = useState('');
+  const [charFormType, setCharFormType] = useState<ChartType>('xbar-r');
+  const [charFormUnit, setCharFormUnit] = useState('mm');
+  const [charFormTarget, setCharFormTarget] = useState('50');
+  const [charFormUsl, setCharFormUsl] = useState('55');
+  const [charFormLsl, setCharFormLsl] = useState('45');
+  const [charFormSubgroupSize, setCharFormSubgroupSize] = useState('5');
+
   // Purge any legacy demo keys once on load
   useEffect(() => {
     try {
       localStorage.removeItem('qms_spc_real_measurements');
       (['xbar-r', 'i-mr', 'p', 'u'] as ChartType[]).forEach(t => {
-        loadUserMeasurements(t);
+        loadUserMeasurements(t, null);
       });
     } catch {}
   }, []);
 
   // Real user data only — starts strictly empty if no real measurements recorded
-  const [data, setData] = useState<SpcMeasurementRow[]>(() => loadUserMeasurements('xbar-r'));
+  const [data, setData] = useState<SpcMeasurementRow[]>(() => {
+    try {
+      const savedCharId = localStorage.getItem(ACTIVE_CHAR_STORAGE_KEY);
+      if (savedCharId) {
+        const chars = loadSavedCharacteristics();
+        const found = chars.find(c => c.id === savedCharId);
+        if (found) {
+          return loadUserMeasurements(found.chartType, found.id);
+        }
+      }
+    } catch {}
+    return loadUserMeasurements('xbar-r', null);
+  });
 
-  // Switch dataset when chartType changes (real data only)
+  // Synchronize when active characteristic changes (or resets to general)
   useEffect(() => {
-    setData(loadUserMeasurements(chartType));
+    if (activeChar) {
+      setChartType(activeChar.chartType);
+      if (typeof activeChar.target === 'number') setTarget(activeChar.target);
+      if (typeof activeChar.usl === 'number') setUsl(activeChar.usl);
+      if (typeof activeChar.lsl === 'number') setLsl(activeChar.lsl);
+      setData(loadUserMeasurements(activeChar.chartType, activeChar.id));
+      try {
+        localStorage.setItem(ACTIVE_CHAR_STORAGE_KEY, activeChar.id);
+      } catch {}
+    } else {
+      setData(loadUserMeasurements(chartType, null));
+      try {
+        localStorage.removeItem(ACTIVE_CHAR_STORAGE_KEY);
+      } catch {}
+    }
+  }, [activeCharId]);
+
+  // Switch dataset when chartType changes in general session mode
+  useEffect(() => {
+    if (!activeChar) {
+      setData(loadUserMeasurements(chartType, null));
+    }
   }, [chartType]);
 
-  // Save changes to current chart storage
+  // Save changes to current characteristic storage (or general chart storage)
   const saveData = (updated: SpcMeasurementRow[]) => {
     setData(updated);
     try {
-      localStorage.setItem(getStorageKey(chartType), JSON.stringify(updated));
+      const key = getStorageKey(chartType, activeChar?.id);
+      localStorage.setItem(key, JSON.stringify(updated));
     } catch {}
+  };
+
+  // Open Add Characteristic Modal
+  const handleOpenAddChar = () => {
+    setEditingCharId(null);
+    setCharFormName('');
+    setCharFormPart('');
+    setCharFormLine('');
+    setCharFormType(chartType);
+    setCharFormUnit('mm');
+    setCharFormTarget('50');
+    setCharFormUsl('55');
+    setCharFormLsl('45');
+    setCharFormSubgroupSize('5');
+    setIsCharModalOpen(true);
+  };
+
+  // Open Edit Characteristic Modal
+  const handleOpenEditChar = (c: SpcCharacteristic) => {
+    setEditingCharId(c.id);
+    setCharFormName(c.name);
+    setCharFormPart(c.partName || '');
+    setCharFormLine(c.productionLine || '');
+    setCharFormType(c.chartType);
+    setCharFormUnit(c.unit || 'mm');
+    setCharFormTarget(String(c.target ?? 50));
+    setCharFormUsl(String(c.usl ?? 55));
+    setCharFormLsl(String(c.lsl ?? 45));
+    setCharFormSubgroupSize(String(c.subgroupSize ?? 5));
+    setIsCharModalOpen(true);
+  };
+
+  // Save Characteristic from Modal
+  const handleSaveCharModal = () => {
+    const name = charFormName.trim();
+    if (!name) {
+      toast.error(isAr ? 'يرجى إدخال اسم الخاصية الفنية' : 'Please enter characteristic name');
+      return;
+    }
+    const tVal = parseFloat(charFormTarget) || 50;
+    const uVal = parseFloat(charFormUsl) || 55;
+    const lVal = parseFloat(charFormLsl) || 45;
+    const sgSize = parseInt(charFormSubgroupSize) || 5;
+
+    if (uVal <= lVal) {
+      toast.error(isAr ? 'الحد الأعلى (USL) يجب أن يكون أكبر من الحد الأدنى (LSL)' : 'USL must be greater than LSL');
+      return;
+    }
+
+    if (editingCharId) {
+      const updatedList = characteristics.map(c => {
+        if (c.id === editingCharId) {
+          return {
+            ...c,
+            name,
+            partName: charFormPart.trim() || undefined,
+            productionLine: charFormLine.trim() || undefined,
+            chartType: charFormType,
+            unit: charFormUnit.trim() || undefined,
+            target: tVal,
+            usl: uVal,
+            lsl: lVal,
+            subgroupSize: sgSize,
+            updatedAt: new Date().toISOString()
+          };
+        }
+        return c;
+      });
+      setCharacteristics(updatedList);
+      try {
+        localStorage.setItem(CHARACTERS_STORAGE_KEY, JSON.stringify(updatedList));
+      } catch {}
+      if (activeCharId === editingCharId) {
+        setTarget(tVal);
+        setUsl(uVal);
+        setLsl(lVal);
+        setChartType(charFormType);
+      }
+      toast.success(isAr ? 'تم تعديل مواصفات الخاصية بنجاح' : 'Characteristic updated');
+    } else {
+      const newChar: SpcCharacteristic = {
+        id: `char-${Date.now()}`,
+        name,
+        partName: charFormPart.trim() || undefined,
+        productionLine: charFormLine.trim() || undefined,
+        chartType: charFormType,
+        unit: charFormUnit.trim() || undefined,
+        target: tVal,
+        usl: uVal,
+        lsl: lVal,
+        subgroupSize: sgSize,
+        createdAt: new Date().toISOString()
+      };
+      const updatedList = [...characteristics, newChar];
+      setCharacteristics(updatedList);
+      try {
+        localStorage.setItem(CHARACTERS_STORAGE_KEY, JSON.stringify(updatedList));
+      } catch {}
+      setActiveCharId(newChar.id);
+      setData([]); // Starts fresh with zero measurements
+      toast.success(isAr ? `تم حفظ الخاصية "${name}" بنجاح - يمكنك الآن تسجيل القراءات عليها` : `Characteristic "${name}" saved`);
+    }
+    setIsCharModalOpen(false);
+  };
+
+  // Delete Characteristic and its data
+  const handleDeleteChar = (id: string) => {
+    const toDelete = characteristics.find(c => c.id === id);
+    if (!toDelete) return;
+    if (!window.confirm(isAr ? `هل أنت متأكد من حذف خاصية "${toDelete.name}" وسجل قياساتها بالكامل؟` : `Delete characteristic "${toDelete.name}" and all its records?`)) {
+      return;
+    }
+    const updated = characteristics.filter(c => c.id !== id);
+    setCharacteristics(updated);
+    try {
+      localStorage.setItem(CHARACTERS_STORAGE_KEY, JSON.stringify(updated));
+      localStorage.removeItem(getStorageKey(toDelete.chartType, id));
+    } catch {}
+    if (activeCharId === id) {
+      setActiveCharId(null);
+      setData(loadUserMeasurements(chartType, null));
+    }
+    toast.info(isAr ? 'تم حذف الخاصية الفنية' : 'Characteristic deleted');
   };
 
   // Form Inputs State
@@ -105,11 +330,6 @@ export default function SPCSystem() {
   const [inputSampleSize, setInputSampleSize] = useState('100');
   const [inputDefects, setInputDefects] = useState('3');
   const [inputUnits, setInputUnits] = useState('10');
-
-  // Capability specs state
-  const [usl, setUsl] = useState<number>(55);
-  const [lsl, setLsl] = useState<number>(45);
-  const [target, setTarget] = useState<number>(50);
 
   // Clear all data
   const handleClearData = () => {
@@ -550,6 +770,105 @@ export default function SPCSystem() {
         </div>
       </div>
 
+      {/* Characteristic Selection & Management Bar */}
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl mb-6">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+          
+          {/* Left: Selector & Actions */}
+          <div className="flex-1 w-full space-y-2">
+            <div className="flex items-center gap-2">
+              <Bookmark className="w-5 h-5 text-sky-400" />
+              <label className="text-xs sm:text-sm font-bold text-white tracking-wide uppercase">
+                {isAr ? 'الخاصية الفنية / معيار القياس المستمر:' : 'Quality Characteristic / Parameter:'}
+              </label>
+              {activeChar && (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-sky-500/20 text-sky-300 border border-sky-500/30 uppercase">
+                  {activeChar.chartType}
+                </span>
+              )}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2.5">
+              <select
+                value={activeCharId || ''}
+                onChange={(e) => setActiveCharId(e.target.value || null)}
+                className="bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-xs sm:text-sm text-white font-medium outline-none focus:border-sky-500 shadow-inner min-w-[280px] max-w-full"
+              >
+                <option value="">
+                  {characteristics.length === 0 
+                    ? (isAr ? '— لا توجد خواص محفوظة حتى الآن (اضغط + لحفظ خاصية) —' : '— No saved characteristics (Click + to add) —')
+                    : (isAr ? '— تسجيل عام حر (بدون ربط بخاصية) —' : '— General Session (Unlinked) —')
+                  }
+                </option>
+                {characteristics.map(c => (
+                  <option key={c.id} value={c.id}>
+                    {c.name} {c.partName ? `(${c.partName})` : ''} {c.productionLine ? `[${c.productionLine}]` : ''}
+                  </option>
+                ))}
+              </select>
+
+              <button
+                onClick={handleOpenAddChar}
+                className="px-3.5 py-2 bg-sky-500 hover:bg-sky-400 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md transition-transform active:scale-95"
+              >
+                <Plus className="w-4 h-4" />
+                <span>{isAr ? 'إضافة خاصية جديدة' : 'Add Characteristic'}</span>
+              </button>
+
+              {activeChar && (
+                <>
+                  <button
+                    onClick={() => handleOpenEditChar(activeChar)}
+                    className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl text-xs font-bold flex items-center gap-1.5 border border-slate-700 transition-colors"
+                    title={isAr ? 'تعديل حدود المواصفات والبيانات' : 'Edit Specs'}
+                  >
+                    <Edit3 className="w-3.5 h-3.5 text-sky-400" />
+                    <span>{isAr ? 'تعديل المواصفة' : 'Edit Specs'}</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleDeleteChar(activeChar.id)}
+                    className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl text-xs border border-red-500/20 transition-colors"
+                    title={isAr ? 'حذف هذه الخاصية وسجل قياساتها' : 'Delete characteristic'}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Right: Active Characteristic Specs Pill */}
+          {activeChar ? (
+            <div className="flex flex-wrap items-center gap-3 bg-slate-950/80 border border-slate-800 px-4 py-2.5 rounded-xl text-xs">
+              <div>
+                <span className="text-[10px] text-slate-500 block">{isAr ? 'القيمة المستهدفة (Target):' : 'Target:'}</span>
+                <span className="font-bold text-emerald-400 font-mono">{activeChar.target ?? '—'} {activeChar.unit}</span>
+              </div>
+              <div className="w-[1px] h-6 bg-slate-800 hidden sm:block" />
+              <div>
+                <span className="text-[10px] text-slate-500 block">{isAr ? 'المواصفة (LSL ~ USL):' : 'Spec Limits:'}</span>
+                <span className="font-bold text-sky-400 font-mono">{activeChar.lsl ?? '—'} ~ {activeChar.usl ?? '—'} {activeChar.unit}</span>
+              </div>
+              <div className="w-[1px] h-6 bg-slate-800 hidden sm:block" />
+              <div>
+                <span className="text-[10px] text-slate-500 block">{isAr ? 'القراءات المسجلة:' : 'Stored Readings:'}</span>
+                <span className="font-bold text-amber-400 font-mono">{data.length} {isAr ? 'عينة' : 'samples'}</span>
+              </div>
+            </div>
+          ) : (
+            <div className="text-xs text-slate-400 bg-slate-950/50 border border-slate-800/60 p-3 rounded-xl max-w-sm">
+              <span className="text-sky-400 font-bold block mb-0.5">
+                {isAr ? '💡 حفظ واستئناف الخواص الفنية:' : '💡 Save & Resume Parameters:'}
+              </span>
+              {isAr 
+                ? 'احفظ معايير الجودة (مثل: القطر، الوزن، السمك) مع حدود مواصفاتها، لتستأنف التسجيل عليها في أي وقت وشفت دون فقدان البيانات.' 
+                : 'Save engineering parameters to resume recording measurements across shifts without data loss.'}
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Main Content Layout */}
       {activeTab === 'control' && (
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -568,6 +887,22 @@ export default function SPCSystem() {
               </h3>
               
               <div className="space-y-4">
+                {activeChar && (
+                  <div className="p-3 bg-sky-500/10 border border-sky-500/20 rounded-xl text-xs text-sky-200 flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] text-sky-400 block font-bold uppercase">{isAr ? 'الخاصية النشطة حالياً:' : 'Active Parameter:'}</span>
+                      <span className="font-bold text-white text-xs">{activeChar.name}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenEditChar(activeChar)}
+                      className="text-[11px] font-bold text-sky-400 hover:text-sky-300 underline"
+                    >
+                      {isAr ? 'تعديل' : 'Edit'}
+                    </button>
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-xs font-bold text-slate-400 mb-1.5 uppercase tracking-wider">
                     {isAr ? 'نوع شارت التحكم الإحصائي:' : 'SPC Chart Type:'}
@@ -976,10 +1311,18 @@ export default function SPCSystem() {
             <div>
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
                 <TableIcon className="w-5 h-5 text-sky-400" />
-                {isAr ? 'مصفوفة القراءات المسجلة' : 'Recorded Measurements Table'}
+                {isAr 
+                  ? (activeChar ? `سجل قراءات خاصية: ${activeChar.name}` : 'مصفوفة القراءات المسجلة') 
+                  : (activeChar ? `Measurements: ${activeChar.name}` : 'Recorded Measurements Table')}
               </h3>
               <p className="text-xs text-slate-400 mt-0.5">
-                {isAr ? `إجمالي العينات في شارت (${chartType}): ${data.length}` : `Total samples in (${chartType}) chart: ${data.length}`}
+                {isAr 
+                  ? (activeChar 
+                      ? `المنتج: ${activeChar.partName || '—'} | الخط: ${activeChar.productionLine || '—'} | نوع الشارت: ${activeChar.chartType.toUpperCase()} | إجمالي العينات: ${data.length}`
+                      : `إجمالي العينات في شارت (${chartType}): ${data.length}`)
+                  : (activeChar
+                      ? `Part: ${activeChar.partName || '—'} | Line: ${activeChar.productionLine || '—'} | Chart: ${activeChar.chartType.toUpperCase()} | Samples: ${data.length}`
+                      : `Total samples in (${chartType}) chart: ${data.length}`)}
               </p>
             </div>
             
@@ -1055,6 +1398,181 @@ export default function SPCSystem() {
               <p>{isAr ? 'لا توجد قراءات في هذا الجدول حتى الآن.' : 'No rows in this table yet.'}</p>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Modal: Add / Edit Characteristic */}
+      {isCharModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-lg shadow-2xl p-6 sm:p-7 relative max-h-[90vh] overflow-y-auto">
+            
+            {/* Modal Header */}
+            <div className="flex justify-between items-center pb-4 border-b border-slate-800 mb-5">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 bg-sky-500/10 border border-sky-500/20 rounded-xl text-sky-400">
+                  <Bookmark className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white">
+                    {isAr 
+                      ? (editingCharId ? 'تعديل بيانات وحدود الخاصية' : 'إضافة خاصية فنية جديدة للمراقبة') 
+                      : (editingCharId ? 'Edit Characteristic Specs' : 'Add New Quality Characteristic')}
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    {isAr ? 'تعريف معيار قياس هندسي لتسجيل العينات ومتابعة مؤشرات القدرة Cpk' : 'Define parameter specs to record samples & track Cpk capability'}
+                  </p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setIsCharModalOpen(false)}
+                className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Form */}
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">
+                  {isAr ? 'اسم الخاصية الفنية / معيار الجودة *' : 'Characteristic Name *'}
+                </label>
+                <input
+                  type="text"
+                  value={charFormName}
+                  onChange={e => setCharFormName(e.target.value)}
+                  placeholder={isAr ? 'مثال: القطر الخارجي للغطاء، سمك الجدار، الوزن الصافي...' : 'e.g. Outer Diameter, Wall Thickness, Net Weight...'}
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-slate-600 outline-none focus:border-sky-500 font-medium"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">
+                    {isAr ? 'المنتج / كود القطعة (Part Name)' : 'Part Name / Code'}
+                  </label>
+                  <input
+                    type="text"
+                    value={charFormPart}
+                    onChange={e => setCharFormPart(e.target.value)}
+                    placeholder={isAr ? 'مثال: ماسورة 110مم، عبوة 1 لتر' : 'e.g. Pipe 110mm, Bottle 1L'}
+                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-600 outline-none focus:border-sky-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">
+                    {isAr ? 'خط الإنتاج / المحطة' : 'Production Line / Station'}
+                  </label>
+                  <input
+                    type="text"
+                    value={charFormLine}
+                    onChange={e => setCharFormLine(e.target.value)}
+                    placeholder={isAr ? 'مثال: خط 1، ماكينة البثق 4' : 'e.g. Line 1, Extruder 4'}
+                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-600 outline-none focus:border-sky-500"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">
+                    {isAr ? 'نوع شارت التحكم الإحصائي' : 'SPC Chart Type'}
+                  </label>
+                  <select
+                    value={charFormType}
+                    onChange={e => setCharFormType(e.target.value as ChartType)}
+                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-sky-500"
+                  >
+                    <option value="xbar-r">{isAr ? 'X-bar & R (متغيرات - عينات متكررة)' : 'X-bar & R (Variables)'}</option>
+                    <option value="i-mr">{isAr ? 'I-MR (متغيرات - قراءات فردية)' : 'I-MR (Individual Readings)'}</option>
+                    <option value="p">{isAr ? 'p-Chart (نسبة المعيب)' : 'p-Chart (Proportion Defective)'}</option>
+                    <option value="u">{isAr ? 'u-Chart (معدل العيوب لكل وحدة)' : 'u-Chart (Defects per Unit)'}</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">
+                    {isAr ? 'وحدة القياس' : 'Measurement Unit'}
+                  </label>
+                  <input
+                    type="text"
+                    value={charFormUnit}
+                    onChange={e => setCharFormUnit(e.target.value)}
+                    placeholder="mm, g, kg, bar, %, sec"
+                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-600 outline-none focus:border-sky-500 font-mono"
+                  />
+                </div>
+              </div>
+
+              {/* Engineering Limits (for continuous variables) */}
+              {(charFormType === 'xbar-r' || charFormType === 'i-mr') && (
+                <div className="p-3.5 bg-slate-950/70 border border-slate-800 rounded-2xl space-y-3">
+                  <span className="text-[11px] font-bold text-sky-400 block">
+                    {isAr ? 'حدود المواصفة الهندسية (Engineering Limits):' : 'Engineering Specification Limits:'}
+                  </span>
+                  
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-400 mb-1">
+                        {isAr ? 'الحد الأدنى (LSL)' : 'Lower (LSL)'}
+                      </label>
+                      <input
+                        type="number"
+                        step="any"
+                        value={charFormLsl}
+                        onChange={e => setCharFormLsl(e.target.value)}
+                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white font-mono outline-none focus:border-sky-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-emerald-400 mb-1">
+                        {isAr ? 'الهدف (Target)' : 'Nominal Target'}
+                      </label>
+                      <input
+                        type="number"
+                        step="any"
+                        value={charFormTarget}
+                        onChange={e => setCharFormTarget(e.target.value)}
+                        className="w-full bg-slate-900 border border-emerald-600/60 rounded-lg px-2.5 py-1.5 text-xs text-emerald-300 font-mono outline-none focus:border-emerald-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-400 mb-1">
+                        {isAr ? 'الحد الأعلى (USL)' : 'Upper (USL)'}
+                      </label>
+                      <input
+                        type="number"
+                        step="any"
+                        value={charFormUsl}
+                        onChange={e => setCharFormUsl(e.target.value)}
+                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white font-mono outline-none focus:border-sky-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex justify-end items-center gap-3 pt-3 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setIsCharModalOpen(false)}
+                  className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold transition-colors"
+                >
+                  {isAr ? 'إلغاء' : 'Cancel'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveCharModal}
+                  className="px-5 py-2.5 bg-sky-500 hover:bg-sky-400 text-white rounded-xl text-xs font-bold shadow-lg transition-transform active:scale-95 flex items-center gap-2"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>{isAr ? (editingCharId ? 'حفظ التعديلات' : 'حفظ الخاصية والبدء في التسجيل') : (editingCharId ? 'Save Changes' : 'Save & Start Recording')}</span>
+                </button>
+              </div>
+            </div>
+
+          </div>
         </div>
       )}
     </div>
