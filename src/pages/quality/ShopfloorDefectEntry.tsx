@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   AlertTriangle,
@@ -296,6 +296,16 @@ export default function ShopfloorDefectEntry() {
     setFormDraft((prev) => ({ ...prev, ...patch }));
     if (refreshRenderer) setFormKey((key) => key + 1);
   };
+
+  const handleDynamicFormChange = useCallback((values: Record<string, unknown>) => {
+    setFormDraft((prev) => {
+      const safe = { ...values };
+      // Never let empty partId or partNumber from template wipe what the user actively types in barcode field
+      if (!safe.partId && prev.partId) delete safe.partId;
+      if (!safe.partNumber && prev.partNumber) delete safe.partNumber;
+      return { ...prev, ...safe };
+    });
+  }, []);
 
   const applyBarcodeLookup = (barcode: string) => {
     const clean = barcode.trim();
@@ -727,7 +737,7 @@ export default function ShopfloorDefectEntry() {
                 const val = event.target.value;
                 updateDraft({
                   partId: val,
-                  partNumber: isEmpty(formDraft.partNumber) ? val : formDraft.partNumber,
+                  partNumber: val,
                 });
               }}
               onKeyDown={(event) => {
@@ -1131,7 +1141,7 @@ export default function ShopfloorDefectEntry() {
               key={formKey}
               formType="defect-log"
               initialValues={formDraft}
-              onChange={(values) => setFormDraft((prev) => ({ ...prev, ...values }))}
+              onChange={handleDynamicFormChange}
               showSubmitButton={false}
               compactMode="shopfloor"
               qualityTemplateContext={{

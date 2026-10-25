@@ -515,13 +515,21 @@ const DynamicFormContent: React.FC<DynamicFormContentProps> = ({
     control,
     handleSubmit,
     setValue,
-    formState: { errors },
+    reset,
+    formState: { errors, isDirty },
     watch,
   } = useForm({
     resolver: zodResolver(validationSchema),
     defaultValues: initialData,
     mode: 'all',
   });
+
+  // Sync initialData when parent updates and form is clean (prevents overwriting parent state)
+  useEffect(() => {
+    if (initialData && !isDirty) {
+      reset(initialData);
+    }
+  }, [initialData, isDirty, reset]);
 
   const formValues = watch();
   const { externalDataSources, forms } = useConfigStore();
@@ -814,9 +822,14 @@ const DynamicFormContent: React.FC<DynamicFormContentProps> = ({
     });
   };
 
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+
   useEffect(() => {
-    onChange?.(formValues as Record<string, unknown>);
-  }, [formValues, onChange]);
+    if (isDirty) {
+      onChangeRef.current?.(formValues as Record<string, unknown>);
+    }
+  }, [formValues, isDirty]);
 
   const renderField = useCallback(
     (field: DynamicField) => {
