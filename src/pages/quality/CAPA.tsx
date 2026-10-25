@@ -507,7 +507,7 @@ export function CAPAPage() {
                 />
               </div>
               
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
                 {/* View Switcher Toggle */}
                 <div className="flex items-center bg-white/5 border border-white/10 rounded-2xl p-1 backdrop-blur-md">
                   <button
@@ -553,7 +553,7 @@ export function CAPAPage() {
                 
                 <Button 
                   onClick={() => handleOpenCreate()}
-                  className="h-11 px-5 bg-gradient-to-r from-[#0066CC] to-[#00A3E0] text-white rounded-2xl hover:opacity-90 font-bold shadow-lg shadow-[#0066CC]/20 flex items-center gap-2"
+                  className="h-11 px-5 bg-gradient-to-r from-[#0066CC] to-[#00A3E0] text-white rounded-2xl hover:opacity-90 font-bold shadow-lg shadow-[#0066CC]/20 flex items-center justify-center gap-2 flex-1 sm:flex-initial"
                 >
                   <Plus className="w-4 h-4" />
                   <span>{isAr ? 'إجراء CAPA جديد' : 'New CAPA'}</span>
@@ -849,8 +849,8 @@ export function CAPAPage() {
       {/* MODAL 1: VIEW CAPA DETAILS MODAL (نافذة عرض تفاصيل الكابا الشاملة) */}
       {/* ======================================================================== */}
       {viewingCapa && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
-          <div className="w-full max-w-4xl bg-slate-900 border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl my-8 space-y-6">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
+          <div className="w-full max-w-4xl bg-slate-900 border border-white/10 rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-2xl my-4 sm:my-8 space-y-6 max-h-[92vh] overflow-y-auto">
             {/* Header */}
             <div className="flex items-start justify-between pb-4 border-b border-white/10">
               <div className="space-y-1">
@@ -1034,11 +1034,11 @@ export function CAPAPage() {
                 )}
               </div>
 
-              <div className="flex items-center gap-2.5">
+              <div className="flex flex-wrap items-center justify-end gap-2 w-full sm:w-auto">
                 <Button
                   variant="outline"
                   onClick={() => handleCreateImprovementAction(viewingCapa)}
-                  className="bg-teal-500/10 text-teal-300 border-teal-500/30 hover:bg-teal-500/20 rounded-xl h-11"
+                  className="bg-teal-500/10 text-teal-300 border-teal-500/30 hover:bg-teal-500/20 rounded-xl h-11 flex-1 sm:flex-initial justify-center"
                 >
                   <Sparkles className="w-4 h-4 mr-1.5 rtl:ml-1.5 rtl:mr-0" />
                   {isAr ? 'ربط خطة تحسين' : 'Link Action'}
@@ -1047,7 +1047,7 @@ export function CAPAPage() {
                 <Button
                   variant="outline"
                   onClick={() => handleEscalateTo8D(viewingCapa)}
-                  className="bg-purple-500/10 text-purple-300 border-purple-500/30 hover:bg-purple-500/20 rounded-xl h-11"
+                  className="bg-purple-500/10 text-purple-300 border-purple-500/30 hover:bg-purple-500/20 rounded-xl h-11 flex-1 sm:flex-initial justify-center"
                 >
                   <ShieldAlert className="w-4 h-4 mr-1.5 rtl:ml-1.5 rtl:mr-0" />
                   {isAr ? 'تصعيد إلى 8D' : 'Escalate to 8D'}
@@ -1055,7 +1055,7 @@ export function CAPAPage() {
 
                 <Button
                   onClick={() => handleOpenEdit(viewingCapa)}
-                  className="bg-[#00A3E0] hover:bg-[#008cc0] text-slate-950 font-black rounded-xl h-11 px-6 shadow-lg shadow-[#00A3E0]/20"
+                  className="bg-[#00A3E0] hover:bg-[#008cc0] text-slate-950 font-black rounded-xl h-11 px-6 shadow-lg shadow-[#00A3E0]/20 flex-1 sm:flex-initial justify-center"
                 >
                   <Edit3 className="w-4 h-4 mr-1.5 rtl:ml-1.5 rtl:mr-0" />
                   {isAr ? 'تعديل هذا الإجراء' : 'Edit CAPA'}
@@ -1064,7 +1064,7 @@ export function CAPAPage() {
                 <Button
                   variant="outline"
                   onClick={() => setViewingCapa(null)}
-                  className="bg-white/5 border-white/10 text-white hover:bg-white/10 rounded-xl h-11"
+                  className="bg-white/5 border-white/10 text-white hover:bg-white/10 rounded-xl h-11 w-full sm:w-auto justify-center"
                 >
                   {isAr ? 'إغلاق' : 'Close'}
                 </Button>
@@ -1078,8 +1078,8 @@ export function CAPAPage() {
       {/* MODAL 2: EDIT & CREATE CAPA MODAL (نافذة تعديل وإنشاء الكابا المباشرة) */}
       {/* ======================================================================== */}
       {isFormOpen && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
-          <div className="w-full max-w-3xl bg-slate-900 border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl my-8">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
+          <div className="w-full max-w-3xl bg-slate-900 border border-white/10 rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-2xl my-4 sm:my-8 max-h-[92vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-6">
               <div className="flex items-center gap-3">
                 <div className="p-3 rounded-2xl bg-[#00A3E0]/10 text-[#00A3E0] border border-[#00A3E0]/20">
@@ -1316,18 +1316,18 @@ export function CAPAPage() {
               </div>
 
               {/* Submit Buttons */}
-              <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
+              <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3 pt-4 border-t border-white/10">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => { setIsFormOpen(false); setEditingCapa(null); }}
-                  className="bg-white/5 border-white/10 text-white rounded-xl h-11"
+                  className="bg-white/5 border-white/10 text-white rounded-xl h-11 w-full sm:w-auto justify-center"
                 >
                   {isAr ? 'إلغاء' : 'Cancel'}
                 </Button>
                 <Button
                   type="submit"
-                  className="bg-[#00A3E0] hover:bg-[#008cc0] text-slate-950 font-black rounded-xl h-11 px-6 shadow-lg shadow-[#00A3E0]/20"
+                  className="bg-[#00A3E0] hover:bg-[#008cc0] text-slate-950 font-black rounded-xl h-11 px-6 shadow-lg shadow-[#00A3E0]/20 w-full sm:w-auto justify-center"
                 >
                   {editingCapa ? (isAr ? 'حفظ التعديلات' : 'Save Changes') : (isAr ? 'إنشاء الإجراء' : 'Create CAPA')}
                 </Button>

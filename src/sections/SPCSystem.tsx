@@ -712,57 +712,57 @@ export default function SPCSystem() {
   };
 
   return (
-    <div className="max-w-[1600px] mx-auto p-4 sm:p-6 lg:p-8 pt-20 sm:pt-24 min-h-screen text-slate-100">
+    <div className="max-w-[1600px] mx-auto p-3 sm:p-6 lg:p-8 pt-4 sm:pt-6 min-h-screen text-slate-100">
       
       {/* Page Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 border-b border-slate-800 pb-5">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tight flex items-center gap-3">
-            <LineChartIcon className="w-8 h-8 text-sky-400" />
-            {isAr ? 'التحكم الإحصائي في العمليات (SPC)' : 'Statistical Process Control (SPC)'}
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-white uppercase tracking-tight flex items-center gap-3">
+            <LineChartIcon className="w-7 h-7 sm:w-8 sm:h-8 text-sky-400 shrink-0" />
+            <span>{isAr ? 'التحكم الإحصائي في العمليات (SPC)' : 'Statistical Process Control (SPC)'}</span>
           </h1>
-          <p className="text-slate-400 mt-1 text-sm font-medium">
+          <p className="text-slate-400 mt-1 text-xs sm:text-sm font-medium">
             {isAr ? 'رسم ومراقبة استقرار وقدرة خطوط الإنتاج وحساب حدود التحكم بدقة AIAG' : 'Monitor process stability, capability, and real-time AIAG control limits'}
           </p>
         </div>
         
         {/* Navigation Tabs */}
-        <div className="flex bg-slate-900 border border-slate-800 p-1 rounded-xl shadow-lg">
+        <div className="flex w-full sm:w-auto bg-slate-900 border border-slate-800 p-1 rounded-xl shadow-lg overflow-x-auto no-scrollbar">
           <button
             onClick={() => setActiveTab('control')}
-            className={`px-4 sm:px-6 py-2 rounded-lg font-bold text-xs sm:text-sm transition-all flex items-center gap-2 ${
+            className={`flex-1 sm:flex-initial px-3 sm:px-6 py-2 rounded-lg font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-1.5 sm:gap-2 shrink-0 ${
               activeTab === 'control' 
                 ? 'bg-sky-500 text-white shadow-md' 
                 : 'text-slate-400 hover:text-white'
             }`}
           >
-            <Activity className="w-4 h-4" />
-            {isAr ? 'شارتات التحكم' : 'Control Charts'}
+            <Activity className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span>{isAr ? 'شارتات التحكم' : 'Control Charts'}</span>
           </button>
           
           <button
             onClick={() => setActiveTab('capability')}
             disabled={chartType !== 'xbar-r' && chartType !== 'i-mr'}
-            className={`px-4 sm:px-6 py-2 rounded-lg font-bold text-xs sm:text-sm transition-all flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed ${
+            className={`flex-1 sm:flex-initial px-3 sm:px-6 py-2 rounded-lg font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-1.5 sm:gap-2 shrink-0 disabled:opacity-40 disabled:cursor-not-allowed ${
               activeTab === 'capability' 
                 ? 'bg-sky-500 text-white shadow-md' 
                 : 'text-slate-400 hover:text-white'
             }`}
           >
-            <BarChart3 className="w-4 h-4" />
-            {isAr ? 'تحليل القدرة' : 'Capability Analysis'}
+            <BarChart3 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span>{isAr ? 'تحليل القدرة' : 'Capability'}</span>
           </button>
 
           <button
             onClick={() => setActiveTab('data')}
-            className={`px-4 sm:px-6 py-2 rounded-lg font-bold text-xs sm:text-sm transition-all flex items-center gap-2 ${
+            className={`flex-1 sm:flex-initial px-3 sm:px-6 py-2 rounded-lg font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-1.5 sm:gap-2 shrink-0 ${
               activeTab === 'data' 
                 ? 'bg-sky-500 text-white shadow-md' 
                 : 'text-slate-400 hover:text-white'
             }`}
           >
-            <TableIcon className="w-4 h-4" />
-            {isAr ? 'جدول القراءات' : 'Data Table'}
+            <TableIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span>{isAr ? 'جدول القراءات' : 'Data Table'}</span>
             <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-slate-800 text-sky-400 font-mono">
               {data.length}
             </span>
@@ -777,7 +777,7 @@ export default function SPCSystem() {
           {/* Left: Selector & Actions */}
           <div className="flex-1 w-full space-y-2">
             <div className="flex items-center gap-2">
-              <Bookmark className="w-5 h-5 text-sky-400" />
+              <Bookmark className="w-5 h-5 text-sky-400 shrink-0" />
               <label className="text-xs sm:text-sm font-bold text-white tracking-wide uppercase">
                 {isAr ? 'الخاصية الفنية / معيار القياس المستمر:' : 'Quality Characteristic / Parameter:'}
               </label>
@@ -788,11 +788,11 @@ export default function SPCSystem() {
               )}
             </div>
 
-            <div className="flex flex-wrap items-center gap-2.5">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 w-full">
               <select
                 value={activeCharId || ''}
                 onChange={(e) => setActiveCharId(e.target.value || null)}
-                className="bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-xs sm:text-sm text-white font-medium outline-none focus:border-sky-500 shadow-inner min-w-[280px] max-w-full"
+                className="bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white font-medium outline-none focus:border-sky-500 shadow-inner w-full sm:w-auto min-w-0 sm:min-w-[280px]"
               >
                 <option value="">
                   {characteristics.length === 0 
@@ -807,34 +807,36 @@ export default function SPCSystem() {
                 ))}
               </select>
 
-              <button
-                onClick={handleOpenAddChar}
-                className="px-3.5 py-2 bg-sky-500 hover:bg-sky-400 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md transition-transform active:scale-95"
-              >
-                <Plus className="w-4 h-4" />
-                <span>{isAr ? 'إضافة خاصية جديدة' : 'Add Characteristic'}</span>
-              </button>
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <button
+                  onClick={handleOpenAddChar}
+                  className="flex-1 sm:flex-initial px-3.5 py-2.5 bg-sky-500 hover:bg-sky-400 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-md transition-transform active:scale-95"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>{isAr ? 'إضافة خاصية' : 'Add Characteristic'}</span>
+                </button>
 
-              {activeChar && (
-                <>
-                  <button
-                    onClick={() => handleOpenEditChar(activeChar)}
-                    className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl text-xs font-bold flex items-center gap-1.5 border border-slate-700 transition-colors"
-                    title={isAr ? 'تعديل حدود المواصفات والبيانات' : 'Edit Specs'}
-                  >
-                    <Edit3 className="w-3.5 h-3.5 text-sky-400" />
-                    <span>{isAr ? 'تعديل المواصفة' : 'Edit Specs'}</span>
-                  </button>
+                {activeChar && (
+                  <>
+                    <button
+                      onClick={() => handleOpenEditChar(activeChar)}
+                      className="px-3 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl text-xs font-bold flex items-center gap-1.5 border border-slate-700 transition-colors"
+                      title={isAr ? 'تعديل حدود المواصفات والبيانات' : 'Edit Specs'}
+                    >
+                      <Edit3 className="w-3.5 h-3.5 text-sky-400" />
+                      <span>{isAr ? 'تعديل' : 'Edit'}</span>
+                    </button>
 
-                  <button
-                    onClick={() => handleDeleteChar(activeChar.id)}
-                    className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl text-xs border border-red-500/20 transition-colors"
-                    title={isAr ? 'حذف هذه الخاصية وسجل قياساتها' : 'Delete characteristic'}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </>
-              )}
+                    <button
+                      onClick={() => handleDeleteChar(activeChar.id)}
+                      className="p-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl text-xs border border-red-500/20 transition-colors"
+                      title={isAr ? 'حذف هذه الخاصية وسجل قياساتها' : 'Delete characteristic'}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           </div>
 
@@ -1403,8 +1405,8 @@ export default function SPCSystem() {
 
       {/* Modal: Add / Edit Characteristic */}
       {isCharModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-lg shadow-2xl p-6 sm:p-7 relative max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-lg shadow-2xl p-4 sm:p-7 relative max-h-[92vh] overflow-y-auto">
             
             {/* Modal Header */}
             <div className="flex justify-between items-center pb-4 border-b border-slate-800 mb-5">
@@ -1553,18 +1555,18 @@ export default function SPCSystem() {
               )}
 
               {/* Action Buttons */}
-              <div className="flex justify-end items-center gap-3 pt-3 border-t border-slate-800">
+              <div className="flex flex-col-reverse sm:flex-row justify-end items-stretch sm:items-center gap-2 pt-3 border-t border-slate-800 w-full">
                 <button
                   type="button"
                   onClick={() => setIsCharModalOpen(false)}
-                  className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold transition-colors"
+                  className="w-full sm:w-auto px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold transition-colors text-center"
                 >
                   {isAr ? 'إلغاء' : 'Cancel'}
                 </button>
                 <button
                   type="button"
                   onClick={handleSaveCharModal}
-                  className="px-5 py-2.5 bg-sky-500 hover:bg-sky-400 text-white rounded-xl text-xs font-bold shadow-lg transition-transform active:scale-95 flex items-center gap-2"
+                  className="w-full sm:w-auto px-5 py-2.5 bg-sky-500 hover:bg-sky-400 text-white rounded-xl text-xs font-bold shadow-lg transition-transform active:scale-95 flex items-center justify-center gap-2"
                 >
                   <CheckCircle2 className="w-4 h-4" />
                   <span>{isAr ? (editingCharId ? 'حفظ التعديلات' : 'حفظ الخاصية والبدء في التسجيل') : (editingCharId ? 'Save Changes' : 'Save & Start Recording')}</span>

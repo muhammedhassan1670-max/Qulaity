@@ -268,7 +268,8 @@ export function ComplaintsDashboardPage() {
               View Complaints List
             </button>
           </div>
-          <table className="w-full">
+          <div className="overflow-x-auto w-full no-scrollbar">
+            <table className="w-full min-w-[580px]">
             <thead className="bg-white/5 border-b border-white/10">
               <tr>
                 <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-4">Customer</th>
@@ -301,11 +302,12 @@ export function ComplaintsDashboardPage() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       </PageSection>
 
       <PageSection>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
           <div className="glass-panel rounded-xl p-5">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-white">Avg Response</h3>

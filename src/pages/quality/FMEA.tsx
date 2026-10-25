@@ -160,7 +160,7 @@ export function FMEAPage() {
       <StatsBar stats={stats} />
 
       <PageSection>
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
             <input
@@ -172,19 +172,20 @@ export function FMEAPage() {
             />
           </div>
           <button
-            className="h-11 px-4 bg-[#0066CC] text-white rounded-lg hover:bg-[#0052a3] flex items-center gap-2"
+            className="h-11 px-4 bg-[#0066CC] text-white rounded-lg hover:bg-[#0052a3] flex items-center justify-center gap-2 w-full sm:w-auto"
             onClick={() => {
               setEditingFmea(null);
               setIsFormOpen(true);
             }}
           >
             <Plus className="w-4 h-4" />
-            New FMEA
+            <span>New FMEA</span>
           </button>
         </div>
 
         <div className="glass-panel rounded-xl overflow-hidden">
-          <table className="w-full">
+          <div className="overflow-x-auto w-full no-scrollbar">
+            <table className="w-full min-w-[720px]">
             <thead className="bg-white/5 border-b border-white/10">
               <tr>
                 <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-4">ID</th>
@@ -263,17 +264,18 @@ export function FMEAPage() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
 
         {isFormOpen && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <div className="glass-panel w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-2xl">
-              <div className="sticky top-0 z-10 flex items-center justify-between p-6 border-b border-white/10 bg-[#0a0a0f]">
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-2 sm:p-4 bg-black/75 backdrop-blur-sm">
+            <div className="glass-panel w-full max-w-5xl max-h-[92vh] sm:max-h-[90vh] overflow-y-auto rounded-2xl">
+              <div className="sticky top-0 z-10 flex items-center justify-between p-4 sm:p-6 border-b border-white/10 bg-[#0a0a0f]">
                 <div>
-                  <h2 className="text-xl font-semibold text-white">
+                  <h2 className="text-lg sm:text-xl font-semibold text-white">
                     {editingFmea ? 'Edit FMEA' : 'Create New FMEA'}
                   </h2>
-                  <p className="text-sm text-gray-400 mt-1">
+                  <p className="text-xs sm:text-sm text-gray-400 mt-1">
                     {editingFmea ? 'Update failure mode analysis' : 'Create a new failure mode analysis'}
                   </p>
                 </div>
@@ -285,7 +287,7 @@ export function FMEAPage() {
                 </button>
               </div>
 
-              <div className="p-6">
+              <div className="p-3 sm:p-6">
                 <DynamicFormRenderer
                   formType="fmea"
                   initialValues={(editingFmea || {}) as Record<string, unknown>}

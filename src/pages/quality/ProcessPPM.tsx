@@ -268,7 +268,8 @@ export function ProcessPPMPage() {
             </div>
             <div className="text-xs text-gray-500">Focus improvement projects</div>
           </div>
-          <table className="w-full">
+          <div className="overflow-x-auto w-full no-scrollbar">
+            <table className="w-full min-w-[640px]">
             <thead className="bg-white/5 border-b border-white/10">
               <tr>
                 <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-4">Defect</th>
@@ -314,11 +315,12 @@ export function ProcessPPMPage() {
               )}
             </tbody>
           </table>
+          </div>
         </div>
       </PageSection>
 
       <PageSection>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
           <div className="glass-panel rounded-xl p-5">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-white">Gap to Target</h3>

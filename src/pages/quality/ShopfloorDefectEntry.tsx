@@ -883,7 +883,7 @@ export default function ShopfloorDefectEntry() {
                   key={defect}
                   type="button"
                   onClick={() => setDefectType(defect)}
-                  className={`min-h-12 sm:min-h-14 rounded-2xl border px-3 sm:px-4 py-2.5 sm:py-3 text-left text-xs sm:text-sm font-bold transition-all ${
+                  className={`min-h-12 sm:min-h-14 rounded-2xl border px-3 sm:px-4 py-2.5 sm:py-3 text-left rtl:text-right text-xs sm:text-sm font-bold transition-all ${
                     formDraft.defectType === defect
                       ? 'border-[#00A3E0] bg-[#00A3E0]/20 text-cyan-300 shadow-md font-black'
                       : 'border-slate-700 bg-slate-950 text-slate-200 hover:bg-slate-800 hover:border-slate-600'

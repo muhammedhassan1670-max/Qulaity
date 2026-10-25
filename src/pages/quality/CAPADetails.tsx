@@ -476,11 +476,11 @@ export function CAPADetailsPage() {
 
       {/* EDIT MODAL */}
       {isEditOpen && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
-          <div className="w-full max-w-3xl bg-slate-900 border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl my-8">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-2 sm:p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
+          <div className="w-full max-w-3xl bg-slate-900 border border-white/10 rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-2xl my-auto max-h-[92vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-6">
               <div className="flex items-center gap-3">
-                <div className="p-3 rounded-2xl bg-[#00A3E0]/10 text-[#00A3E0] border border-[#00A3E0]/20">
+                <div className="p-2 sm:p-3 rounded-xl sm:rounded-2xl bg-[#00A3E0]/10 text-[#00A3E0] border border-[#00A3E0]/20">
                   <Edit3 className="w-6 h-6" />
                 </div>
                 <div>
@@ -695,18 +695,18 @@ export function CAPADetailsPage() {
                 </select>
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
+              <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4 border-t border-white/10">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => setIsEditOpen(false)}
-                  className="bg-white/5 border-white/10 text-white rounded-xl h-11"
+                  className="bg-white/5 border-white/10 text-white rounded-xl h-11 w-full sm:w-auto"
                 >
                   {isAr ? 'إلغاء' : 'Cancel'}
                 </Button>
                 <Button
                   type="submit"
-                  className="bg-[#00A3E0] hover:bg-[#008cc0] text-slate-950 font-bold rounded-xl h-11 px-6 shadow-lg shadow-[#00A3E0]/20"
+                  className="bg-[#00A3E0] hover:bg-[#008cc0] text-slate-950 font-bold rounded-xl h-11 px-6 shadow-lg shadow-[#00A3E0]/20 w-full sm:w-auto"
                 >
                   {isAr ? 'حفظ التعديلات' : 'Save Changes'}
                 </Button>

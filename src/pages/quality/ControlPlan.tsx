@@ -286,7 +286,7 @@ export function ControlPlanPage() {
                 />
               </div>
               
-              <div className="flex gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <button 
                   onClick={() => setShowFilters(!showFilters)}
                   className={`h-11 px-4 border rounded-lg transition-colors flex items-center gap-2 ${
@@ -306,10 +306,10 @@ export function ControlPlanPage() {
                 
                 <button 
                   onClick={handleCreate}
-                  className="h-11 px-4 bg-[#0066CC] text-white rounded-lg hover:bg-[#0052a3] transition-colors flex items-center gap-2"
+                  className="h-11 px-4 bg-[#0066CC] text-white rounded-lg hover:bg-[#0052a3] transition-colors flex items-center justify-center gap-2 flex-1 sm:flex-initial"
                 >
                   <Plus className="w-4 h-4" />
-                  <span className="hidden sm:inline">New Control Plan</span>
+                  <span>New Control Plan</span>
                 </button>
               </div>
             </div>
@@ -440,14 +440,14 @@ export function ControlPlanPage() {
       </PageSection>
 
       {isFormOpen && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="glass-panel w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl">
-            <div className="sticky top-0 z-10 flex items-center justify-between p-6 border-b border-white/10 bg-[#0a0a0f]">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-2 sm:p-4 bg-black/75 backdrop-blur-sm">
+          <div className="glass-panel w-full max-w-4xl max-h-[92vh] sm:max-h-[90vh] overflow-y-auto rounded-2xl">
+            <div className="sticky top-0 z-10 flex items-center justify-between p-4 sm:p-6 border-b border-white/10 bg-[#0a0a0f]">
               <div>
-                <h2 className="text-xl font-semibold text-white">
+                <h2 className="text-lg sm:text-xl font-semibold text-white">
                   {editingControlPlan ? 'Edit Control Plan' : 'Create New Control Plan'}
                 </h2>
-                <p className="text-sm text-gray-400 mt-1">
+                <p className="text-xs sm:text-sm text-gray-400 mt-1">
                   {editingControlPlan ? 'Edit control plan information' : 'Define a new process control plan'}
                 </p>
               </div>
@@ -459,7 +459,7 @@ export function ControlPlanPage() {
               </button>
             </div>
             
-            <div className="p-6">
+            <div className="p-3 sm:p-6">
               <DynamicFormRenderer
                 formType="control-plan"
                 initialValues={getInitialValues()}

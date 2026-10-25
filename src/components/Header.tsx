@@ -168,12 +168,12 @@ export function Header({ onMenuToggle, user }: HeaderProps) {
 
           {/* 3D Digital Twin Plant Button (Always visible) */}
           <button
-            className="inline-flex items-center gap-1.5 md:gap-2 px-3 md:px-4 h-10 rounded-xl border border-cyan-500/60 bg-gradient-to-r from-cyan-500/25 via-blue-500/25 to-purple-500/25 hover:from-cyan-500/35 hover:to-blue-500/35 text-cyan-400 dark:text-cyan-300 transition-all duration-300 text-xs md:text-sm font-black shadow-lg shadow-cyan-500/20 hover:scale-105 active:scale-95 shrink-0 whitespace-nowrap"
+            className="inline-flex items-center gap-1.5 md:gap-2 px-2.5 sm:px-4 h-9 sm:h-10 rounded-xl border border-cyan-500/60 bg-gradient-to-r from-cyan-500/25 via-blue-500/25 to-purple-500/25 hover:from-cyan-500/35 hover:to-blue-500/35 text-cyan-400 dark:text-cyan-300 transition-all duration-300 text-xs md:text-sm font-black shadow-lg shadow-cyan-500/20 hover:scale-105 active:scale-95 shrink-0 whitespace-nowrap"
             onClick={() => navigate('/quality-control-tower')}
             title={language === 'ar' ? 'التوأم الرقمي ثلاثي الأبعاد لصالة المصنع (3D WebGL Digital Twin)' : '3D WebGL Digital Twin Factory'}
           >
             <Box className="w-4 h-4 text-cyan-400 animate-pulse shrink-0" />
-            <span className="font-black">{language === 'ar' ? '🌐 التوأم الرقمي 3D' : '🌐 3D Digital Twin'}</span>
+            <span className="font-black hidden sm:inline">{language === 'ar' ? '🌐 التوأم الرقمي 3D' : '🌐 3D Digital Twin'}</span>
           </button>
 
           {/* Admin - Desktop only */}
@@ -188,8 +188,8 @@ export function Header({ onMenuToggle, user }: HeaderProps) {
             <span className="text-slate-700 dark:text-gray-300 group-hover:text-[var(--industrial-primary)] dark:group-hover:text-[var(--industrial-secondary)]">{t('admin')}</span>
           </button>
 
-          {/* Mode Toggle (Simple/Advanced) */}
-          <div className="flex items-center gap-1 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-1 rounded-xl shadow-sm dark:shadow-none">
+          {/* Mode Toggle (Simple/Advanced) - Desktop and tablet */}
+          <div className="hidden sm:flex items-center gap-1 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-1 rounded-xl shadow-sm dark:shadow-none">
             <button
               onClick={() => {
                 setLiteMode(true);

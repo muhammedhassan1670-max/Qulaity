@@ -179,19 +179,20 @@ export function CalibrationPage() {
             />
           </div>
           <button
-            className="h-11 px-4 bg-[#0066CC] text-white rounded-lg hover:bg-[#0052a3] flex items-center gap-2"
+            className="h-11 px-4 bg-[#0066CC] text-white rounded-lg hover:bg-[#0052a3] flex items-center justify-center gap-2 w-full sm:w-auto"
             onClick={() => {
               setEditingItem(null);
               setIsFormOpen(true);
             }}
           >
             <Plus className="w-4 h-4" />
-            Add Equipment
+            <span>Add Equipment</span>
           </button>
         </div>
 
         <div className="glass-panel rounded-xl overflow-hidden">
-          <table className="w-full">
+          <div className="overflow-x-auto w-full no-scrollbar">
+            <table className="w-full min-w-[720px]">
             <thead className="bg-white/5 border-b border-white/10">
               <tr>
                 <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-4">ID</th>
@@ -251,14 +252,15 @@ export function CalibrationPage() {
               })}
             </tbody>
           </table>
+          </div>
         </div>
 
         {isFormOpen && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <div className="glass-panel w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-2xl">
-              <div className="sticky top-0 z-10 flex items-center justify-between p-6 border-b border-white/10 bg-[#0a0a0f]">
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-2 sm:p-4 bg-black/75 backdrop-blur-sm">
+            <div className="glass-panel w-full max-w-5xl max-h-[92vh] sm:max-h-[90vh] overflow-y-auto rounded-2xl">
+              <div className="sticky top-0 z-10 flex items-center justify-between p-4 sm:p-6 border-b border-white/10 bg-[#0a0a0f]">
                 <div>
-                  <h2 className="text-xl font-semibold text-white">{editingItem ? 'Edit Calibration' : 'Add Equipment'}</h2>
+                  <h2 className="text-lg sm:text-xl font-semibold text-white">{editingItem ? 'Edit Calibration' : 'Add Equipment'}</h2>
                 </div>
                 <button
                   onClick={() => setIsFormOpen(false)}
@@ -268,7 +270,7 @@ export function CalibrationPage() {
                 </button>
               </div>
 
-              <div className="p-6">
+              <div className="p-3 sm:p-6">
                 <DynamicFormRenderer
                   formType="calibration"
                   initialValues={(editingItem || {}) as Record<string, unknown>}

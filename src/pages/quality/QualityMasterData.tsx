@@ -266,7 +266,7 @@ export default function QualityMasterData() {
               </TabsTrigger>
             </TabsList>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
               <div className="glass-panel p-4 rounded-2xl border border-white/10">
                 <Database className="w-5 h-5 text-[#00A3E0] mb-2" />
                 <p className="text-xs text-white/40 uppercase font-black">Total Records</p>
@@ -392,7 +392,7 @@ export default function QualityMasterData() {
                     </div>
                   </div>
 
-                  <div className="p-5 border-b border-white/10 flex flex-col md:flex-row gap-3">
+                  <div className="p-3 sm:p-5 border-b border-white/10 flex flex-col md:flex-row gap-3">
                     <div className="relative flex-1">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
                       <input

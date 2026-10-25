@@ -51,6 +51,7 @@ import {
   XAxis,
   YAxis,
   Tooltip,
+  ResponsiveContainer,
 } from 'recharts';
 
 const ChartField: React.FC<
@@ -89,38 +90,36 @@ const ChartField: React.FC<
   const colors = ['#00A3E0', '#0066CC', '#22C55E', '#F59E0B', '#EF4444', '#A855F7'];
 
   return (
-    <div className="space-y-3">
-      <div className="rounded-lg border border-white/10 bg-white/5 p-3">
-        {cfg?.chartType === 'bar' && (
-          <BarChart width={600} height={240} data={chartData} margin={{ left: 12, right: 12 }}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="x" />
-            <YAxis />
-            <Tooltip />
-            <Bar dataKey="y" fill="#00A3E0" radius={[6, 6, 0, 0]} />
-          </BarChart>
-        )}
-
-        {cfg?.chartType === 'line' && (
-          <LineChart width={600} height={240} data={chartData} margin={{ left: 12, right: 12 }}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="x" />
-            <YAxis />
-            <Tooltip />
-            <Line type="monotone" dataKey="y" stroke="#00A3E0" strokeWidth={3} dot />
-          </LineChart>
-        )}
-
-        {cfg?.chartType === 'pie' && (
-          <PieChart width={600} height={240}>
-            <Tooltip />
-            <Pie data={chartData} dataKey="y" nameKey="x" cx="50%" cy="50%" outerRadius={90}>
-              {chartData.map((_, idx) => (
-                <Cell key={idx} fill={colors[idx % colors.length]} />
-              ))}
-            </Pie>
-          </PieChart>
-        )}
+    <div className="space-y-3 w-full">
+      <div className="rounded-lg border border-white/10 bg-white/5 p-3 h-[250px] w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          {cfg?.chartType === 'bar' ? (
+            <BarChart data={chartData} margin={{ left: 12, right: 12 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="x" />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="y" fill="#00A3E0" radius={[6, 6, 0, 0]} />
+            </BarChart>
+          ) : cfg?.chartType === 'line' ? (
+            <LineChart data={chartData} margin={{ left: 12, right: 12 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="x" />
+              <YAxis />
+              <Tooltip />
+              <Line type="monotone" dataKey="y" stroke="#00A3E0" strokeWidth={3} dot />
+            </LineChart>
+          ) : (
+            <PieChart>
+              <Tooltip />
+              <Pie data={chartData} dataKey="y" nameKey="x" cx="50%" cy="50%" outerRadius={80}>
+                {chartData.map((_, idx) => (
+                  <Cell key={idx} fill={colors[idx % colors.length]} />
+                ))}
+              </Pie>
+            </PieChart>
+          )}
+        </ResponsiveContainer>
       </div>
 
       {cfg?.dataMode !== 'bind' && (
@@ -1233,7 +1232,7 @@ const DynamicFormContent: React.FC<DynamicFormContentProps> = ({
               )}
             </div>
             
-            <div className="flex flex-col sm:flex-row justify-end items-stretch sm:items-center gap-3">
+            <div className="flex flex-col sm:flex-row justify-end items-stretch sm:items-center gap-3 w-full sm:w-auto">
               {useWizard && formConfig.sections && formConfig.sections.length > 1 && !isShopfloor && (
                 <>
                   <Button
@@ -1241,7 +1240,7 @@ const DynamicFormContent: React.FC<DynamicFormContentProps> = ({
                     variant="outline"
                     disabled={currentStep === 0}
                     onClick={() => setCurrentStep(prev => prev - 1)}
-                    className="px-8 py-6 border-white/10 text-white hover:bg-white/10 font-black rounded-2xl"
+                    className="w-full sm:w-auto px-6 py-4 sm:px-8 sm:py-6 border-white/10 text-white hover:bg-white/10 font-black rounded-2xl"
                   >
                     Previous Step
                   </Button>
@@ -1250,13 +1249,13 @@ const DynamicFormContent: React.FC<DynamicFormContentProps> = ({
                     <Button
                       type="button"
                       onClick={() => setCurrentStep(prev => prev + 1)}
-                      className="group relative px-12 py-6 bg-[#0066CC] hover:bg-[#00A3E0] text-white text-lg font-black rounded-2xl shadow-xl transition-all duration-300"
+                      className="group relative w-full sm:w-auto px-8 py-4 sm:px-12 sm:py-6 bg-[#0066CC] hover:bg-[#00A3E0] text-white text-base sm:text-lg font-black rounded-2xl shadow-xl transition-all duration-300"
                     >
                       Next Step
                     </Button>
                   ) : (
                     // Final Submit Button
-                    <div className="flex gap-3">
+                    <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                       {submitActions.map((action) => (
                         <Button
                           key={action.id}
@@ -1267,7 +1266,7 @@ const DynamicFormContent: React.FC<DynamicFormContentProps> = ({
                             submitActionRef.current = action.value;
                             setSubmitAction(action.value);
                           }}
-                          className="px-8 py-6 border-white/10 text-white hover:bg-white/10 font-black rounded-2xl"
+                          className="w-full sm:w-auto px-6 py-4 sm:px-8 sm:py-6 border-white/10 text-white hover:bg-white/10 font-black rounded-2xl"
                           title={action.description}
                         >
                           {action.label}
@@ -1280,18 +1279,18 @@ const DynamicFormContent: React.FC<DynamicFormContentProps> = ({
                           submitActionRef.current = 'submit';
                           setSubmitAction('submit');
                         }}
-                        className="group relative px-16 py-8 bg-gradient-to-r from-green-600 to-emerald-500 hover:from-green-500 hover:to-emerald-400 text-white text-xl font-black rounded-2xl shadow-2xl shadow-green-500/40 hover:scale-[1.05] active:scale-[0.95] transition-all duration-300 overflow-hidden"
+                        className="group relative w-full sm:w-auto px-8 py-4 sm:px-16 sm:py-7 bg-gradient-to-r from-green-600 to-emerald-500 hover:from-green-500 hover:to-emerald-400 text-white text-base sm:text-xl font-black rounded-2xl shadow-2xl shadow-green-500/40 hover:scale-[1.02] sm:hover:scale-[1.05] active:scale-[0.95] transition-all duration-300 overflow-hidden"
                       >
                         <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
-                        <div className="relative z-10 flex items-center gap-3">
+                        <div className="relative z-10 flex items-center justify-center gap-3">
                           {isSubmitting ? (
                             <>
-                              <RefreshCw className="w-6 h-6 animate-spin" />
+                              <RefreshCw className="w-5 h-5 sm:w-6 sm:h-6 animate-spin" />
                               Processing...
                             </>
                           ) : (
                             <>
-                              <Check className="w-7 h-7" />
+                              <Check className="w-5 h-5 sm:w-7 sm:h-7" />
                               {submitLabel}
                             </>
                           )}
@@ -1303,7 +1302,7 @@ const DynamicFormContent: React.FC<DynamicFormContentProps> = ({
               )}
 
               {(!useWizard || !(formConfig.sections && formConfig.sections.length > 1) || isShopfloor) && (
-                <>
+                <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                   {submitActions.map((action) => (
                     <Button
                       key={action.id}
@@ -1314,7 +1313,7 @@ const DynamicFormContent: React.FC<DynamicFormContentProps> = ({
                         submitActionRef.current = action.value;
                         setSubmitAction(action.value);
                       }}
-                      className="px-8 py-6 border-white/10 text-white hover:bg-white/10 font-black rounded-2xl"
+                      className="w-full sm:w-auto px-6 py-4 sm:px-8 sm:py-6 border-white/10 text-white hover:bg-white/10 font-black rounded-2xl"
                       title={action.description}
                     >
                       {action.label}
@@ -1327,24 +1326,24 @@ const DynamicFormContent: React.FC<DynamicFormContentProps> = ({
                       submitActionRef.current = 'submit';
                       setSubmitAction('submit');
                     }}
-                    className="group relative px-16 py-8 bg-gradient-to-r from-[#0066CC] to-[#00A3E0] hover:from-[#0052a3] hover:to-[#008cc2] text-white text-xl font-black rounded-2xl shadow-2xl shadow-[#0066CC]/40 hover:scale-[1.05] active:scale-[0.95] transition-all duration-300 overflow-hidden"
+                    className="group relative w-full sm:w-auto px-8 py-4 sm:px-16 sm:py-7 bg-gradient-to-r from-[#0066CC] to-[#00A3E0] hover:from-[#0052a3] hover:to-[#008cc2] text-white text-base sm:text-xl font-black rounded-2xl shadow-2xl shadow-[#0066CC]/40 hover:scale-[1.02] sm:hover:scale-[1.05] active:scale-[0.95] transition-all duration-300 overflow-hidden"
                   >
                     <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
-                    <div className="relative z-10 flex items-center gap-3">
+                    <div className="relative z-10 flex items-center justify-center gap-3">
                       {isSubmitting ? (
                         <>
-                          <RefreshCw className="w-6 h-6 animate-spin" />
+                          <RefreshCw className="w-5 h-5 sm:w-6 sm:h-6 animate-spin" />
                           Processing...
                         </>
                       ) : (
                         <>
-                          <Check className="w-7 h-7" />
+                          <Check className="w-5 h-5 sm:w-7 sm:h-7" />
                           {submitLabel}
                         </>
                       )}
                     </div>
                   </Button>
-                </>
+                </div>
               )}
             </div>
           </div>

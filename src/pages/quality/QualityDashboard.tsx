@@ -185,7 +185,7 @@ export function QualityDashboardPage() {
       />
 
       {/* Period Selector */}
-      <div className="flex gap-2 mb-6">
+      <div className="flex items-center gap-2 mb-6 overflow-x-auto no-scrollbar pb-1">
         {['day', 'week', 'month', 'quarter', 'year'].map((period) => (
           <button
             key={period}
@@ -193,7 +193,7 @@ export function QualityDashboardPage() {
               setSelectedPeriod(period);
               setFilters((current) => ({ ...current, datePreset: period === 'day' ? 'week' : period as QualityDashboardFilters['datePreset'] }));
             }}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors shrink-0 ${
               selectedPeriod === period
                 ? 'bg-[#0066CC] text-white'
                 : 'bg-white/5 text-gray-400 hover:bg-white/10'
@@ -250,7 +250,7 @@ export function QualityDashboardPage() {
       <PageSection>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           {/* Trend Chart */}
-          <div className="lg:col-span-2 glass-panel rounded-xl p-6">
+          <div className="lg:col-span-2 glass-panel rounded-xl p-4 sm:p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-white">Quality Trends</h3>
               <div className="flex items-center gap-4 text-sm">
@@ -293,7 +293,7 @@ export function QualityDashboardPage() {
           </div>
 
           {/* Status Distribution */}
-          <div className="glass-panel rounded-xl p-6">
+          <div className="glass-panel rounded-xl p-4 sm:p-6">
             <h3 className="text-lg font-semibold text-white mb-4">Status Distribution</h3>
             <div className="h-48">
               <ResponsiveContainer width="100%" height="100%">
@@ -333,7 +333,7 @@ export function QualityDashboardPage() {
         <PageSection>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           {/* Priority Distribution */}
-          <div className="glass-panel rounded-xl p-6">
+          <div className="glass-panel rounded-xl p-4 sm:p-6">
             <h3 className="text-lg font-semibold text-white mb-4">Priority Distribution</h3>
             <div className="h-48">
               <ResponsiveContainer width="100%" height="100%">
@@ -356,7 +356,7 @@ export function QualityDashboardPage() {
           </div>
 
           {/* Recent Activity */}
-          <div className="lg:col-span-2 glass-panel rounded-xl p-6">
+          <div className="lg:col-span-2 glass-panel rounded-xl p-4 sm:p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-white">Recent Activity</h3>
               <button className="text-[#00A3E0] text-sm hover:text-white transition-colors">
@@ -400,7 +400,7 @@ export function QualityDashboardPage() {
       {/* Alerts Section */}
       {!isLiteMode && (
         <PageSection>
-        <div className="glass-panel rounded-xl p-6">
+        <div className="glass-panel rounded-xl p-4 sm:p-6">
           <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
             <AlertCircle className="w-5 h-5 text-yellow-400" />
             Alerts & Notifications

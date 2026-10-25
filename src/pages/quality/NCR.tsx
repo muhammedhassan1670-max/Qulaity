@@ -464,7 +464,7 @@ export function NCRPage() {
                 />
               </div>
 
-              <div className="flex items-center gap-2 self-end sm:self-auto">
+              <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
                 {/* View Mode Toggle */}
                 <div className="flex items-center bg-white/5 p-1 rounded-2xl border border-white/10">
                   <button
@@ -519,7 +519,7 @@ export function NCRPage() {
 
                 <Button 
                   onClick={() => handleOpenCreate()}
-                  className="h-11 px-5 bg-gradient-to-r from-[#0066CC] to-[#00A3E0] text-white rounded-2xl hover:opacity-90 font-bold shadow-lg shadow-[#0066CC]/20 flex items-center gap-2"
+                  className="h-11 px-4 sm:px-5 bg-gradient-to-r from-[#0066CC] to-[#00A3E0] text-white rounded-2xl hover:opacity-90 font-bold shadow-lg shadow-[#0066CC]/20 flex items-center gap-2 text-xs sm:text-sm"
                 >
                   <Plus className="w-4 h-4" />
                   <span>{isAr ? 'تقرير NCR جديد' : 'New NCR'}</span>
@@ -787,8 +787,8 @@ export function NCRPage() {
       {/* MODAL 1: VIEW NCR DETAILS MODAL */}
       {/* ======================================================================== */}
       {viewingNcr && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
-          <div className="w-full max-w-3xl bg-slate-900 border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl my-8 space-y-6">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
+          <div className="w-full max-w-3xl bg-slate-900 border border-white/10 rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-2xl my-4 sm:my-8 space-y-6 max-h-[92vh] overflow-y-auto">
             <div className="flex items-start justify-between pb-4 border-b border-white/10">
               <div className="space-y-1">
                 <div className="flex items-center gap-2.5">
@@ -953,21 +953,21 @@ export function NCRPage() {
                 </Button>
               </div>
 
-              <div className="flex items-center gap-2.5">
-                <Button
-                  onClick={() => { setViewingNcr(null); handleOpenEdit(viewingNcr); }}
-                  className="bg-[#00A3E0] hover:bg-[#008cc0] text-slate-950 font-black rounded-xl h-11 px-6 shadow-lg shadow-[#00A3E0]/20"
-                >
-                  <Edit3 className="w-4 h-4 mr-1.5 rtl:ml-1.5 rtl:mr-0" />
-                  {isAr ? 'تعديل هذا التقرير' : 'Edit NCR'}
-                </Button>
-
+              <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
                 <Button
                   variant="outline"
                   onClick={() => setViewingNcr(null)}
-                  className="bg-white/5 border-white/10 text-white hover:bg-white/10 rounded-xl h-11"
+                  className="bg-white/5 border-white/10 text-white hover:bg-white/10 rounded-xl h-11 w-full sm:w-auto justify-center"
                 >
                   {isAr ? 'إغلاق' : 'Close'}
+                </Button>
+
+                <Button
+                  onClick={() => { setViewingNcr(null); handleOpenEdit(viewingNcr); }}
+                  className="bg-[#00A3E0] hover:bg-[#008cc0] text-slate-950 font-black rounded-xl h-11 px-6 shadow-lg shadow-[#00A3E0]/20 w-full sm:w-auto justify-center"
+                >
+                  <Edit3 className="w-4 h-4 mr-1.5 rtl:ml-1.5 rtl:mr-0" />
+                  {isAr ? 'تعديل هذا التقرير' : 'Edit NCR'}
                 </Button>
               </div>
             </div>
@@ -979,8 +979,8 @@ export function NCRPage() {
       {/* MODAL 2: EDIT & CREATE NCR MODAL */}
       {/* ======================================================================== */}
       {isFormOpen && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
-          <div className="w-full max-w-3xl bg-slate-900 border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl my-8">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
+          <div className="w-full max-w-3xl bg-slate-900 border border-white/10 rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-2xl my-4 sm:my-8 max-h-[92vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-6">
               <div className="flex items-center gap-3">
                 <div className="p-3 rounded-2xl bg-[#00A3E0]/10 text-[#00A3E0] border border-[#00A3E0]/20">
@@ -1240,18 +1240,18 @@ export function NCRPage() {
               </div>
 
               {/* Submit Buttons */}
-              <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
+              <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3 pt-4 border-t border-white/10">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => { setIsFormOpen(false); setEditingNcr(null); }}
-                  className="bg-white/5 border-white/10 text-white rounded-xl h-11"
+                  className="bg-white/5 border-white/10 text-white rounded-xl h-11 w-full sm:w-auto justify-center"
                 >
                   {isAr ? 'إلغاء' : 'Cancel'}
                 </Button>
                 <Button
                   type="submit"
-                  className="bg-[#00A3E0] hover:bg-[#008cc0] text-slate-950 font-black rounded-xl h-11 px-6 shadow-lg shadow-[#00A3E0]/20"
+                  className="bg-[#00A3E0] hover:bg-[#008cc0] text-slate-950 font-black rounded-xl h-11 px-6 shadow-lg shadow-[#00A3E0]/20 w-full sm:w-auto justify-center"
                 >
                   {editingNcr ? (isAr ? 'حفظ التعديلات' : 'Save Changes') : (isAr ? 'إنشاء التقرير' : 'Create NCR')}
                 </Button>

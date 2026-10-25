@@ -645,7 +645,7 @@ export function D8Page() {
                 />
               </div>
 
-              <div className="flex items-center gap-2 self-end sm:self-auto">
+              <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
                 {/* View Toggle */}
                 <div className="flex items-center bg-white/5 p-1 rounded-2xl border border-white/10">
                   <button
@@ -690,7 +690,7 @@ export function D8Page() {
 
                 <Button 
                   onClick={() => handleOpenCreate()}
-                  className="h-11 px-5 bg-gradient-to-r from-[#0066CC] to-[#00A3E0] text-white rounded-2xl hover:opacity-90 font-bold shadow-lg shadow-[#0066CC]/20 flex items-center gap-2"
+                  className="h-11 px-4 sm:px-5 bg-gradient-to-r from-[#0066CC] to-[#00A3E0] text-white rounded-2xl hover:opacity-90 font-bold shadow-lg shadow-[#0066CC]/20 flex items-center gap-2 text-xs sm:text-sm"
                 >
                   <Plus className="w-4 h-4" />
                   <span>{isAr ? 'تقرير 8D جديد' : 'New 8D'}</span>
@@ -964,8 +964,8 @@ export function D8Page() {
       {/* MODAL 1: DEDICATED 8D VIEW DETAILS MODAL */}
       {/* ======================================================================== */}
       {viewingReport && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
-          <div className="w-full max-w-4xl bg-slate-900 border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl my-8 space-y-6">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
+          <div className="w-full max-w-4xl bg-slate-900 border border-white/10 rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 shadow-2xl my-4 sm:my-8 space-y-4 sm:space-y-6">
             {/* Modal Header */}
             <div className="flex items-start justify-between pb-4 border-b border-white/10">
               <div className="space-y-1">
@@ -1223,8 +1223,8 @@ export function D8Page() {
       {/* MODAL 2: EDIT & CREATE 8D MODAL */}
       {/* ======================================================================== */}
       {isFormOpen && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
-          <div className="w-full max-w-4xl bg-slate-900 border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl my-8">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
+          <div className="w-full max-w-4xl bg-slate-900 border border-white/10 rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 shadow-2xl my-4 sm:my-8">
             <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-6">
               <div className="flex items-center gap-3">
                 <div className="p-3 rounded-2xl bg-[#00A3E0]/10 text-[#00A3E0] border border-[#00A3E0]/20">
@@ -1555,18 +1555,18 @@ export function D8Page() {
               </div>
 
               {/* Form Buttons */}
-              <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
+              <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3 pt-4 border-t border-white/10 w-full">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => { setIsFormOpen(false); setEditingReport(null); }}
-                  className="bg-white/5 border-white/10 text-white rounded-xl h-11"
+                  className="w-full sm:w-auto bg-white/5 border-white/10 text-white rounded-xl h-11"
                 >
                   {isAr ? 'إلغاء' : 'Cancel'}
                 </Button>
                 <Button
                   type="submit"
-                  className="bg-[#00A3E0] hover:bg-[#008cc0] text-slate-950 font-black rounded-xl h-11 px-6 shadow-lg shadow-[#00A3E0]/20"
+                  className="w-full sm:w-auto bg-[#00A3E0] hover:bg-[#008cc0] text-slate-950 font-black rounded-xl h-11 px-6 shadow-lg shadow-[#00A3E0]/20"
                 >
                   {editingReport ? (isAr ? 'حفظ التعديلات' : 'Save Changes') : (isAr ? 'إنشاء التقرير' : 'Create 8D')}
                 </Button>

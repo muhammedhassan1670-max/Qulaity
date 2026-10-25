@@ -46,20 +46,20 @@ export function useBreadcrumbs(): BreadcrumbItem[] {
 
 export function PageHeader({ title, subtitle, breadcrumbs, actions }: PageHeaderProps) {
   return (
-    <div className="relative mb-8 p-8 rounded-[2.5rem] overflow-hidden group">
+    <div className="relative mb-6 sm:mb-8 p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-[2.5rem] overflow-hidden group">
       {/* Background with animated gradient */}
       <div className="absolute inset-0 bg-[#10101a] z-0" />
       <div className="absolute inset-0 bg-gradient-to-br from-[#0077ff]/10 via-transparent to-[#7000ff]/10 z-0 opacity-50 group-hover:opacity-100 transition-opacity duration-700" />
       <div className="absolute -top-24 -right-24 w-64 h-64 bg-[#00d2ff]/10 rounded-full blur-[80px] z-0 animate-pulse" />
       <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-[#7000ff]/10 rounded-full blur-[80px] z-0 animate-pulse" style={{ animationDelay: '1s' }} />
       
-      <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div className="space-y-4">
+      <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-6">
+        <div className="space-y-2 sm:space-y-4">
           {/* Breadcrumbs */}
           {breadcrumbs && (
-            <nav className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">
+            <nav className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">
               {breadcrumbs.map((crumb, idx) => (
-                <div key={idx} className="flex items-center gap-2 group/crumb">
+                <div key={idx} className="flex items-center gap-1.5 sm:gap-2 group/crumb">
                   <span className="hover:text-[#00d2ff] transition-colors cursor-pointer">{crumb.label}</span>
                   {idx < breadcrumbs.length - 1 && <ChevronRight className="w-3 h-3 text-gray-700" />}
                 </div>
@@ -68,11 +68,11 @@ export function PageHeader({ title, subtitle, breadcrumbs, actions }: PageHeader
           )}
           
           <div className="space-y-1">
-            <h1 className="text-4xl md:text-5xl font-black text-white tracking-tighter">
+            <h1 className="text-xl sm:text-3xl md:text-5xl font-black text-white tracking-tighter leading-tight">
               {title}
             </h1>
             {subtitle && (
-              <p className="text-sm md:text-base text-gray-400 font-medium max-w-2xl leading-relaxed">
+              <p className="text-xs sm:text-sm md:text-base text-gray-400 font-medium max-w-2xl leading-relaxed">
                 {subtitle}
               </p>
             )}
@@ -80,20 +80,20 @@ export function PageHeader({ title, subtitle, breadcrumbs, actions }: PageHeader
         </div>
 
         {/* Actions */}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full md:w-auto">
           {actions?.refresh && (
             <button
               onClick={actions.refresh}
-              className="p-3 rounded-2xl bg-white/5 border border-white/10 text-gray-400 hover:text-white hover:border-[#00d2ff]/50 hover:bg-[#00d2ff]/10 transition-all duration-300 hover:scale-110 active:scale-95 shadow-lg"
+              className="p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-white/5 border border-white/10 text-gray-400 hover:text-white hover:border-[#00d2ff]/50 hover:bg-[#00d2ff]/10 transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg"
             >
-              <RefreshCw className="w-5 h-5" />
+              <RefreshCw className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           )}
           
           {actions?.export && (
             <button
               onClick={actions.export}
-              className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-white/5 border border-white/10 text-gray-300 font-bold text-sm hover:text-white hover:border-[#00d2ff]/50 hover:bg-[#00d2ff]/10 transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg"
+              className="flex items-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl bg-white/5 border border-white/10 text-gray-300 font-bold text-xs sm:text-sm hover:text-white hover:border-[#00d2ff]/50 hover:bg-[#00d2ff]/10 transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg"
             >
               <Download className="w-4 h-4 text-[#00d2ff]" />
               Export
@@ -104,10 +104,10 @@ export function PageHeader({ title, subtitle, breadcrumbs, actions }: PageHeader
             <button
               key={idx}
               onClick={action.onClick}
-              className="btn-jamed"
+              className="btn-jamed text-xs sm:text-sm px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl"
             >
               {action.icon}
-              <span className="uppercase tracking-wider text-xs">{action.label}</span>
+              <span className="uppercase tracking-wider text-[11px] sm:text-xs">{action.label}</span>
             </button>
           ))}
         </div>

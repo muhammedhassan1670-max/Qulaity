@@ -403,8 +403,8 @@ export default function ModelBOMComparison() {
 
           {/* Results Table */}
           <div className="bg-slate-900/60 border border-white/10 rounded-2xl overflow-hidden shadow-xl">
-            <div className="overflow-x-auto max-h-[600px]">
-              <table className="w-full text-right text-xs">
+            <div className="overflow-x-auto max-h-[600px] no-scrollbar">
+              <table className="w-full min-w-[700px] text-right text-xs">
                 <thead className="bg-slate-950/90 text-slate-400 border-b border-white/10 sticky top-0 z-10 backdrop-blur">
                   <tr>
                     <th className="py-3 px-4 font-semibold">كود الجزء</th>

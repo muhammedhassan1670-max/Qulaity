@@ -186,7 +186,7 @@ export function QualityRecordHub() {
         }}
       />
 
-      <div className="flex flex-wrap gap-3 mb-8 p-1.5 bg-white/5 border border-white/10 rounded-[1.5rem] w-fit backdrop-blur-md">
+      <div className="flex items-center gap-2 sm:gap-3 mb-6 sm:mb-8 p-1.5 bg-white/5 border border-white/10 rounded-2xl sm:rounded-[1.5rem] w-full sm:w-fit overflow-x-auto no-scrollbar backdrop-blur-md">
         {(Object.values(MODULES)).map((m) => {
           const MIcon = m.icon;
           const isActive = activeType === m.id;
@@ -194,14 +194,14 @@ export function QualityRecordHub() {
             <button
               key={m.id}
               onClick={() => navigate(`/quality/records/${m.id}`)}
-              className={`flex items-center gap-3 px-6 py-3 rounded-2xl transition-all duration-300 transform ${
+              className={`shrink-0 flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-2xl transition-all duration-300 transform ${
                 isActive 
                   ? 'bg-[#0066CC] text-white shadow-xl shadow-[#0066CC]/30 scale-105 border border-white/10' 
                   : 'text-white/40 hover:text-white hover:bg-white/10 hover:scale-[1.02]'
               }`}
             >
               <MIcon className={`w-4 h-4 transition-colors duration-300 ${isActive ? 'text-white' : ''}`} style={{ color: !isActive ? m.color : undefined }} />
-              <span className={`text-sm font-black uppercase tracking-tighter ${isActive ? 'text-white' : 'text-white/40'}`}>{m.label}</span>
+              <span className={`text-xs sm:text-sm font-black uppercase tracking-tighter ${isActive ? 'text-white' : 'text-white/40'}`}>{m.label}</span>
               {isActive && (
                 <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
               )}
@@ -211,8 +211,8 @@ export function QualityRecordHub() {
       </div>
 
       <PageSection>
-        <div className="glass-panel rounded-[2rem] border border-white/5 overflow-hidden">
-          <div className="p-6 border-b border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="glass-panel rounded-2xl sm:rounded-[2rem] border border-white/5 overflow-hidden">
+          <div className="p-4 sm:p-6 border-b border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
             <div className="relative flex-1 max-w-md group">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 group-focus-within:text-[#00A3E0] transition-colors" />
               <input 
@@ -308,11 +308,11 @@ export function QualityRecordHub() {
 
       {/* Dynamic Create Dialog */}
       {showCreateForm && formConfig && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto glass-strong rounded-[2.5rem] border border-white/10 shadow-2xl animate-in zoom-in-95 duration-300">
-            <div className="sticky top-0 z-10 p-6 bg-[#0a0a0f]/80 backdrop-blur-md border-b border-white/5 flex items-center justify-between">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="w-full max-w-4xl max-h-[92vh] sm:max-h-[90vh] overflow-y-auto glass-strong rounded-2xl sm:rounded-[2.5rem] border border-white/10 shadow-2xl animate-in zoom-in-95 duration-300">
+            <div className="sticky top-0 z-10 p-4 sm:p-6 bg-[#0a0a0f]/80 backdrop-blur-md border-b border-white/5 flex items-center justify-between">
               <div>
-                <h2 className="text-xl font-black text-white uppercase tracking-tighter">New {config.label} Record</h2>
+                <h2 className="text-lg sm:text-xl font-black text-white uppercase tracking-tighter">New {config.label} Record</h2>
                 <p className="text-xs text-white/40">Fill in the details for the new quality report</p>
               </div>
               <button 
@@ -322,7 +322,7 @@ export function QualityRecordHub() {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="p-8">
+            <div className="p-4 sm:p-8">
               <DynamicFormRenderer 
                 config={formConfig}
                 onSubmit={async (data) => {

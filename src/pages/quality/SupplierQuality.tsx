@@ -189,14 +189,14 @@ export function SupplierQualityPage() {
             />
           </div>
           <button
-            className="h-11 px-4 bg-[#0066CC] text-white rounded-lg hover:bg-[#0052a3] flex items-center gap-2"
+            className="h-11 px-4 bg-[#0066CC] text-white rounded-lg hover:bg-[#0052a3] flex items-center justify-center gap-2 w-full sm:w-auto"
             onClick={() => {
               setEditingSupplier(null);
               setIsFormOpen(true);
             }}
           >
             <Plus className="w-4 h-4" />
-            Add Supplier
+            <span>Add Supplier</span>
           </button>
         </div>
 
@@ -204,7 +204,7 @@ export function SupplierQualityPage() {
           {suppliers.map((supplier) => (
             <div
               key={supplier.id}
-              className="glass-panel rounded-xl p-6 cursor-pointer hover:bg-white/5 transition-colors"
+              className="glass-panel rounded-xl p-4 sm:p-6 cursor-pointer hover:bg-white/5 transition-colors"
               onClick={() => {
                 setEditingSupplier(supplier);
                 setIsFormOpen(true);
@@ -260,14 +260,14 @@ export function SupplierQualityPage() {
         </div>
 
         {isFormOpen && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <div className="glass-panel w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-2xl">
-              <div className="sticky top-0 z-10 flex items-center justify-between p-6 border-b border-white/10 bg-[#0a0a0f]">
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-2 sm:p-4 bg-black/75 backdrop-blur-sm">
+            <div className="glass-panel w-full max-w-5xl max-h-[92vh] sm:max-h-[90vh] overflow-y-auto rounded-2xl">
+              <div className="sticky top-0 z-10 flex items-center justify-between p-4 sm:p-6 border-b border-white/10 bg-[#0a0a0f]">
                 <div>
-                  <h2 className="text-xl font-semibold text-white">
+                  <h2 className="text-lg sm:text-xl font-semibold text-white">
                     {editingSupplier ? 'Edit Supplier' : 'Add Supplier'}
                   </h2>
-                  <p className="text-sm text-gray-400 mt-1">
+                  <p className="text-xs sm:text-sm text-gray-400 mt-1">
                     {editingSupplier ? 'Update supplier details' : 'Create a new supplier'}
                   </p>
                 </div>
@@ -279,7 +279,7 @@ export function SupplierQualityPage() {
                 </button>
               </div>
 
-              <div className="p-6">
+              <div className="p-3 sm:p-6">
                 <DynamicFormRenderer
                   formType="supplier"
                   initialValues={(editingSupplier || {}) as Record<string, unknown>}
