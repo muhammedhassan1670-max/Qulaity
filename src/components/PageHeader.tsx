@@ -46,7 +46,7 @@ export function useBreadcrumbs(): BreadcrumbItem[] {
 
 export function PageHeader({ title, subtitle, breadcrumbs, actions }: PageHeaderProps) {
   return (
-    <div className="relative mb-6 sm:mb-8 p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-[2.5rem] overflow-hidden group">
+    <div className="relative mb-4 sm:mb-8 p-3.5 sm:p-6 md:p-8 rounded-2xl sm:rounded-[2.5rem] overflow-hidden group">
       {/* Background with animated gradient */}
       <div className="absolute inset-0 bg-[#10101a] z-0" />
       <div className="absolute inset-0 bg-gradient-to-br from-[#0077ff]/10 via-transparent to-[#7000ff]/10 z-0 opacity-50 group-hover:opacity-100 transition-opacity duration-700" />
@@ -170,14 +170,14 @@ export function StatsBar({
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4 mb-4 sm:mb-6">
       {stats.map((stat, index) => (
-        <div key={index} className="glass-panel rounded-xl sm:rounded-2xl p-3 sm:p-4">
-          <p className="text-gray-400 text-xs sm:text-sm truncate">{stat.label}</p>
+        <div key={index} className="relative rounded-2xl p-3 sm:p-4 bg-gradient-to-b from-white/[0.08] to-white/[0.02] border border-white/10 shadow-lg hover:border-[#00d2ff]/30 transition-all duration-300">
+          <p className="text-gray-400 text-xs sm:text-sm truncate font-medium">{stat.label}</p>
           <div className="flex items-baseline gap-1.5 sm:gap-2 mt-1">
-            <p className="text-lg sm:text-2xl font-bold text-white">{stat.value}</p>
+            <p className="text-lg sm:text-2xl font-black text-white">{stat.value}</p>
             {stat.change && (
-              <span className={`text-[10px] sm:text-xs ${
-                stat.trend === 'up' ? 'text-green-400' : 
-                stat.trend === 'down' ? 'text-red-400' : 'text-gray-400'
+              <span className={`text-[10px] sm:text-xs font-bold ${
+                stat.trend === 'up' ? 'text-emerald-400' : 
+                stat.trend === 'down' ? 'text-rose-400' : 'text-gray-400'
               }`}>
                 {stat.change}
               </span>

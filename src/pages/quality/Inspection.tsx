@@ -482,8 +482,9 @@ export function InspectionPage() {
         </div>
 
         {isFormOpen && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center p-2 sm:p-4 bg-black/75 backdrop-blur-sm">
-            <div className="glass-panel w-full max-w-5xl max-h-[92vh] sm:max-h-[90vh] overflow-y-auto rounded-2xl">
+          <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/85 backdrop-blur-md">
+            <div className="glass-panel w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-t-[32px] sm:rounded-2xl animate-slideUp sm:animate-none">
+              <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto my-3 sm:hidden" />
               <div className="sticky top-0 z-10 flex items-center justify-between p-4 sm:p-6 border-b border-white/10 bg-[#0a0a0f]">
                 <div>
                   <h2 className="text-lg sm:text-xl font-semibold text-white">{editingInspection ? 'Edit Inspection' : 'New Inspection'}</h2>

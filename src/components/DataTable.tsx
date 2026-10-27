@@ -272,14 +272,14 @@ export function DataTable<T>({
             <div
               key={id}
               onClick={() => onRowClick?.(item)}
-              className={`rounded-2xl border p-4 transition-all duration-200 ${
+              className={`rounded-2xl border p-3.5 sm:p-4 transition-all duration-200 shadow-md ${
                 isSelected
-                  ? 'bg-[#00A3E0]/15 border-[#00A3E0]/50'
-                  : 'bg-white/5 border-white/10 hover:border-white/20'
-              } ${onRowClick ? 'cursor-pointer active:scale-[0.99]' : ''}`}
+                  ? 'bg-[#00A3E0]/15 border-[#00A3E0]/60 shadow-[0_0_15px_rgba(0,163,224,0.15)]'
+                  : 'bg-gradient-to-b from-white/[0.07] to-white/[0.02] border-white/10 hover:border-white/25 hover:from-white/[0.1]'
+              } ${onRowClick ? 'cursor-pointer active:scale-[0.98]' : ''}`}
             >
               {/* Header: ID/Primary Column + Checkbox + Actions */}
-              <div className="flex items-start justify-between gap-2 pb-2.5 border-b border-white/5">
+              <div className="flex items-start justify-between gap-2 pb-2.5 border-b border-white/10">
                 <div className="flex items-center gap-2 min-w-0">
                   {onSelectionChange && (
                     <button
@@ -314,15 +314,15 @@ export function DataTable<T>({
               </div>
 
               {/* Grid of secondary fields */}
-              <div className="grid grid-cols-2 gap-2.5 pt-3">
+              <div className="grid grid-cols-2 gap-2 pt-2.5">
                 {secondaryCols.map((col) => {
                   const val = getNestedValue(item, col.key);
                   return (
-                    <div key={col.key} className="space-y-0.5 min-w-0">
-                      <span className="text-[10px] font-black uppercase tracking-wider text-white/40 block truncate">
+                    <div key={col.key} className="p-2 rounded-xl bg-white/[0.03] border border-white/[0.05] space-y-0.5 min-w-0">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-white/45 block truncate">
                         {col.title}
                       </span>
-                      <div className="text-xs text-white/90">
+                      <div className="text-xs text-white/95 font-medium">
                         {col.render ? col.render(item) : String(val ?? '-')}
                       </div>
                     </div>
