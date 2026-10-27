@@ -437,57 +437,113 @@ export default function QualityMasterData() {
                         />
                       </div>
                     ) : (
-                      <table className="w-full min-w-[900px] text-sm">
-                        <thead className="bg-white/5 text-white/40 uppercase text-[10px] tracking-widest">
-                          <tr>
-                            {config.fields.slice(0, 6).map((field) => (
-                              <th key={field.key} className="px-4 py-3 text-left font-black">{field.label}</th>
-                            ))}
-                            <th className="px-4 py-3 text-left font-black">Status</th>
-                            <th className="px-4 py-3 text-left font-black">Last Updated</th>
-                            <th className="px-4 py-3 text-right font-black">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
+                      <>
+                        {/* Mobile Card List (<md) */}
+                        <div className="block md:hidden p-3 space-y-3">
                           {filteredRecords.map((record) => (
-                            <tr key={record.id} className="border-t border-white/5 hover:bg-white/[0.03]">
-                              {config.fields.slice(0, 6).map((field) => (
-                                <td key={field.key} className="px-4 py-3 text-white/70 max-w-[220px] truncate" title={String(record[field.key] ?? '')}>
-                                  {String(record[field.key] ?? '---') || '---'}
-                                </td>
-                              ))}
-                              <td className="px-4 py-3">
-                                <span className={`px-2 py-1 rounded text-[10px] font-black uppercase ${record.isActive === false ? 'bg-slate-500/10 text-slate-300' : 'bg-emerald-400/10 text-emerald-300'}`}>
+                            <div key={record.id} className="rounded-2xl border border-white/10 bg-white/5 p-4 space-y-3">
+                              <div className="flex items-center justify-between gap-2 border-b border-white/5 pb-2.5">
+                                <span className="font-bold text-white text-sm truncate max-w-[200px]">
+                                  {String(record[config.fields[0]?.key] ?? '---')}
+                                </span>
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase shrink-0 whitespace-nowrap ${record.isActive === false ? 'bg-slate-500/10 text-slate-300 border border-slate-500/20' : 'bg-emerald-400/10 text-emerald-300 border border-emerald-400/20'}`}>
                                   {record.isActive === false ? 'Inactive' : 'Active'}
                                 </span>
-                              </td>
-                              <td className="px-4 py-3 text-white/40">{record.lastUpdatedAt ? new Date(record.lastUpdatedAt).toLocaleString() : '---'}</td>
-                              <td className="px-4 py-3">
-                                <div className="flex items-center justify-end gap-2">
+                              </div>
+                              <div className="grid grid-cols-2 gap-2 text-xs">
+                                {config.fields.slice(1, 5).map((field) => (
+                                  <div key={field.key} className="p-2 rounded-xl bg-white/[0.03] border border-white/[0.05] min-w-0">
+                                    <span className="text-[10px] font-black uppercase tracking-wider text-white/40 block truncate">
+                                      {field.label}
+                                    </span>
+                                    <span className="text-white/80 font-medium truncate block mt-0.5" title={String(record[field.key] ?? '')}>
+                                      {String(record[field.key] ?? '---') || '---'}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                              <div className="flex items-center justify-between pt-2 border-t border-white/5 text-[11px] text-white/40">
+                                <span>{record.lastUpdatedAt ? new Date(record.lastUpdatedAt).toLocaleDateString() : '---'}</span>
+                                <div className="flex items-center gap-1.5">
                                   <button
                                     type="button"
                                     onClick={() => startEdit(record)}
-                                    className="p-2 rounded-lg text-white/50 hover:text-[#00A3E0] hover:bg-[#00A3E0]/10"
-                                    title="Edit"
+                                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[#00A3E0] bg-[#00A3E0]/10 hover:bg-[#00A3E0]/20 font-bold text-xs"
                                   >
-                                    <Edit3 className="w-4 h-4" />
+                                    <Edit3 className="w-3.5 h-3.5" />
+                                    <span>Edit</span>
                                   </button>
                                   {record.isActive !== false && (
                                     <button
                                       type="button"
                                       onClick={() => deactivateRecord(record.id)}
-                                      className="p-2 rounded-lg text-white/50 hover:text-amber-300 hover:bg-amber-300/10"
+                                      className="p-1.5 rounded-lg text-amber-300 hover:bg-amber-300/10"
                                       title="Deactivate"
                                     >
-                                      <Power className="w-4 h-4" />
+                                      <Power className="w-3.5 h-3.5" />
                                     </button>
                                   )}
                                 </div>
-                              </td>
-                            </tr>
+                              </div>
+                            </div>
                           ))}
-                        </tbody>
-                      </table>
+                        </div>
+
+                        {/* Desktop Table (md+) */}
+                        <div className="hidden md:block">
+                          <table className="w-full min-w-[900px] text-sm">
+                            <thead className="bg-white/5 text-white/40 uppercase text-[10px] tracking-widest">
+                              <tr>
+                                {config.fields.slice(0, 6).map((field) => (
+                                  <th key={field.key} className="px-4 py-3 text-left font-black">{field.label}</th>
+                                ))}
+                                <th className="px-4 py-3 text-left font-black">Status</th>
+                                <th className="px-4 py-3 text-left font-black">Last Updated</th>
+                                <th className="px-4 py-3 text-right font-black">Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {filteredRecords.map((record) => (
+                                <tr key={record.id} className="border-t border-white/5 hover:bg-white/[0.03]">
+                                  {config.fields.slice(0, 6).map((field) => (
+                                    <td key={field.key} className="px-4 py-3 text-white/70 max-w-[220px] truncate" title={String(record[field.key] ?? '')}>
+                                      {String(record[field.key] ?? '---') || '---'}
+                                    </td>
+                                  ))}
+                                  <td className="px-4 py-3">
+                                    <span className={`px-2 py-1 rounded text-[10px] font-black uppercase ${record.isActive === false ? 'bg-slate-500/10 text-slate-300' : 'bg-emerald-400/10 text-emerald-300'}`}>
+                                      {record.isActive === false ? 'Inactive' : 'Active'}
+                                    </span>
+                                  </td>
+                                  <td className="px-4 py-3 text-white/40">{record.lastUpdatedAt ? new Date(record.lastUpdatedAt).toLocaleString() : '---'}</td>
+                                  <td className="px-4 py-3">
+                                    <div className="flex items-center justify-end gap-2">
+                                      <button
+                                        type="button"
+                                        onClick={() => startEdit(record)}
+                                        className="p-2 rounded-lg text-white/50 hover:text-[#00A3E0] hover:bg-[#00A3E0]/10"
+                                        title="Edit"
+                                      >
+                                        <Edit3 className="w-4 h-4" />
+                                      </button>
+                                      {record.isActive !== false && (
+                                        <button
+                                          type="button"
+                                          onClick={() => deactivateRecord(record.id)}
+                                          className="p-2 rounded-lg text-white/50 hover:text-amber-300 hover:bg-amber-300/10"
+                                          title="Deactivate"
+                                        >
+                                          <Power className="w-4 h-4" />
+                                        </button>
+                                      )}
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </>
                     )}
                   </div>
                 </div>
@@ -496,11 +552,11 @@ export default function QualityMasterData() {
           ))}
 
           <TabsContent value="defect-records" className="mt-0 focus-visible:outline-none">
-            <div className="glass-panel p-5 rounded-2xl border border-white/10">
+            <div className="glass-panel p-4 sm:p-5 rounded-2xl border border-white/10">
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
                 <div>
                   <h3 className="text-xl font-black text-white">Recorded Defects</h3>
-                  <p className="text-xs text-white/50">
+                  <p className="text-xs text-white/50 mt-0.5">
                     These are the actual defect records logged by operators. Note: This view is read-only. 
                     To log new defects, please use the Defect Recorder page.
                   </p>
@@ -519,7 +575,56 @@ export default function QualityMasterData() {
                 </div>
               </div>
 
-              <div className="overflow-x-auto">
+              {/* Mobile Defect Cards (<md) */}
+              <div className="block md:hidden space-y-3">
+                {defectRecords.length === 0 ? (
+                  <p className="py-8 text-center text-sm text-white/40">No defect records found.</p>
+                ) : (
+                  defectRecords.filter(r => !search || JSON.stringify(r).toLowerCase().includes(search.toLowerCase())).map((record: any, index: number) => (
+                    <div key={index} className="rounded-2xl border border-white/10 bg-white/5 p-4 space-y-2.5">
+                      <div className="flex items-center justify-between gap-2 border-b border-white/5 pb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-mono font-bold text-white/70">{record.date || '---'}</span>
+                          <span className="text-[10px] text-white/40">({record.shift || 'Shift'})</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0 whitespace-nowrap">
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase shrink-0 whitespace-nowrap ${
+                            record.severity === 'critical' ? 'bg-red-500/20 text-red-400' :
+                            record.severity === 'major' ? 'bg-amber-500/20 text-amber-400' :
+                            'bg-yellow-500/20 text-yellow-400'
+                          }`}>
+                            {record.severity || 'minor'}
+                          </span>
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase shrink-0 whitespace-nowrap ${
+                            record.status === 'open' ? 'bg-amber-500/10 text-amber-400' :
+                            record.status === 'closed' ? 'bg-emerald-500/10 text-emerald-400' :
+                            'bg-blue-500/10 text-blue-400'
+                          }`}>
+                            {record.status || 'open'}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <h4 className="text-sm font-bold text-white break-words">
+                          {record.partNameAtTime || record.partId || '---'}
+                        </h4>
+                        <div className="flex items-center justify-between text-xs text-white/60">
+                          <span>{record.defectType || '---'}</span>
+                          <span className="font-mono font-bold text-white">Qty: {record.quantity || 0}</span>
+                        </div>
+                      </div>
+                      {record.productionLine && (
+                        <div className="pt-2 border-t border-white/5 text-[11px] text-white/40">
+                          Line: <span className="text-white/70 font-medium">{record.productionLine}</span>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* Desktop Defect Table (md+) */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-sm text-left">
                   <thead className="text-xs text-white/40 uppercase bg-white/5 border-b border-white/10">
                     <tr>

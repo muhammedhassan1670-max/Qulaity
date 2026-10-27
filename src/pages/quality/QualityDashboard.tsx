@@ -208,7 +208,7 @@ export function QualityDashboardPage() {
       </div>
       {/* Module Stats Grid */}
       <PageSection>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4 mb-8">
           {moduleStats.map((stat) => {
             const Icon = stat.icon;
             const isPositive = stat.trend > 0;
@@ -227,19 +227,19 @@ export function QualityDashboardPage() {
                 key={stat.name}
                 to={buildDashboardDrilldownUrl(targetRoute, targetFilters)}
                 onClick={() => recordDashboardDrilldown(targetRoute, targetFilters, stat.name)}
-                className="glass-panel rounded-xl p-4 hover:bg-white/5 transition-colors cursor-pointer"
+                className="glass-panel rounded-xl p-3 sm:p-4 hover:bg-white/5 transition-colors cursor-pointer min-w-0"
               >
-                <div className="flex items-start justify-between mb-3">
-                  <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${stat.color}20` }}>
-                    <Icon className="w-5 h-5" style={{ color: stat.color }} />
+                <div className="flex items-start justify-between mb-2 sm:mb-3">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: `${stat.color}20` }}>
+                    <Icon className="w-4 h-4 sm:w-5 sm:h-5" style={{ color: stat.color }} />
                   </div>
-                  <div className={`flex items-center gap-1 text-xs ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
+                  <div className={`flex items-center gap-1 text-[11px] sm:text-xs shrink-0 whitespace-nowrap ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
                     <TrendIcon className="w-3 h-3" />
                     <span>{Math.abs(stat.trend)}%</span>
                   </div>
                 </div>
-                <p className="text-2xl font-semibold text-white mb-1">{stat.count}</p>
-                <p className="text-sm text-gray-400">{stat.name}</p>
+                <p className="text-xl sm:text-2xl font-bold text-white mb-0.5 truncate">{stat.count}</p>
+                <p className="text-xs sm:text-sm text-gray-400 truncate">{stat.name}</p>
               </Link>
             );
           })}
@@ -250,20 +250,20 @@ export function QualityDashboardPage() {
       <PageSection>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           {/* Trend Chart */}
-          <div className="lg:col-span-2 glass-panel rounded-xl p-4 sm:p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-white">Quality Trends</h3>
-              <div className="flex items-center gap-4 text-sm">
-                <span className="flex items-center gap-1 text-gray-400">
-                  <span className="w-3 h-3 rounded-full bg-red-500" /> NCR
+          <div className="lg:col-span-2 glass-panel rounded-xl p-3.5 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
+              <h3 className="text-base sm:text-lg font-semibold text-white">Quality Trends</h3>
+              <div className="flex items-center gap-3 sm:gap-4 text-xs sm:text-sm flex-wrap">
+                <span className="flex items-center gap-1 text-gray-400 shrink-0">
+                  <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-red-500" /> NCR
                 </span>
                 {!isLiteMode && (
                   <>
-                    <span className="flex items-center gap-1 text-gray-400">
-                      <span className="w-3 h-3 rounded-full bg-yellow-500" /> CAPA
+                    <span className="flex items-center gap-1 text-gray-400 shrink-0">
+                      <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-yellow-500" /> CAPA
                     </span>
-                    <span className="flex items-center gap-1 text-gray-400">
-                      <span className="w-3 h-3 rounded-full bg-blue-500" /> Complaints
+                    <span className="flex items-center gap-1 text-gray-400 shrink-0">
+                      <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-blue-500" /> Complaints
                     </span>
                   </>
                 )}

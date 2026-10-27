@@ -308,8 +308,9 @@ export function QualityRecordHub() {
 
       {/* Dynamic Create Dialog */}
       {showCreateForm && formConfig && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="w-full max-w-4xl max-h-[92vh] sm:max-h-[90vh] overflow-y-auto glass-strong rounded-2xl sm:rounded-[2.5rem] border border-white/10 shadow-2xl animate-in zoom-in-95 duration-300">
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto glass-strong rounded-t-[32px] sm:rounded-[2.5rem] border border-white/10 shadow-2xl animate-slideUp sm:animate-none">
+            <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mt-3 -mb-1 sm:hidden" />
             <div className="sticky top-0 z-10 p-4 sm:p-6 bg-[#0a0a0f]/80 backdrop-blur-md border-b border-white/5 flex items-center justify-between">
               <div>
                 <h2 className="text-lg sm:text-xl font-black text-white uppercase tracking-tighter">New {config.label} Record</h2>

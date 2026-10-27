@@ -849,8 +849,9 @@ export function CAPAPage() {
       {/* MODAL 1: VIEW CAPA DETAILS MODAL (نافذة عرض تفاصيل الكابا الشاملة) */}
       {/* ======================================================================== */}
       {viewingCapa && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
-          <div className="w-full max-w-4xl bg-slate-900 border border-white/10 rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-2xl my-4 sm:my-8 space-y-6 max-h-[92vh] overflow-y-auto">
+        <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
+          <div className="w-full max-w-4xl bg-slate-900 border border-white/10 rounded-t-[32px] sm:rounded-3xl p-5 sm:p-8 shadow-2xl my-0 sm:my-8 space-y-5 max-h-[90vh] overflow-y-auto animate-slideUp sm:animate-none">
+            <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto -mt-1 mb-2 sm:hidden" />
             {/* Header */}
             <div className="flex items-start justify-between pb-4 border-b border-white/10">
               <div className="space-y-1">
@@ -1078,8 +1079,9 @@ export function CAPAPage() {
       {/* MODAL 2: EDIT & CREATE CAPA MODAL (نافذة تعديل وإنشاء الكابا المباشرة) */}
       {/* ======================================================================== */}
       {isFormOpen && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
-          <div className="w-full max-w-3xl bg-slate-900 border border-white/10 rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-2xl my-4 sm:my-8 max-h-[92vh] overflow-y-auto">
+        <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
+          <div className="w-full max-w-3xl bg-slate-900 border border-white/10 rounded-t-[32px] sm:rounded-3xl p-5 sm:p-8 shadow-2xl my-0 sm:my-8 max-h-[90vh] overflow-y-auto animate-slideUp sm:animate-none">
+            <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto -mt-1 mb-3 sm:hidden" />
             <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-6">
               <div className="flex items-center gap-3">
                 <div className="p-3 rounded-2xl bg-[#00A3E0]/10 text-[#00A3E0] border border-[#00A3E0]/20">

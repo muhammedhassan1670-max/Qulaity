@@ -377,7 +377,7 @@ export default function QualityHome() {
         {/* End-to-End Factory Value Stream Pipeline */}
         <FactoryQualityStream />
 
-        <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-9">
+        <section className="grid grid-cols-3 gap-2.5 sm:gap-3 sm:grid-cols-3 xl:grid-cols-9">
           {[
             ['Defects', metrics.defects],
             ['Master Rows', metrics.masterRows],
@@ -389,9 +389,9 @@ export default function QualityHome() {
             ['Lessons', metrics.activeLessons],
             ['Pending Sync', metrics.pendingSync],
           ].map(([label, value]) => (
-            <div key={String(label)} className="rounded-2xl border border-white/10 bg-white/5 p-4">
-              <p className="text-[10px] font-black uppercase tracking-widest text-white/35">{label}</p>
-              <p className="mt-2 text-2xl font-black text-white">{String(value)}</p>
+            <div key={String(label)} className="rounded-2xl border border-white/10 bg-white/5 p-3 sm:p-4 min-w-0">
+              <p className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-white/35 truncate">{label}</p>
+              <p className="mt-1 sm:mt-2 text-lg sm:text-2xl font-black text-white truncate">{String(value)}</p>
             </div>
           ))}
         </section>
@@ -409,12 +409,12 @@ export default function QualityHome() {
               <ShieldCheck className="h-4 w-4" /> Run Safety Check
             </button>
           </div>
-          <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-2 xl:grid-cols-6">
+          <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-6 gap-3">
             <div className="rounded-2xl border border-white/10 bg-black/10 p-4">
               <p className="text-[10px] font-black uppercase tracking-widest text-white/35">Records</p>
               <p className="mt-2 text-2xl font-black text-white">{persistenceDiagnostics.recordCount}</p>
             </div>
-            <div className="rounded-2xl border border-white/10 bg-black/10 p-4 md:col-span-2">
+            <div className="rounded-2xl border border-white/10 bg-black/10 p-4 sm:col-span-2">
               <p className="text-[10px] font-black uppercase tracking-widest text-white/35">Storage Key</p>
               <p className="mt-2 break-all text-sm font-black text-white">{persistenceDiagnostics.storageKey}</p>
             </div>
@@ -428,7 +428,7 @@ export default function QualityHome() {
             </div>
             <div className="rounded-2xl border border-white/10 bg-black/10 p-4">
               <p className="text-[10px] font-black uppercase tracking-widest text-white/35">Health</p>
-              <span className={`mt-2 inline-flex rounded-full border px-3 py-1 text-xs font-black ${storageHealthClass(persistenceDiagnostics.storageHealth)}`}>
+              <span className={`mt-2 inline-flex rounded-full border px-3 py-1 text-xs font-black shrink-0 whitespace-nowrap ${storageHealthClass(persistenceDiagnostics.storageHealth)}`}>
                 {persistenceDiagnostics.storageHealth}
               </span>
             </div>
