@@ -337,21 +337,22 @@ export function D8Page() {
   const getStepIndex = (status: string) => dSteps.findIndex(s => s.key === status);
 
   const handleOpenCreate = (sourceNcr?: string, initialTitle?: string) => {
+    const p = new URLSearchParams(location.search);
     const newNum = generate8DNumber();
     setFormData({
-      problemTitle: initialTitle || '',
+      problemTitle: initialTitle || p.get('title') || '',
       eightDNumber: newNum,
-      department: 'Quality Engineering',
-      productName: '',
-      productionLine: 'Line 01',
-      lotNumber: '',
+      department: p.get('department') || 'Quality Engineering',
+      productName: p.get('product') || p.get('productName') || '',
+      productionLine: p.get('line') || p.get('productionLine') || 'Line 01',
+      lotNumber: p.get('lot') || p.get('lotNumber') || '',
       dateDetected: new Date().toISOString().split('T')[0],
       teamLeader: 'Eng. Quality Team',
       champion: 'Quality Director',
       teamMembers: '',
-      symptomDescription: '',
+      symptomDescription: p.get('desc') || p.get('symptom') || '',
       emergencyResponse: '',
-      problemDescription: '',
+      problemDescription: p.get('desc') || p.get('problemDescription') || '',
       customerImpact: '',
       immediateAction: '',
       containmentResponsible: '',

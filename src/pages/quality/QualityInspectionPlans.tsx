@@ -7,6 +7,7 @@ import {
   Copy,
   Download,
   FileJson,
+  Layers,
   Lock,
   Plus,
   RefreshCw,
@@ -14,6 +15,7 @@ import {
   Search,
   ShieldCheck,
   Upload,
+  X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageContainer, PageHeader } from '@/components/PageHeader';
@@ -64,6 +66,107 @@ function numberValue(value: unknown): string {
   return value === undefined || value === null ? '' : String(value);
 }
 
+interface ControlPlanItem {
+  id: string;
+  controlPlanId: string;
+  partNumber: string;
+  partName: string;
+  operationName: string;
+  productCharacteristic: string;
+  specification: string;
+  tolerance?: string;
+  evaluationMethod: string;
+  sampleSize: string;
+  frequency: string;
+  controlMethodType: string;
+  reactionPlanDesc: string;
+}
+
+const DEFAULT_CP_TEMPLATES: ControlPlanItem[] = [
+  {
+    id: 'cp-001',
+    controlPlanId: 'CP-2026-ENG-01',
+    partNumber: 'PART-ENG-001',
+    partName: 'كتلة المحرك والتشغيل الميكانيكي (Engine Block)',
+    operationName: 'OP-10: التشغيل والتفريز بالـ CNC (Milling & Boring)',
+    productCharacteristic: 'القطر الداخلي للاسطوانة والعمق الحرج والتسامح البعدي',
+    specification: '50.00 mm',
+    tolerance: '± 0.20 mm',
+    evaluationMethod: 'قدمة ورنية رقمية / ميكرومتر داخلي',
+    sampleSize: '5',
+    frequency: 'hourly',
+    controlMethodType: 'spc',
+    reactionPlanDesc: 'إيقاف ماكينة الـ CNC وعزل آخر 5 قطع وتعديل تعويض سكين التفريز',
+  },
+  {
+    id: 'cp-002',
+    controlPlanId: 'CP-2026-ELEC-02',
+    partNumber: 'PART-ELEC-002',
+    partName: 'وحدة التحكم والقدرة الكهربائية (Power Control Unit)',
+    operationName: 'OP-20: تجميع وتوصيل أطراف الكابلات (Terminal Fastening)',
+    productCharacteristic: 'عزم ربط مسامير التوصيل الكهربائي الرئيسية',
+    specification: '5.00 Nm',
+    tolerance: '± 0.50 Nm',
+    evaluationMethod: 'مفتاح عزم رقمي معاير',
+    sampleSize: '3',
+    frequency: 'shift',
+    controlMethodType: 'variable',
+    reactionPlanDesc: 'إعادة ربط بالمفتاح المعاير وفحص 100% من الوجبة وتوثيق القراءة',
+  },
+  {
+    id: 'cp-003',
+    controlPlanId: 'CP-2026-CHS-03',
+    partNumber: 'PART-CHS-003',
+    partName: 'الهيكل الخارجي والطلاء النهائي (Chassis Enclosure)',
+    operationName: 'OP-30: معالجة السطح والطلاء الإلكتروستاتيكي (Powder Coating)',
+    productCharacteristic: 'سماكة طبقة الطلاء ومقاومة الخدش واللمعان',
+    specification: '120.0 µm',
+    tolerance: '± 15.0 µm',
+    evaluationMethod: 'جهاز قياس سماكة الطلاء المغناطيسي',
+    sampleSize: '2',
+    frequency: 'batch',
+    controlMethodType: 'gauge',
+    reactionPlanDesc: 'إعادة معالجة الطلاء وفتح تقرير عدم مطابقة NCR في حال تقشر الدهان',
+  },
+];
+
+function parseSpecValues(spec: string, tol?: string): { target?: number; lsl?: number; usl?: number; unit?: string } {
+  if (!spec) return {};
+  const clean = spec.trim();
+  const unitMatch = (clean + ' ' + (tol || '')).match(/(mm|cm|nm|bar|psi|kg|g|v|a|µm|um|deg|°c|c)/i);
+  const unit = unitMatch ? unitMatch[1] : 'mm';
+
+  const plusMinus = (clean + ' ' + (tol || '')).match(/([\d.]+)\s*(?:±|\+\/-|\+-)\s*([\d.]+)/);
+  if (plusMinus) {
+    const target = parseFloat(plusMinus[1]);
+    const delta = parseFloat(plusMinus[2]);
+    return { target, lsl: Number((target - delta).toFixed(3)), usl: Number((target + delta).toFixed(3)), unit };
+  }
+
+  if (tol) {
+    const deltaNum = parseFloat(tol.replace(/[^\d.]/g, ''));
+    const targetNum = parseFloat(clean.replace(/[^\d.]/g, ''));
+    if (!isNaN(targetNum) && !isNaN(deltaNum)) {
+      return { target: targetNum, lsl: Number((targetNum - deltaNum).toFixed(3)), usl: Number((targetNum + deltaNum).toFixed(3)), unit };
+    }
+  }
+
+  const range = clean.match(/([\d.]+)\s*(?:-|to|إلى)\s*([\d.]+)/i);
+  if (range) {
+    const lsl = parseFloat(range[1]);
+    const usl = parseFloat(range[2]);
+    const target = Number(((lsl + usl) / 2).toFixed(3));
+    return { target, lsl, usl, unit };
+  }
+
+  const singleNum = parseFloat(clean.replace(/[^\d.]/g, ''));
+  if (!isNaN(singleNum)) {
+    return { target: singleNum, unit };
+  }
+
+  return { unit };
+}
+
 export default function QualityInspectionPlans() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const role = loadLocalWorkflowRole();
@@ -74,6 +177,35 @@ export default function QualityInspectionPlans() {
   const [draft, setDraft] = useState<QualityInspectionPlan>(() => plans[0] || createBlankInspectionPlan());
   const [searchText, setSearchText] = useState('');
   const [sectionDraft, setSectionDraft] = useState('');
+  const [showControlPlanModal, setShowControlPlanModal] = useState(false);
+
+  // Load available control plans from localStorage or defaults
+  const availableControlPlans = useMemo<ControlPlanItem[]>(() => {
+    try {
+      const raw = localStorage.getItem('qms_local_control_plan');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map((item: any) => ({
+            id: item.id || `cp-${Math.random()}`,
+            controlPlanId: item.controlPlanId || item.id,
+            partNumber: item.partNumber || item.part || '',
+            partName: item.partName || item.product || '',
+            operationName: item.operationName || item.operation || '',
+            productCharacteristic: item.productCharacteristic || item.characteristic || '',
+            specification: item.specification || '',
+            tolerance: item.tolerance || '',
+            evaluationMethod: item.evaluationMethod || '',
+            sampleSize: String(item.sampleSize || '5'),
+            frequency: item.frequency || 'hourly',
+            controlMethodType: item.controlMethodType || 'spc',
+            reactionPlanDesc: item.reactionPlanDesc || item.reactionPlan || '',
+          }));
+        }
+      }
+    } catch {}
+    return DEFAULT_CP_TEMPLATES;
+  }, [showControlPlanModal]);
 
   const analytics = useMemo(() => buildInspectionAnalytics(runs, plans), [runs, plans]);
   const filteredPlans = useMemo(() => {
@@ -234,6 +366,59 @@ export default function QualityInspectionPlans() {
     event.target.value = '';
   };
 
+  const handleImportFromControlPlan = (cp: ControlPlanItem) => {
+    if (!ensureAccess()) return;
+    const specs = parseSpecValues(cp.specification, cp.tolerance);
+    const isNumeric = cp.controlMethodType === 'spc' || cp.controlMethodType === 'gauge' || cp.controlMethodType === 'variable' || specs.target !== undefined;
+
+    const newCheck: QualityInspectionCheckItem = {
+      id: `chk-cp-${Date.now()}`,
+      checkCode: `CP-${String(draft.checkItems.length + 1).padStart(3, '0')}`,
+      checkName: cp.productCharacteristic || 'Control Plan Characteristic',
+      description: `مستورد تلقائياً من خطة ضبط العمليات (${cp.controlPlanId}) - ${cp.operationName || ''}`,
+      section: cp.operationName || draft.sections[0]?.title || 'General',
+      inspectionMethod: isNumeric ? 'measurement' : cp.controlMethodType === 'visual' ? 'visual' : 'functional',
+      standard: `${cp.specification}${cp.tolerance ? ` (${cp.tolerance})` : ''}`,
+      acceptanceCriteria: `${cp.specification}${cp.tolerance ? ` [تفاوت: ${cp.tolerance}]` : ''}`,
+      inputType: isNumeric ? 'numeric' : 'pass-fail',
+      lowerSpecLimit: specs.lsl,
+      upperSpecLimit: specs.usl,
+      targetValue: specs.target,
+      unit: specs.unit || 'mm',
+      sampleSize: parseInt(cp.sampleSize) || 5,
+      frequency: cp.frequency,
+      defectTypeIfNG: cp.reactionPlanDesc || 'حيود عن معايير خطة ضبط العمليات',
+      severityIfNG: 'major',
+      recordTypeIfNG: 'process-ppm',
+      requiredEvidence: false,
+      guidanceText: `طريقة التقييم: ${cp.evaluationMethod || 'قياس مباشر'}. خطة الاحتواء والتدخل: ${cp.reactionPlanDesc || 'عزل وإيقاف الخط'}.`,
+      order: draft.checkItems.length + 1,
+      isRequired: true,
+    };
+
+    let nextSections = [...draft.sections];
+    const sectionTitle = cp.operationName || 'Operation Controls';
+    if (!nextSections.some((s) => s.title.toLowerCase() === sectionTitle.toLowerCase())) {
+      nextSections.push({
+        id: `sec-cp-${Date.now()}`,
+        title: sectionTitle,
+        order: nextSections.length + 1,
+      });
+    }
+
+    updateDraft({
+      partNumber: draft.partNumber || cp.partNumber,
+      model: draft.model || cp.partName,
+      sections: nextSections,
+      checkItems: [...draft.checkItems, newCheck],
+    });
+
+    setShowControlPlanModal(false);
+    toast.success('تم استيراد بند الفحص من خطة ضبط العمليات بنجاح!', {
+      description: `تم ربط الخاصية "${cp.productCharacteristic}" بحدود مواصفات: ${cp.specification}`,
+    });
+  };
+
   return (
     <PageContainer>
       <PageHeader
@@ -256,6 +441,15 @@ export default function QualityInspectionPlans() {
             <div className="flex flex-wrap gap-2">
               <Button type="button" onClick={createPlan} disabled={!access.allowed} className="rounded-xl">
                 <Plus className="mr-2 h-4 w-4" /> New Plan
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowControlPlanModal(true)}
+                disabled={!access.allowed}
+                className="rounded-xl border-[#00A3E0]/40 text-[#8be3ff] hover:bg-[#00A3E0]/10"
+              >
+                <Layers className="mr-2 h-4 w-4 text-[#00A3E0]" /> استيراد من الـ Control Plan
               </Button>
               <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={!access.allowed} className="rounded-xl">
                 <Upload className="mr-2 h-4 w-4" /> Import JSON
@@ -559,6 +753,83 @@ export default function QualityInspectionPlans() {
           </main>
         </div>
       </div>
+
+      {showControlPlanModal && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-sm">
+          <div className="glass-panel w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-3xl border border-white/10 bg-slate-900 p-5 sm:p-7 shadow-2xl">
+            <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-5">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-[#00A3E0]/20 border border-[#00A3E0]/30 flex items-center justify-center text-[#00A3E0]">
+                  <Layers className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg sm:text-xl font-black text-white">استيراد بنود الفحص من خطة ضبط العمليات (Control Plan)</h3>
+                  <p className="text-xs text-white/50 mt-0.5">اختر خطة الضبط المعتمدة ليتم استخراج الخصائص الحرجة ومعايير القبول تلقائياً</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowControlPlanModal(false)}
+                className="p-2 rounded-xl text-white/50 hover:text-white hover:bg-white/10 transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {availableControlPlans.map((cp) => (
+                <div
+                  key={cp.id}
+                  className="rounded-2xl border border-white/10 bg-white/5 p-4 hover:border-[#00A3E0]/40 transition space-y-2"
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                      <span className="font-mono text-xs font-bold text-[#00A3E0] bg-[#00A3E0]/10 px-2 py-0.5 rounded-md border border-[#00A3E0]/20">
+                        {cp.controlPlanId}
+                      </span>
+                      <h4 className="text-sm font-black text-white mt-1">{cp.partName}</h4>
+                      <p className="text-xs text-white/50">{cp.partNumber} • {cp.operationName}</p>
+                    </div>
+                    <Button
+                      type="button"
+                      onClick={() => handleImportFromControlPlan(cp)}
+                      className="rounded-xl bg-[#0066CC] hover:bg-[#0052a3] text-white text-xs font-bold px-4 py-2 self-start sm:self-auto shrink-0"
+                    >
+                      <Plus className="w-4 h-4 mr-1.5" /> استيراد للخطة
+                    </Button>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2 border-t border-white/5 text-xs text-white/60">
+                    <div>
+                      <span className="text-white/35">الخاصية: </span>
+                      <span className="text-white font-medium">{cp.productCharacteristic}</span>
+                    </div>
+                    <div>
+                      <span className="text-white/35">المواصفة: </span>
+                      <span className="text-emerald-300 font-mono font-bold">{cp.specification} {cp.tolerance}</span>
+                    </div>
+                    <div>
+                      <span className="text-white/35">طريقة الضبط: </span>
+                      <span className="text-amber-200 font-medium">{cp.controlMethodType.toUpperCase()} ({cp.frequency})</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-end pt-5 mt-5 border-t border-white/10">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowControlPlanModal(false)}
+                className="rounded-xl border-white/10 text-white hover:bg-white/10"
+              >
+                إغلاق
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </PageContainer>
   );
 }

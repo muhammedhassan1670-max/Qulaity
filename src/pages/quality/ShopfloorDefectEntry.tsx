@@ -3,11 +3,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   AlertTriangle,
+  BarChart2,
   Barcode,
   Camera,
   CheckCircle2,
   ClipboardCheck,
   Copy,
+  ExternalLink,
   FileText,
   Gauge,
   ImagePlus,
@@ -16,11 +18,13 @@ import {
   Plus,
   RotateCcw,
   Save,
+  ShieldAlert,
   ShieldCheck,
   Smartphone,
   Sparkles,
   MapPin,
   Search,
+  Wrench,
   X,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -129,6 +133,109 @@ function appendGlobalAudit(recordId: string, entry: AuditEntry): void {
   }
 }
 
+interface CalibrationToolItem {
+  id: string;
+  equipment: string;
+  serialNumber: string;
+  status: 'calibrated' | 'due' | 'overdue' | 'maintenance';
+}
+
+const DEFAULT_CALIBRATION_TOOLS: CalibrationToolItem[] = [
+  { id: 'cal-01', equipment: 'Digital Vernier Caliper (0-150mm)', serialNumber: 'SN-CAL-8821', status: 'calibrated' },
+  { id: 'cal-02', equipment: 'Digital Micrometer (0-25mm)', serialNumber: 'SN-MIC-4019', status: 'calibrated' },
+  { id: 'cal-03', equipment: 'Digital Torque Wrench (10-100 Nm)', serialNumber: 'SN-TRQ-1102', status: 'overdue' },
+  { id: 'cal-04', equipment: 'Dial Indicator Gauge (0-10mm)', serialNumber: 'SN-IND-0922', status: 'calibrated' },
+  { id: 'cal-05', equipment: 'Pin Gauge Set (1.0-10.0mm)', serialNumber: 'SN-PIN-3041', status: 'calibrated' },
+];
+
+function loadLocalCalibrationTools(): CalibrationToolItem[] {
+  try {
+    for (const key of ['qms_local_calibrations', 'qms_local_calibration']) {
+      const raw = localStorage.getItem(key);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map((item: any) => ({
+            id: item.id || `tool-${Math.random()}`,
+            equipment: item.equipment || item.description || item.itemCode || 'Measurement Gauge',
+            serialNumber: item.serialNumber || 'SN-NA',
+            status: (item.status?.toLowerCase() as any) || 'calibrated',
+          }));
+        }
+      }
+    }
+  } catch {}
+  return DEFAULT_CALIBRATION_TOOLS;
+}
+
+function syncMeasurementToSpc(
+  checkItem: QualityInspectionCheckItem,
+  value: number,
+  modelOrPart: string,
+  productionLine: string,
+  sampleRef?: string
+) {
+  try {
+    const CHARACTERS_STORAGE_KEY = 'qms_spc_characteristics_v1';
+    const ACTIVE_CHAR_STORAGE_KEY = 'qms_spc_active_char_id';
+
+    let chars: any[] = [];
+    try {
+      const raw = localStorage.getItem(CHARACTERS_STORAGE_KEY);
+      if (raw) chars = JSON.parse(raw);
+    } catch {}
+
+    const charName = checkItem.checkName || 'Inspection Measurement';
+    let existingChar = chars.find((c: any) => c.name === charName || c.id === checkItem.id);
+
+    if (!existingChar) {
+      existingChar = {
+        id: checkItem.id || `char-${Date.now()}`,
+        name: charName,
+        partName: modelOrPart || 'Standard Part',
+        productionLine: productionLine || 'Line 01',
+        chartType: 'i-mr',
+        unit: checkItem.unit || 'mm',
+        target: checkItem.targetValue,
+        usl: checkItem.upperSpecLimit,
+        lsl: checkItem.lowerSpecLimit,
+        createdAt: new Date().toISOString(),
+      };
+      chars.push(existingChar);
+      localStorage.setItem(CHARACTERS_STORAGE_KEY, JSON.stringify(chars));
+    }
+
+    localStorage.setItem(ACTIVE_CHAR_STORAGE_KEY, existingChar.id);
+
+    const newRow = {
+      id: `meas-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      label: sampleRef || `S-${new Date().toLocaleTimeString('en-US', { hour12: false })}`,
+      timestamp: new Date().toISOString(),
+      value: value,
+    };
+
+    const charDataKey = `qms_spc_char_${existingChar.id}_data`;
+    let charRows: any[] = [];
+    try {
+      const r = localStorage.getItem(charDataKey);
+      if (r) charRows = JSON.parse(r);
+    } catch {}
+    charRows.push(newRow);
+    localStorage.setItem(charDataKey, JSON.stringify(charRows));
+
+    const generalKey = 'qms_spc_v3_i-mr';
+    let generalRows: any[] = [];
+    try {
+      const g = localStorage.getItem(generalKey);
+      if (g) generalRows = JSON.parse(g);
+    } catch {}
+    generalRows.push(newRow);
+    localStorage.setItem(generalKey, JSON.stringify(generalRows));
+  } catch (err) {
+    console.warn('Failed to sync measurement to SPC:', err);
+  }
+}
+
 function compactNumber(value: unknown): string {
   const number = Number(value || 0);
   if (!Number.isFinite(number)) return '0';
@@ -191,6 +298,8 @@ export default function ShopfloorDefectEntry() {
   const [checkResults, setCheckResults] = useState<Record<string, QualityInspectionCheckResult>>({});
   const [preparedCheckId, setPreparedCheckId] = useState('');
   const [formKey, setFormKey] = useState(0);
+  const [selectedTools, setSelectedTools] = useState<Record<string, string>>({});
+  const calibrationTools = useMemo(() => loadLocalCalibrationTools(), []);
 
   const activeTemplate = useMemo(() => loadActiveQualityFormTemplate({
     entityType: 'defect-log',
@@ -437,6 +546,17 @@ export default function ShopfloorDefectEntry() {
       if (patch.measuredValue !== undefined) {
         const numericResult = evaluateNumericCheck(item, patch.measuredValue);
         if (numericResult) next.result = numericResult;
+
+        const numVal = parseFloat(String(patch.measuredValue));
+        if (!isNaN(numVal)) {
+          syncMeasurementToSpc(
+            item,
+            numVal,
+            String(formDraft.model || formDraft.partNumber || activeInspectionPlan?.partNumber || ''),
+            String(formDraft.productionLine || activeInspectionPlan?.productionLine || ''),
+            String(formDraft.lotNumber || formDraft.barcode || '')
+          );
+        }
       }
       return { ...prev, [item.id]: next };
     });
@@ -1038,7 +1158,7 @@ export default function ShopfloorDefectEntry() {
                                   onChange={(event) => updateCheckResult(item, { measuredValue: event.target.value })}
                                   disabled={!inspectionAccess.allowed}
                                   placeholder={`Measured value${item.unit ? ` (${item.unit})` : ''}`}
-                                  className="h-12 rounded-2xl border border-white/10 bg-black/20 px-4 text-sm text-white"
+                                  className="h-12 rounded-2xl border border-white/10 bg-black/20 px-4 text-sm text-white focus:outline-none focus:border-[#00A3E0]"
                                 />
                               )}
                               {item.inputType !== 'numeric' && item.inputType !== 'pass-fail' && (
@@ -1047,7 +1167,7 @@ export default function ShopfloorDefectEntry() {
                                   onChange={(event) => updateCheckResult(item, { measuredValue: event.target.value })}
                                   disabled={!inspectionAccess.allowed}
                                   placeholder="Check value"
-                                  className="h-12 rounded-2xl border border-white/10 bg-black/20 px-4 text-sm text-white"
+                                  className="h-12 rounded-2xl border border-white/10 bg-black/20 px-4 text-sm text-white focus:outline-none focus:border-[#00A3E0]"
                                 />
                               )}
                               <input
@@ -1055,25 +1175,130 @@ export default function ShopfloorDefectEntry() {
                                 onChange={(event) => updateCheckResult(item, { notes: event.target.value })}
                                 disabled={!inspectionAccess.allowed}
                                 placeholder="Inspector note"
-                                className="h-12 rounded-2xl border border-white/10 bg-black/20 px-4 text-sm text-white"
+                                className="h-12 rounded-2xl border border-white/10 bg-black/20 px-4 text-sm text-white focus:outline-none focus:border-[#00A3E0]"
                               />
                             </div>
+
+                            {/* Calibration Tool Selection & Overdue Warning */}
+                            {item.inspectionMethod === 'measurement' && (
+                              <div className="mt-2.5 rounded-xl border border-white/10 bg-black/30 p-2.5 space-y-2">
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                  <div className="flex items-center gap-1.5 text-xs text-white/60">
+                                    <Wrench className="w-3.5 h-3.5 text-[#00A3E0]" />
+                                    <span>{isAr ? 'أداة القياس / العيار:' : 'Measurement Gage:'}</span>
+                                  </div>
+                                  <select
+                                    value={selectedTools[item.id] || calibrationTools[0]?.id || ''}
+                                    onChange={(e) => setSelectedTools((prev) => ({ ...prev, [item.id]: e.target.value }))}
+                                    disabled={!inspectionAccess.allowed}
+                                    className="h-8 rounded-lg border border-white/10 bg-slate-900 px-2 text-xs text-white focus:outline-none focus:border-[#00A3E0]"
+                                  >
+                                    {calibrationTools.map((t) => (
+                                      <option key={t.id} value={t.id}>
+                                        {t.equipment} ({t.serialNumber})
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+
+                                {(() => {
+                                  const activeToolId = selectedTools[item.id] || calibrationTools[0]?.id;
+                                  const activeTool = calibrationTools.find((t) => t.id === activeToolId);
+                                  if (!activeTool) return null;
+                                  const isOverdue = activeTool.status === 'overdue';
+                                  const isDueSoon = activeTool.status === 'due';
+                                  if (isOverdue) {
+                                    return (
+                                      <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-red-950/40 border border-red-500/30 text-xs text-red-300">
+                                        <div className="flex items-center gap-1.5 font-bold">
+                                          <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
+                                          <span>{isAr ? 'تنبيه: أداة القياس منتهية المعايرة (Overdue)! لا يجوز الاعتماد النهائي بها.' : 'Warning: Tool calibration is overdue! Do not use for release.'}</span>
+                                        </div>
+                                        <Link to="/calibration" className="underline font-black text-red-200 hover:text-white shrink-0">
+                                          {isAr ? 'سجل المعايرة' : 'View Calibrations'}
+                                        </Link>
+                                      </div>
+                                    );
+                                  }
+                                  if (isDueSoon) {
+                                    return (
+                                      <div className="flex items-center gap-1.5 p-1.5 rounded-lg bg-yellow-950/30 border border-yellow-500/30 text-[11px] text-yellow-300">
+                                        <AlertTriangle className="w-3.5 h-3.5 text-yellow-400 shrink-0" />
+                                        <span>{isAr ? 'تنبيه: أداة القياس تستحق المعايرة قريباً.' : 'Note: Tool calibration is due soon.'}</span>
+                                      </div>
+                                    );
+                                  }
+                                  return (
+                                    <div className="flex items-center gap-1.5 text-[11px] text-emerald-300">
+                                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                                      <span>{isAr ? 'حالة المعايرة: معتمد ومطابق للمعايير القياسية' : 'Tool calibration verified and valid'}</span>
+                                    </div>
+                                  );
+                                })()}
+                              </div>
+                            )}
+
+                            {/* SPC Live Synchronization Banner */}
+                            {(item.inputType === 'numeric' || item.inspectionMethod === 'measurement') && (
+                              <div className="mt-2 flex items-center justify-between gap-2 rounded-xl border border-[#00A3E0]/20 bg-[#00A3E0]/5 px-3 py-2 text-xs">
+                                <div className="flex items-center gap-1.5 text-white/70">
+                                  <BarChart2 className="w-4 h-4 text-[#00A3E0] shrink-0" />
+                                  <span>{isAr ? 'مربوط لحظياً بالتحكم الإحصائي (SPC) - يتم تسجيل العينات تلقائياً' : 'Live SPC linked - measurements update control charts'}</span>
+                                </div>
+                                <Link
+                                  to="/spc"
+                                  className="inline-flex items-center gap-1 font-bold text-[#8be3ff] hover:text-white shrink-0"
+                                >
+                                  <span>{isAr ? 'عرض خريطة SPC' : 'View Chart'}</span>
+                                  <ExternalLink className="w-3 h-3" />
+                                </Link>
+                              </div>
+                            )}
 
                             {needsEvidence && (
                               <p className="mt-3 text-xs text-amber-200">Evidence is required before creating a defect or completing this failed check.</p>
                             )}
 
+                            {/* Escalation Options for Failed Checks */}
                             {result?.result === 'fail' && (
-                              <div className="mt-4 flex flex-wrap gap-2">
-                                <Button
-                                  type="button"
-                                  onClick={() => prepareDefectFromCheck(item)}
-                                  disabled={!inspectionAccess.allowed || needsEvidence}
-                                  className="rounded-xl"
-                                >
-                                  Create Defect from Failed Check
-                                </Button>
-                                <span className="self-center text-xs text-white/45">This only pre-fills the defect. Save confirmation is still required.</span>
+                              <div className="mt-4 space-y-2.5 rounded-2xl border border-red-500/30 bg-red-950/20 p-3.5">
+                                <div className="flex items-center gap-2 text-xs font-bold text-red-300">
+                                  <AlertTriangle className="w-4 h-4 text-red-400" />
+                                  <span>{isAr ? 'خيارات التدخل الفوري وتصعيد عدم المطابقة:' : 'Failure Reaction & Escalation Options:'}</span>
+                                </div>
+
+                                <div className="flex flex-wrap gap-2">
+                                  <Button
+                                    type="button"
+                                    onClick={() => prepareDefectFromCheck(item)}
+                                    disabled={!inspectionAccess.allowed || needsEvidence}
+                                    className="rounded-xl bg-[#0066CC] hover:bg-[#0052a3] text-white text-xs font-bold"
+                                  >
+                                    <Plus className="w-3.5 h-3.5 mr-1" />
+                                    {isAr ? 'تسجيل عيب في الشوب فلور' : 'Log Shopfloor Defect'}
+                                  </Button>
+
+                                  <Link
+                                    to={`/ncr?create=1&title=${encodeURIComponent(`حيود فحص: ${item.checkName}`)}&defectType=${encodeURIComponent(item.defectTypeIfNG || 'Dimensional / Geometry')}&line=${encodeURIComponent(formDraft.productionLine || activeInspectionPlan.productionLine || '')}&desc=${encodeURIComponent(`فشل بند الفحص [${item.checkCode} - ${item.checkName}] في خطة الفحص (${activeInspectionPlan.planName}). المعيار: ${item.standard || item.acceptanceCriteria || 'مطابقة الحدود'}. القيمة المقاسة: ${result.measuredValue || 'غير مطابقة'}. الملاحظات: ${result.notes || 'تم الرصد في الشوب فلور'}`)}&severity=${item.severityIfNG || 'major'}&partNumber=${encodeURIComponent(formDraft.partNumber || formDraft.model || activeInspectionPlan.partNumber || '')}&lot=${encodeURIComponent(formDraft.lotNumber || formDraft.barcode || '')}`}
+                                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-red-500/20 text-red-200 hover:bg-red-500/30 border border-red-500/40 transition"
+                                  >
+                                    <ShieldAlert className="w-3.5 h-3.5 text-red-400" />
+                                    <span>{isAr ? '🚨 فتح تقرير عدم مطابقة (NCR)' : 'Open NCR'}</span>
+                                  </Link>
+
+                                  <Link
+                                    to={`/8d?create=1&title=${encodeURIComponent(`فشل فحص جودة: ${item.checkName}`)}&product=${encodeURIComponent(formDraft.model || formDraft.partNumber || activeInspectionPlan.model || '')}&line=${encodeURIComponent(formDraft.productionLine || activeInspectionPlan.productionLine || '')}&desc=${encodeURIComponent(`تم رصد عدم مطابقة في خطة الفحص للشوب فلور: ${item.checkName} (${item.checkCode}). المعايير: ${item.acceptanceCriteria || item.standard}. العيب المحتمل: ${item.defectTypeIfNG || 'حيود جودة'}`)}&lot=${encodeURIComponent(formDraft.lotNumber || formDraft.barcode || '')}`}
+                                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-amber-500/20 text-amber-200 hover:bg-amber-500/30 border border-amber-500/40 transition"
+                                  >
+                                    <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+                                    <span>{isAr ? '⚡ تصعيد إلى تقرير (8D)' : 'Escalate to 8D'}</span>
+                                  </Link>
+                                </div>
+                                <p className="text-[11px] text-white/50">
+                                  {isAr
+                                    ? 'تم ربط بيانات العيب تلقائياً: سيتم ملء مواصفة البند، الخط، القطعة، والحيود فوراً في نموذج NCR أو 8D.'
+                                    : 'Seamless data linkage: item specs, line, part, and deviation pre-populate in NCR or 8D.'}
+                                </p>
                               </div>
                             )}
                           </div>

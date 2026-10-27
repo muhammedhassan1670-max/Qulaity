@@ -250,18 +250,19 @@ export function NCRPage() {
   }, [ncrs, searchQuery, activeFilters]);
 
   const handleOpenCreate = (_sourceStr?: string, initialTitle?: string) => {
+    const p = new URLSearchParams(location.search);
     setFormData({
-      title: initialTitle || '',
-      description: '',
-      defectType: 'Dimensional / Geometry',
-      severity: 'major',
+      title: initialTitle || p.get('title') || '',
+      description: p.get('desc') || p.get('description') || '',
+      defectType: p.get('defectType') || 'Dimensional / Geometry',
+      severity: (p.get('severity') as any) || 'major',
       status: 'open',
-      priority: 'medium',
-      department: 'Quality Assurance',
-      productionLine: 'Line 01',
-      affectedQuantity: 1,
-      lotNumber: '',
-      containmentAction: '',
+      priority: (p.get('priority') as any) || 'medium',
+      department: p.get('department') || 'Quality Assurance',
+      productionLine: p.get('line') || p.get('productionLine') || 'Line 01',
+      affectedQuantity: Number(p.get('qty')) || 1,
+      lotNumber: p.get('lot') || p.get('partNumber') || '',
+      containmentAction: p.get('containment') || '',
       disposition: 'pending',
       dispositionNotes: '',
       rootCauseNotes: '',
