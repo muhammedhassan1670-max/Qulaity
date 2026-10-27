@@ -125,10 +125,10 @@ export function Header({ onMenuToggle, user }: HeaderProps) {
         </div>
         
         {/* Right Section */}
-        <div className="flex items-center gap-1 md:gap-2">
-          {/* Voice Command Button */}
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+          {/* Voice Command Button - Tablet and Desktop */}
           {isSupported && (
-            <div className="relative">
+            <div className="relative hidden md:block">
               <button
                 onClick={toggleListening}
                 className={`p-2.5 rounded-xl transition-all duration-300 ${
@@ -156,27 +156,19 @@ export function Header({ onMenuToggle, user }: HeaderProps) {
             </div>
           )}
 
-          {/* Mobile Search Toggle */}
-          <button
-            onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))}
-            className="lg:hidden p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 transition-all duration-300 text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white"
-            title="Search / Command Palette"
-          >
-            <Search className="w-5 h-5 text-[#00A3E0]" />
-          </button>
-
           {/* Scanner Button (Mobile & Desktop) */}
           <button
             onClick={scanner.open}
-            className="p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 transition-all duration-300 text-slate-500 dark:text-gray-400 hover:text-[var(--industrial-primary)] dark:hover:text-[var(--industrial-secondary)] hover:scale-105 active:scale-95"
+            className="p-2 sm:p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 transition-all duration-300 text-slate-500 dark:text-gray-400 hover:text-[var(--industrial-primary)] dark:hover:text-[var(--industrial-secondary)] active:scale-95 shrink-0"
             title="Scan QR/Barcode"
+            aria-label="Scan QR or Barcode"
           >
             <QrCode className="w-5 h-5" />
           </button>
 
-          {/* 3D Digital Twin Plant Button (Always visible) */}
+          {/* 3D Digital Twin Plant Button (Desktop & Tablet) */}
           <button
-            className="inline-flex items-center gap-1.5 md:gap-2 px-2.5 sm:px-4 h-9 sm:h-10 rounded-xl border border-cyan-500/60 bg-gradient-to-r from-cyan-500/25 via-blue-500/25 to-purple-500/25 hover:from-cyan-500/35 hover:to-blue-500/35 text-cyan-400 dark:text-cyan-300 transition-all duration-300 text-xs md:text-sm font-black shadow-lg shadow-cyan-500/20 hover:scale-105 active:scale-95 shrink-0 whitespace-nowrap"
+            className="hidden sm:inline-flex items-center gap-1.5 md:gap-2 px-2.5 sm:px-4 h-9 sm:h-10 rounded-xl border border-cyan-500/60 bg-gradient-to-r from-cyan-500/25 via-blue-500/25 to-purple-500/25 hover:from-cyan-500/35 hover:to-blue-500/35 text-cyan-400 dark:text-cyan-300 transition-all duration-300 text-xs md:text-sm font-black shadow-lg shadow-cyan-500/20 hover:scale-105 active:scale-95 shrink-0 whitespace-nowrap"
             onClick={() => navigate('/quality-control-tower')}
             title={language === 'ar' ? 'التوأم الرقمي ثلاثي الأبعاد لصالة المصنع (3D WebGL Digital Twin)' : '3D WebGL Digital Twin Factory'}
           >
@@ -230,8 +222,22 @@ export function Header({ onMenuToggle, user }: HeaderProps) {
             </button>
           </div>
 
-          {/* Theme Toggle - Condensed on mobile */}
-          <div className="flex items-center gap-1 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-1 rounded-xl shadow-sm dark:shadow-none">
+          {/* Mobile Single Theme Toggle */}
+          <button
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            className="sm:hidden p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-gray-400 transition-all active:scale-90 shrink-0"
+            title={theme === 'dark' ? t('light-mode') : t('dark-mode')}
+            aria-label="Toggle theme"
+          >
+            {theme === 'dark' ? (
+              <Sun className="w-4 h-4 text-amber-400" />
+            ) : (
+              <Moon className="w-4 h-4 text-sky-500" />
+            )}
+          </button>
+
+          {/* Desktop Dual Theme Toggle */}
+          <div className="hidden sm:flex items-center gap-1 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-1 rounded-xl shadow-sm dark:shadow-none shrink-0">
             <button
               onClick={() => setTheme('light')}
               className={`p-1.5 rounded-lg transition-all duration-300 ${theme === 'light' ? 'bg-white text-yellow-500 shadow-sm scale-110' : 'text-slate-400 hover:text-slate-600 dark:text-gray-500 dark:hover:text-gray-300'}`}
@@ -251,18 +257,21 @@ export function Header({ onMenuToggle, user }: HeaderProps) {
           {/* Notifications */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 transition-all duration-300 relative group active:scale-90">
+              <button 
+                className="p-2 sm:p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 transition-all duration-300 relative group active:scale-90 shrink-0"
+                aria-label="Notifications"
+              >
                 <Bell className="w-5 h-5 text-slate-500 dark:text-gray-400 group-hover:text-slate-900 dark:group-hover:text-white transition-colors" />
                 {unreadCount > 0 && (
                   <Badge 
-                    className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 bg-gradient-sunset text-white text-[10px] font-black shadow-lg shadow-[var(--industrial-accent)]/25 animate-pulse"
+                    className="absolute -top-1 -right-1 h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center p-0 bg-gradient-sunset text-white text-[9px] sm:text-[10px] font-black shadow-lg shadow-[var(--industrial-accent)]/25 animate-pulse"
                   >
                     {unreadCount}
                   </Badge>
                 )}
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[calc(100vw-2rem)] sm:w-80 bg-white dark:bg-[#0f131a]/95 backdrop-blur-xl border border-slate-200 dark:border-white/10 mt-2 shadow-2xl rounded-2xl p-1 overflow-hidden">
+            <DropdownMenuContent align="end" className="w-[calc(100vw-2rem)] sm:w-80 bg-white dark:bg-[#0f131a]/95 backdrop-blur-xl border border-slate-200 dark:border-white/10 mt-2 shadow-2xl rounded-2xl p-1 overflow-hidden z-[110]">
               <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-white/10 bg-slate-50/50 dark:bg-black/20">
                 <span className="font-bold text-sm text-slate-900 dark:text-white">{t('notifications')}</span>
                 <button
@@ -315,88 +324,74 @@ export function Header({ onMenuToggle, user }: HeaderProps) {
               setLanguage(nextLang);
               toast.success(nextLang === 'ar' ? 'تم تحويل الواجهة للعربية' : 'Switched to English');
             }}
-            className="sm:hidden px-2 py-1 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-[11px] font-black text-sky-500 hover:text-sky-400 active:scale-90 transition-all flex items-center gap-1 shadow-sm"
+            className="sm:hidden px-2 py-1.5 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-[11px] font-black text-sky-500 hover:text-sky-400 active:scale-90 transition-all flex items-center gap-1 shadow-sm shrink-0"
             title={language === 'ar' ? 'Switch to English' : 'التحويل للعربية'}
           >
             <Globe className="w-3.5 h-3.5 text-sky-400" />
             <span>{language === 'ar' ? 'EN' : 'عربي'}</span>
           </button>
 
-          {/* Mobile User Profile Trigger */}
-          <button 
-            className="sm:hidden w-8 h-8 rounded-xl bg-gradient-to-br from-[var(--industrial-primary)] to-[var(--industrial-secondary)] p-0.5 active:scale-95 transition-transform"
-            onClick={() => navigate('/profile')}
-            aria-label="User Profile"
-          >
-            <div className="w-full h-full rounded-[10px] bg-slate-900 dark:bg-[#0a0a0f] flex items-center justify-center overflow-hidden">
-              {user?.avatar ? (
-                <img src={user.avatar} alt={user?.name || 'User'} className="w-full h-full object-cover" />
-              ) : (
-                <UserIcon className="w-4 h-4 text-white" />
-              )}
-            </div>
-          </button>
-
-          {/* Desktop User Profile */}
-          <div className="hidden sm:block">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 p-1.5 rounded-2xl hover:bg-slate-50 dark:hover:bg-white/5 border border-transparent hover:border-slate-200 dark:hover:border-white/10 transition-all duration-300 ml-2 group">
-                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[var(--industrial-primary)] to-[var(--industrial-secondary)] p-0.5 shadow-md dark:shadow-lg group-hover:scale-110 transition-transform">
-                    <div className="w-full h-full rounded-[10px] bg-slate-900 dark:bg-[#0a0a0f] flex items-center justify-center overflow-hidden">
-                      {user?.avatar ? (
-                        <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-white text-sm font-black">
-                          {user?.name?.charAt(0) || 'U'}
-                        </div>
-                      )}
-                    </div>
+          {/* User Profile (Mobile + Desktop Dropdown) */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button 
+                className="flex items-center gap-1.5 sm:gap-2 p-1 sm:p-1.5 rounded-2xl hover:bg-slate-50 dark:hover:bg-white/5 border border-transparent hover:border-slate-200 dark:hover:border-white/10 transition-all duration-300 group shrink-0 active:scale-95"
+                aria-label="User Profile"
+              >
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-[var(--industrial-primary)] to-[var(--industrial-secondary)] p-0.5 shadow-md dark:shadow-lg group-hover:scale-105 transition-transform">
+                  <div className="w-full h-full rounded-[10px] bg-slate-900 dark:bg-[#0a0a0f] flex items-center justify-center overflow-hidden">
+                    {user?.avatar ? (
+                      <img src={user.avatar} alt={user?.name || 'User'} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-white text-xs sm:text-sm font-black">
+                        {user?.name?.charAt(0) || 'U'}
+                      </div>
+                    )}
                   </div>
-                  <div className="hidden lg:block text-left">
-                    <p className="text-sm font-black leading-tight text-slate-900 dark:text-white group-hover:text-[var(--industrial-primary)] dark:group-hover:text-[var(--industrial-secondary)] transition-colors">{user?.name}</p>
-                    <p className="text-[10px] text-slate-500 dark:text-gray-500 font-bold uppercase tracking-tighter">{user?.role}</p>
-                  </div>
-                  <ChevronDown className="w-4 h-4 text-slate-400 dark:text-gray-600 group-hover:text-slate-900 dark:group-hover:text-white transition-colors" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 bg-white dark:bg-[#0f131a]/95 backdrop-blur-xl border border-slate-200 dark:border-white/10 mt-2 shadow-2xl rounded-2xl p-1">
-                <div className="px-3 py-2 border-b border-slate-100 dark:border-white/10">
-                  <p className="font-medium text-slate-900 dark:text-white">{user?.name}</p>
-                  <p className="text-sm text-slate-500 dark:text-gray-400">{user?.email}</p>
                 </div>
-                <DropdownMenuItem
-                  className="hover:bg-slate-50 dark:hover:bg-white/10 cursor-pointer text-slate-700 dark:text-slate-200"
-                  onSelect={() => navigate('/profile')}
-                >
-                  <UserIcon className="w-4 h-4 mr-2" />
-                  {t('user-profile')}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="hover:bg-white/10 cursor-pointer"
-                  onSelect={() => navigate('/settings')}
-                >
-                  <Settings className="w-4 h-4 mr-2" />
-                  {t('settings')}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="hover:bg-white/10 cursor-pointer"
-                  onSelect={() => toast.info(t('help-support'), { description: language === 'ar' ? 'مركز المساعدة سيتوفر قريباً' : 'Help center coming soon' })}
-                >
-                  <HelpCircle className="w-4 h-4 mr-2" />
-                  {t('help-support')}
-                </DropdownMenuItem>
-                <DropdownMenuSeparator className="bg-white/10" />
-                <DropdownMenuItem
-                  className="hover:bg-white/10 cursor-pointer text-red-400"
-                  onSelect={handleLogout}
-                >
-                  <LogOut className="w-4 h-4 mr-2" />
-                  {t('sign-out')}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+                <div className="hidden lg:block text-left">
+                  <p className="text-sm font-black leading-tight text-slate-900 dark:text-white group-hover:text-[var(--industrial-primary)] dark:group-hover:text-[var(--industrial-secondary)] transition-colors">{user?.name}</p>
+                  <p className="text-[10px] text-slate-500 dark:text-gray-500 font-bold uppercase tracking-tighter">{user?.role}</p>
+                </div>
+                <ChevronDown className="w-4 h-4 text-slate-400 dark:text-gray-600 group-hover:text-slate-900 dark:group-hover:text-white transition-colors hidden sm:block" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56 bg-white dark:bg-[#0f131a]/95 backdrop-blur-xl border border-slate-200 dark:border-white/10 mt-2 shadow-2xl rounded-2xl p-1 z-[110]">
+              <div className="px-3 py-2 border-b border-slate-100 dark:border-white/10">
+                <p className="font-medium text-slate-900 dark:text-white">{user?.name}</p>
+                <p className="text-sm text-slate-500 dark:text-gray-400 truncate">{user?.email}</p>
+              </div>
+              <DropdownMenuItem
+                className="hover:bg-slate-50 dark:hover:bg-white/10 cursor-pointer text-slate-700 dark:text-slate-200"
+                onSelect={() => navigate('/profile')}
+              >
+                <UserIcon className="w-4 h-4 mr-2" />
+                {t('user-profile')}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="hover:bg-white/10 cursor-pointer"
+                onSelect={() => navigate('/settings')}
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                {t('settings')}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="hover:bg-white/10 cursor-pointer"
+                onSelect={() => toast.info(t('help-support'), { description: language === 'ar' ? 'مركز المساعدة سيتوفر قريباً' : 'Help center coming soon' })}
+              >
+                <HelpCircle className="w-4 h-4 mr-2" />
+                {t('help-support')}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator className="bg-white/10" />
+              <DropdownMenuItem
+                className="hover:bg-white/10 cursor-pointer text-red-400"
+                onSelect={handleLogout}
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                {t('sign-out')}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 

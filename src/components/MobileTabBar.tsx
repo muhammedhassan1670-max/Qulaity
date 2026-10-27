@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Home, ClipboardList, Menu, Box, Sparkles } from 'lucide-react';
+import { Home, ClipboardList, Menu, BarChart2, Zap } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useTranslation } from '../utils/translations';
 import { MobileQuickActionSheet } from './MobileQuickActionSheet';
@@ -14,115 +14,124 @@ export function MobileTabBar({ onMenuToggle }: MobileTabBarProps) {
   const location = useLocation();
   const [isActionSheetOpen, setIsActionSheetOpen] = useState(false);
 
-  // Check if home or quality home is active
-  const isHomeActive = location.pathname === '/' || location.pathname === '/quality';
-  const isTwinActive = location.pathname.includes('/quality-control-tower') || location.pathname.includes('plant-map');
-  const isRecordsActive = location.pathname.includes('/record-hub') || location.pathname.includes('/records');
+  // Active state detections
+  const isHomeActive = location.pathname === '/' || location.pathname === '/quality' || location.pathname === '/quality-home';
+  const isRecordsActive = 
+    location.pathname.includes('/record-hub') || 
+    location.pathname.includes('/records') || 
+    location.pathname.includes('/ncr') || 
+    location.pathname.includes('/capa') || 
+    location.pathname.includes('/8d') ||
+    location.pathname.includes('/deviation') ||
+    location.pathname.includes('/change-control') ||
+    location.pathname.includes('/complaints');
+  const isDashboardActive = 
+    location.pathname.includes('/quality-dashboard') || 
+    location.pathname.includes('/defect-cost') || 
+    location.pathname.includes('/process-ppm');
 
   return (
     <>
-      {/* Floating Island Glass Dock */}
-      <div 
-        aria-label="Mobile Navigation Dock"
-        className="md:hidden fixed bottom-3 left-3 right-3 max-w-md mx-auto z-50 rounded-[28px] bg-slate-950/85 backdrop-blur-2xl border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.85),0_0_30px_rgba(14,165,233,0.2)] px-2 py-1.5 transition-all duration-300"
-        style={{
-          boxShadow: '0 15px 40px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.15)'
-        }}
+      {/* Grounded Mobile Bottom Navigation Bar */}
+      <nav 
+        aria-label="Mobile Navigation Bar"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-[#070a0f]/95 backdrop-blur-2xl border-t border-slate-200 dark:border-white/10 shadow-[0_-4px_25px_rgba(0,0,0,0.25)] dark:shadow-[0_-8px_30px_rgba(0,0,0,0.7)] px-2 pt-1 pb-[max(env(safe-area-inset-bottom,0px),8px)] transition-all select-none"
       >
-        <div className="flex items-center justify-between relative">
+        <div className="flex items-center justify-around max-w-lg mx-auto">
           
           {/* 1. Home Tab */}
           <NavLink
-            to="/quality"
+            to="/quality-home"
             aria-label={isAr ? 'الرئيسية' : 'Home'}
-            className={`flex flex-col items-center justify-center flex-1 h-12 rounded-2xl transition-all duration-200 active:scale-90 ${
+            className={`flex flex-col items-center justify-center flex-1 py-1 px-1 rounded-xl transition-all duration-200 active:scale-95 ${
               isHomeActive 
-                ? 'text-sky-400 bg-sky-500/10' 
-                : 'text-gray-400 hover:text-white'
+                ? 'text-sky-500 dark:text-sky-400 font-bold' 
+                : 'text-slate-400 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white'
             }`}
           >
-            <Home className="w-5 h-5 transition-transform duration-200" />
-            <span className="text-[10px] mt-0.5 font-bold tracking-tight">
+            <div className="relative">
+              <Home className={`w-5 h-5 transition-transform ${isHomeActive ? 'scale-110' : ''}`} />
+              {isHomeActive && (
+                <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-sky-500 shadow-[0_0_8px_#0ea5e9]" />
+              )}
+            </div>
+            <span className="text-[10px] mt-1 font-bold tracking-tight">
               {isAr ? 'الرئيسية' : 'Home'}
             </span>
-            {isHomeActive && (
-              <span className="w-1.5 h-1.5 rounded-full bg-sky-400 shadow-[0_0_8px_#38bdf8] mt-0.5 animate-pulse" />
-            )}
           </NavLink>
 
-          {/* 2. 3D Digital Twin Tab */}
+          {/* 2. Records Tab */}
           <NavLink
-            to="/quality-control-tower"
-            aria-label={isAr ? 'التوأم 3D' : '3D Twin'}
-            className={`flex flex-col items-center justify-center flex-1 h-12 rounded-2xl transition-all duration-200 active:scale-90 ${
-              isTwinActive 
-                ? 'text-cyan-400 bg-cyan-500/10' 
-                : 'text-gray-400 hover:text-white'
+            to="/quality/records/ncr"
+            aria-label={isAr ? 'السجلات' : 'Records'}
+            className={`flex flex-col items-center justify-center flex-1 py-1 px-1 rounded-xl transition-all duration-200 active:scale-95 ${
+              isRecordsActive 
+                ? 'text-sky-500 dark:text-sky-400 font-bold' 
+                : 'text-slate-400 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white'
             }`}
           >
-            <Box className="w-5 h-5 transition-transform duration-200" />
-            <span className="text-[10px] mt-0.5 font-bold tracking-tight">
-              {isAr ? 'التوأم 3D' : '3D Twin'}
+            <div className="relative">
+              <ClipboardList className={`w-5 h-5 transition-transform ${isRecordsActive ? 'scale-110' : ''}`} />
+              {isRecordsActive && (
+                <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-sky-500 shadow-[0_0_8px_#0ea5e9]" />
+              )}
+            </div>
+            <span className="text-[10px] mt-1 font-bold tracking-tight">
+              {isAr ? 'السجلات' : 'Records'}
             </span>
-            {isTwinActive && (
-              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee] mt-0.5 animate-pulse" />
-            )}
           </NavLink>
 
-          {/* 3. Center Glowing Action Hub Button */}
+          {/* 3. Center Action Hub Button */}
           <div className="flex-1 flex justify-center items-center">
             <button
               onClick={() => setIsActionSheetOpen(true)}
               aria-label={isAr ? 'إجراءات الجودة السريعة' : 'Quick Actions'}
-              className="relative -top-5 flex flex-col items-center group active:scale-90 transition-transform duration-200"
+              className="relative -top-2 flex flex-col items-center active:scale-95 transition-all group"
             >
-              {/* Outer pulsing neon ring */}
-              <div className="absolute inset-0 rounded-full bg-gradient-to-r from-sky-400 via-teal-300 to-indigo-500 blur-md opacity-75 group-hover:opacity-100 animate-pulse duration-1000" />
-              
-              {/* Center Button */}
-              <div className="relative w-14 h-14 rounded-full bg-gradient-to-tr from-sky-500 via-teal-500 to-emerald-400 flex items-center justify-center text-white shadow-xl shadow-sky-500/50 border-2 border-white/30 group-hover:scale-105 transition-all">
-                <Sparkles className="w-6 h-6 animate-spin" style={{ animationDuration: '6s' }} />
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-sky-500 via-teal-500 to-emerald-400 flex items-center justify-center text-white shadow-lg shadow-sky-500/40 border-2 border-white/40 dark:border-white/20 group-hover:scale-105 transition-all duration-300">
+                <Zap className="w-6 h-6 animate-pulse" />
               </div>
-              
-              <span className="text-[9px] mt-1 font-black text-sky-400 drop-shadow-sm tracking-wide">
+              <span className="text-[10px] mt-0.5 font-black text-sky-500 dark:text-sky-400 tracking-tight">
                 {isAr ? 'إجراءات' : 'Actions'}
               </span>
             </button>
           </div>
 
-          {/* 4. Records Hub Tab */}
+          {/* 4. Dashboard Tab */}
           <NavLink
-            to="/record-hub"
-            aria-label={isAr ? 'السجلات' : 'Records'}
-            className={`flex flex-col items-center justify-center flex-1 h-12 rounded-2xl transition-all duration-200 active:scale-90 ${
-              isRecordsActive 
-                ? 'text-sky-400 bg-sky-500/10' 
-                : 'text-gray-400 hover:text-white'
+            to="/quality-dashboard"
+            aria-label={isAr ? 'المؤشرات' : 'Dashboard'}
+            className={`flex flex-col items-center justify-center flex-1 py-1 px-1 rounded-xl transition-all duration-200 active:scale-95 ${
+              isDashboardActive 
+                ? 'text-sky-500 dark:text-sky-400 font-bold' 
+                : 'text-slate-400 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white'
             }`}
           >
-            <ClipboardList className="w-5 h-5 transition-transform duration-200" />
-            <span className="text-[10px] mt-0.5 font-bold tracking-tight">
-              {isAr ? 'السجلات' : 'Records'}
+            <div className="relative">
+              <BarChart2 className={`w-5 h-5 transition-transform ${isDashboardActive ? 'scale-110' : ''}`} />
+              {isDashboardActive && (
+                <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-sky-500 shadow-[0_0_8px_#0ea5e9]" />
+              )}
+            </div>
+            <span className="text-[10px] mt-1 font-bold tracking-tight">
+              {isAr ? 'المؤشرات' : 'Dashboard'}
             </span>
-            {isRecordsActive && (
-              <span className="w-1.5 h-1.5 rounded-full bg-sky-400 shadow-[0_0_8px_#38bdf8] mt-0.5 animate-pulse" />
-            )}
           </NavLink>
 
           {/* 5. Menu Drawer Button */}
           <button
             onClick={onMenuToggle}
             aria-label={isAr ? 'القائمة الكاملة' : 'Full Menu'}
-            className="flex flex-col items-center justify-center flex-1 h-12 rounded-2xl text-gray-400 hover:text-white hover:bg-white/5 transition-all duration-200 active:scale-90"
+            className="flex flex-col items-center justify-center flex-1 py-1 px-1 rounded-xl text-slate-400 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white transition-all duration-200 active:scale-95"
           >
             <Menu className="w-5 h-5" />
-            <span className="text-[10px] mt-0.5 font-bold tracking-tight">
+            <span className="text-[10px] mt-1 font-bold tracking-tight">
               {isAr ? 'القائمة' : 'Menu'}
             </span>
           </button>
 
         </div>
-      </div>
+      </nav>
 
       {/* Modern Slide-up Quick Action Sheet */}
       <MobileQuickActionSheet 

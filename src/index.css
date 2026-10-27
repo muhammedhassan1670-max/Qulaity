@@ -1578,3 +1578,14 @@ canvas { touch-action: pan-y !important; }
     margin: 10mm;
   }
 }
+
+/* Mobile bottom tab bar safe padding */
+.mobile-pb-tabbar {
+  padding-bottom: calc(5rem + env(safe-area-inset-bottom, 16px));
+}
+
+@media (min-width: 768px) {
+  .mobile-pb-tabbar {
+    padding-bottom: 2rem;
+  }
+}
