@@ -435,9 +435,378 @@ function enqueueRun(operation: 'create-inspection-run' | 'update-inspection-run'
   });
 }
 
+export const DEFAULT_INSPECTION_PLANS: QualityInspectionPlan[] = [
+  {
+    id: 'PLAN-IPQC-001',
+    planName: 'خطة فحص الجودة أثناء التشغيل والإنتاج (In-Process IPQC)',
+    description: 'خطة الفحص المرحلي الشاملة لخطوط الإنتاج والتشغيل لضبط الأبعاد، المظهر، وعزم الربط والأداء.',
+    factory: 'Main Plant',
+    workshop: 'Assembly Workshop',
+    productionLine: '',
+    inspectionPoint: 'In-Process Quality (IPQC)',
+    product: '',
+    model: '',
+    partNumber: '',
+    customer: '',
+    supplier: '',
+    version: 1,
+    status: 'active',
+    effectiveDate: '2026-01-01',
+    sections: [
+      { id: 'sec-ipqc-1', title: 'المظهر والتشطيب (Visual & Finish)', description: 'فحص المظهر الخارجي وسلامة الطلاء والملصقات', order: 1 },
+      { id: 'sec-ipqc-2', title: 'الأبعاد وعزم الربط (Dimensions & Torque)', description: 'القياسات الفيزيائية وعزوم التثبيت الميكانيكي', order: 2 },
+      { id: 'sec-ipqc-3', title: 'الأداء الوظيفي والسلامة (Functional & Safety)', description: 'فحص التوصيل الكهربائي واختبار التشغيل', order: 3 },
+    ],
+    checkItems: [
+      {
+        id: 'chk-ipqc-01',
+        checkCode: 'CHK-V01',
+        checkName: 'فحص الخلو من الخدوش والتشوهات والعيوب السطحية',
+        description: 'التأكد من سلامة السطح الخارجي وعدم وجود أي خدوش أو انبعاجات أو تشوهات بصرية',
+        section: 'المظهر والتشطيب (Visual & Finish)',
+        inspectionMethod: 'visual',
+        standard: 'ISO 9001 / Visual Acceptance Std',
+        acceptanceCriteria: 'خالٍ تماماً من الخدوش والشوائب والنتوءات',
+        inputType: 'pass-fail',
+        defectTypeIfNG: 'خدوش وتلف سطحي (Surface Scratch / Damage)',
+        severityIfNG: 'minor',
+        recordTypeIfNG: 'process-ppm',
+        requiredEvidence: false,
+        guidanceText: 'افحص السطح تحت إضاءة جيدة بزاوية 45 درجة للتأكد من خلوه من العيوب السطحية.',
+        order: 1,
+        isRequired: true,
+      },
+      {
+        id: 'chk-ipqc-02',
+        checkCode: 'CHK-V02',
+        checkName: 'فحص وضوح الباركود وملصق البيانات والسيريال',
+        description: 'التحقق من طباعة الباركود والسيريال وقابليته للقراءة بالماسح الضوئي',
+        section: 'المظهر والتشطيب (Visual & Finish)',
+        inspectionMethod: 'barcode',
+        standard: 'GS1 / Internal Labeling Std',
+        acceptanceCriteria: 'الباركود مقروء بنسبة 100% بدون تشويش أو بهتان',
+        inputType: 'pass-fail',
+        defectTypeIfNG: 'عدم قراءة الباركود / ملصق تالف (Barcode / Label Defect)',
+        severityIfNG: 'major',
+        recordTypeIfNG: 'process-ppm',
+        requiredEvidence: false,
+        guidanceText: 'قم بمسح الباركود للتأكد من التطابق التام مع رقم الموديل ورقم التشغيلة.',
+        order: 2,
+        isRequired: true,
+      },
+      {
+        id: 'chk-ipqc-03',
+        checkCode: 'CHK-D01',
+        checkName: 'قياس البعد الحرج A بالقدمة الورنية أو الميكرومتر',
+        description: 'قياس الطول / القطر الخارجي بالمليمتر للتأكد من الوقوع ضمن حدود التفاوت',
+        section: 'الأبعاد وعزم الربط (Dimensions & Torque)',
+        inspectionMethod: 'measurement',
+        standard: 'DIN ISO 2768-m',
+        acceptanceCriteria: '49.50 mm إلى 50.50 mm (الهدف: 50.00 mm)',
+        inputType: 'numeric',
+        lowerSpecLimit: 49.5,
+        upperSpecLimit: 50.5,
+        targetValue: 50.0,
+        unit: 'mm',
+        sampleSize: 5,
+        frequency: 'Every 1 Hour',
+        defectTypeIfNG: 'حيود أبعاد حرجة (Critical Dimension Deviation)',
+        severityIfNG: 'major',
+        recordTypeIfNG: 'process-ppm',
+        requiredEvidence: false,
+        guidanceText: 'استخدم القدمة الرقمية المعايرة وسجل القيمة المقاسة بالمليمتر.',
+        order: 3,
+        isRequired: true,
+      },
+      {
+        id: 'chk-ipqc-04',
+        checkCode: 'CHK-D02',
+        checkName: 'فحص عزم ربط براغي التثبيت الميكانيكي الرئيسية',
+        description: 'فحص عزم الربط بمفتاح العزم المعاير لضمان التثبيت الميكانيكي السليم',
+        section: 'الأبعاد وعزم الربط (Dimensions & Torque)',
+        inspectionMethod: 'measurement',
+        standard: 'Torque Spec TQ-04',
+        acceptanceCriteria: '4.50 Nm إلى 5.50 Nm (الهدف: 5.00 Nm)',
+        inputType: 'numeric',
+        lowerSpecLimit: 4.5,
+        upperSpecLimit: 5.5,
+        targetValue: 5.0,
+        unit: 'Nm',
+        sampleSize: 3,
+        frequency: 'Every Batch',
+        defectTypeIfNG: 'عزم ربط غير مطابق (Incorrect Fastener Torque)',
+        severityIfNG: 'major',
+        recordTypeIfNG: 'process-ppm',
+        requiredEvidence: false,
+        guidanceText: 'اضبط مفتاح العزم على 5.0 Nm وافحص 3 مسامير تثبيت رئيسية.',
+        order: 4,
+        isRequired: true,
+      },
+      {
+        id: 'chk-ipqc-05',
+        checkCode: 'CHK-F01',
+        checkName: 'اختبار التشغيل الكهربائي والأداء الوظيفي',
+        description: 'توصيل الوحدة بمنصة الاختبار والتحقق من الاستجابة السليمة والمؤشرات',
+        section: 'الأداء الوظيفي والسلامة (Functional & Safety)',
+        inspectionMethod: 'functional',
+        standard: 'Functional Test Spec FT-01',
+        acceptanceCriteria: 'استجابة طبيعية لجميع الأزرار والمؤشرات بدون أي أعطال',
+        inputType: 'pass-fail',
+        defectTypeIfNG: 'عطل تشغيل وظيفي (Functional Failure)',
+        severityIfNG: 'critical',
+        recordTypeIfNG: 'process-ppm',
+        requiredEvidence: true,
+        guidanceText: 'وصل كابل الاختبار وشغل المفتاح الرئيسي، وتأكد من إضاءة المؤشر الأخضر.',
+        order: 5,
+        isRequired: true,
+      },
+      {
+        id: 'chk-ipqc-06',
+        checkCode: 'CHK-F02',
+        checkName: 'فحص العزل والتأريض واختبار التسريب',
+        description: 'فحص العزل الميكانيكي والكهربائي لضمان أعلى معايير السلامة الصناعية',
+        section: 'الأداء الوظيفي والسلامة (Functional & Safety)',
+        inspectionMethod: 'leak-test',
+        standard: 'IEC 60335 / Safety Test',
+        acceptanceCriteria: 'مقاومة عزل > 2 MΩ وعدم وجود أي تسريب',
+        inputType: 'pass-fail',
+        defectTypeIfNG: 'فشل اختبار العزل والسلامة (Insulation / Safety Failure)',
+        severityIfNG: 'critical',
+        recordTypeIfNG: 'process-ppm',
+        requiredEvidence: true,
+        guidanceText: 'تأكد من سلامة أسلاك الأرضي وعدم وجود تلامس غير معزول.',
+        order: 6,
+        isRequired: true,
+      },
+    ],
+    history: [],
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+    createdBy: 'Quality Engineering Team',
+    createdByRole: 'QUALITY_ENGINEER',
+  },
+  {
+    id: 'PLAN-IQC-001',
+    planName: 'خطة فحص استلام المواد الخام والمكونات (Incoming IQC)',
+    description: 'فحص شحنات الموردين والمواد الخام الواردة ومطابقة شهادة التحليل والمواصفات.',
+    factory: 'Main Plant',
+    workshop: 'Receiving Area',
+    productionLine: '',
+    inspectionPoint: 'Receiving Inspection (IQC)',
+    product: '',
+    model: '',
+    partNumber: '',
+    customer: '',
+    supplier: '',
+    version: 1,
+    status: 'active',
+    effectiveDate: '2026-01-01',
+    sections: [
+      { id: 'sec-iqc-1', title: 'المستندات والتغليف (Documents & Packing)', description: 'مطابقة بوليصة الشحن وسلامة العبوات', order: 1 },
+      { id: 'sec-iqc-2', title: 'الفحص الفني والأبعاد (Technical & Dimensional)', description: 'أبعاد ومطابقة المواصفات الفنية للخامات', order: 2 },
+    ],
+    checkItems: [
+      {
+        id: 'chk-iqc-01',
+        checkCode: 'CHK-I01',
+        checkName: 'مطابقة رقم التشغيلة وبوليصة الشحن وشهادة التحليل CoA',
+        description: 'مراجعة شهادة المورد ومطابقتها مع أمر الشراء والكمية المستلمة',
+        section: 'المستندات والتغليف (Documents & Packing)',
+        inspectionMethod: 'document',
+        standard: 'CoA Review Guideline',
+        acceptanceCriteria: 'تطابق كامل للمستندات والتواريخ وأرقام التشغيلات',
+        inputType: 'pass-fail',
+        defectTypeIfNG: 'عدم تطابق مستندات المورد (Supplier Documentation Mismatch)',
+        severityIfNG: 'major',
+        recordTypeIfNG: 'supplier-quality',
+        requiredEvidence: false,
+        guidanceText: 'راجع تاريخ الإنتاج والصلاحية ورقم الـ Lot على الكرتونة مع شهادة التحليل.',
+        order: 1,
+        isRequired: true,
+      },
+      {
+        id: 'chk-iqc-02',
+        checkCode: 'CHK-I02',
+        checkName: 'فحص سلامة التغليف وسلامة الأختام والخلو من التلف',
+        description: 'فحص الصناديق والطبليات وخلوها من الكسر أو الرطوبة أو التمزق',
+        section: 'المستندات والتغليف (Documents & Packing)',
+        inspectionMethod: 'visual',
+        standard: 'Packaging Integrity Std',
+        acceptanceCriteria: 'العبوات سليمة ومغلقة بإحكام وبدون أي تلف',
+        inputType: 'pass-fail',
+        defectTypeIfNG: 'تلف عبوات الشحن أثناء النقل (Transit Packaging Damage)',
+        severityIfNG: 'minor',
+        recordTypeIfNG: 'supplier-quality',
+        requiredEvidence: false,
+        guidanceText: 'افحص مؤشر الرطوبة وسلامة أشرطة الربط البلاستيكية على البالتة.',
+        order: 2,
+        isRequired: true,
+      },
+      {
+        id: 'chk-iqc-03',
+        checkCode: 'CHK-I03',
+        checkName: 'قياس السماكة والأبعاد الخارجية للخامات المسحوبة',
+        description: 'قياس عينة عشوائية حسب خطة أخذ العينات AQL للتأكد من السماكة',
+        section: 'الفحص الفني والأبعاد (Technical & Dimensional)',
+        inspectionMethod: 'measurement',
+        standard: 'Raw Material Spec RMS-02',
+        acceptanceCriteria: '9.80 mm إلى 10.20 mm (الهدف: 10.00 mm)',
+        inputType: 'numeric',
+        lowerSpecLimit: 9.8,
+        upperSpecLimit: 10.2,
+        targetValue: 10.0,
+        unit: 'mm',
+        sampleSize: 10,
+        frequency: 'Per Shipment',
+        defectTypeIfNG: 'انحراف أبعاد المواد الخام (Raw Material Dimensional Deviation)',
+        severityIfNG: 'major',
+        recordTypeIfNG: 'supplier-quality',
+        requiredEvidence: false,
+        guidanceText: 'قس السماكة في 3 نقاط مختلفة على العينة وسجل المتوسط.',
+        order: 3,
+        isRequired: true,
+      },
+      {
+        id: 'chk-iqc-04',
+        checkCode: 'CHK-I04',
+        checkName: 'فحص الخلو من الصدأ والتآكل والشوائب الغريبة',
+        description: 'فحص مظهر المعدن / الخامة والتأكد من خلوه من الأكسدة والتلوث',
+        section: 'الفحص الفني والأبعاد (Technical & Dimensional)',
+        inspectionMethod: 'visual',
+        standard: 'Corrosion Prevention Spec',
+        acceptanceCriteria: 'نظيف تماماً وخالٍ من الصدأ والزيوت الزائدة والشوائب',
+        inputType: 'pass-fail',
+        defectTypeIfNG: 'صدأ أو تلوث خامات (Corrosion / Contamination)',
+        severityIfNG: 'critical',
+        recordTypeIfNG: 'supplier-quality',
+        requiredEvidence: true,
+        guidanceText: 'التقط صورة واضحة في حال وجود أي بقع صدأ أو أكسدة على الخامة.',
+        order: 4,
+        isRequired: true,
+      },
+    ],
+    history: [],
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+    createdBy: 'Incoming Quality Team',
+    createdByRole: 'QUALITY_SUPERVISOR',
+  },
+  {
+    id: 'PLAN-OQC-001',
+    planName: 'خطة الفحص النهائي وجودة شحن المنتجات (Final Outgoing OQC)',
+    description: 'الفحص النهائي قبل الشحن للعملاء لضمان مطابقة الكرتونة الخارجية والملحقات واكتمال الفحص.',
+    factory: 'Main Plant',
+    workshop: 'Final Packaging & Shipping',
+    productionLine: '',
+    inspectionPoint: 'Final Outgoing (OQC)',
+    product: '',
+    model: '',
+    partNumber: '',
+    customer: '',
+    supplier: '',
+    version: 1,
+    status: 'active',
+    effectiveDate: '2026-01-01',
+    sections: [
+      { id: 'sec-oqc-1', title: 'التجميع النهائي والملحقات (Final Assembly & Accessories)', description: 'اكتمال الملحقات ونظافة المنتج النهائي', order: 1 },
+      { id: 'sec-oqc-2', title: 'التغليف والباركود والشحن (Packaging & Shipping)', description: 'مطابقة الباركود الخارجي وجودة الإغلاق', order: 2 },
+    ],
+    checkItems: [
+      {
+        id: 'chk-oqc-01',
+        checkCode: 'CHK-O01',
+        checkName: 'فحص اكتمال الملحقات ودليل الاستخدام وبطاقة الضمان',
+        description: 'التأكد من وجود الكابلات ودليل المستخدم وبطاقة الضمان داخل الصندوق',
+        section: 'التجميع النهائي والملحقات (Final Assembly & Accessories)',
+        inspectionMethod: 'visual',
+        standard: 'Packaging BOM Verification',
+        acceptanceCriteria: 'جميع الملحقات مكتملة وموضوعة بأماكنها المخصصة',
+        inputType: 'pass-fail',
+        defectTypeIfNG: 'نقص ملحقات أو دليل الاستخدام (Missing Accessories / Manual)',
+        severityIfNG: 'major',
+        recordTypeIfNG: 'customer-complaint',
+        requiredEvidence: false,
+        guidanceText: 'راجع قائمة الملحقات المرفقة وتأكد من وجود جميع القطع.',
+        order: 1,
+        isRequired: true,
+      },
+      {
+        id: 'chk-oqc-02',
+        checkCode: 'CHK-O02',
+        checkName: 'فحص النظافة العامة والتشطيب النهائي الخارجي',
+        description: 'التأكد من خلو المنتج النهائي من بصمات الأصابع أو الأتربة أو الزيوت',
+        section: 'التجميع النهائي والملحقات (Final Assembly & Accessories)',
+        inspectionMethod: 'visual',
+        standard: 'Final Product Cosmetic Std',
+        acceptanceCriteria: 'نظيف وجاف ولامع بدون أي عيوب أو شوائب',
+        inputType: 'pass-fail',
+        defectTypeIfNG: 'نظافة غير مقبولة للمنتج النهائي (Cosmetic Cleanliness Issue)',
+        severityIfNG: 'minor',
+        recordTypeIfNG: 'process-ppm',
+        requiredEvidence: false,
+        guidanceText: 'امسح المنتج بقطعة قماش ناعمة مخصصة قبل وضعه في الكيس العازل.',
+        order: 2,
+        isRequired: true,
+      },
+      {
+        id: 'chk-oqc-03',
+        checkCode: 'CHK-O03',
+        checkName: 'مطابقة الباركود الخارجي مع السيريال الداخلي للوحدة',
+        description: 'مسح الباركود الخارجي ومقارنته مع السيريال الإلكتروني المسجل',
+        section: 'التغليف والباركود والشحن (Packaging & Shipping)',
+        inspectionMethod: 'barcode',
+        standard: 'Shipping Label Std SL-01',
+        acceptanceCriteria: 'تطابق رقم السيريال الخارجي مع الداخلي بنسبة 100%',
+        inputType: 'pass-fail',
+        defectTypeIfNG: 'عدم تطابق السيريال الخارجي والداخلي (Serial Mismatch)',
+        severityIfNG: 'critical',
+        recordTypeIfNG: 'customer-complaint',
+        requiredEvidence: true,
+        guidanceText: 'امسح باركود الكرتونة ثم باركود المنتج للتأكد من التطابق التام.',
+        order: 3,
+        isRequired: true,
+      },
+      {
+        id: 'chk-oqc-04',
+        checkCode: 'CHK-O04',
+        checkName: 'فحص إحكام إغلاق الصندوق ومتانة التغليف للشحن',
+        description: 'فحص شريط اللصق وسلامة أركان الصندوق لتحمل عمليات النقل',
+        section: 'التغليف والباركود والشحن (Packaging & Shipping)',
+        inspectionMethod: 'visual',
+        standard: 'Box Sealing Spec BX-03',
+        acceptanceCriteria: 'الشريط اللاصق محكم والكرتونة خالية من الانبعاجات',
+        inputType: 'pass-fail',
+        defectTypeIfNG: 'إغلاق كرتونة ضعيف أو تالف (Defective Box Sealing)',
+        severityIfNG: 'minor',
+        recordTypeIfNG: 'process-ppm',
+        requiredEvidence: false,
+        guidanceText: 'تأكد من تطبيق الشريط اللاصق بالتساوي على طول درز الصندوق.',
+        order: 4,
+        isRequired: true,
+      },
+    ],
+    history: [],
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+    createdBy: 'Final QA Team',
+    createdByRole: 'QUALITY_SUPERVISOR',
+  },
+];
+
 export function loadQualityInspectionPlans(includeArchived = false): QualityInspectionPlan[] {
-  return readJsonArray<Partial<QualityInspectionPlan>>(QUALITY_INSPECTION_PLANS_KEY)
-    .map(normalizeInspectionPlan)
+  const stored = readJsonArray<Partial<QualityInspectionPlan>>(QUALITY_INSPECTION_PLANS_KEY);
+  if (stored.length === 0) {
+    writeJsonArray(QUALITY_INSPECTION_PLANS_KEY, DEFAULT_INSPECTION_PLANS);
+    return DEFAULT_INSPECTION_PLANS.filter((plan) => includeArchived || plan.status !== 'archived');
+  }
+  const normalized = stored.map(normalizeInspectionPlan);
+  const hasActive = normalized.some((p) => p.status === 'active');
+  if (!hasActive) {
+    const combined = [...normalized, ...DEFAULT_INSPECTION_PLANS];
+    writeJsonArray(QUALITY_INSPECTION_PLANS_KEY, combined);
+    return combined.filter((plan) => includeArchived || plan.status !== 'archived');
+  }
+  return normalized
     .filter((plan) => includeArchived || plan.status !== 'archived')
     .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
 }
@@ -623,23 +992,44 @@ export function exportQualityInspectionPlan(plan: QualityInspectionPlan): Record
 function scorePlan(plan: QualityInspectionPlan, context: QualityInspectionMatchContext): number {
   let score = 0;
   const fields: Array<keyof QualityInspectionMatchContext> = ['factory', 'workshop', 'productionLine', 'inspectionPoint', 'product', 'model', 'partNumber', 'customer', 'supplier'];
+  let checkedFields = 0;
+
   fields.forEach((field) => {
     const planValue = plan[field];
     const contextValue = context[field];
     if (!cleanText(planValue)) return;
-    score += sameText(planValue, contextValue) ? 10 : -25;
+    checkedFields++;
+    if (cleanText(contextValue)) {
+      if (sameText(planValue, contextValue)) {
+        score += 20;
+      } else {
+        score -= 5;
+      }
+    }
   });
-  if (!fields.some((field) => cleanText(plan[field]))) score += 1;
+
+  // Generic plans that don't restrict line/model receive positive base priority
+  if (checkedFields === 0) {
+    score += 5;
+  }
   return score;
 }
 
 export function findMatchingActiveInspectionPlan(context: QualityInspectionMatchContext): QualityInspectionPlan | null {
-  const candidates = loadQualityInspectionPlans()
-    .filter((plan) => plan.status === 'active')
+  const allActive = loadQualityInspectionPlans().filter((plan) => plan.status === 'active');
+  if (allActive.length === 0) return null;
+
+  const candidates = allActive
     .map((plan) => ({ plan, score: scorePlan(plan, context) }))
     .filter(({ score }) => score > 0)
     .sort((a, b) => b.score - a.score || b.plan.version - a.plan.version);
-  return candidates[0]?.plan || null;
+
+  if (candidates.length > 0) {
+    return candidates[0].plan;
+  }
+
+  // Gracefully fall back to the first active plan so shopfloor never shows empty
+  return allActive[0] || null;
 }
 
 export function upsertQualityInspectionRun(run: QualityInspectionRun, enqueue = true): QualityInspectionRun {

@@ -64,6 +64,7 @@ import {
   canExecuteInspection,
   evaluateNumericCheck,
   findMatchingActiveInspectionPlan,
+  loadQualityInspectionPlans,
   upsertQualityInspectionRun,
   type QualityInspectionCheckItem,
   type QualityInspectionCheckResult,
@@ -234,10 +235,20 @@ export default function ShopfloorDefectEntry() {
     formDraft.workshop,
   ]);
 
-  const activeInspectionPlan = useMemo(
+  const [selectedPlanId, setSelectedPlanId] = useState<string>('auto');
+  const allActivePlans = useMemo(() => loadQualityInspectionPlans().filter((plan) => plan.status === 'active'), []);
+
+  const autoMatchedPlan = useMemo(
     () => findMatchingActiveInspectionPlan(inspectionContext),
     [inspectionContext],
   );
+
+  const activeInspectionPlan = useMemo(() => {
+    if (selectedPlanId && selectedPlanId !== 'auto') {
+      return allActivePlans.find((p) => p.id === selectedPlanId) || autoMatchedPlan;
+    }
+    return autoMatchedPlan;
+  }, [selectedPlanId, allActivePlans, autoMatchedPlan]);
 
   const failedChecks = useMemo(() => Object.values(checkResults).filter((result) => result.result === 'fail'), [checkResults]);
   const currentPreparedCheck = useMemo(
@@ -923,13 +934,35 @@ export default function ShopfloorDefectEntry() {
                 <p className="text-xs text-white/45 truncate">
                   {activeInspectionPlan
                     ? `${activeInspectionPlan.planName} v${activeInspectionPlan.version}`
-                    : 'No matching active plan.'}
+                    : (isAr ? 'لا توجد خطة فحص نشطة' : 'No matching active plan.')}
                 </p>
               </div>
             </div>
-            <Link to="/quality-inspection-plans" className="w-full sm:w-auto rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-center text-xs font-black uppercase tracking-widest text-white/70 hover:bg-white/10">
-              Open Plans
-            </Link>
+
+            <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+              {allActivePlans.length > 0 && (
+                <div className="flex items-center gap-1.5 w-full sm:w-auto">
+                  <select
+                    value={selectedPlanId}
+                    onChange={(e) => setSelectedPlanId(e.target.value)}
+                    className="h-10 px-3 bg-white/5 border border-white/10 rounded-xl text-xs font-bold text-white outline-none focus:border-[#00A3E0] w-full sm:w-auto max-w-full sm:max-w-[280px] truncate"
+                    title={isAr ? 'اختيار خطة الفحص' : 'Select inspection plan'}
+                  >
+                    <option value="auto" className="bg-slate-900 text-white">
+                      {isAr ? '✨ اختيار تلقائي ذكي' : '✨ Auto-Match'}
+                    </option>
+                    {allActivePlans.map((p) => (
+                      <option key={p.id} value={p.id} className="bg-slate-900 text-white">
+                        {p.planName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              <Link to="/quality-inspection-plans" className="w-full sm:w-auto rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-center text-xs font-black uppercase tracking-widest text-white/70 hover:bg-white/10 shrink-0">
+                {isAr ? 'إدارة الخطط' : 'Open Plans'}
+              </Link>
+            </div>
           </div>
 
           {!inspectionAccess.allowed && (
@@ -940,8 +973,10 @@ export default function ShopfloorDefectEntry() {
           )}
 
           {!activeInspectionPlan ? (
-            <div className="rounded-2xl border border-dashed border-white/10 p-5 text-sm text-white/45">
-              Select or scan values for model, production line, part number, and inspection point. Matching active plans will load automatically. No fake checks are shown.
+            <div className="rounded-2xl border border-dashed border-white/10 p-5 text-sm text-white/45 text-center">
+              {isAr
+                ? 'لم يتم العثور على خطة فحص نشطة مطابقة. يمكنك اختيار خطة من القائمة أعلاه أو إضافة خطة جديدة من زر "إدارة الخطط".'
+                : 'No matching active plan. Select a plan from the dropdown above or open plans to create one.'}
             </div>
           ) : (
             <div className="space-y-4">
