@@ -19,7 +19,8 @@ import {
   LayoutGrid,
   Box,
   Mic,
-  MicOff
+  MicOff,
+  Globe
 } from 'lucide-react';
 import { useVoiceCommand } from '../hooks/useVoiceCommand';
 import { useAppStore, type User } from '../stores/appStore';
@@ -48,7 +49,7 @@ export function Header({ onMenuToggle, user }: HeaderProps) {
 
   const navigate = useNavigate();
   
-  const { theme, setTheme, notifications, removeNotification, setUser, isLiteMode, setLiteMode } = useAppStore();
+  const { theme, setTheme, notifications, removeNotification, setUser, isLiteMode, setLiteMode, setLanguage } = useAppStore();
   
   const unreadCount = notifications.filter(n => !n.read).length;
   
@@ -79,26 +80,33 @@ export function Header({ onMenuToggle, user }: HeaderProps) {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 h-[70px] bg-white/80 dark:bg-[#080b11]/80 dark:glass-ultra z-[100] border-b border-slate-200 dark:border-white/10 backdrop-blur-md">
-      <div className="h-full flex items-center justify-between px-4">
+    <header className="fixed top-0 left-0 right-0 h-[62px] sm:h-[70px] bg-white/80 dark:bg-[#080b11]/80 dark:glass-ultra z-[100] border-b border-slate-200 dark:border-white/10 backdrop-blur-md transition-all">
+      <div className="h-full flex items-center justify-between px-3 sm:px-4">
         {/* Left Section */}
-        <div className="flex items-center gap-2 md:gap-4">
+        <div className="flex items-center gap-1.5 sm:gap-4">
           <button
             onClick={onMenuToggle}
-            className="p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 transition-all duration-300 hover:scale-110 active:scale-95"
+            className="p-2 sm:p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 transition-all duration-300 hover:scale-110 active:scale-95"
+            aria-label="Toggle menu"
           >
             <Menu className="w-5 h-5 text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white" />
           </button>
           
           {/* Logo */}
-          <div className="flex items-center gap-2 md:gap-3 group cursor-pointer">
-            <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-gradient-to-br from-[var(--industrial-primary)] to-[var(--industrial-secondary)] flex items-center justify-center shadow-md dark:shadow-[0_0_20px_rgba(14,165,233,0.25)] group-hover:scale-110 transition-transform duration-500">
-              <Zap className="w-4 h-4 md:w-5 md:h-5 text-white animate-pulse" />
+          <div className="flex items-center gap-2 md:gap-3 group cursor-pointer" onClick={() => navigate('/quality')}>
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-[var(--industrial-primary)] to-[var(--industrial-secondary)] flex items-center justify-center shadow-md dark:shadow-[0_0_20px_rgba(14,165,233,0.25)] group-hover:scale-110 transition-transform duration-500">
+              <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-white animate-pulse" />
             </div>
             <div className="block">
-              <h1 className="text-sm md:text-xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">
-                QMS <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--industrial-primary)] to-[var(--industrial-secondary)]">4.0</span>
-              </h1>
+              <div className="flex items-center gap-1.5">
+                <h1 className="text-sm md:text-xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">
+                  QMS <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--industrial-primary)] to-[var(--industrial-secondary)]">4.0</span>
+                </h1>
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[8px] font-black text-emerald-400">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                  LIVE
+                </span>
+              </div>
               <p className="text-[8px] md:text-[10px] text-slate-500 dark:text-gray-500 font-bold uppercase tracking-[0.2em] hidden sm:block">Industrial Intelligence</p>
             </div>
           </div>
@@ -300,10 +308,25 @@ export function Header({ onMenuToggle, user }: HeaderProps) {
             </DropdownMenuContent>
           </DropdownMenu>
 
+          {/* Mobile Quick Language Toggle */}
+          <button
+            onClick={() => {
+              const nextLang = language === 'ar' ? 'en' : 'ar';
+              setLanguage(nextLang);
+              toast.success(nextLang === 'ar' ? 'تم تحويل الواجهة للعربية' : 'Switched to English');
+            }}
+            className="sm:hidden px-2 py-1 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-[11px] font-black text-sky-500 hover:text-sky-400 active:scale-90 transition-all flex items-center gap-1 shadow-sm"
+            title={language === 'ar' ? 'Switch to English' : 'التحويل للعربية'}
+          >
+            <Globe className="w-3.5 h-3.5 text-sky-400" />
+            <span>{language === 'ar' ? 'EN' : 'عربي'}</span>
+          </button>
+
           {/* Mobile User Profile Trigger */}
           <button 
-            className="sm:hidden w-8 h-8 rounded-xl bg-gradient-to-br from-[var(--industrial-primary)] to-[var(--industrial-secondary)] p-0.5"
+            className="sm:hidden w-8 h-8 rounded-xl bg-gradient-to-br from-[var(--industrial-primary)] to-[var(--industrial-secondary)] p-0.5 active:scale-95 transition-transform"
             onClick={() => navigate('/profile')}
+            aria-label="User Profile"
           >
             <div className="w-full h-full rounded-[10px] bg-slate-900 dark:bg-[#0a0a0f] flex items-center justify-center overflow-hidden">
               {user?.avatar ? (

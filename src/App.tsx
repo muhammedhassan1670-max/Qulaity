@@ -144,14 +144,13 @@ function App() {
       
       {/* Main Content with Outlet for nested routes */}
       <main 
-        className="transition-all duration-300 mobile-pb-tabbar"
+        className="transition-all duration-300 mobile-pb-tabbar pt-[62px] sm:pt-[70px]"
         style={{ 
           marginLeft: '0px',
-          marginTop: '70px',
-          minHeight: 'calc(100vh - 70px)'
+          minHeight: '100vh'
         }}
       >
-        <div className="p-4 md:p-6">
+        <div className="p-3 sm:p-4 md:p-6">
           <QualityPageAssistant />
           <AnimatePresence mode="wait">
             <motion.div
