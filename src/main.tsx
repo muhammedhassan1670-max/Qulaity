@@ -4,6 +4,17 @@ import { Toaster } from 'sonner'
 import './index.css'
 import { router } from './router'
 
+// Handle Vite dynamic import / chunk update errors gracefully across deploys
+window.addEventListener('vite:preloadError', (event) => {
+  event.preventDefault();
+  const lastReload = sessionStorage.getItem('last_chunk_reload');
+  const now = Date.now();
+  if (!lastReload || now - parseInt(lastReload, 10) > 10000) {
+    sessionStorage.setItem('last_chunk_reload', now.toString());
+    window.location.reload();
+  }
+});
+
 if (import.meta.env.DEV && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.getRegistrations().then((registrations) => {
