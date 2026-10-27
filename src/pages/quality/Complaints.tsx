@@ -23,7 +23,9 @@ import {
   Phone,
   Mail,
   Globe,
-  Building
+  Building,
+  ShieldAlert,
+  ClipboardList,
 } from 'lucide-react';
 
 interface Complaint {
@@ -404,6 +406,26 @@ export function ComplaintsPage() {
                   <button onClick={(e) => { e.stopPropagation(); handleEdit(item); }} className="p-2 hover:bg-white/10 rounded-lg transition-colors" title="Edit">
                     <Edit3 className="w-4 h-4 text-[#00A3E0]" />
                   </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/8d?create=1&title=${encodeURIComponent(`شكوى عميل: ${item.customerName} - ${item.productModel}`)}&product=${encodeURIComponent(item.productModel)}&lot=${encodeURIComponent(item.batchNumber || '')}&desc=${encodeURIComponent(`شكوى مقدمة من العميل [${item.customerName}] بشأن المنتج [${item.productModel}]: ${item.complaintDescription}. مصدر الشكوى: ${item.complaintSource}. درجة الخطورة: ${item.severity}.`)}&complaintId=${item.complaintId || item.id}`);
+                    }}
+                    className="p-2 hover:bg-amber-500/20 text-amber-400 rounded-lg transition-colors"
+                    title="تصعيد إلى تقرير حل المشكلات (8D)"
+                  >
+                    <ClipboardList className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/capa?create=1&title=${encodeURIComponent(`CAPA - شكوى عميل: ${item.customerName}`)}&source=complaint&sourceId=${item.id}&desc=${encodeURIComponent(item.complaintDescription)}`);
+                    }}
+                    className="p-2 hover:bg-blue-500/20 text-blue-400 rounded-lg transition-colors"
+                    title="فتح إجراء تصحيحي ووقائي (CAPA)"
+                  >
+                    <ShieldAlert className="w-4 h-4" />
+                  </button>
                 </div>
               )}
               emptyState={
@@ -490,6 +512,46 @@ export function ComplaintsPage() {
             </div>
             
             <div className="p-3 sm:p-6">
+              {editingComplaint && (
+                <div className="mb-6 rounded-2xl border border-[#00A3E0]/30 bg-[#00A3E0]/10 p-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                        <ShieldAlert className="w-4 h-4 text-[#00A3E0]" />
+                        <span>مسار التدخل والتصعيد الجذري (Closed-Loop Escalation)</span>
+                      </h4>
+                      <p className="text-xs text-white/60 mt-0.5">
+                        يمكنك تصعيد هذه الشكوى مباشرة إلى دورة حل المشكلات 8D أو فتح طلب إجراء تصحيحي ووقائي CAPA
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsFormOpen(false);
+                          navigate(`/8d?create=1&title=${encodeURIComponent(`شكوى عميل: ${editingComplaint.customerName} - ${editingComplaint.productModel}`)}&product=${encodeURIComponent(editingComplaint.productModel)}&lot=${encodeURIComponent(editingComplaint.batchNumber || '')}&desc=${encodeURIComponent(`شكوى مقدمة من العميل [${editingComplaint.customerName}] بشأن المنتج [${editingComplaint.productModel}]: ${editingComplaint.complaintDescription}. مصدر الشكوى: ${editingComplaint.complaintSource}. درجة الخطورة: ${editingComplaint.severity}.`)}&complaintId=${editingComplaint.complaintId || editingComplaint.id}`);
+                        }}
+                        className="px-3.5 py-2 rounded-xl text-xs font-black bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 border border-amber-500/40 transition flex items-center gap-1.5"
+                      >
+                        <ClipboardList className="w-3.5 h-3.5 text-amber-400" />
+                        <span>تصعيد إلى تقرير 8D</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsFormOpen(false);
+                          navigate(`/capa?create=1&title=${encodeURIComponent(`CAPA - شكوى عميل: ${editingComplaint.customerName}`)}&source=complaint&sourceId=${editingComplaint.id}&desc=${encodeURIComponent(editingComplaint.complaintDescription)}`);
+                        }}
+                        className="px-3.5 py-2 rounded-xl text-xs font-black bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 border border-blue-500/40 transition flex items-center gap-1.5"
+                      >
+                        <ShieldAlert className="w-3.5 h-3.5 text-blue-400" />
+                        <span>فتح تقرير CAPA</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <DynamicFormRenderer
                 formType="complaint"
                 initialValues={getInitialValues()}

@@ -27,7 +27,49 @@ interface Supplier {
   [key: string]: unknown;
 }
 
-export const mockSuppliers: Supplier[] = [];
+export const DEFAULT_SUPPLIERS: Supplier[] = [
+  {
+    id: 'SUP-001',
+    name: 'Apex Industrial Steel Ltd.',
+    location: 'Alexandria, Egypt',
+    category: 'Raw Materials (Coils & Plates)',
+    rating: 4.8,
+    status: 'approved',
+    lastAudit: '2026-03-15',
+    nextAudit: '2027-03-15',
+    ncCount: 1,
+    deliveryPerformance: 98,
+    qualityPerformance: 96,
+  },
+  {
+    id: 'SUP-002',
+    name: 'Delta Precision Polymers & Seals',
+    location: '10th of Ramadan, Egypt',
+    category: 'Injection Molded Parts',
+    rating: 4.2,
+    status: 'approved',
+    lastAudit: '2026-01-20',
+    nextAudit: '2027-01-20',
+    ncCount: 3,
+    deliveryPerformance: 92,
+    qualityPerformance: 88,
+  },
+  {
+    id: 'SUP-003',
+    name: 'Global Fasteners & Hardware Co.',
+    location: 'Cairo, Egypt',
+    category: 'Fasteners & Standard Hardware',
+    rating: 3.4,
+    status: 'conditional',
+    lastAudit: '2025-11-10',
+    nextAudit: '2026-11-10',
+    ncCount: 6,
+    deliveryPerformance: 85,
+    qualityPerformance: 78,
+  },
+];
+
+export const mockSuppliers: Supplier[] = DEFAULT_SUPPLIERS;
 
 const statusConfig = {
   'approved': 'bg-green-500/20 text-green-400',
@@ -253,6 +295,33 @@ export function SupplierQualityPage() {
                     <p className="text-xs text-gray-500">Next Audit</p>
                     <p className="text-sm text-gray-300">{supplier.nextAudit}</p>
                   </div>
+                </div>
+              </div>
+
+              <div className="mt-3 pt-3 border-t border-white/5 flex flex-wrap items-center justify-between gap-2 text-xs" onClick={(e) => e.stopPropagation()}>
+                <span className="text-white/40 font-medium">سجلات الجودة والارتباطات:</span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => navigate('/inspection')}
+                    className="px-2.5 py-1 rounded-lg bg-blue-500/10 text-blue-300 hover:bg-blue-500/20 border border-blue-500/30 transition flex items-center gap-1 font-bold text-[11px]"
+                  >
+                    <span>🔍 فحص الوارد (IQC)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/ncr?search=${encodeURIComponent(supplier.name)}`)}
+                    className="px-2.5 py-1 rounded-lg bg-red-500/10 text-red-300 hover:bg-red-500/20 border border-red-500/30 transition flex items-center gap-1 font-bold text-[11px]"
+                  >
+                    <span>🚨 تقارير عدم المطابقة ({supplier.ncCount})</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/8d?search=${encodeURIComponent(supplier.name)}`)}
+                    className="px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 border border-amber-500/30 transition flex items-center gap-1 font-bold text-[11px]"
+                  >
+                    <span>⚡ تقارير 8D للمورد</span>
+                  </button>
                 </div>
               </div>
             </div>

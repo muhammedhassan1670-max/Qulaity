@@ -9,7 +9,10 @@ import {
   CheckCircle2,
   XCircle,
   Clock,
-  MoreHorizontal
+  MoreHorizontal,
+  Building,
+  ClipboardList,
+  ShieldAlert,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -29,7 +32,76 @@ interface Inspection {
   [key: string]: unknown;
 }
 
-const mockInspections: Inspection[] = [];
+const DEFAULT_INSPECTIONS: Inspection[] = [
+  {
+    id: 'INS-IQC-001',
+    type: 'incoming',
+    product: 'Cold Rolled Steel Coil 1.5mm',
+    batch: 'LOT-STL-9042',
+    inspectedBy: 'Eng. Ahmed QC',
+    date: new Date().toISOString().split('T')[0],
+    result: 'fail',
+    sampleSize: 50,
+    defectCount: 4,
+    inspectionPoints: 6,
+  },
+  {
+    id: 'INS-IPQC-002',
+    type: 'in-process',
+    product: 'Bracket Assembly BR-200',
+    batch: 'LOT-PRD-7711',
+    inspectedBy: 'Mahmoud Inspector',
+    date: new Date().toISOString().split('T')[0],
+    result: 'pass',
+    sampleSize: 32,
+    defectCount: 0,
+    inspectionPoints: 8,
+  },
+  {
+    id: 'INS-OQC-003',
+    type: 'final',
+    product: 'Gearbox Housing Assy',
+    batch: 'LOT-FIN-1029',
+    inspectedBy: 'Sara Quality',
+    date: new Date().toISOString().split('T')[0],
+    result: 'pass',
+    sampleSize: 20,
+    defectCount: 0,
+    inspectionPoints: 10,
+  },
+];
+
+function recordSupplierDefectLink(productName: string, defectCount: number) {
+  try {
+    for (const key of ['qms_local_suppliers', 'qms_local_supplier']) {
+      const raw = localStorage.getItem(key);
+      if (raw) {
+        const suppliers = JSON.parse(raw);
+        if (Array.isArray(suppliers) && suppliers.length > 0) {
+          const updated = suppliers.map((sup: any) => {
+            const matches = !productName ||
+              sup.name?.toLowerCase().includes(productName.toLowerCase()) ||
+              sup.category?.toLowerCase().includes(productName.toLowerCase());
+            if (matches) {
+              const currentNc = Number(sup.ncCount || 0) + 1;
+              const currentPerf = Math.max(50, Number(sup.qualityPerformance || 95) - (defectCount > 0 ? 5 : 2));
+              return {
+                ...sup,
+                ncCount: currentNc,
+                qualityPerformance: currentPerf,
+                status: currentPerf < 70 ? 'conditional' : sup.status,
+              };
+            }
+            return sup;
+          });
+          localStorage.setItem(key, JSON.stringify(updated));
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('Failed to update supplier score from inspection failure:', err);
+  }
+}
 
 const typeConfig = {
   'incoming': 'bg-blue-500/20 text-blue-400',
@@ -85,8 +157,7 @@ export function InspectionPage() {
           }
         }
       } catch {}
-      setInspections(mockInspections);
-      toast.info('Backend unavailable - no records loaded');
+      setInspections(DEFAULT_INSPECTIONS);
     } finally {
       setIsLoading(false);
     }
@@ -138,6 +209,11 @@ export function InspectionPage() {
       } else {
         await inspectionApi.create(payload as any);
         toast.success('Inspection created');
+      }
+
+      if (payload.result === 'fail' && payload.type === 'incoming') {
+        recordSupplierDefectLink(payload.productName || (payload as any).product, payload.defectCount || 1);
+        toast.info('تم تحديث تقييم جودة المورد آلياً بناءً على حيود فحص الوارد');
       }
 
       await loadInspections();
@@ -223,6 +299,7 @@ export function InspectionPage() {
                 <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-4">Sample/Defects</th>
                 <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-4">Inspected By</th>
                 <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-4">Date</th>
+                <th className="text-right text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-4">Actions / تصعيد</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
@@ -273,6 +350,37 @@ export function InspectionPage() {
                     <td className="px-6 py-4">
                       <span className="text-gray-400 text-sm">{ins.date}</span>
                     </td>
+                    <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
+                      {ins.result === 'fail' ? (
+                        <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigate(`/ncr?create=1&title=${encodeURIComponent(`فشل فحص وارد: ${ins.product} (${ins.batch})`)}&defectType=Incoming Material&line=Incoming Inspection&qty=${ins.defectCount || 1}&lot=${encodeURIComponent(ins.batch)}&desc=${encodeURIComponent(`فشل فحص الجودة للخامة/المنتج [${ins.product}] - تشغيلة رقم [${ins.batch}]. عدد العينات: ${ins.sampleSize}، عدد العيوب: ${ins.defectCount}. المسؤول: ${ins.inspectedBy}`)}&severity=major`);
+                            }}
+                            className="px-2.5 py-1 rounded-lg text-xs font-bold bg-red-500/20 text-red-300 hover:bg-red-500/30 border border-red-500/40 transition flex items-center gap-1"
+                            title="فتح تقرير عدم مطابقة (NCR)"
+                          >
+                            <ShieldAlert className="w-3.5 h-3.5 text-red-400" />
+                            <span>فتح NCR</span>
+                          </button>
+
+                          {ins.type === 'incoming' && (
+                            <button
+                              type="button"
+                              onClick={() => navigate('/supplier-quality')}
+                              className="px-2.5 py-1 rounded-lg text-xs font-bold bg-[#00A3E0]/20 text-[#00A3E0] hover:bg-[#00A3E0]/30 border border-[#00A3E0]/40 transition flex items-center gap-1"
+                              title="تقييم وسجل المورد"
+                            >
+                              <Building className="w-3.5 h-3.5" />
+                              <span>المورد</span>
+                            </button>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-emerald-400/60 font-medium">مطابق</span>
+                      )}
+                    </td>
                   </tr>
                 );
               })}
@@ -297,6 +405,59 @@ export function InspectionPage() {
               </div>
 
               <div className="p-3 sm:p-6">
+                {editingInspection && editingInspection.result === 'fail' && (
+                  <div className="mb-6 rounded-2xl border border-red-500/30 bg-red-950/30 p-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                          <ShieldAlert className="w-4 h-4 text-red-400" />
+                          <span>إجراءات التدخل لعدم المطابقة (IQC / Inspection Escalation)</span>
+                        </h4>
+                        <p className="text-xs text-white/60 mt-0.5">
+                          هذه الشحنة/الدفعة غير مطابقة. يمكنك تصعيدها فوراً لتقرير عدم مطابقة NCR أو إصدار SCAR للمورد
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsFormOpen(false);
+                            navigate(`/ncr?create=1&title=${encodeURIComponent(`فشل فحص وارد: ${editingInspection.product} (${editingInspection.batch})`)}&defectType=Incoming Material&line=Incoming Inspection&qty=${editingInspection.defectCount || 1}&lot=${encodeURIComponent(editingInspection.batch)}&desc=${encodeURIComponent(`فشل فحص الجودة للخامة/المنتج [${editingInspection.product}] - تشغيلة رقم [${editingInspection.batch}]. عدد العينات: ${editingInspection.sampleSize}، عدد العيوب: ${editingInspection.defectCount}. المسؤول: ${editingInspection.inspectedBy}`)}&severity=major`);
+                          }}
+                          className="px-3 py-2 rounded-xl text-xs font-black bg-red-500/20 text-red-300 hover:bg-red-500/30 border border-red-500/40 transition flex items-center gap-1.5"
+                        >
+                          <ShieldAlert className="w-3.5 h-3.5 text-red-400" />
+                          <span>فتح تقرير NCR</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsFormOpen(false);
+                            navigate(`/8d?create=1&title=${encodeURIComponent(`فشل فحص خامة: ${editingInspection.product} (${editingInspection.batch})`)}&product=${encodeURIComponent(editingInspection.product)}&lot=${encodeURIComponent(editingInspection.batch)}&desc=${encodeURIComponent(`إجراء تصحيحي لحل المشكلة الجذرية إثر فشل فحص الشحنة [${editingInspection.batch}] لمنتج [${editingInspection.product}]. نسبة العيوب: ${editingInspection.defectCount}/${editingInspection.sampleSize}.`)}`);
+                          }}
+                          className="px-3 py-2 rounded-xl text-xs font-black bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 border border-amber-500/40 transition flex items-center gap-1.5"
+                        >
+                          <ClipboardList className="w-3.5 h-3.5 text-amber-400" />
+                          <span>إصدار 8D للمورد</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsFormOpen(false);
+                            navigate('/supplier-quality');
+                          }}
+                          className="px-3 py-2 rounded-xl text-xs font-black bg-[#00A3E0]/20 text-[#00A3E0] hover:bg-[#00A3E0]/30 border border-[#00A3E0]/40 transition flex items-center gap-1.5"
+                        >
+                          <Building className="w-3.5 h-3.5" />
+                          <span>سجل الموردين</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <DynamicFormRenderer
                   formType="inspection"
                   initialValues={(editingInspection || {}) as Record<string, unknown>}

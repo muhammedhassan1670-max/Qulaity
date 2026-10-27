@@ -18,8 +18,61 @@ import {
   X,
   Edit3,
   Eye,
-  Barcode
+  Barcode,
+  Layers
 } from 'lucide-react';
+
+interface FmeaImportItem {
+  id: string;
+  fmeaNumber: string;
+  process: string;
+  partName: string;
+  failureMode: string;
+  rpn: number;
+  severity: number;
+  preventionControl: string;
+  detectionControl: string;
+  recommendedAction: string;
+}
+
+const DEFAULT_FMEAS_FOR_IMPORT: FmeaImportItem[] = [
+  {
+    id: 'fmea-01',
+    fmeaNumber: 'PFMEA-ST-101',
+    process: 'عملية الكبس والتشكيل (Stamping)',
+    partName: 'هيكل تثبيت أمامي BR-200',
+    failureMode: 'انحراف أبعاد الثقوب عن السنترلاين (Dimensional Shift)',
+    rpn: 144,
+    severity: 8,
+    preventionControl: 'دليل تثبيت ميكانيكي (Fixture Guiding Pins)',
+    detectionControl: 'قياس دوري بمحدد قياس رقمي (Digital Height Gauge)',
+    recommendedAction: 'تطبيق خريطة تحكم إحصائي SPC X-bar & R لكل وردية وعزل الدفعة عند الخروج عن الضبط',
+  },
+  {
+    id: 'fmea-02',
+    fmeaNumber: 'PFMEA-WL-204',
+    process: 'اللحام الآلي (Robotic Welding)',
+    partName: 'مجموعة الشاسيه الأساسي',
+    failureMode: 'نقص انصهار ونفاذ اللحام (Lack of Penetration)',
+    rpn: 120,
+    severity: 8,
+    preventionControl: 'مراقبة آلية لمعاملات التيار وسرعة السلك (Parameter Monitoring)',
+    detectionControl: 'فحص عزم وتدميري دوري للعينات (Torque & Macro Etch Test)',
+    recommendedAction: 'إيقاف أوتوماتيكي للروبوت عند هبوط تيار اللحام عن 180 أمبير',
+  },
+  {
+    id: 'fmea-03',
+    fmeaNumber: 'PFMEA-IN-305',
+    process: 'حقن البلاستيك (Plastic Injection)',
+    partName: 'غطاء المحرك العلوي',
+    failureMode: 'فجوات هوائية وتبريد غير متجانس (Sink Marks & Voids)',
+    rpn: 96,
+    severity: 6,
+    preventionControl: 'تحكم رقمي في ضغط الحقن ودرجة حرارة الاسطوانة',
+    detectionControl: 'فحص وزني دقيق ومظهر بصري تحت إضاءة معيارية',
+    recommendedAction: 'تثبيت زمن التبريد إلى 25 ثانية وفحص 5 عينات في بداية كل تشغيلة',
+  },
+];
 
 interface ControlPlan {
   id: string;
@@ -84,6 +137,42 @@ export function ControlPlanPage() {
   const [dateRange, setDateRange] = useState<{ from: string | null; to: string | null }>({ from: null, to: null });
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingControlPlan, setEditingControlPlan] = useState<ControlPlan | null>(null);
+  const [showFmeaModal, setShowFmeaModal] = useState(false);
+
+  const handleImportFromFmea = (fmea: FmeaImportItem) => {
+    const newCp: ControlPlan = {
+      id: `cp-fmea-${Date.now()}`,
+      controlPlanId: generateCPNumber(),
+      controlPlanType: 'production',
+      partNumber: `PN-${fmea.fmeaNumber.split('-')[1] || '100'}`,
+      partName: fmea.partName,
+      revision: 'Rev. A',
+      date: new Date().toISOString().split('T')[0],
+      processNumber: '10',
+      operationName: fmea.process,
+      productCharacteristic: fmea.failureMode,
+      specification: fmea.preventionControl || 'مطابقة معايير العملية الهندسية',
+      evaluationMethod: fmea.detectionControl || 'قياس مباشر وفحص عينات',
+      sampleSize: fmea.rpn >= 100 ? '5 pcs / sub-lot' : '3 pcs',
+      frequency: fmea.rpn >= 100 ? 'hourly' : 'shift',
+      controlMethodType: fmea.rpn >= 100 ? 'spc' : 'checklist',
+      responsible: 'Eng. Quality & Production Team',
+      reactionPlanDesc: fmea.recommendedAction || 'عزل فوري للمنتجات وإشعار مهندس الجودة',
+      correctiveActionRequired: fmea.rpn >= 100,
+      status: 'active',
+    };
+
+    const nextPlans = [newCp, ...controlPlans];
+    setControlPlans(nextPlans);
+    try {
+      localStorage.setItem('qms_local_control_plans', JSON.stringify(nextPlans));
+    } catch {}
+
+    setShowFmeaModal(false);
+    toast.success('تم استيراد خطة الضبط من تحليل المخاطر FMEA بنجاح!', {
+      description: `تم تحويل وضع الفشل "${fmea.failureMode}" وضوابط الوقاية إلى خطة ضبط معتمدة.`,
+    });
+  };
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -311,6 +400,14 @@ export function ControlPlanPage() {
                   <Plus className="w-4 h-4" />
                   <span>New Control Plan</span>
                 </button>
+                <button 
+                  onClick={() => setShowFmeaModal(true)}
+                  className="h-11 px-4 border border-[#00A3E0]/40 text-[#8be3ff] bg-[#00A3E0]/10 hover:bg-[#00A3E0]/20 rounded-lg transition-colors flex items-center justify-center gap-2"
+                  title="استيراد أوضاع الفشل الحرجة من تحليل المخاطر FMEA"
+                >
+                  <Layers className="w-4 h-4 text-[#00A3E0]" />
+                  <span>استيراد من FMEA</span>
+                </button>
               </div>
             </div>
 
@@ -479,6 +576,85 @@ export function ControlPlanPage() {
                   />
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+      {showFmeaModal && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-sm">
+          <div className="glass-panel w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-3xl border border-white/10 bg-slate-900 p-5 sm:p-7 shadow-2xl">
+            <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-5">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-[#00A3E0]/20 border border-[#00A3E0]/30 flex items-center justify-center text-[#00A3E0]">
+                  <Layers className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg sm:text-xl font-black text-white">استيراد بنود خطة الضبط من تحليل المخاطر (FMEA)</h3>
+                  <p className="text-xs text-white/50 mt-0.5">اختر وضع الفشل الحرج ليتم اشتقاق معايير الضبط والوقاية وخطة التدخل تلقائياً</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowFmeaModal(false)}
+                className="p-2 rounded-xl text-white/50 hover:text-white hover:bg-white/10 transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {DEFAULT_FMEAS_FOR_IMPORT.map((fmea) => (
+                <div
+                  key={fmea.id}
+                  className="rounded-2xl border border-white/10 bg-white/5 p-4 hover:border-[#00A3E0]/40 transition space-y-2.5"
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-xs font-bold text-[#00A3E0] bg-[#00A3E0]/10 px-2 py-0.5 rounded-md border border-[#00A3E0]/20">
+                          {fmea.fmeaNumber}
+                        </span>
+                        <span className={`text-xs font-black px-2 py-0.5 rounded-md ${
+                          fmea.rpn >= 120 ? 'bg-red-500/20 text-red-300 border border-red-500/30' : 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30'
+                        }`}>
+                          RPN: {fmea.rpn} (Severity: {fmea.severity})
+                        </span>
+                      </div>
+                      <h4 className="text-sm font-black text-white mt-1.5">{fmea.failureMode}</h4>
+                      <p className="text-xs text-white/50">{fmea.partName} • {fmea.process}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleImportFromFmea(fmea)}
+                      className="rounded-xl bg-[#0066CC] hover:bg-[#0052a3] text-white text-xs font-bold px-4 py-2 self-start sm:self-auto shrink-0 flex items-center gap-1.5"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>اشتقاق خطة الضبط</span>
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-white/5 text-xs text-white/60">
+                    <div>
+                      <span className="text-white/35">طريقة الكشف: </span>
+                      <span className="text-emerald-300 font-medium">{fmea.detectionControl}</span>
+                    </div>
+                    <div>
+                      <span className="text-white/35">الإجراء الموصى به: </span>
+                      <span className="text-amber-200 font-medium">{fmea.recommendedAction}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-end pt-5 mt-5 border-t border-white/10">
+              <button
+                type="button"
+                onClick={() => setShowFmeaModal(false)}
+                className="px-4 py-2 rounded-xl border border-white/10 text-white hover:bg-white/10 text-xs font-bold"
+              >
+                إغلاق
+              </button>
             </div>
           </div>
         </div>

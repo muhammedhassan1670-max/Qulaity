@@ -268,20 +268,20 @@ export function CAPAPage() {
     });
   }, [capas, searchQuery, activeFilters]);
 
-  // Handlers
   const handleOpenCreate = (sourceNCR?: string, initialTitle?: string) => {
+    const p = new URLSearchParams(location.search);
     setEditingCapa(null);
     setFormData({
-      title: initialTitle || '',
-      description: '',
-      problemStatement: '',
-      type: 'corrective',
+      title: initialTitle || p.get('title') || '',
+      description: p.get('desc') || p.get('description') || '',
+      problemStatement: p.get('desc') || p.get('problemStatement') || p.get('description') || '',
+      type: (p.get('type') as any) || 'corrective',
       status: 'identified',
-      priority: 'medium',
-      sourceNCRId: sourceNCR || '',
+      priority: (p.get('priority') as any) || 'medium',
+      sourceNCRId: sourceNCR || p.get('sourceNCRId') || p.get('sourceId') || '',
       owner: 'Eng. Quality Team',
-      department: 'Quality Assurance',
-      plant: 'Main Plant - Assembly 01',
+      department: p.get('department') || 'Quality Assurance',
+      plant: p.get('plant') || 'Main Plant - Assembly 01',
       targetDate: new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0],
       rootCause: '',
       fiveWhy: '',
