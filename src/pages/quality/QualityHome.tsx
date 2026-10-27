@@ -120,9 +120,9 @@ function storageHealthClass(status: string): string {
 }
 
 function StepIcon({ status }: { status: QualitySetupStepStatus }) {
-  if (status === 'done') return <CheckCircle2 className="h-5 w-5 text-emerald-300" />;
-  if (status === 'warning') return <AlertTriangle className="h-5 w-5 text-amber-300" />;
-  return <XCircle className="h-5 w-5 text-red-300" />;
+  if (status === 'done') return <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-300" />;
+  if (status === 'warning') return <AlertTriangle className="h-5 w-5 shrink-0 text-amber-300" />;
+  return <XCircle className="h-5 w-5 shrink-0 text-red-300" />;
 }
 
 function cardsForRole(role: QualityWorkflowRole): WorkspaceCard[] {
@@ -520,21 +520,25 @@ export default function QualityHome() {
               </div>
             </div>
 
-            <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-2 xl:grid-cols-3">
+            <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3.5">
               {setupReport.guidedSteps.map((step: GuidedSetupStep) => (
-                <div key={step.id} className="rounded-2xl border border-white/10 bg-black/10 p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-2">
-                      <StepIcon status={step.status} />
-                      <h3 className="text-sm font-black text-white">{step.title}</h3>
+                <div key={step.id} className="rounded-2xl border border-white/10 bg-black/10 p-4 flex flex-col justify-between overflow-hidden">
+                  <div>
+                    <div className="flex items-start justify-between gap-2.5">
+                      <div className="flex items-start gap-2.5 min-w-0 flex-1">
+                        <div className="mt-0.5 shrink-0">
+                          <StepIcon status={step.status} />
+                        </div>
+                        <h3 className="text-sm font-black text-white leading-tight break-words">{step.title}</h3>
+                      </div>
+                      <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-black uppercase shrink-0 whitespace-nowrap ${statusBadgeClass(step.status)}`}>
+                        {step.status}
+                      </span>
                     </div>
-                    <span className={`rounded-full border px-2 py-1 text-[10px] font-black uppercase ${statusBadgeClass(step.status)}`}>
-                      {step.status}
-                    </span>
+                    <p className="mt-3 text-xs leading-5 text-white/45 break-words">{step.explanation}</p>
+                    <p className="mt-3 rounded-xl border border-white/10 bg-white/5 p-3 text-xs text-white/55 break-words">{step.validationReason}</p>
                   </div>
-                  <p className="mt-3 text-xs leading-5 text-white/45">{step.explanation}</p>
-                  <p className="mt-3 rounded-xl border border-white/10 bg-white/5 p-3 text-xs text-white/55">{step.validationReason}</p>
-                  <Link to={step.href} className="mt-3 inline-flex rounded-xl bg-[#0066CC] px-3 py-2 text-xs font-black text-white hover:bg-[#005BB8]">
+                  <Link to={step.href} className="mt-4 inline-flex items-center justify-center rounded-xl bg-[#0066CC] px-4 py-2.5 text-xs font-black text-white hover:bg-[#005BB8] active:scale-95 transition-transform w-full sm:w-auto self-start">
                     {step.actionLabel}
                   </Link>
                 </div>
@@ -547,15 +551,15 @@ export default function QualityHome() {
           <div className="rounded-3xl border border-white/10 bg-white/5 px-3 py-4 sm:px-5 sm:py-5">
             <h2 className="text-xl font-black text-white sm:text-3xl">End-to-End Journey Checklist</h2>
             <p className="mt-1 text-sm text-white/45">Completion is calculated from real local configuration, inspection runs, defects, actions, and knowledge records.</p>
-            <div className="mt-5 grid grid-cols-2 gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
               {setupReport.journeys.map((journey) => {
                 const completed = journey.items.filter((item) => item.done).length;
                 const percent = Math.round((completed / Math.max(1, journey.items.length)) * 100);
                 return (
-                  <div key={journey.id} className="rounded-2xl border border-white/10 bg-black/10 p-4">
+                  <div key={journey.id} className="rounded-2xl border border-white/10 bg-black/10 p-4 overflow-hidden">
                     <div className="flex items-center justify-between gap-3">
-                      <h3 className="text-sm font-black text-white">{journey.title}</h3>
-                      <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-black text-white/50">{percent}%</span>
+                      <h3 className="text-sm font-black text-white break-words">{journey.title}</h3>
+                      <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-black text-white/50 shrink-0 whitespace-nowrap">{percent}%</span>
                     </div>
                     <div className="mt-3 h-2 overflow-hidden rounded-full bg-black/30">
                       <div className="h-full rounded-full bg-[#00A3E0]" style={{ width: `${percent}%` }} />
@@ -639,18 +643,22 @@ export default function QualityHome() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-2 xl:grid-cols-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
             {pilotReport.categories.map((category) => (
-              <Link key={category.id} to={category.href} className="rounded-2xl border border-white/10 bg-black/10 p-4 hover:bg-white/10">
-                <div className="flex items-center justify-between gap-2">
-                  <StepIcon status={category.status} />
-                  <span className={`rounded-full border px-2 py-1 text-[10px] font-black uppercase ${statusBadgeClass(category.status)}`}>{category.status}</span>
+              <Link key={category.id} to={category.href} className="rounded-2xl border border-white/10 bg-black/10 p-4 hover:bg-white/10 transition-colors flex flex-col justify-between overflow-hidden">
+                <div>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="shrink-0">
+                      <StepIcon status={category.status} />
+                    </div>
+                    <span className={`rounded-full border px-2 py-0.5 text-[10px] font-black uppercase shrink-0 whitespace-nowrap ${statusBadgeClass(category.status)}`}>{category.status}</span>
+                  </div>
+                  <p className="mt-3 text-sm font-black text-white break-words">{category.title}</p>
+                  <div className="mt-3 h-2 overflow-hidden rounded-full bg-black/30">
+                    <div className="h-full rounded-full bg-[#00A3E0]" style={{ width: `${category.score}%` }} />
+                  </div>
                 </div>
-                <p className="mt-3 text-sm font-black text-white">{category.title}</p>
-                <div className="mt-3 h-2 overflow-hidden rounded-full bg-black/30">
-                  <div className="h-full rounded-full bg-[#00A3E0]" style={{ width: `${category.score}%` }} />
-                </div>
-                <p className="mt-2 text-xs leading-5 text-white/40">{category.validationReason}</p>
+                <p className="mt-2 text-xs leading-5 text-white/40 break-words">{category.validationReason}</p>
               </Link>
             ))}
           </div>
@@ -845,15 +853,15 @@ export default function QualityHome() {
         <section className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
           <div>
             <h2 className="mb-4 text-xl font-black text-white sm:text-3xl">Recommended For {roleLabel(role)}</h2>
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
               {roleCards.map(({ title, description, href, icon: Icon, badge }) => (
                 <Link key={title} to={href} className={cardClass()}>
-                  <Icon className="mb-4 h-7 w-7 text-[#00A3E0]" />
+                  <Icon className="mb-4 h-7 w-7 text-[#00A3E0] shrink-0" />
                   <div className="flex items-start justify-between gap-3">
-                    <h3 className="text-lg font-black text-white">{title}</h3>
-                    {badge && <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-black text-white/45">{badge}</span>}
+                    <h3 className="text-lg font-black text-white break-words">{title}</h3>
+                    {badge && <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-black text-white/45 shrink-0 whitespace-nowrap">{badge}</span>}
                   </div>
-                  <p className="mt-2 text-sm text-white/45">{description}</p>
+                  <p className="mt-2 text-sm text-white/45 break-words">{description}</p>
                 </Link>
               ))}
             </div>
