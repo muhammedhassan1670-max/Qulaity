@@ -559,62 +559,61 @@ export function NCRPage() {
                     <div
                       key={ncr.id}
                       onClick={() => handleOpenView(ncr)}
-                      className="rounded-3xl border border-white/10 bg-slate-900/80 backdrop-blur-xl p-5 shadow-2xl flex flex-col justify-between hover:border-[#00A3E0]/40 transition-all duration-300 group cursor-pointer"
+                      className="rounded-2xl sm:rounded-3xl border border-white/10 bg-slate-900/80 backdrop-blur-xl p-4 sm:p-5 shadow-xl flex flex-col justify-between hover:border-[#00A3E0]/40 transition-all duration-300 group cursor-pointer overflow-hidden max-w-full"
                     >
-                      <div className="space-y-3.5">
+                      <div className="space-y-3 min-w-0">
                         {/* Header ID & Status */}
-                        <div className="flex items-start justify-between gap-2 flex-wrap">
-                          <div className="flex items-center gap-2">
-                            <span className="text-[#00A3E0] font-mono font-bold text-xs bg-[#00A3E0]/10 px-2.5 py-1 rounded-xl border border-[#00A3E0]/20">
+                        <div className="flex items-center justify-between gap-2 min-w-0">
+                          <div className="flex items-center gap-1.5 min-w-0 shrink-0">
+                            <span className="text-[#00A3E0] font-mono font-bold text-xs bg-[#00A3E0]/10 px-2 py-0.5 rounded-lg border border-[#00A3E0]/20 shrink-0">
                               {ncr.ncrNumber || ncr.id}
                             </span>
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-lg border ${
+                            <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md border shrink-0 ${
                               ncr.severity === 'critical' ? 'bg-rose-500/10 text-rose-300 border-rose-500/20' :
                               ncr.severity === 'major' ? 'bg-orange-500/10 text-orange-300 border-orange-500/20' : 'bg-yellow-500/10 text-yellow-300 border-yellow-500/20'
                             }`}>
                               {ncr.severity.toUpperCase()}
                             </span>
                           </div>
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1 shrink-0">
                             <StatusBadge status={ncr.status} size="sm" />
-                            <PriorityBadge priority={ncr.priority} size="sm" />
                           </div>
                         </div>
 
                         {/* Title & Description */}
-                        <div>
-                          <h4 className="text-white font-bold text-base leading-snug line-clamp-2 group-hover:text-[#00A3E0] transition-colors">
+                        <div className="min-w-0">
+                          <h4 className="text-white font-bold text-sm sm:text-base leading-snug line-clamp-2 break-words group-hover:text-[#00A3E0] transition-colors">
                             {ncr.title}
                           </h4>
-                          <p className="text-gray-400 text-xs mt-1.5 line-clamp-2 leading-relaxed">
+                          <p className="text-gray-400 text-xs mt-1 line-clamp-2 leading-relaxed break-words">
                             {ncr.description}
                           </p>
                         </div>
 
                         {/* Defect Type & Qty */}
-                        <div className="flex items-center justify-between text-xs bg-white/5 p-2.5 rounded-xl border border-white/5">
-                          <span className="text-gray-300 truncate max-w-[160px] font-medium">{ncr.defectType}</span>
-                          <span className="font-bold text-[#00A3E0] bg-[#00A3E0]/10 px-2 py-0.5 rounded-md">
+                        <div className="flex items-center justify-between gap-2 text-xs bg-white/5 p-2 rounded-xl border border-white/5 min-w-0">
+                          <span className="text-gray-300 truncate font-medium min-w-0 flex-1">{ncr.defectType}</span>
+                          <span className="font-bold text-[#00A3E0] bg-[#00A3E0]/10 px-2 py-0.5 rounded-md shrink-0">
                             {ncr.affectedQuantity} {isAr ? 'قطع' : 'pcs'}
                           </span>
                         </div>
 
                         {/* Line & Owner */}
-                        <div className="grid grid-cols-2 gap-2 pt-1 border-t border-white/5 text-xs text-gray-300">
-                          <div className="flex items-center gap-1.5 truncate">
+                        <div className="grid grid-cols-2 gap-2 pt-1 border-t border-white/5 text-xs text-gray-300 min-w-0">
+                          <div className="flex items-center gap-1.5 min-w-0">
                             <User className="w-3.5 h-3.5 text-[#00A3E0] shrink-0" />
-                            <span className="truncate">{ncr.assignedTo}</span>
+                            <span className="truncate min-w-0">{ncr.assignedTo}</span>
                           </div>
-                          <div className="flex items-center gap-1.5 truncate">
+                          <div className="flex items-center gap-1.5 min-w-0">
                             <Building className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                            <span className="truncate">{ncr.productionLine}</span>
+                            <span className="truncate min-w-0">{ncr.productionLine}</span>
                           </div>
                         </div>
 
                         {/* Disposition Status */}
-                        <div className="flex items-center justify-between text-[11px] pt-1">
-                          <span className="text-gray-400">{isAr ? 'قرار التصرف:' : 'Disposition:'}</span>
-                          <span className={`font-bold px-2 py-0.5 rounded-md ${
+                        <div className="flex items-center justify-between gap-2 text-[11px] pt-1 min-w-0">
+                          <span className="text-gray-400 shrink-0">{isAr ? 'قرار التصرف:' : 'Disposition:'}</span>
+                          <span className={`font-bold px-2 py-0.5 rounded-md truncate max-w-[60%] text-end shrink-0 ${
                             ncr.disposition === 'rework' ? 'bg-amber-500/20 text-amber-300' :
                             ncr.disposition === 'scrap' ? 'bg-rose-500/20 text-rose-300' :
                             ncr.disposition === 'return-to-vendor' ? 'bg-purple-500/20 text-purple-300' :
@@ -629,7 +628,7 @@ export function NCRPage() {
                       </div>
 
                       {/* Footer Actions */}
-                      <div className="pt-4 mt-4 border-t border-white/10 flex items-center justify-between gap-2">
+                      <div className="pt-3 mt-3 border-t border-white/10 flex items-center justify-between gap-2 min-w-0">
                         <button
                           type="button"
                           onClick={(e) => { e.stopPropagation(); handleOpenView(ncr); }}

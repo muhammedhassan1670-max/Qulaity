@@ -1477,13 +1477,35 @@ html, body, #root {
   animation: mobileFadeIn 0.25s ease-out forwards;
 }
 
-/* Eliminate mobile touch tap highlights & improve fluid feel */
+/* Eliminate mobile touch tap highlights & ensure zero text overflow */
 @media (max-width: 768px) {
   * {
     -webkit-tap-highlight-color: transparent;
+    box-sizing: border-box;
   }
-  body {
+  html, body {
+    overflow-x: hidden !important;
+    max-width: 100vw;
     -webkit-overflow-scrolling: touch;
+  }
+  /* Prevent any text from breaking out of cards or containers */
+  p, h1, h2, h3, h4, h5, h6, span, label, div {
+    overflow-wrap: break-word;
+    word-break: normal;
+  }
+  .truncate {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+  /* Keep all cards, panels and dialogs strictly within screen bounds */
+  .glass-panel, [class*="rounded-"] {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+  /* Ensure mono codes break cleanly without widening the page */
+  .font-mono, code {
+    word-break: break-all;
   }
 }
 
