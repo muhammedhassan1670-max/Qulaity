@@ -5,7 +5,7 @@ import DynamicFormRenderer from '../../components/DynamicFormRenderer';
 import { 
   Search,
   Plus,
-  MoreHorizontal
+  X
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -183,7 +183,80 @@ export function FMEAPage() {
           </button>
         </div>
 
-        <div className="glass-panel rounded-xl overflow-hidden">
+        {/* Mobile Cards View */}
+        <div className="block sm:hidden space-y-3">
+          {visibleFmeas.map((fmea) => (
+            <div
+              key={fmea.id}
+              onClick={() => {
+                setEditingFmea(fmea);
+                setIsFormOpen(true);
+              }}
+              className="rounded-2xl border border-white/10 bg-white/5 p-4 space-y-3 hover:border-white/20 transition-all cursor-pointer active:scale-[0.99]"
+            >
+              {/* Header: ID, RPN & Status */}
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-[#00A3E0] font-mono font-bold text-xs bg-[#00A3E0]/10 px-2.5 py-0.5 rounded-lg border border-[#00A3E0]/20">
+                    {fmea.id}
+                  </span>
+                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${statusConfig[fmea.status]}`}>
+                    {fmea.status}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] uppercase font-bold text-white/40">RPN:</span>
+                  <span className={`text-base font-black ${getRPNColor(fmea.rpn)}`}>
+                    {fmea.rpn}
+                  </span>
+                </div>
+              </div>
+
+              {/* Process & Failure Mode */}
+              <div>
+                <span className="text-[10px] font-black uppercase text-[#00A3E0] tracking-wider block">{fmea.process}</span>
+                <h4 className="text-white font-bold text-sm mt-0.5 leading-tight">{fmea.failureMode}</h4>
+                {fmea.failureEffect && (
+                  <p className="text-gray-400 text-xs mt-1 line-clamp-2">{fmea.failureEffect}</p>
+                )}
+              </div>
+
+              {/* S - O - D Score Badges */}
+              <div className="flex items-center gap-2 pt-1 border-t border-white/5 text-xs">
+                <div className="flex items-center gap-1">
+                  <span className="text-[10px] text-white/40 font-bold">Severity:</span>
+                  <span className={`w-5 h-5 rounded flex items-center justify-center font-bold text-[11px] ${getScoreColor(fmea.severity)}`}>
+                    {fmea.severity}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="text-[10px] text-white/40 font-bold">Occur:</span>
+                  <span className={`w-5 h-5 rounded flex items-center justify-center font-bold text-[11px] ${getScoreColor(fmea.occurrence)}`}>
+                    {fmea.occurrence}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="text-[10px] text-white/40 font-bold">Detect:</span>
+                  <span className={`w-5 h-5 rounded flex items-center justify-center font-bold text-[11px] ${getScoreColor(fmea.detection)}`}>
+                    {fmea.detection}
+                  </span>
+                </div>
+              </div>
+
+              {/* Actions & Owner */}
+              {fmea.actions && (
+                <div className="p-2 rounded-xl bg-white/5 text-xs text-gray-300">
+                  <span className="text-white/40 block text-[10px] font-bold uppercase">Actions / Owner</span>
+                  <p className="truncate mt-0.5">{fmea.actions}</p>
+                  {fmea.owner && <span className="text-[10px] text-gray-400 block mt-0.5">Resp: {fmea.owner}</span>}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop Table View */}
+        <div className="hidden sm:block glass-panel rounded-xl overflow-hidden">
           <div className="overflow-x-auto w-full no-scrollbar">
             <table className="w-full min-w-[720px]">
             <thead className="bg-white/5 border-b border-white/10">
@@ -281,9 +354,9 @@ export function FMEAPage() {
                 </div>
                 <button
                   onClick={() => setIsFormOpen(false)}
-                  className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                  className="p-2 hover:bg-white/10 rounded-lg transition-colors text-gray-400 hover:text-white"
                 >
-                  <MoreHorizontal className="w-5 h-5 text-gray-400" />
+                  <X className="w-5 h-5" />
                 </button>
               </div>
 

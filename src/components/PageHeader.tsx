@@ -125,7 +125,7 @@ export function PageContainer({
   className?: string;
 }) {
   return (
-    <div className={`max-w-[1600px] mx-auto page-enter ${className}`}>
+    <div className={`max-w-[1600px] mx-auto px-2 sm:px-4 md:px-6 page-enter ${className}`}>
       {children}
     </div>
   );
@@ -144,11 +144,11 @@ export function PageSection({
   className?: string;
 }) {
   return (
-    <div className={`mb-8 ${className}`}>
+    <div className={`mb-6 sm:mb-8 ${className}`}>
       {(title || description) && (
-        <div className="mb-4">
-          {title && <h2 className="text-lg font-semibold text-white">{title}</h2>}
-          {description && <p className="text-gray-400 text-sm">{description}</p>}
+        <div className="mb-3 sm:mb-4">
+          {title && <h2 className="text-base sm:text-lg font-semibold text-white">{title}</h2>}
+          {description && <p className="text-gray-400 text-xs sm:text-sm">{description}</p>}
         </div>
       )}
       {children}
@@ -168,14 +168,14 @@ export function StatsBar({
   }>;
 }) {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4 mb-4 sm:mb-6">
       {stats.map((stat, index) => (
-        <div key={index} className="glass-panel rounded-lg p-4">
-          <p className="text-gray-400 text-sm">{stat.label}</p>
-          <div className="flex items-baseline gap-2 mt-1">
-            <p className="text-2xl font-bold text-white">{stat.value}</p>
+        <div key={index} className="glass-panel rounded-xl sm:rounded-2xl p-3 sm:p-4">
+          <p className="text-gray-400 text-xs sm:text-sm truncate">{stat.label}</p>
+          <div className="flex items-baseline gap-1.5 sm:gap-2 mt-1">
+            <p className="text-lg sm:text-2xl font-bold text-white">{stat.value}</p>
             {stat.change && (
-              <span className={`text-xs ${
+              <span className={`text-[10px] sm:text-xs ${
                 stat.trend === 'up' ? 'text-green-400' : 
                 stat.trend === 'down' ? 'text-red-400' : 'text-gray-400'
               }`}>

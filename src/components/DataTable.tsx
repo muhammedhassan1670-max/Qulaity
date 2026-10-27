@@ -17,7 +17,9 @@ import {
   Download,
   AlignJustify,
   Maximize2,
-  Minimize2
+  Minimize2,
+  LayoutGrid,
+  List
 } from 'lucide-react';
 
 export interface Column<T> {
@@ -66,6 +68,7 @@ export function DataTable<T>({
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [density, setDensity] = useState<'compact' | 'comfortable' | 'spacious'>('comfortable');
+  const [mobileView, setMobileView] = useState<'cards' | 'table'>('cards');
 
   // Density padding maps
   const cellPadding = {
@@ -181,10 +184,10 @@ export function DataTable<T>({
   return (
     <div className={`space-y-4 ${className}`}>
       {/* Search and Filters - Stack on mobile */}
-      {(onSearch || filterOptions.length > 0) && (
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1 sm:px-2 flex-wrap">
+        <div className="flex flex-1 items-center gap-3 w-full sm:w-auto flex-wrap">
           {onSearch && (
-            <div className="relative w-full sm:w-80 group">
+            <div className="relative flex-1 sm:w-80 group min-w-[200px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-[#00A3E0] transition-colors" />
               <input
                 type="text"
@@ -197,7 +200,7 @@ export function DataTable<T>({
           )}
           
           {filterOptions.length > 0 && (
-            <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap pb-1 sm:pb-0 no-scrollbar">
+            <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap pb-1 sm:pb-0 no-scrollbar max-w-full">
               <Filter className="w-4 h-4 text-gray-500 shrink-0" />
               {filterOptions.map((option) => (
                 <button
@@ -216,27 +219,123 @@ export function DataTable<T>({
               ))}
             </div>
           )}
-          {/* Right Toolbar: Export & Density */}
-          <div className="flex items-center gap-2 border border-white/10 bg-white/5 rounded-xl p-1">
-            <button onClick={exportToCSV} title="Export to CSV" className="p-2 rounded-lg text-white/50 hover:text-white hover:bg-white/10 transition-all">
-              <Download className="w-4 h-4" />
+        </div>
+
+        {/* Right Toolbar: Mobile Cards/Table View, Export & Density */}
+        <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-2 border border-white/10 bg-white/5 rounded-xl p-1 shrink-0">
+          {/* Mobile View Toggle */}
+          <div className="flex items-center sm:hidden">
+            <button
+              type="button"
+              onClick={() => setMobileView('cards')}
+              title="Card View"
+              className={`p-2 rounded-lg transition-all ${mobileView === 'cards' ? 'bg-[#00A3E0]/20 text-[#00A3E0]' : 'text-white/50 hover:text-white'}`}
+            >
+              <LayoutGrid className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setMobileView('table')}
+              title="Table View"
+              className={`p-2 rounded-lg transition-all ${mobileView === 'table' ? 'bg-[#00A3E0]/20 text-[#00A3E0]' : 'text-white/50 hover:text-white'}`}
+            >
+              <List className="w-4 h-4" />
             </button>
             <div className="w-[1px] h-4 bg-white/10 mx-1"></div>
-            <button onClick={() => setDensity('compact')} title="Compact" className={`p-2 rounded-lg transition-all ${density === 'compact' ? 'bg-[#00A3E0]/20 text-[#00A3E0]' : 'text-white/50 hover:text-white hover:bg-white/10'}`}>
-              <Minimize2 className="w-4 h-4" />
-            </button>
-            <button onClick={() => setDensity('comfortable')} title="Comfortable" className={`p-2 rounded-lg transition-all ${density === 'comfortable' ? 'bg-[#00A3E0]/20 text-[#00A3E0]' : 'text-white/50 hover:text-white hover:bg-white/10'}`}>
-              <AlignJustify className="w-4 h-4" />
-            </button>
-            <button onClick={() => setDensity('spacious')} title="Spacious" className={`p-2 rounded-lg transition-all ${density === 'spacious' ? 'bg-[#00A3E0]/20 text-[#00A3E0]' : 'text-white/50 hover:text-white hover:bg-white/10'}`}>
-              <Maximize2 className="w-4 h-4" />
-            </button>
           </div>
+
+          <button onClick={exportToCSV} title="Export to CSV" className="p-2 rounded-lg text-white/50 hover:text-white hover:bg-white/10 transition-all">
+            <Download className="w-4 h-4" />
+          </button>
+          <div className="hidden sm:block w-[1px] h-4 bg-white/10 mx-1"></div>
+          <button onClick={() => setDensity('compact')} title="Compact" className={`hidden sm:inline-flex p-2 rounded-lg transition-all ${density === 'compact' ? 'bg-[#00A3E0]/20 text-[#00A3E0]' : 'text-white/50 hover:text-white hover:bg-white/10'}`}>
+            <Minimize2 className="w-4 h-4" />
+          </button>
+          <button onClick={() => setDensity('comfortable')} title="Comfortable" className={`hidden sm:inline-flex p-2 rounded-lg transition-all ${density === 'comfortable' ? 'bg-[#00A3E0]/20 text-[#00A3E0]' : 'text-white/50 hover:text-white hover:bg-white/10'}`}>
+            <AlignJustify className="w-4 h-4" />
+          </button>
+          <button onClick={() => setDensity('spacious')} title="Spacious" className={`hidden sm:inline-flex p-2 rounded-lg transition-all ${density === 'spacious' ? 'bg-[#00A3E0]/20 text-[#00A3E0]' : 'text-white/50 hover:text-white hover:bg-white/10'}`}>
+            <Maximize2 className="w-4 h-4" />
+          </button>
         </div>
-      )}
+      </div>
+
+      {/* Mobile Cards View (Active by default on mobile) */}
+      <div className={`${mobileView === 'cards' ? 'block sm:hidden' : 'hidden'} space-y-3`}>
+        {paginatedData.map((item) => {
+          const id = keyExtractor(item);
+          const isSelected = selectedItems.includes(id);
+          const primaryCol = columns[0];
+          const secondaryCols = columns.slice(1);
+
+          return (
+            <div
+              key={id}
+              onClick={() => onRowClick?.(item)}
+              className={`rounded-2xl border p-4 transition-all duration-200 ${
+                isSelected
+                  ? 'bg-[#00A3E0]/15 border-[#00A3E0]/50'
+                  : 'bg-white/5 border-white/10 hover:border-white/20'
+              } ${onRowClick ? 'cursor-pointer active:scale-[0.99]' : ''}`}
+            >
+              {/* Header: ID/Primary Column + Checkbox + Actions */}
+              <div className="flex items-start justify-between gap-2 pb-2.5 border-b border-white/5">
+                <div className="flex items-center gap-2 min-w-0">
+                  {onSelectionChange && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleSelect(id);
+                      }}
+                      className="p-1 hover:bg-white/10 rounded-lg shrink-0"
+                    >
+                      {isSelected ? (
+                        <CheckSquare className="w-4 h-4 text-[#00A3E0]" />
+                      ) : (
+                        <Square className="w-4 h-4 text-white/30" />
+                      )}
+                    </button>
+                  )}
+                  <div className="min-w-0 font-medium text-sm">
+                    {primaryCol?.render ? primaryCol.render(item) : (
+                      <span className="font-bold text-white truncate block">
+                        {String(getNestedValue(item, primaryCol?.key) ?? '-')}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {actions && (
+                  <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+                    {actions(item)}
+                  </div>
+                )}
+              </div>
+
+              {/* Grid of secondary fields */}
+              <div className="grid grid-cols-2 gap-2.5 pt-3">
+                {secondaryCols.map((col) => {
+                  const val = getNestedValue(item, col.key);
+                  return (
+                    <div key={col.key} className="space-y-0.5 min-w-0">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-white/40 block truncate">
+                        {col.title}
+                      </span>
+                      <div className="text-xs text-white/90">
+                        {col.render ? col.render(item) : String(val ?? '-')}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
 
       {/* Table Container - Scrollable on mobile */}
-      <div className="relative overflow-x-auto rounded-[2rem] glass-panel border border-white/5 no-scrollbar max-h-[70vh]">
+      <div className={`${mobileView === 'cards' ? 'hidden sm:block' : 'block'} relative overflow-x-auto rounded-2xl sm:rounded-[2rem] glass-panel border border-white/5 no-scrollbar max-h-[70vh]`}>
         <table className="w-full text-left border-collapse min-w-[800px]">
           <thead className="bg-white/[0.05] sticky top-0 z-10 backdrop-blur-md shadow-md">
             <tr>
@@ -354,7 +453,7 @@ export function DataTable<T>({
                   {/* Actions */}
                   {actions && (
                     <td className={`${cellPadding} text-right`} onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center justify-end opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="flex items-center justify-end opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-300">
                         {actions(item)}
                       </div>
                     </td>
@@ -375,7 +474,7 @@ export function DataTable<T>({
             <span className="text-white font-medium">{sortedData.length}</span> entries
           </p>
           
-          <div className="flex items-center gap-2 order-1 sm:order-2">
+          <div className="flex items-center gap-1 sm:gap-2 order-1 sm:order-2 flex-wrap justify-center">
             <button
               onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
               disabled={currentPage === 1}

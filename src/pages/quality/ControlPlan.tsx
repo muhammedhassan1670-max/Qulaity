@@ -375,34 +375,37 @@ export function ControlPlanPage() {
                 />
               </div>
               
-              <div className="flex items-center gap-2 flex-wrap">
-                <button 
-                  onClick={() => setShowFilters(!showFilters)}
-                  className={`h-11 px-4 border rounded-lg transition-colors flex items-center gap-2 ${
-                    showFilters || Object.keys(activeFilters).length > 0
-                      ? 'bg-[#0066CC]/20 border-[#00A3E0] text-[#00A3E0]'
-                      : 'bg-white/5 border-white/10 text-white hover:bg-white/10'
-                  }`}
-                >
-                  <Filter className="w-4 h-4" />
-                  <span className="hidden sm:inline">Filters</span>
-                  {Object.keys(activeFilters).length > 0 && (
-                    <span className="ml-1 px-1.5 py-0.5 bg-[#0066CC] text-white text-xs rounded-full">
-                      {Object.values(activeFilters).flat().length}
-                    </span>
-                  )}
-                </button>
-                
-                <button 
-                  onClick={handleCreate}
-                  className="h-11 px-4 bg-[#0066CC] text-white rounded-lg hover:bg-[#0052a3] transition-colors flex items-center justify-center gap-2 flex-1 sm:flex-initial"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>New Control Plan</span>
-                </button>
+              <div className="grid grid-cols-1 sm:flex items-center gap-2 w-full sm:w-auto">
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => setShowFilters(!showFilters)}
+                    className={`h-11 px-4 border rounded-lg transition-colors flex items-center justify-center gap-2 flex-1 sm:flex-initial ${
+                      showFilters || Object.keys(activeFilters).length > 0
+                        ? 'bg-[#0066CC]/20 border-[#00A3E0] text-[#00A3E0]'
+                        : 'bg-white/5 border-white/10 text-white hover:bg-white/10'
+                    }`}
+                  >
+                    <Filter className="w-4 h-4" />
+                    <span>Filters</span>
+                    {Object.keys(activeFilters).length > 0 && (
+                      <span className="ml-1 px-1.5 py-0.5 bg-[#0066CC] text-white text-xs rounded-full">
+                        {Object.values(activeFilters).flat().length}
+                      </span>
+                    )}
+                  </button>
+                  
+                  <button 
+                    onClick={handleCreate}
+                    className="h-11 px-4 bg-[#0066CC] text-white rounded-lg hover:bg-[#0052a3] transition-colors flex items-center justify-center gap-2 flex-1 sm:flex-initial"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>New Plan</span>
+                  </button>
+                </div>
+
                 <button 
                   onClick={() => setShowFmeaModal(true)}
-                  className="h-11 px-4 border border-[#00A3E0]/40 text-[#8be3ff] bg-[#00A3E0]/10 hover:bg-[#00A3E0]/20 rounded-lg transition-colors flex items-center justify-center gap-2"
+                  className="h-11 px-4 border border-[#00A3E0]/40 text-[#8be3ff] bg-[#00A3E0]/10 hover:bg-[#00A3E0]/20 rounded-lg transition-colors flex items-center justify-center gap-2 w-full sm:w-auto"
                   title="استيراد أوضاع الفشل الحرجة من تحليل المخاطر FMEA"
                 >
                   <Layers className="w-4 h-4 text-[#00A3E0]" />

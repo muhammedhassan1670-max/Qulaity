@@ -505,13 +505,13 @@ export default function QualityMasterData() {
                     To log new defects, please use the Defect Recorder page.
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="relative">
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <div className="relative w-full sm:w-auto">
                     <Search className="w-4 h-4 text-white/40 absolute left-3 top-1/2 -translate-y-1/2" />
                     <input
                       type="text"
                       placeholder="Search records..."
-                      className="w-[250px] pl-9 pr-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-sm"
+                      className="w-full sm:w-[250px] pl-9 pr-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-sm"
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
                     />

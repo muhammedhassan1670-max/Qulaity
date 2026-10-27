@@ -1011,16 +1011,16 @@ const DynamicFormContent: React.FC<DynamicFormContentProps> = ({
       className={`${isShopfloor ? 'space-y-5' : 'space-y-12'} animate-in fade-in duration-700 ${className}`}
     >
       {/* Form Header */}
-      {!isShopfloor && <div className="relative overflow-hidden p-10 rounded-[2rem] pro-card border-none bg-gradient-to-br from-[#0066CC]/20 via-[#0066CC]/5 to-transparent">
-        <div className="relative z-10 space-y-4">
+      {!isShopfloor && <div className="relative overflow-hidden p-4 sm:p-8 md:p-10 rounded-2xl sm:rounded-[2rem] pro-card border-none bg-gradient-to-br from-[#0066CC]/20 via-[#0066CC]/5 to-transparent">
+        <div className="relative z-10 space-y-3 sm:space-y-4">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#0066CC]/20 border border-[#0066CC]/30 text-[#00A3E0] text-[10px] font-bold uppercase tracking-widest">
             Industrial Form System
           </div>
-          <h2 className="text-4xl font-black text-white tracking-tight leading-none">
+          <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight leading-tight">
             {formConfig.name}
           </h2>
           {formConfig.description && (
-            <p className="text-white/60 text-lg max-w-3xl font-medium leading-relaxed">
+            <p className="text-white/60 text-sm sm:text-lg max-w-3xl font-medium leading-relaxed">
               {formConfig.description}
             </p>
           )}
@@ -1029,7 +1029,7 @@ const DynamicFormContent: React.FC<DynamicFormContentProps> = ({
         {/* Abstract Background Elements */}
         <div className="absolute top-0 right-0 w-96 h-96 bg-[#00A3E0]/10 rounded-full blur-[100px] -mr-32 -mt-32" />
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#0066CC]/10 rounded-full blur-[80px] -ml-32 -mb-32" />
-        <div className="absolute top-1/2 right-10 -translate-y-1/2 opacity-10">
+        <div className="hidden sm:block absolute top-1/2 right-10 -translate-y-1/2 opacity-10">
           <Barcode className="w-32 h-32 text-white" />
         </div>
       </div>}
@@ -1045,11 +1045,11 @@ const DynamicFormContent: React.FC<DynamicFormContentProps> = ({
 
       {mode === 'create' && !readOnly && (
         <div className="flex justify-end px-2">
-          <div className="flex p-1 bg-white/5 rounded-xl border border-white/10 w-fit">
+          <div className="flex p-1 bg-white/5 rounded-xl border border-white/10 w-full sm:w-fit justify-center">
             <button
               type="button"
               onClick={() => setViewMode('form')}
-              className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${
+              className={`flex-1 sm:flex-initial px-4 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all ${
                 viewMode === 'form' ? 'bg-[#00A3E0] text-white shadow-lg' : 'text-white/40 hover:text-white/80'
               }`}
             >
@@ -1058,7 +1058,7 @@ const DynamicFormContent: React.FC<DynamicFormContentProps> = ({
             <button
               type="button"
               onClick={() => setViewMode('grid')}
-              className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${
+              className={`flex-1 sm:flex-initial px-4 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all ${
                 viewMode === 'grid' ? 'bg-green-500 text-white shadow-lg' : 'text-white/40 hover:text-white/80'
               }`}
             >
@@ -1190,11 +1190,11 @@ const DynamicFormContent: React.FC<DynamicFormContentProps> = ({
                 animate={useWizard ? { opacity: 1, x: 0 } : undefined}
                 exit={useWizard ? { opacity: 0, x: -20 } : undefined}
                 transition={{ duration: 0.3 }}
-                className={`${isShopfloor ? 'rounded-2xl border border-dashed border-white/10 bg-white/5 p-4 space-y-4' : 'pro-card p-8 space-y-8 border-dashed border-white/10'}`}
+                className={`${isShopfloor ? 'rounded-2xl border border-dashed border-white/10 bg-white/5 p-4 space-y-4' : 'pro-card p-4 sm:p-8 space-y-6 sm:space-y-8 border-dashed border-white/10'}`}
               >
-                <div className="flex items-center gap-4">
-                  <div className="h-10 w-2 bg-slate-600 rounded-full" />
-                  <h3 className="text-2xl font-black text-white tracking-tight uppercase">Additional Details</h3>
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <div className="h-8 sm:h-10 w-1.5 sm:w-2 bg-slate-600 rounded-full" />
+                  <h3 className="text-lg sm:text-2xl font-black text-white tracking-tight uppercase">Additional Details</h3>
                   <div className="flex-1 h-px bg-gradient-to-r from-white/10 via-white/5 to-transparent" />
                 </div>
                 <div className={`grid grid-cols-1 ${isShopfloor ? 'gap-4' : 'md:grid-cols-2 gap-x-10 gap-y-8'}`}>

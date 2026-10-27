@@ -9,7 +9,7 @@ import {
   CheckCircle2,
   Clock,
   Wrench,
-  MoreHorizontal
+  X
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -190,7 +190,68 @@ export function CalibrationPage() {
           </button>
         </div>
 
-        <div className="glass-panel rounded-xl overflow-hidden">
+        {/* Mobile Cards View */}
+        <div className="block sm:hidden space-y-3">
+          {items.map((cal) => {
+            const StatusIcon = statusConfig[cal.status].icon;
+            return (
+              <div
+                key={cal.id}
+                onClick={() => {
+                  setEditingItem(cal);
+                  setIsFormOpen(true);
+                }}
+                className="rounded-2xl border border-white/10 bg-white/5 p-4 space-y-3 hover:border-white/20 transition-all cursor-pointer active:scale-[0.99]"
+              >
+                {/* Header: ID, Equipment & Status */}
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[#00A3E0] font-mono font-bold text-xs bg-[#00A3E0]/10 px-2 py-0.5 rounded-lg border border-[#00A3E0]/20">
+                    {cal.id}
+                  </span>
+                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold ${statusConfig[cal.status].color}`}>
+                    <StatusIcon className="w-3.5 h-3.5" />
+                    <span className="capitalize">{cal.status}</span>
+                  </span>
+                </div>
+
+                {/* Equipment & Model */}
+                <div>
+                  <h4 className="text-white font-bold text-sm leading-tight">{cal.equipment}</h4>
+                  {cal.model && <p className="text-gray-400 text-xs mt-0.5">Model: {cal.model}</p>}
+                </div>
+
+                {/* Serial & Location */}
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <span className="text-white/40 block text-[10px] uppercase font-bold">Serial No.</span>
+                    <span className="font-mono text-gray-200 text-xs">{cal.serialNumber}</span>
+                  </div>
+                  <div>
+                    <span className="text-white/40 block text-[10px] uppercase font-bold">Location</span>
+                    <span className="text-gray-300 text-xs truncate block">{cal.location}</span>
+                  </div>
+                </div>
+
+                {/* Calibration Dates & Uncertainty */}
+                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/5 text-xs">
+                  <div>
+                    <span className="text-white/40 block text-[10px] uppercase font-bold">Last Cal.</span>
+                    <span className="text-gray-400 text-xs">{cal.lastCalibration || '-'}</span>
+                  </div>
+                  <div>
+                    <span className="text-white/40 block text-[10px] uppercase font-bold">Next Due</span>
+                    <span className={`text-xs font-bold ${cal.status === 'overdue' ? 'text-red-400' : 'text-emerald-400'}`}>
+                      {cal.nextCalibration || '-'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Desktop Table View */}
+        <div className="hidden sm:block glass-panel rounded-xl overflow-hidden">
           <div className="overflow-x-auto w-full no-scrollbar">
             <table className="w-full min-w-[720px]">
             <thead className="bg-white/5 border-b border-white/10">
@@ -264,9 +325,9 @@ export function CalibrationPage() {
                 </div>
                 <button
                   onClick={() => setIsFormOpen(false)}
-                  className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                  className="p-2 hover:bg-white/10 rounded-lg transition-colors text-gray-400 hover:text-white"
                 >
-                  <MoreHorizontal className="w-5 h-5 text-gray-400" />
+                  <X className="w-5 h-5" />
                 </button>
               </div>
 

@@ -6,7 +6,7 @@ import {
   Search,
   Plus,
   Star,
-  MoreHorizontal
+  X
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -252,73 +252,75 @@ export function SupplierQualityPage() {
                 setIsFormOpen(true);
               }}
             >
-              <div className="flex flex-col lg:flex-row gap-4">
+              <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
                 <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="text-[#00A3E0] font-mono text-sm">{supplier.id}</span>
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${statusConfig[supplier.status]}`}>
+                  <div className="flex items-center gap-2 sm:gap-3 mb-1.5 flex-wrap">
+                    <span className="text-[#00A3E0] font-mono font-bold text-xs bg-[#00A3E0]/10 px-2 py-0.5 rounded-lg border border-[#00A3E0]/20">
+                      {supplier.id}
+                    </span>
+                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${statusConfig[supplier.status]}`}>
                       {supplier.status}
                     </span>
                     <span className="text-gray-400 text-xs">{supplier.category}</span>
                   </div>
-                  <h3 className="text-white font-medium text-lg">{supplier.name}</h3>
-                  <p className="text-gray-400 text-sm">{supplier.location}</p>
+                  <h3 className="text-white font-bold text-base sm:text-lg">{supplier.name}</h3>
+                  <p className="text-gray-400 text-xs sm:text-sm mt-0.5">{supplier.location}</p>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 self-start lg:self-auto bg-white/5 px-3 py-1.5 rounded-xl border border-white/5">
                   <Star className={`w-5 h-5 ${getRatingColor(supplier.rating)}`} />
-                  <span className={`text-2xl font-bold ${getRatingColor(supplier.rating)}`}>
+                  <span className={`text-xl sm:text-2xl font-black ${getRatingColor(supplier.rating)}`}>
                     {Number(supplier.rating || 0).toFixed(1)}
                   </span>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-6">
-                  <div className="text-center">
-                    <p className="text-xs text-gray-500">Delivery</p>
-                    <p className={`text-sm font-medium ${supplier.deliveryPerformance >= 90 ? 'text-green-400' : 'text-yellow-400'}`}>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 w-full lg:w-auto">
+                  <div className="bg-white/5 p-2 rounded-xl text-center border border-white/5">
+                    <p className="text-[10px] uppercase font-bold text-gray-400">Delivery</p>
+                    <p className={`text-sm font-black mt-0.5 ${supplier.deliveryPerformance >= 90 ? 'text-green-400' : 'text-yellow-400'}`}>
                       {supplier.deliveryPerformance}%
                     </p>
                   </div>
-                  <div className="text-center">
-                    <p className="text-xs text-gray-500">Quality</p>
-                    <p className={`text-sm font-medium ${supplier.qualityPerformance >= 95 ? 'text-green-400' : supplier.qualityPerformance >= 90 ? 'text-yellow-400' : 'text-red-400'}`}>
+                  <div className="bg-white/5 p-2 rounded-xl text-center border border-white/5">
+                    <p className="text-[10px] uppercase font-bold text-gray-400">Quality</p>
+                    <p className={`text-sm font-black mt-0.5 ${supplier.qualityPerformance >= 95 ? 'text-green-400' : supplier.qualityPerformance >= 90 ? 'text-yellow-400' : 'text-red-400'}`}>
                       {supplier.qualityPerformance}%
                     </p>
                   </div>
-                  <div className="text-center">
-                    <p className="text-xs text-gray-500">Open NCs</p>
-                    <p className={`text-sm font-medium ${supplier.ncCount === 0 ? 'text-green-400' : 'text-red-400'}`}>
+                  <div className="bg-white/5 p-2 rounded-xl text-center border border-white/5">
+                    <p className="text-[10px] uppercase font-bold text-gray-400">Open NCs</p>
+                    <p className={`text-sm font-black mt-0.5 ${supplier.ncCount === 0 ? 'text-green-400' : 'text-red-400'}`}>
                       {supplier.ncCount}
                     </p>
                   </div>
-                  <div className="text-center">
-                    <p className="text-xs text-gray-500">Next Audit</p>
-                    <p className="text-sm text-gray-300">{supplier.nextAudit}</p>
+                  <div className="bg-white/5 p-2 rounded-xl text-center border border-white/5">
+                    <p className="text-[10px] uppercase font-bold text-gray-400">Next Audit</p>
+                    <p className="text-xs font-bold text-gray-300 mt-0.5 truncate">{supplier.nextAudit}</p>
                   </div>
                 </div>
               </div>
 
-              <div className="mt-3 pt-3 border-t border-white/5 flex flex-wrap items-center justify-between gap-2 text-xs" onClick={(e) => e.stopPropagation()}>
+              <div className="mt-3 pt-3 border-t border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs" onClick={(e) => e.stopPropagation()}>
                 <span className="text-white/40 font-medium">سجلات الجودة والارتباطات:</span>
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="grid grid-cols-1 sm:flex sm:flex-wrap items-center gap-2">
                   <button
                     type="button"
                     onClick={() => navigate('/inspection')}
-                    className="px-2.5 py-1 rounded-lg bg-blue-500/10 text-blue-300 hover:bg-blue-500/20 border border-blue-500/30 transition flex items-center gap-1 font-bold text-[11px]"
+                    className="px-2.5 py-1.5 rounded-lg bg-blue-500/10 text-blue-300 hover:bg-blue-500/20 border border-blue-500/30 transition flex items-center justify-center gap-1 font-bold text-[11px]"
                   >
                     <span>🔍 فحص الوارد (IQC)</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => navigate(`/ncr?search=${encodeURIComponent(supplier.name)}`)}
-                    className="px-2.5 py-1 rounded-lg bg-red-500/10 text-red-300 hover:bg-red-500/20 border border-red-500/30 transition flex items-center gap-1 font-bold text-[11px]"
+                    className="px-2.5 py-1.5 rounded-lg bg-red-500/10 text-red-300 hover:bg-red-500/20 border border-red-500/30 transition flex items-center justify-center gap-1 font-bold text-[11px]"
                   >
                     <span>🚨 تقارير عدم المطابقة ({supplier.ncCount})</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => navigate(`/8d?search=${encodeURIComponent(supplier.name)}`)}
-                    className="px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 border border-amber-500/30 transition flex items-center gap-1 font-bold text-[11px]"
+                    className="px-2.5 py-1.5 rounded-lg bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 border border-amber-500/30 transition flex items-center justify-center gap-1 font-bold text-[11px]"
                   >
                     <span>⚡ تقارير 8D للمورد</span>
                   </button>
@@ -342,9 +344,9 @@ export function SupplierQualityPage() {
                 </div>
                 <button
                   onClick={() => setIsFormOpen(false)}
-                  className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                  className="p-2 hover:bg-white/10 rounded-lg transition-colors text-gray-400 hover:text-white"
                 >
-                  <MoreHorizontal className="w-5 h-5 text-gray-400" />
+                  <X className="w-5 h-5" />
                 </button>
               </div>
 

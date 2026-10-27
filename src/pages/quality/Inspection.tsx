@@ -9,7 +9,7 @@ import {
   CheckCircle2,
   XCircle,
   Clock,
-  MoreHorizontal,
+  X,
   Building,
   ClipboardList,
   ShieldAlert,
@@ -286,7 +286,99 @@ export function InspectionPage() {
           </button>
         </div>
 
-        <div className="glass-panel rounded-xl overflow-hidden">
+        {/* Mobile Cards View */}
+        <div className="block sm:hidden space-y-3">
+          {inspections.map((ins) => {
+            const ResultIcon = resultConfig[ins.result].icon;
+            return (
+              <div
+                key={ins.id}
+                onClick={() => {
+                  setEditingInspection(ins);
+                  setIsFormOpen(true);
+                }}
+                className="rounded-2xl border border-white/10 bg-white/5 p-4 space-y-3 hover:border-white/20 transition-all cursor-pointer active:scale-[0.99]"
+              >
+                {/* Header: ID, Type & Status */}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[#00A3E0] font-mono font-bold text-xs bg-[#00A3E0]/10 px-2 py-0.5 rounded-lg border border-[#00A3E0]/20">
+                      {ins.id}
+                    </span>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${typeConfig[ins.type]}`}>
+                      {ins.type}
+                    </span>
+                  </div>
+                  <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold ${resultConfig[ins.result].color}`}>
+                    <ResultIcon className="w-3.5 h-3.5" />
+                    <span className="capitalize">{ins.result}</span>
+                  </span>
+                </div>
+
+                {/* Product & Batch */}
+                <div>
+                  <h4 className="text-white font-bold text-sm leading-tight">{ins.product}</h4>
+                  <p className="text-gray-400 text-xs mt-1">
+                    <span className="text-white/40">Lot / Batch:</span> <span className="font-mono text-gray-300">{ins.batch}</span>
+                  </p>
+                </div>
+
+                {/* Metrics Grid */}
+                <div className="grid grid-cols-2 gap-2 p-2.5 rounded-xl bg-white/5 border border-white/5 text-xs">
+                  <div>
+                    <span className="text-white/40 block text-[10px] uppercase font-bold">Samples / Defects</span>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className="text-white font-medium">{ins.sampleSize} عينة</span>
+                      {ins.defectCount > 0 && (
+                        <span className="px-1.5 py-0.2 rounded bg-red-500/20 text-red-300 text-[10px] font-bold">
+                          {ins.defectCount} عيوب
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <span className="text-white/40 block text-[10px] uppercase font-bold">Inspector</span>
+                    <span className="text-gray-200 mt-0.5 block truncate font-medium">{ins.inspectedBy}</span>
+                  </div>
+                </div>
+
+                {/* Actions & Date */}
+                <div className="flex items-center justify-between pt-1 text-xs" onClick={(e) => e.stopPropagation()}>
+                  <span className="text-gray-500 text-[11px]">{ins.date}</span>
+                  {ins.result === 'fail' ? (
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigate(`/ncr?create=1&title=${encodeURIComponent(`فشل فحص وارد: ${ins.product} (${ins.batch})`)}&defectType=Incoming Material&line=Incoming Inspection&qty=${ins.defectCount || 1}&lot=${encodeURIComponent(ins.batch)}&desc=${encodeURIComponent(`فشل فحص الجودة للخامة/المنتج [${ins.product}] - تشغيلة رقم [${ins.batch}]. عدد العينات: ${ins.sampleSize}، عدد العيوب: ${ins.defectCount}. المسؤول: ${ins.inspectedBy}`)}&severity=major`);
+                        }}
+                        className="px-2.5 py-1 rounded-lg text-xs font-bold bg-red-500/20 text-red-300 hover:bg-red-500/30 border border-red-500/40 transition flex items-center gap-1"
+                      >
+                        <ShieldAlert className="w-3.5 h-3.5 text-red-400" />
+                        <span>فتح NCR</span>
+                      </button>
+                      {ins.type === 'incoming' && (
+                        <button
+                          type="button"
+                          onClick={() => navigate('/supplier-quality')}
+                          className="px-2 py-1 rounded-lg text-xs font-bold bg-[#00A3E0]/20 text-[#00A3E0] hover:bg-[#00A3E0]/30 border border-[#00A3E0]/40 transition flex items-center gap-1"
+                        >
+                          <Building className="w-3 h-3" />
+                          <span>المورد</span>
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <span className="text-xs text-emerald-400/80 font-bold">مطابق للجودة ✓</span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Desktop Table View */}
+        <div className="hidden sm:block glass-panel rounded-xl overflow-hidden">
           <div className="overflow-x-auto w-full no-scrollbar">
             <table className="w-full min-w-[720px]">
             <thead className="bg-white/5 border-b border-white/10">
@@ -398,9 +490,9 @@ export function InspectionPage() {
                 </div>
                 <button
                   onClick={() => setIsFormOpen(false)}
-                  className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                  className="p-2 hover:bg-white/10 rounded-lg transition-colors text-gray-400 hover:text-white"
                 >
-                  <MoreHorizontal className="w-5 h-5 text-gray-400" />
+                  <X className="w-5 h-5" />
                 </button>
               </div>
 

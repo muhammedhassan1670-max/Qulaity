@@ -38,8 +38,8 @@ export function BulkActionBar({
   if (selectedCount === 0) return null;
 
   return (
-    <div className="glass-panel rounded-xl p-4 animate-in slide-in-from-bottom-2">
-      <div className="flex items-center justify-between">
+    <div className="glass-panel rounded-xl p-3 sm:p-4 animate-in slide-in-from-bottom-2">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         {/* Selection Info */}
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">

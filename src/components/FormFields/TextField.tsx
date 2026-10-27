@@ -44,7 +44,7 @@ const TextField: React.FC<FieldComponentProps> = ({ field, value, onChange, erro
           />
           <label
             className={`
-              absolute left-5 transition-all duration-300 pointer-events-none text-white/50
+              absolute start-5 transition-all duration-300 pointer-events-none text-white/50
               peer-focus:-top-6 peer-focus:text-xs peer-focus:text-[#00A3E0] peer-focus:font-bold
               ${isFocusedOrFilled ? '-top-6 text-xs text-white/70 font-bold' : 'top-4 text-base'}
             `}
@@ -52,21 +52,21 @@ const TextField: React.FC<FieldComponentProps> = ({ field, value, onChange, erro
             {field.label} {required && <span className="text-red-500">*</span>}
           </label>
           {!error && isFocusedOrFilled && (
-            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute right-12 text-green-400">
+            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute end-12 text-green-400">
               <Check className="w-4 h-4 drop-shadow-[0_0_5px_rgba(74,222,128,0.8)]" />
             </motion.div>
           )}
           {!value && field.label.toLowerCase().includes('cause') && (
             <motion.div 
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} 
-              className="absolute left-32 top-1/2 -translate-y-1/2 flex items-center gap-1 text-[#A855F7]/70 cursor-pointer hover:text-[#A855F7] transition-colors"
+              className="hidden sm:flex absolute left-32 top-1/2 -translate-y-1/2 items-center gap-1 text-[#A855F7]/70 cursor-pointer hover:text-[#A855F7] transition-colors"
               onClick={() => onChange('Cooling System Failure')}
             >
               <Sparkles className="w-3 h-3" />
               <span className="text-xs font-medium">Press Tab to accept: Cooling System Failure</span>
             </motion.div>
           )}
-          <div className="absolute right-2 top-1/2 -translate-y-1/2">
+          <div className="absolute end-2 top-1/2 -translate-y-1/2">
             <VoiceInputButton
               disabled={disabled}
               onResult={(text) => {
