@@ -16,7 +16,20 @@ async function upload() {
         console.log("Navigating to htdocs...");
         await client.ensureDir("htdocs");
         
-        console.log("Uploading new build (dist) with zero-downtime asset preservation...");
+        console.log("Removing stale PWA manifest and workbox files to prevent MIME errors...");
+        try { await client.remove("manifest.webmanifest"); } catch(e) {}
+        try { await client.remove("manifest.json"); } catch(e) {}
+        try {
+            const list = await client.list();
+            for (const item of list) {
+                if (item.name.startsWith("workbox-")) {
+                    await client.remove(item.name);
+                    console.log("Removed stale workbox bundle:", item.name);
+                }
+            }
+        } catch(e) {}
+
+        console.log("Uploading fresh build with zero-downtime asset preservation...");
         await client.uploadFromDir("dist");
         
         console.log("Upload completed successfully!");

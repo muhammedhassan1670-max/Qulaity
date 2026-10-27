@@ -1,3 +1,10 @@
+<IfModule mod_mime.c>
+  AddType application/javascript .js .mjs
+  AddType text/css .css
+  AddType application/json .json
+  AddType image/svg+xml .svg
+</IfModule>
+
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /
@@ -14,7 +21,11 @@
   RewriteCond %{REQUEST_FILENAME} -d
   RewriteRule ^ - [L]
 
-  # 4. For all other routes, send to index.html (React Router SPA)
+  # 4. Never serve index.html (text/html) for missing assets or scripts - return 404
+  RewriteCond %{REQUEST_URI} \.(js|mjs|css|json|webmanifest|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|map)$ [NC]
+  RewriteRule ^ - [R=404,L]
+
+  # 5. For all other SPA client navigation routes, send to index.html
   RewriteRule ^ index.html [L]
 </IfModule>
 
