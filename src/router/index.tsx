@@ -52,6 +52,7 @@ const OutgoingQualityPage = lazy(() => import('../pages/quality/OutgoingQuality'
 const QualityIntelligencePage = lazy(() => import('../pages/quality/Intelligence'));
 const DailyDefectsPage = lazy(() => import('../pages/quality/DailyDefects'));
 const QualityHomePage = lazy(() => import('../pages/quality/QualityHome'));
+const QualityEcosystemPortalPage = lazy(() => import('../pages/quality/QualityEcosystemPortal'));
 const ShopfloorDefectEntryPage = lazy(() => import('../pages/quality/ShopfloorDefectEntry'));
 const QualityInspectionPlansPage = lazy(() => import('../pages/quality/QualityInspectionPlans'));
 const QualityExecutionBoardPage = lazy(() => import('../pages/quality/QualityExecutionBoard'));
@@ -126,8 +127,9 @@ const routes: RouteObject[] = [
       </ProtectedRoute>
     ),
     children: [
-      { index: true, element: <LazyWrapper><Dashboard /></LazyWrapper> },
-      { path: 'dashboard', element: <Navigate to="/" replace /> },
+      { index: true, element: <LazyWrapper><QualityEcosystemPortalPage /></LazyWrapper> },
+      { path: 'dashboard', element: <LazyWrapper><Dashboard /></LazyWrapper> },
+      { path: 'ecosystem', element: <LazyWrapper><QualityEcosystemPortalPage /></LazyWrapper> },
       { path: 'quality', element: <LazyWrapper><QualityModules /></LazyWrapper> },
       { path: 'quality/records/:type', element: <LazyWrapper><RecordHubPage /></LazyWrapper> },
       { path: 'quality/records/ncr/:id', element: <LazyWrapper><NCRDetailsPage /></LazyWrapper> },
@@ -184,7 +186,8 @@ const routes: RouteObject[] = [
       { path: 'complaints/:id', element: <ProtectedRoute requiredPermissions={['complaints.manage', 'rma.approve']}><LazyWrapper><ComplaintsPage /></LazyWrapper></ProtectedRoute> },
       { path: 'complaints-dashboard', element: <ProtectedRoute requiredPermissions={['complaints.manage']}><LazyWrapper><ComplaintsDashboardPage /></LazyWrapper></ProtectedRoute> },
       { path: 'defect-cost', element: <ProtectedRoute requiredPermissions={['copq.view', 'capa.manage', 'admin.access']}><LazyWrapper><DefectCostPage /></LazyWrapper></ProtectedRoute> },
-      { path: 'quality-home', element: <ProtectedRoute requiredPermissions={['stream.view', '*', 'admin.access']}><LazyWrapper><QualityHomePage /></LazyWrapper></ProtectedRoute> },
+      { path: 'quality-home', element: <LazyWrapper><QualityEcosystemPortalPage /></LazyWrapper> },
+      { path: 'quality-home-legacy', element: <ProtectedRoute requiredPermissions={['stream.view', '*', 'admin.access']}><LazyWrapper><QualityHomePage /></LazyWrapper></ProtectedRoute> },
       { path: 'defect-log', element: <ProtectedRoute requiredPermissions={['shopfloor.log_defect', 'admin.access']}><LazyWrapper><DailyDefectsPage /></LazyWrapper></ProtectedRoute> },
       { path: 'quality-shopfloor', element: <ProtectedRoute requiredPermissions={['shopfloor.fast_entry', 'shopfloor.log_defect', 'admin.access']}><LazyWrapper><ShopfloorDefectEntryPage /></LazyWrapper></ProtectedRoute> },
       { path: 'quality-inspection-plans', element: <ProtectedRoute requiredPermissions={['iqc.plans', 'iqc.inspect', 'admin.access']}><LazyWrapper><QualityInspectionPlansPage /></LazyWrapper></ProtectedRoute> },

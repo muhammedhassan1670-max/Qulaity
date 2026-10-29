@@ -124,6 +124,8 @@ function App() {
     return <FullPageLoader message="Initializing QMS Enterprise 4.0..." submessage="Industrial Operating System" />;
   }
 
+  const isFullScreenPage = location.pathname === '/' || location.pathname === '/quality-home' || location.pathname === '/ecosystem';
+
   return (
     <div className={`min-h-screen transition-colors duration-300 ${theme === 'dark' ? 'bg-[var(--bg-primary)] text-white dark' : 'bg-[var(--bg-primary)] text-slate-900 light'}`}>
       {/* 3D Background */}
@@ -144,14 +146,17 @@ function App() {
       
       {/* Main Content with Outlet for nested routes */}
       <main 
-        className="transition-all duration-300 mobile-pb-tabbar pt-[62px] sm:pt-[70px]"
+        className={`transition-all duration-300 mobile-pb-tabbar ${
+          isFullScreenPage
+            ? 'pt-[56px] sm:pt-[64px] h-[100dvh] overflow-hidden'
+            : 'pt-[62px] sm:pt-[70px] min-h-screen'
+        }`}
         style={{ 
-          marginLeft: '0px',
-          minHeight: '100vh'
+          marginLeft: '0px'
         }}
       >
-        <div className="p-3 sm:p-4 md:p-6">
-          <QualityPageAssistant />
+        <div className={isFullScreenPage ? 'p-0 h-full overflow-hidden' : 'p-3 sm:p-4 md:p-6'}>
+          {!isFullScreenPage && <QualityPageAssistant />}
           <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}
@@ -159,6 +164,7 @@ function App() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2, ease: 'easeInOut' }}
+              className={isFullScreenPage ? 'h-full overflow-hidden' : ''}
             >
               <Outlet />
             </motion.div>

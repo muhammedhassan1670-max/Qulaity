@@ -93,7 +93,7 @@ export function Header({ onMenuToggle, user }: HeaderProps) {
           </button>
           
           {/* Logo */}
-          <div className="flex items-center gap-2 md:gap-3 group cursor-pointer" onClick={() => navigate('/quality')}>
+          <div className="flex items-center gap-2 md:gap-3 group cursor-pointer" onClick={() => navigate('/')}>
             <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-[var(--industrial-primary)] to-[var(--industrial-secondary)] flex items-center justify-center shadow-md dark:shadow-[0_0_20px_rgba(14,165,233,0.25)] group-hover:scale-110 transition-transform duration-500">
               <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-white animate-pulse" />
             </div>
