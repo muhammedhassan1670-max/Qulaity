@@ -32,6 +32,7 @@ import {
   ExternalLink,
   Link2,
   Database,
+  CornerUpLeft,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -64,7 +65,10 @@ interface CableRelation {
   id: string;
   source: string;
   target: string;
+  orderFromSource: number;
+  shortTag: string;
   label: string;
+  isFeedback: boolean;
   category: 'defect' | 'governance' | 'prevention' | 'supplier' | 'intelligence';
   color: string;
 }
@@ -433,61 +437,473 @@ const NODES: BlueprintNode[] = [
 ];
 
 // =========================================================================
-// 2. COMPLETE CLOSED-LOOP ENGINEERING RELATIONSHIPS (39 ACTIVE LINKS)
+// 2. ORDERED & SEQUENCED RELATIONSHIPS WITH FEEDBACK LOOPS (39 LINKS)
 // =========================================================================
 
 const CABLES: CableRelation[] = [
-  // Stage 01 Links (Supply Chain & Foundation)
-  { id: 'c1', source: 'master_data', target: 'inspection_plans', label: 'Feeds standard defect catalogs & acceptance specs', category: 'governance', color: '#10B981' },
-  { id: 'c2', source: 'master_data', target: 'fmea', label: 'Supplies part BOM & process steps for risk analysis', category: 'governance', color: '#10B981' },
-  { id: 'c3', source: 'calibration', target: 'iqc', label: 'Validates gauge accuracy for incoming inspection', category: 'governance', color: '#10B981' },
-  { id: 'c4', source: 'calibration', target: 'spc', label: 'Ensures measurement reliability for SPC charts', category: 'intelligence', color: '#06B6D4' },
-  { id: 'c5', source: 'iqc', target: 'suppliers', label: 'Auto-updates vendor scorecard from lot results', category: 'supplier', color: '#10B981' },
-  { id: 'c6', source: 'iqc', target: 'ncr', label: 'Triggers NCR & quarantine for rejected material', category: 'supplier', color: '#F59E0B' },
-  { id: 'c7', source: 'iqc', target: 'deviation', label: 'Requests conditional concession for urgent lots', category: 'supplier', color: '#F59E0B' },
-  { id: 'c8', source: 'suppliers', target: 'audits', label: 'Schedules supplier audits for low-rated vendors', category: 'supplier', color: '#10B981' },
+  // Stage 01 Outgoing (Supply Chain & Inbound)
+  {
+    id: 'c1',
+    source: 'master_data',
+    target: 'inspection_plans',
+    orderFromSource: 1,
+    shortTag: 'Defect Catalogs',
+    label: '1st: Feeds standard defect catalogs & acceptance specs to IPQC',
+    isFeedback: false,
+    category: 'governance',
+    color: '#10B981',
+  },
+  {
+    id: 'c2',
+    source: 'master_data',
+    target: 'fmea',
+    orderFromSource: 2,
+    shortTag: 'BOM & Process',
+    label: '2nd: Supplies part BOM & process steps for PFMEA risk analysis',
+    isFeedback: false,
+    category: 'governance',
+    color: '#10B981',
+  },
+  {
+    id: 'c3',
+    source: 'calibration',
+    target: 'iqc',
+    orderFromSource: 1,
+    shortTag: 'Gauge Validation',
+    label: '1st: Validates measurement gauge accuracy before Incoming QC',
+    isFeedback: false,
+    category: 'governance',
+    color: '#10B981',
+  },
+  {
+    id: 'c4',
+    source: 'calibration',
+    target: 'spc',
+    orderFromSource: 2,
+    shortTag: 'MSA Reliability',
+    label: '2nd: Ensures measurement system reliability for SPC charts',
+    isFeedback: false,
+    category: 'intelligence',
+    color: '#06B6D4',
+  },
+  {
+    id: 'c6',
+    source: 'iqc',
+    target: 'ncr',
+    orderFromSource: 1,
+    shortTag: 'Quarantine Lot',
+    label: '1st: Triggers NCR & quarantine hold for rejected inbound material',
+    isFeedback: false,
+    category: 'supplier',
+    color: '#EF4444',
+  },
+  {
+    id: 'c7',
+    source: 'iqc',
+    target: 'deviation',
+    orderFromSource: 2,
+    shortTag: 'Request Concession',
+    label: '2nd: Requests conditional concession for urgent production lots',
+    isFeedback: false,
+    category: 'supplier',
+    color: '#F59E0B',
+  },
+  {
+    id: 'c5',
+    source: 'iqc',
+    target: 'suppliers',
+    orderFromSource: 3,
+    shortTag: 'Update Rating',
+    label: '3rd (Feedback): Auto-updates vendor scorecard from lot results',
+    isFeedback: true,
+    category: 'supplier',
+    color: '#10B981',
+  },
+  {
+    id: 'c8',
+    source: 'suppliers',
+    target: 'audits',
+    orderFromSource: 1,
+    shortTag: 'Schedule Audit',
+    label: '1st: Schedules supplier quality audits for low-rated vendors',
+    isFeedback: false,
+    category: 'supplier',
+    color: '#10B981',
+  },
 
-  // Stage 02 Links (Shopfloor & Production)
-  { id: 'c9', source: 'setup_readiness', target: 'inspection_plans', label: 'Authorizes line startup & First Piece check', category: 'governance', color: '#0EA5E9' },
-  { id: 'c10', source: 'inspection_plans', target: 'daily_defects', label: 'Logs defects detected during IPQC patrol', category: 'defect', color: '#0EA5E9' },
-  { id: 'c11', source: 'daily_defects', target: 'ncr', label: 'Escalates critical shopfloor defects to NCR', category: 'defect', color: '#EF4444' },
-  { id: 'c12', source: 'daily_defects', target: 'spc', label: 'Streams live defect telemetry into SPC charts', category: 'intelligence', color: '#0EA5E9' },
-  { id: 'c13', source: 'daily_defects', target: 'defect_cost', label: 'Calculates daily scrap and rework cost', category: 'defect', color: '#EF4444' },
-  { id: 'c14', source: 'lpa', target: 'capa_records', label: 'Opens CAPA for non-compliant process audit items', category: 'governance', color: '#0EA5E9' },
-  { id: 'c15', source: 'lpa', target: 'setup_readiness', label: 'Verifies operator compliance with setup checklists', category: 'governance', color: '#0EA5E9' },
+  // Stage 02 Outgoing (Shopfloor & Production)
+  {
+    id: 'c9',
+    source: 'setup_readiness',
+    target: 'inspection_plans',
+    orderFromSource: 1,
+    shortTag: 'Startup Go/No-Go',
+    label: '1st: Authorizes line startup & mandatory First Piece check',
+    isFeedback: false,
+    category: 'governance',
+    color: '#0EA5E9',
+  },
+  {
+    id: 'c10',
+    source: 'inspection_plans',
+    target: 'daily_defects',
+    orderFromSource: 1,
+    shortTag: 'Log Patrol Defect',
+    label: '1st: Logs live defects detected during IPQC patrol checks',
+    isFeedback: false,
+    category: 'defect',
+    color: '#0EA5E9',
+  },
+  {
+    id: 'c11',
+    source: 'daily_defects',
+    target: 'ncr',
+    orderFromSource: 1,
+    shortTag: 'Escalate to NCR',
+    label: '1st: Escalates critical shopfloor defects into formal NCR',
+    isFeedback: false,
+    category: 'defect',
+    color: '#EF4444',
+  },
+  {
+    id: 'c12',
+    source: 'daily_defects',
+    target: 'spc',
+    orderFromSource: 2,
+    shortTag: 'Live SPC Stream',
+    label: '2nd: Streams live defect telemetry into SPC control charts',
+    isFeedback: false,
+    category: 'intelligence',
+    color: '#0EA5E9',
+  },
+  {
+    id: 'c13',
+    source: 'daily_defects',
+    target: 'defect_cost',
+    orderFromSource: 3,
+    shortTag: 'Scrap Cost (COPQ)',
+    label: '3rd: Calculates daily scrap and rework financial impact',
+    isFeedback: false,
+    category: 'defect',
+    color: '#EF4444',
+  },
+  {
+    id: 'c14',
+    source: 'lpa',
+    target: 'capa_records',
+    orderFromSource: 1,
+    shortTag: 'Audit CAPA',
+    label: '1st: Opens CAPA for non-compliant process audit findings',
+    isFeedback: false,
+    category: 'governance',
+    color: '#0EA5E9',
+  },
+  {
+    id: 'c15',
+    source: 'lpa',
+    target: 'setup_readiness',
+    orderFromSource: 2,
+    shortTag: 'Verify Clearance',
+    label: '2nd (Feedback): Reinforces operator setup checklist compliance',
+    isFeedback: true,
+    category: 'governance',
+    color: '#0EA5E9',
+  },
 
-  // Stage 03 Links (Containment, NCR & Complaints)
-  { id: 'c16', source: 'ncr', target: 'capa_records', label: 'Initiates corrective & preventive action plan', category: 'defect', color: '#EF4444' },
-  { id: 'c17', source: 'ncr', target: 'eight_d', label: 'Launches 8D investigation for major non-conformance', category: 'defect', color: '#8B5CF6' },
-  { id: 'c18', source: 'ncr', target: 'defect_cost', label: 'Records quarantine sorting & scrap losses', category: 'defect', color: '#EF4444' },
-  { id: 'c19', source: 'complaints', target: 'ncr', label: 'Converts customer RMA claim into formal NCR', category: 'defect', color: '#EF4444' },
-  { id: 'c20', source: 'complaints', target: 'eight_d', label: 'Mandates 8D root cause report for customer', category: 'defect', color: '#8B5CF6' },
-  { id: 'c21', source: 'deviation', target: 'change_control', label: 'Routes temporary deviation for engineering review', category: 'governance', color: '#F59E0B' },
-  { id: 'c22', source: 'defect_cost', target: 'control_tower', label: 'Reports COPQ financial impact to Control Tower', category: 'intelligence', color: '#EF4444' },
+  // Stage 03 Outgoing (Containment, NCR & Complaints)
+  {
+    id: 'c17',
+    source: 'ncr',
+    target: 'eight_d',
+    orderFromSource: 1,
+    shortTag: 'Launch 8D',
+    label: '1st: Launches structured 8D root cause investigation',
+    isFeedback: false,
+    category: 'defect',
+    color: '#8B5CF6',
+  },
+  {
+    id: 'c16',
+    source: 'ncr',
+    target: 'capa_records',
+    orderFromSource: 2,
+    shortTag: 'Open CAPA Plan',
+    label: '2nd: Initiates corrective & preventive action plan (CAPA)',
+    isFeedback: false,
+    category: 'defect',
+    color: '#EF4444',
+  },
+  {
+    id: 'c18',
+    source: 'ncr',
+    target: 'defect_cost',
+    orderFromSource: 3,
+    shortTag: 'Log Quarantine Loss',
+    label: '3rd: Records quarantine sorting & batch scrap losses',
+    isFeedback: false,
+    category: 'defect',
+    color: '#EF4444',
+  },
+  {
+    id: 'c19',
+    source: 'complaints',
+    target: 'ncr',
+    orderFromSource: 1,
+    shortTag: 'RMA to NCR',
+    label: '1st: Converts customer RMA claim into formal containment NCR',
+    isFeedback: false,
+    category: 'defect',
+    color: '#EF4444',
+  },
+  {
+    id: 'c20',
+    source: 'complaints',
+    target: 'eight_d',
+    orderFromSource: 2,
+    shortTag: 'Mandate 8D Report',
+    label: '2nd: Mandates formal 8D root cause report for customer',
+    isFeedback: false,
+    category: 'defect',
+    color: '#8B5CF6',
+  },
+  {
+    id: 'c21',
+    source: 'deviation',
+    target: 'change_control',
+    orderFromSource: 1,
+    shortTag: 'Route to ECN',
+    label: '1st: Routes temporary deviation for permanent ECN review',
+    isFeedback: false,
+    category: 'governance',
+    color: '#F59E0B',
+  },
+  {
+    id: 'c22',
+    source: 'defect_cost',
+    target: 'control_tower',
+    orderFromSource: 1,
+    shortTag: 'COPQ KPI Feed',
+    label: '1st: Reports COPQ financial impact to Executive Control Tower',
+    isFeedback: false,
+    category: 'intelligence',
+    color: '#EF4444',
+  },
 
-  // Stage 04 Links (Root Cause, 8D & CAPA)
-  { id: 'c23', source: 'eight_d', target: 'fmea', label: 'Updates PFMEA risk matrix with new failure modes', category: 'prevention', color: '#F59E0B' },
-  { id: 'c24', source: 'eight_d', target: 'control_plan', label: 'Enforces new poka-yoke controls in Control Plan', category: 'prevention', color: '#10B981' },
-  { id: 'c25', source: 'eight_d', target: 'knowledge_base', label: 'Archives verified root cause in Lessons Learned', category: 'prevention', color: '#10B981' },
-  { id: 'c26', source: 'capa_records', target: 'change_control', label: 'Triggers formal Engineering Change Notice (ECN)', category: 'governance', color: '#8B5CF6' },
-  { id: 'c27', source: 'capa_records', target: 'command_center', label: 'Tracks CAPA due dates and closure SLA', category: 'governance', color: '#8B5CF6' },
-  { id: 'c28', source: 'change_control', target: 'control_plan', label: 'Revises Control Plan specs after ECN approval', category: 'prevention', color: '#8B5CF6' },
-  { id: 'c29', source: 'command_center', target: 'control_tower', label: 'Broadcasts action closure KPIs to executive tower', category: 'intelligence', color: '#8B5CF6' },
+  // Stage 04 Outgoing (Root Cause, 8D & CAPA)
+  {
+    id: 'c23',
+    source: 'eight_d',
+    target: 'fmea',
+    orderFromSource: 1,
+    shortTag: 'Update PFMEA RPN',
+    label: '1st: Updates PFMEA risk matrix with newly discovered failure modes',
+    isFeedback: false,
+    category: 'prevention',
+    color: '#F59E0B',
+  },
+  {
+    id: 'c24',
+    source: 'eight_d',
+    target: 'control_plan',
+    orderFromSource: 2,
+    shortTag: 'Add Poka-Yoke',
+    label: '2nd: Enforces new poka-yoke controls in Dynamic Control Plan',
+    isFeedback: false,
+    category: 'prevention',
+    color: '#10B981',
+  },
+  {
+    id: 'c25',
+    source: 'eight_d',
+    target: 'knowledge_base',
+    orderFromSource: 3,
+    shortTag: 'Archive Lesson',
+    label: '3rd: Archives verified root cause in Lessons Learned Hub',
+    isFeedback: false,
+    category: 'prevention',
+    color: '#10B981',
+  },
+  {
+    id: 'c26',
+    source: 'capa_records',
+    target: 'change_control',
+    orderFromSource: 1,
+    shortTag: 'Trigger ECN',
+    label: '1st: Triggers formal Engineering Change Notice (ECN)',
+    isFeedback: false,
+    category: 'governance',
+    color: '#8B5CF6',
+  },
+  {
+    id: 'c27',
+    source: 'capa_records',
+    target: 'command_center',
+    orderFromSource: 2,
+    shortTag: 'Track Action SLA',
+    label: '2nd: Tracks CAPA due dates and departmental closure SLA',
+    isFeedback: false,
+    category: 'governance',
+    color: '#8B5CF6',
+  },
+  {
+    id: 'c28',
+    source: 'change_control',
+    target: 'control_plan',
+    orderFromSource: 1,
+    shortTag: 'Revise Specs',
+    label: '1st: Revises Control Plan specifications after ECN approval',
+    isFeedback: false,
+    category: 'prevention',
+    color: '#8B5CF6',
+  },
+  {
+    id: 'c29',
+    source: 'command_center',
+    target: 'control_tower',
+    orderFromSource: 1,
+    shortTag: 'Closure Velocity',
+    label: '1st: Broadcasts action closure KPIs to Quality Control Tower',
+    isFeedback: false,
+    category: 'intelligence',
+    color: '#8B5CF6',
+  },
 
-  // Stage 05 Links (Engineering & Prevention)
-  { id: 'c30', source: 'fmea', target: 'control_plan', label: 'Transfers high-RPN characteristics to Control Plan', category: 'prevention', color: '#F59E0B' },
-  { id: 'c31', source: 'control_plan', target: 'inspection_plans', label: 'Deploys updated inspection specs to shopfloor', category: 'governance', color: '#0EA5E9' },
-  { id: 'c32', source: 'control_plan', target: 'spc', label: 'Sets USL/LSL specification limits for SPC charts', category: 'intelligence', color: '#06B6D4' },
-  { id: 'c33', source: 'form_designer', target: 'inspection_plans', label: 'Publishes digital checklists to IPQC stations', category: 'governance', color: '#F59E0B' },
-  { id: 'c34', source: 'form_designer', target: 'lpa', label: 'Provides custom audit templates for LPA', category: 'governance', color: '#F59E0B' },
-  { id: 'c35', source: 'knowledge_base', target: 'ai_copilot', label: 'Trains AI Copilot on historical 8D solutions', category: 'intelligence', color: '#06B6D4' },
+  // Stage 05 Outgoing (Engineering & Prevention -> Includes Closed-Loop Returns!)
+  {
+    id: 'c30',
+    source: 'fmea',
+    target: 'control_plan',
+    orderFromSource: 1,
+    shortTag: 'Critical Specs',
+    label: '1st: Transfers high-RPN characteristics to Dynamic Control Plan',
+    isFeedback: false,
+    category: 'prevention',
+    color: '#F59E0B',
+  },
+  {
+    id: 'c32',
+    source: 'control_plan',
+    target: 'spc',
+    orderFromSource: 1,
+    shortTag: 'Set USL / LSL',
+    label: '1st: Sets USL/LSL specification limits for SPC control charts',
+    isFeedback: false,
+    category: 'intelligence',
+    color: '#06B6D4',
+  },
+  {
+    id: 'c31',
+    source: 'control_plan',
+    target: 'inspection_plans',
+    orderFromSource: 2,
+    shortTag: 'Return to IPQC',
+    label: '2nd (Feedback Loop): Deploys updated inspection specs back to Shopfloor IPQC',
+    isFeedback: true,
+    category: 'prevention',
+    color: '#F43F5E',
+  },
+  {
+    id: 'c33',
+    source: 'form_designer',
+    target: 'inspection_plans',
+    orderFromSource: 1,
+    shortTag: 'Deploy Checklists',
+    label: '1st (Feedback Loop): Publishes digital checklists back to Shopfloor IPQC',
+    isFeedback: true,
+    category: 'governance',
+    color: '#F43F5E',
+  },
+  {
+    id: 'c34',
+    source: 'form_designer',
+    target: 'lpa',
+    orderFromSource: 2,
+    shortTag: 'Deploy LPA Forms',
+    label: '2nd (Feedback Loop): Deploys custom audit templates back to Shopfloor LPA',
+    isFeedback: true,
+    category: 'governance',
+    color: '#F43F5E',
+  },
+  {
+    id: 'c35',
+    source: 'knowledge_base',
+    target: 'ai_copilot',
+    orderFromSource: 1,
+    shortTag: 'Train AI Model',
+    label: '1st: Trains AI Copilot on historical 8D solutions & patterns',
+    isFeedback: false,
+    category: 'intelligence',
+    color: '#06B6D4',
+  },
 
-  // Stage 06 Links (SPC, AI & Audits)
-  { id: 'c36', source: 'spc', target: 'ai_copilot', label: 'Feeds process drift trends for predictive alerts', category: 'intelligence', color: '#06B6D4' },
-  { id: 'c37', source: 'spc', target: 'control_tower', label: 'Streams live Cp/Cpk capability metrics to Tower', category: 'intelligence', color: '#06B6D4' },
-  { id: 'c38', source: 'ai_copilot', target: 'eight_d', label: 'Recommends AI-generated root causes to 8D teams', category: 'intelligence', color: '#06B6D4' },
-  { id: 'c39', source: 'audits', target: 'capa_records', label: 'Generates CAPA records from audit non-conformities', category: 'governance', color: '#06B6D4' },
+  // Stage 06 Outgoing (SPC, AI & Audits -> Includes Closed-Loop Returns!)
+  {
+    id: 'c37',
+    source: 'spc',
+    target: 'control_tower',
+    orderFromSource: 1,
+    shortTag: 'Live Cpk Feed',
+    label: '1st: Streams live Cp/Cpk capability metrics to Control Tower',
+    isFeedback: false,
+    category: 'intelligence',
+    color: '#06B6D4',
+  },
+  {
+    id: 'c36',
+    source: 'spc',
+    target: 'ai_copilot',
+    orderFromSource: 2,
+    shortTag: 'Drift Telemetry',
+    label: '2nd: Feeds process drift trends to AI for predictive alerts',
+    isFeedback: false,
+    category: 'intelligence',
+    color: '#06B6D4',
+  },
+  {
+    id: 'c38',
+    source: 'ai_copilot',
+    target: 'eight_d',
+    orderFromSource: 1,
+    shortTag: 'AI Root Cause',
+    label: '1st (Feedback Loop): Recommends AI-generated root causes back to 8D teams',
+    isFeedback: true,
+    category: 'intelligence',
+    color: '#F43F5E',
+  },
+  {
+    id: 'c39',
+    source: 'audits',
+    target: 'capa_records',
+    orderFromSource: 1,
+    shortTag: 'Audit to CAPA',
+    label: '1st (Feedback Loop): Generates CAPA actions from audit non-conformities',
+    isFeedback: true,
+    category: 'governance',
+    color: '#F43F5E',
+  },
 ];
+
+// Ordered Simulation Scenarios (with explicit step sequence 1 -> 2 -> 3 ... + Feedback Loop)
+const SIMULATION_SCENARIOS: Record<
+  'defect' | 'supplier' | 'prevention',
+  { title: string; cableSequence: string[]; focusNode: string }
+> = {
+  defect: {
+    title: 'Shopfloor Closed-Loop (Steps 1➔6 + ↺ Return)',
+    cableSequence: ['c9', 'c10', 'c11', 'c17', 'c23', 'c30', 'c31'],
+    focusNode: 'ncr',
+  },
+  supplier: {
+    title: 'Inbound Reject & Audit Loop (Steps 1➔5 + ↺ Return)',
+    cableSequence: ['c3', 'c6', 'c5', 'c8', 'c39'],
+    focusNode: 'iqc',
+  },
+  prevention: {
+    title: 'Customer 8D & AI Feedback Loop (Steps 1➔6 + ↺ Return)',
+    cableSequence: ['c19', 'c20', 'c25', 'c35', 'c38', 'c24'],
+    focusNode: 'eight_d',
+  },
+};
 
 // =========================================================================
 // 3. MAIN INTERACTIVE ECOSYSTEM PORTAL COMPONENT
@@ -509,7 +925,7 @@ export default function QualityEcosystemPortal() {
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSimulation, setActiveSimulation] = useState<'none' | 'defect' | 'supplier' | 'prevention'>('none');
-  const [activePhaseFilter, setActivePhaseFilter] = useState<string | null>(null);
+  const [showAllFeedbackLoops, setShowAllFeedbackLoops] = useState<boolean>(false);
 
   // Auto-fit entire 24-node matrix cleanly inside the viewport
   const fitToScreen = useCallback(() => {
@@ -536,33 +952,25 @@ export default function QualityEcosystemPortal() {
   }, [fitToScreen]);
 
   // Center camera on a specific node
-  const centerOnNode = useCallback((nodeId: string) => {
-    const targetNode = NODES.find((n) => n.id === nodeId);
-    if (!targetNode || !containerRef.current) return;
+  const centerOnNode = useCallback(
+    (nodeId: string) => {
+      const targetNode = NODES.find((n) => n.id === nodeId);
+      if (!targetNode || !containerRef.current) return;
 
-    const { clientWidth, clientHeight } = containerRef.current;
-    const targetZoom = Math.max(zoom, 0.85);
-    const nodeCenterX = targetNode.x + NODE_WIDTH / 2;
-    const nodeCenterY = targetNode.y + NODE_HEIGHT / 2;
+      const { clientWidth, clientHeight } = containerRef.current;
+      const targetZoom = Math.max(zoom, 0.82);
+      const nodeCenterX = targetNode.x + NODE_WIDTH / 2;
+      const nodeCenterY = targetNode.y + NODE_HEIGHT / 2;
 
-    const targetPanX = clientWidth / 2 - nodeCenterX * targetZoom;
-    const targetPanY = clientHeight / 2 - nodeCenterY * targetZoom;
+      const targetPanX = clientWidth / 2 - nodeCenterX * targetZoom;
+      const targetPanY = clientHeight / 2 - nodeCenterY * targetZoom;
 
-    setZoom(targetZoom);
-    setPan({ x: targetPanX, y: targetPanY });
-    setSelectedNodeId(nodeId);
-  }, [zoom]);
-
-  // Focus camera when simulation is triggered
-  useEffect(() => {
-    if (activeSimulation === 'defect') {
-      centerOnNode('ncr');
-    } else if (activeSimulation === 'supplier') {
-      centerOnNode('iqc');
-    } else if (activeSimulation === 'prevention') {
-      centerOnNode('eight_d');
-    }
-  }, [activeSimulation, centerOnNode]);
+      setZoom(targetZoom);
+      setPan({ x: targetPanX, y: targetPanY });
+      setSelectedNodeId(nodeId);
+    },
+    [zoom]
+  );
 
   // Drag-to-pan handlers
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -606,56 +1014,159 @@ export default function QualityEcosystemPortal() {
 
   const activeNodeId = hoveredNodeId || selectedNodeId;
 
-  // Active highlighted cables
-  const highlightedCableIds = useMemo(() => {
-    const set = new Set<string>();
+  // Compute exact sequence metadata for highlighted cables
+  const activeCableSequenceMap = useMemo(() => {
+    // Maps cable.id -> { stepText, subLabel, isFeedback, badgeColor }
+    const map = new Map<
+      string,
+      {
+        stepNumber: number;
+        stepBadge: string;
+        shortTag: string;
+        isFeedback: boolean;
+        directionRole: 'sim' | 'input' | 'output' | 'feedback';
+        badgeColor: string;
+      }
+    >();
 
-    if (activeSimulation === 'defect') {
-      ['c10', 'c11', 'c12', 'c16', 'c17', 'c18', 'c23', 'c36'].forEach((id) => set.add(id));
-      return set;
+    // 1. If a simulation scenario is active, number cables 1, 2, 3, 4... in exact workflow order
+    if (activeSimulation !== 'none') {
+      const seq = SIMULATION_SCENARIOS[activeSimulation].cableSequence;
+      seq.forEach((cableId, idx) => {
+        const cable = CABLES.find((c) => c.id === cableId);
+        if (!cable) return;
+        const stepNum = idx + 1;
+        map.set(cableId, {
+          stepNumber: stepNum,
+          stepBadge: cable.isFeedback ? `STEP ${stepNum} ↺ RETURN` : `STEP ${stepNum} ➔`,
+          shortTag: cable.shortTag,
+          isFeedback: cable.isFeedback,
+          directionRole: cable.isFeedback ? 'feedback' : 'sim',
+          badgeColor: cable.isFeedback ? '#F43F5E' : cable.color,
+        });
+      });
+      return map;
     }
-    if (activeSimulation === 'supplier') {
-      ['c3', 'c5', 'c6', 'c8', 'c17'].forEach((id) => set.add(id));
-      return set;
+
+    // 2. If user toggled "Show All Feedback Loops (راجع)"
+    if (showAllFeedbackLoops && !activeNodeId) {
+      let fbIndex = 1;
+      CABLES.filter((c) => c.isFeedback).forEach((cable) => {
+        map.set(cable.id, {
+          stepNumber: fbIndex,
+          stepBadge: `↺ LOOP #${fbIndex}`,
+          shortTag: cable.shortTag,
+          isFeedback: true,
+          directionRole: 'feedback',
+          badgeColor: '#F43F5E',
+        });
+        fbIndex++;
+      });
+      return map;
     }
-    if (activeSimulation === 'prevention') {
-      ['c23', 'c24', 'c25', 'c30', 'c31', 'c32', 'c35'].forEach((id) => set.add(id));
-      return set;
+
+    // 3. If a card is hovered or selected, number Incoming (IN #1, IN #2...) and Outgoing (1st, 2nd, 3rd...)
+    if (activeNodeId) {
+      const incomingCables = CABLES.filter((c) => c.target === activeNodeId);
+      incomingCables.forEach((cable, idx) => {
+        const inNum = idx + 1;
+        map.set(cable.id, {
+          stepNumber: inNum,
+          stepBadge: cable.isFeedback ? `↺ RETURN IN #${inNum}` : `IN #${inNum} ➔`,
+          shortTag: cable.shortTag,
+          isFeedback: cable.isFeedback,
+          directionRole: cable.isFeedback ? 'feedback' : 'input',
+          badgeColor: cable.isFeedback ? '#F43F5E' : '#38BDF8',
+        });
+      });
+
+      const outgoingCables = CABLES.filter((c) => c.source === activeNodeId).sort(
+        (a, b) => a.orderFromSource - b.orderFromSource
+      );
+      outgoingCables.forEach((cable) => {
+        const ord = cable.orderFromSource;
+        const ordinalText = ord === 1 ? '1st' : ord === 2 ? '2nd' : ord === 3 ? '3rd' : `${ord}th`;
+        map.set(cable.id, {
+          stepNumber: ord,
+          stepBadge: cable.isFeedback ? `${ordinalText} ↺ FEEDBACK` : `${ordinalText} ➔ STEP ${ord}`,
+          shortTag: cable.shortTag,
+          isFeedback: cable.isFeedback,
+          directionRole: cable.isFeedback ? 'feedback' : 'output',
+          badgeColor: cable.isFeedback ? '#F43F5E' : '#10B981',
+        });
+      });
+    }
+
+    return map;
+  }, [activeNodeId, activeSimulation, showAllFeedbackLoops]);
+
+  // Connected nodes & their role badge when highlighted
+  const nodeSequenceBadges = useMemo(() => {
+    // Maps nodeId -> { text, color, isFeedback }
+    const badgeMap = new Map<string, { text: string; color: string; isFeedback?: boolean }>();
+
+    if (activeSimulation !== 'none') {
+      const seq = SIMULATION_SCENARIOS[activeSimulation].cableSequence;
+      seq.forEach((cableId, idx) => {
+        const cable = CABLES.find((c) => c.id === cableId);
+        if (!cable) return;
+        if (idx === 0) {
+          badgeMap.set(cable.source, { text: 'START (01)', color: '#38BDF8' });
+        }
+        const stepNum = idx + 1;
+        badgeMap.set(cable.target, {
+          text: cable.isFeedback ? `↺ STEP 0${stepNum} (RETURN)` : `STEP 0${stepNum} ➔`,
+          color: cable.isFeedback ? '#F43F5E' : '#10B981',
+          isFeedback: cable.isFeedback,
+        });
+      });
+      return badgeMap;
+    }
+
+    if (showAllFeedbackLoops && !activeNodeId) {
+      CABLES.filter((c) => c.isFeedback).forEach((cable, idx) => {
+        badgeMap.set(cable.source, { text: `↺ LOOP #${idx + 1} SRC`, color: '#F43F5E', isFeedback: true });
+        badgeMap.set(cable.target, { text: `↺ LOOP #${idx + 1} DEST`, color: '#F59E0B', isFeedback: true });
+      });
+      return badgeMap;
     }
 
     if (activeNodeId) {
-      CABLES.forEach((c) => {
-        if (c.source === activeNodeId || c.target === activeNodeId) {
-          set.add(c.id);
-        }
+      badgeMap.set(activeNodeId, { text: 'ACTIVE MODULE', color: '#38BDF8' });
+
+      const incomingCables = CABLES.filter((c) => c.target === activeNodeId);
+      incomingCables.forEach((cable, idx) => {
+        badgeMap.set(cable.source, {
+          text: cable.isFeedback ? `↺ FEEDBACK IN #${idx + 1}` : `📥 INPUT #${idx + 1}`,
+          color: cable.isFeedback ? '#F43F5E' : '#0EA5E9',
+          isFeedback: cable.isFeedback,
+        });
       });
-      return set;
+
+      const outgoingCables = CABLES.filter((c) => c.source === activeNodeId).sort(
+        (a, b) => a.orderFromSource - b.orderFromSource
+      );
+      outgoingCables.forEach((cable) => {
+        const ord = cable.orderFromSource;
+        const ordinalText = ord === 1 ? '1st' : ord === 2 ? '2nd' : ord === 3 ? '3rd' : `${ord}th`;
+        badgeMap.set(cable.target, {
+          text: cable.isFeedback ? `↺ ${ordinalText}: FEEDBACK` : `📤 ${ordinalText} TARGET`,
+          color: cable.isFeedback ? '#F43F5E' : '#10B981',
+          isFeedback: cable.isFeedback,
+        });
+      });
     }
 
-    return set;
-  }, [activeNodeId, activeSimulation]);
-
-  // Connected nodes to highlight
-  const activeConnectedNodeIds = useMemo(() => {
-    const set = new Set<string>();
-    if (activeNodeId) set.add(activeNodeId);
-
-    highlightedCableIds.forEach((cId) => {
-      const c = CABLES.find((item) => item.id === cId);
-      if (c) {
-        set.add(c.source);
-        set.add(c.target);
-      }
-    });
-
-    return set;
-  }, [activeNodeId, highlightedCableIds]);
+    return badgeMap;
+  }, [activeNodeId, activeSimulation, showAllFeedbackLoops]);
 
   // Count links per node
   const nodeConnectionsCount = useMemo(() => {
-    const counts: Record<string, number> = {};
+    const counts: Record<string, { total: number; feedback: number }> = {};
     NODES.forEach((n) => {
-      counts[n.id] = CABLES.filter((c) => c.source === n.id || c.target === n.id).length;
+      const related = CABLES.filter((c) => c.source === n.id || c.target === n.id);
+      const fb = related.filter((c) => c.isFeedback).length;
+      counts[n.id] = { total: related.length, feedback: fb };
     });
     return counts;
   }, []);
@@ -672,34 +1183,120 @@ export default function QualityEcosystemPortal() {
     );
   }, [searchQuery]);
 
-  // Active node details for bottom status bar
+  // Active node details for bottom status bar (sorted by sequence order)
   const activeNodeInfo = useMemo(() => {
     if (!activeNodeId) return null;
     const node = NODES.find((n) => n.id === activeNodeId);
     if (!node) return null;
     const phase = PHASES.find((p) => p.id === node.phaseId);
 
-    const incoming = CABLES.filter((c) => c.target === node.id).map((c) => {
+    const incoming = CABLES.filter((c) => c.target === node.id).map((c, idx) => {
       const srcNode = NODES.find((n) => n.id === c.source);
-      return { cable: c, sourceId: c.source, sourceName: srcNode?.title || c.source };
+      return {
+        cable: c,
+        orderNum: idx + 1,
+        sourceId: c.source,
+        sourceName: srcNode?.title || c.source,
+      };
     });
 
-    const outgoing = CABLES.filter((c) => c.source === node.id).map((c) => {
-      const tgtNode = NODES.find((n) => n.id === c.target);
-      return { cable: c, targetId: c.target, targetName: tgtNode?.title || c.target };
-    });
+    const outgoing = CABLES.filter((c) => c.source === node.id)
+      .sort((a, b) => a.orderFromSource - b.orderFromSource)
+      .map((c) => {
+        const tgtNode = NODES.find((n) => n.id === c.target);
+        return {
+          cable: c,
+          orderNum: c.orderFromSource,
+          targetId: c.target,
+          targetName: tgtNode?.title || c.target,
+        };
+      });
 
     return { node, phase, incoming, outgoing };
   }, [activeNodeId]);
 
+  // Helper to compute cubic bezier path and exact curve point at parameter t (0..1)
+  const computeCableGeometry = (cable: CableRelation, indexOffset: number) => {
+    const src = NODES.find((n) => n.id === cable.source);
+    const tgt = NODES.find((n) => n.id === cable.target);
+    if (!src || !tgt) return null;
+
+    const isSameColumn = src.x === tgt.x;
+    const isForwardLtr = tgt.x > src.x;
+
+    let x1 = src.x + NODE_WIDTH;
+    let y1 = src.y + NODE_HEIGHT / 2;
+    let x2 = tgt.x;
+    let y2 = tgt.y + NODE_HEIGHT / 2;
+    let cx1 = x1;
+    let cy1 = y1;
+    let cx2 = x2;
+    let cy2 = y2;
+
+    // Slight vertical port offset based on orderFromSource so multiple outgoing lines cleanly separate
+    const portShift = (cable.orderFromSource - 2) * 14;
+
+    if (isSameColumn) {
+      x1 = src.x + NODE_WIDTH;
+      x2 = tgt.x + NODE_WIDTH;
+      const curveOffset = 58;
+      cx1 = x1 + curveOffset;
+      cy1 = y1;
+      cx2 = x2 + curveOffset;
+      cy2 = y2;
+    } else if (isForwardLtr) {
+      x1 = src.x + NODE_WIDTH;
+      y1 = src.y + NODE_HEIGHT / 2 + portShift;
+      x2 = tgt.x;
+      y2 = tgt.y + NODE_HEIGHT / 2;
+      const dx = Math.max(60, (x2 - x1) * 0.45);
+      cx1 = x1 + dx;
+      cy1 = y1;
+      cx2 = x2 - dx;
+      cy2 = y2;
+    } else {
+      // Feedback / Return Loop going right-to-left (Stage 05/06 back to Stage 02/04)
+      x1 = src.x;
+      y1 = src.y + NODE_HEIGHT / 2;
+      x2 = tgt.x + NODE_WIDTH;
+      y2 = tgt.y + NODE_HEIGHT / 2;
+      const archOffset = y1 > 420 ? 115 : -115;
+      cx1 = x1 - 85;
+      cy1 = y1 + archOffset;
+      cx2 = x2 + 85;
+      cy2 = y2 + archOffset;
+    }
+
+    const pathD = `M ${x1} ${y1} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${x2} ${y2}`;
+
+    // Stagger t slightly (0.42, 0.50, 0.58) so badges on parallel cables never overlap
+    const tValues = [0.48, 0.38, 0.60, 0.44, 0.54];
+    const t = tValues[indexOffset % tValues.length];
+    const mt = 1 - t;
+
+    const midX =
+      mt * mt * mt * x1 +
+      3 * mt * mt * t * cx1 +
+      3 * mt * t * t * cx2 +
+      t * t * t * x2;
+    const midY =
+      mt * mt * mt * y1 +
+      3 * mt * mt * t * cy1 +
+      3 * mt * t * t * cy2 +
+      t * t * t * y2;
+
+    return { pathD, midX, midY, x1, y1, x2, y2 };
+  };
+
   return (
-    <div className="h-full max-h-full overflow-hidden flex flex-col select-none relative w-full text-white bg-[#040812] font-sans" dir="ltr">
-      
+    <div
+      className="h-full max-h-full overflow-hidden flex flex-col select-none relative w-full text-white bg-[#040812] font-sans"
+      dir="ltr"
+    >
       {/* ========================================================================= */}
-      {/* 1. TOP COMMAND BAR (SIMULATIONS, STAGE FILTERS, SEARCH & ZOOM) */}
+      {/* 1. TOP COMMAND BAR (ORDERED SIMULATIONS, FEEDBACK TOGGLE, SEARCH & ZOOM) */}
       {/* ========================================================================= */}
-      <header className="h-14 px-3 sm:px-6 border-b border-white/10 bg-[#070d19]/90 backdrop-blur-2xl flex items-center justify-between shrink-0 z-30 gap-2">
-        
+      <header className="h-14 px-3 sm:px-5 border-b border-white/10 bg-[#070d19]/95 backdrop-blur-2xl flex items-center justify-between shrink-0 z-30 gap-2">
         {/* Brand & Ecosystem Title */}
         <div className="flex items-center gap-3 shrink-0">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#0066CC] to-[#00A3E0] flex items-center justify-center shadow-[0_0_25px_rgba(0,163,224,0.45)] border border-sky-400/40">
@@ -710,121 +1307,113 @@ export default function QualityEcosystemPortal() {
               <h1 className="text-sm sm:text-base font-black text-white tracking-tight">
                 QMS 4.0 Interactive Ecosystem
               </h1>
-              <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5">
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 hidden sm:flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                24 Connected Modules
+                Sequenced Flow + ↺ Feedback
               </span>
             </div>
-            <p className="text-[11px] text-slate-400 hidden md:block">
-              Hover any module to trace live data conduits • Click to launch directly
+            <p className="text-[11px] text-slate-400 hidden xl:block">
+              Hover any card to see numbered 1st / 2nd / 3rd steps & return loops (↺)
             </p>
           </div>
         </div>
 
-        {/* Live Scenario Simulation Buttons */}
+        {/* Ordered Scenario Simulation Buttons + Feedback Loop Filter */}
         <div className="hidden lg:flex items-center gap-1.5 p-1 bg-white/[0.04] border border-white/10 rounded-2xl">
           <span className="text-[11px] font-bold text-slate-400 px-2 flex items-center gap-1">
             <Play className="w-3 h-3 text-sky-400" />
-            <span>Simulate Flow:</span>
+            <span>Ordered Flows:</span>
           </span>
 
           <button
             type="button"
-            onClick={() => setActiveSimulation(activeSimulation === 'defect' ? 'none' : 'defect')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+            onClick={() => {
+              setShowAllFeedbackLoops(false);
+              setActiveSimulation(activeSimulation === 'defect' ? 'none' : 'defect');
+            }}
+            className={`px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
               activeSimulation === 'defect'
                 ? 'bg-red-500 text-white shadow-[0_0_20px_rgba(239,68,68,0.5)] scale-105'
                 : 'bg-red-500/10 text-red-300 hover:bg-red-500/20 border border-red-500/25'
             }`}
           >
             <span className="w-2 h-2 rounded-full bg-red-400 animate-ping" />
-            <span>Defect ➔ NCR ➔ 8D</span>
+            <span>1➔7 Shopfloor Loop</span>
           </button>
 
           <button
             type="button"
-            onClick={() => setActiveSimulation(activeSimulation === 'supplier' ? 'none' : 'supplier')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+            onClick={() => {
+              setShowAllFeedbackLoops(false);
+              setActiveSimulation(activeSimulation === 'supplier' ? 'none' : 'supplier');
+            }}
+            className={`px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
               activeSimulation === 'supplier'
                 ? 'bg-amber-500 text-black shadow-[0_0_20px_rgba(245,158,11,0.5)] scale-105'
                 : 'bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 border border-amber-500/25'
             }`}
           >
             <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
-            <span>IQC Reject ➔ Vendor Rating</span>
+            <span>1➔5 Vendor Loop</span>
           </button>
 
           <button
             type="button"
-            onClick={() => setActiveSimulation(activeSimulation === 'prevention' ? 'none' : 'prevention')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+            onClick={() => {
+              setShowAllFeedbackLoops(false);
+              setActiveSimulation(activeSimulation === 'prevention' ? 'none' : 'prevention');
+            }}
+            className={`px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
               activeSimulation === 'prevention'
                 ? 'bg-emerald-500 text-black shadow-[0_0_20px_rgba(16,185,129,0.5)] scale-105'
                 : 'bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 border border-emerald-500/25'
             }`}
           >
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-            <span>8D Closure ➔ Control Plan</span>
+            <span>1➔6 AI & 8D Loop</span>
           </button>
 
-          {activeSimulation !== 'none' && (
+          <div className="w-[1px] h-4 bg-white/10 mx-0.5" />
+
+          {/* Dedicated Button to Highlight All Return / Feedback Loops (راجع) */}
+          <button
+            type="button"
+            onClick={() => {
+              setActiveSimulation('none');
+              setSelectedNodeId(null);
+              setShowAllFeedbackLoops((prev) => !prev);
+            }}
+            className={`px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+              showAllFeedbackLoops
+                ? 'bg-rose-500 text-white shadow-[0_0_20px_rgba(244,63,94,0.55)] scale-105'
+                : 'bg-rose-500/10 text-rose-300 hover:bg-rose-500/20 border border-rose-500/30'
+            }`}
+            title="Highlight all closed-loop return/feedback connections"
+          >
+            <CornerUpLeft className="w-3.5 h-3.5" />
+            <span>↺ Feedback Loops (7)</span>
+          </button>
+
+          {(activeSimulation !== 'none' || showAllFeedbackLoops) && (
             <button
               type="button"
-              onClick={() => setActiveSimulation('none')}
+              onClick={() => {
+                setActiveSimulation('none');
+                setShowAllFeedbackLoops(false);
+              }}
               className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/10"
-              title="Reset Simulation"
+              title="Reset View"
             >
               <RotateCcw className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
 
-        {/* Stage Filter, Search & Zoom Controls */}
+        {/* Search & Zoom Controls */}
         <div className="flex items-center gap-2 shrink-0">
-          
-          {/* Quick Stage Filter */}
-          <div className="hidden 2xl:flex items-center gap-1 bg-white/[0.04] border border-white/10 rounded-xl p-1">
-            <button
-              type="button"
-              onClick={() => {
-                setActivePhaseFilter(null);
-                fitToScreen();
-              }}
-              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${
-                !activePhaseFilter ? 'bg-sky-500 text-white shadow' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              All
-            </button>
-            {PHASES.map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => {
-                  if (activePhaseFilter === p.id) {
-                    setActivePhaseFilter(null);
-                    fitToScreen();
-                  } else {
-                    setActivePhaseFilter(p.id);
-                    const firstNode = NODES.find((n) => n.phaseId === p.id);
-                    if (firstNode) centerOnNode(firstNode.id);
-                  }
-                }}
-                className={`px-2 py-1 rounded-lg text-[11px] font-bold transition-all ${
-                  activePhaseFilter === p.id
-                    ? 'bg-white/15 text-white border border-white/30 shadow'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-                style={{ color: activePhaseFilter === p.id ? p.color : undefined }}
-              >
-                {p.title.split(' ')[0]}
-              </button>
-            ))}
-          </div>
-
           {/* Search Module Input */}
           <div className="relative">
-            <div className="flex items-center gap-1.5 bg-white/[0.05] border border-white/10 rounded-xl px-3 py-1.5 focus-within:border-sky-400/60 transition-colors w-36 sm:w-48">
+            <div className="flex items-center gap-1.5 bg-white/[0.05] border border-white/10 rounded-xl px-3 py-1.5 focus-within:border-sky-400/60 transition-colors w-36 sm:w-44">
               <Search className="w-3.5 h-3.5 text-slate-400" />
               <input
                 type="text"
@@ -915,7 +1504,7 @@ export default function QualityEcosystemPortal() {
           }}
         />
 
-        {/* Transform Layer: Stages, Laser Cables & Cards */}
+        {/* Transform Layer: Stages, Base Cables, Cards, and Foreground Sequenced Cables */}
         <div
           className="absolute top-0 left-0 transition-transform duration-75 origin-top-left pointer-events-auto"
           style={{
@@ -927,9 +1516,7 @@ export default function QualityEcosystemPortal() {
           {/* ------------------------------------------------------------- */}
           {/* 6 STAGE ZONES */}
           {/* ------------------------------------------------------------- */}
-          {PHASES.map((phase) => {
-            const isPhaseActive = !activePhaseFilter || activePhaseFilter === phase.id;
-            return (
+          {PHASES.map((phase) => (
               <div
                 key={phase.id}
                 style={{
@@ -938,9 +1525,7 @@ export default function QualityEcosystemPortal() {
                   width: `${phase.width}px`,
                   height: '830px',
                 }}
-                className={`absolute rounded-3xl border ${phase.borderColor} bg-gradient-to-b ${phase.bgGradient} p-4 pointer-events-none transition-all duration-300 ${
-                  isPhaseActive ? 'opacity-100' : 'opacity-20'
-                }`}
+                className={`absolute rounded-3xl border ${phase.borderColor} bg-gradient-to-b ${phase.bgGradient} p-4 pointer-events-none transition-all duration-300`}
               >
                 <div className="flex items-center justify-between border-b border-white/10 pb-3.5">
                   <div className="flex items-center gap-3">
@@ -970,129 +1555,79 @@ export default function QualityEcosystemPortal() {
                   </div>
                 </div>
               </div>
-            );
-          })}
+          ))}
 
           {/* ------------------------------------------------------------- */}
-          {/* DYNAMIC SVG LASER CABLES */}
+          {/* LAYER 1: BACKGROUND CABLES (SUBTLE DIRECTIONAL LINES) */}
           {/* ------------------------------------------------------------- */}
           <svg
             className="absolute inset-0 w-full h-full pointer-events-none z-10"
             style={{ width: `${CANVAS_WIDTH}px`, height: `${CANVAS_HEIGHT}px` }}
           >
             <defs>
-              <filter id="laserGlow" x="-30%" y="-30%" width="160%" height="160%">
-                <feGaussianBlur stdDeviation="4" result="blur" />
-                <feComposite in="SourceGraphic" in2="blur" operator="over" />
-              </filter>
-
-              <linearGradient id="laserPulseRed" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#EF4444" stopOpacity="0.2" />
-                <stop offset="50%" stopColor="#FCA5A5" stopOpacity="1" />
-                <stop offset="100%" stopColor="#EF4444" stopOpacity="0.2" />
-              </linearGradient>
-
-              <linearGradient id="laserPulseEmerald" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#10B981" stopOpacity="0.2" />
-                <stop offset="50%" stopColor="#6EE7B7" stopOpacity="1" />
-                <stop offset="100%" stopColor="#10B981" stopOpacity="0.2" />
-              </linearGradient>
-
-              <linearGradient id="laserPulseCyan" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#0EA5E9" stopOpacity="0.2" />
-                <stop offset="50%" stopColor="#BAE6FD" stopOpacity="1" />
-                <stop offset="100%" stopColor="#0EA5E9" stopOpacity="0.2" />
-              </linearGradient>
-
-              <linearGradient id="laserPulsePurple" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#8B5CF6" stopOpacity="0.2" />
-                <stop offset="50%" stopColor="#DDD6FE" stopOpacity="1" />
-                <stop offset="100%" stopColor="#8B5CF6" stopOpacity="0.2" />
-              </linearGradient>
+              <marker
+                id="arrowMuted"
+                viewBox="0 0 10 10"
+                refX="7"
+                refY="5"
+                markerWidth="5"
+                markerHeight="5"
+                orient="auto-start-reverse"
+              >
+                <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="rgba(148, 163, 184, 0.35)" />
+              </marker>
+              <marker
+                id="arrowFeedbackMuted"
+                viewBox="0 0 10 10"
+                refX="7"
+                refY="5"
+                markerWidth="5"
+                markerHeight="5"
+                orient="auto-start-reverse"
+              >
+                <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="rgba(244, 63, 94, 0.45)" />
+              </marker>
             </defs>
 
-            {CABLES.map((cable) => {
-              const src = NODES.find((n) => n.id === cable.source);
-              const tgt = NODES.find((n) => n.id === cable.target);
-              if (!src || !tgt) return null;
-
-              const isSameColumn = src.x === tgt.x;
-              const isForwardLtr = tgt.x > src.x;
-
-              let x1 = src.x + NODE_WIDTH;
-              const y1 = src.y + NODE_HEIGHT / 2;
-              let x2 = tgt.x;
-              const y2 = tgt.y + NODE_HEIGHT / 2;
-
-              let pathD = '';
-
-              if (isSameColumn) {
-                x1 = src.x + NODE_WIDTH;
-                x2 = tgt.x + NODE_WIDTH;
-                const curveOffset = 45;
-                pathD = `M ${x1} ${y1} C ${x1 + curveOffset} ${y1}, ${x2 + curveOffset} ${y2}, ${x2} ${y2}`;
-              } else if (isForwardLtr) {
-                x1 = src.x + NODE_WIDTH;
-                x2 = tgt.x;
-                const dx = Math.max(55, (x2 - x1) * 0.45);
-                pathD = `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`;
-              } else {
-                x1 = src.x;
-                x2 = tgt.x + NODE_WIDTH;
-                const archOffset = y1 > 450 ? 110 : -110;
-                pathD = `M ${x1} ${y1} C ${x1 - 80} ${y1 + archOffset}, ${x2 + 80} ${y2 + archOffset}, ${x2} ${y2}`;
-              }
-
-              const isHighlighted = highlightedCableIds.has(cable.id);
+            {CABLES.map((cable, idx) => {
+              if (activeCableSequenceMap.has(cable.id)) return null;
+              const geom = computeCableGeometry(cable, idx);
+              if (!geom) return null;
 
               return (
-                <g key={cable.id}>
-                  <path
-                    d={pathD}
-                    fill="none"
-                    stroke={isHighlighted ? cable.color : 'rgba(148, 163, 184, 0.13)'}
-                    strokeWidth={isHighlighted ? '3' : '1.4'}
-                    strokeDasharray={isHighlighted ? 'none' : '5, 5'}
-                    filter={isHighlighted ? 'url(#laserGlow)' : 'none'}
-                    className="transition-all duration-300"
-                  />
-
-                  {isHighlighted && (
-                    <path
-                      d={pathD}
-                      fill="none"
-                      stroke={
-                        cable.color === '#EF4444'
-                          ? 'url(#laserPulseRed)'
-                          : cable.color === '#10B981'
-                          ? 'url(#laserPulseEmerald)'
-                          : cable.color === '#8B5CF6'
-                          ? 'url(#laserPulsePurple)'
-                          : 'url(#laserPulseCyan)'
-                      }
-                      strokeWidth="4.5"
-                      strokeDasharray="18, 26"
-                      className="animate-laser-flow"
-                      filter="url(#laserGlow)"
-                      style={{ animationDuration: '0.75s' }}
-                    />
-                  )}
-                </g>
+                <path
+                  key={cable.id}
+                  d={geom.pathD}
+                  fill="none"
+                  stroke={
+                    cable.isFeedback
+                      ? 'rgba(244, 63, 94, 0.22)'
+                      : 'rgba(148, 163, 184, 0.15)'
+                  }
+                  strokeWidth={cable.isFeedback ? '1.6' : '1.3'}
+                  strokeDasharray={cable.isFeedback ? '8, 5' : '4, 5'}
+                  markerEnd={
+                    cable.isFeedback ? 'url(#arrowFeedbackMuted)' : 'url(#arrowMuted)'
+                  }
+                />
               );
             })}
           </svg>
 
           {/* ------------------------------------------------------------- */}
-          {/* 4. REDESIGNED MODULE CARDS (CRISP VISIBLE ENGLISH TITLES) */}
+          {/* LAYER 2: 24 MODULE CARDS WITH SEQUENCE & FEEDBACK BADGES */}
           {/* ------------------------------------------------------------- */}
           {NODES.map((node) => {
             const isSelected = selectedNodeId === node.id;
             const isHovered = hoveredNodeId === node.id;
-            const isConnected = activeConnectedNodeIds.has(node.id);
-            const isDimmed = activeNodeId && !isConnected && activeSimulation === 'none';
+            const seqBadge = nodeSequenceBadges.get(node.id);
+            const isConnected = Boolean(seqBadge);
+            const isDimmed =
+              (activeNodeId || activeSimulation !== 'none' || showAllFeedbackLoops) &&
+              !isConnected;
             const phase = PHASES.find((p) => p.id === node.phaseId);
             const themeColor = phase?.color || '#0EA5E9';
-            const linksCount = nodeConnectionsCount[node.id] || 0;
+            const linkStats = nodeConnectionsCount[node.id] || { total: 0, feedback: 0 };
 
             return (
               <div
@@ -1104,9 +1639,11 @@ export default function QualityEcosystemPortal() {
                   height: `${NODE_HEIGHT}px`,
                   boxShadow:
                     isSelected || isHovered
-                      ? `0 14px 35px -5px ${themeColor}45, 0 0 0 2px ${themeColor}`
+                      ? `0 14px 35px -5px ${themeColor}50, 0 0 0 2.5px ${themeColor}`
                       : isConnected
-                      ? `0 8px 25px -5px ${themeColor}30, 0 0 0 1.5px ${themeColor}90`
+                      ? `0 10px 28px -5px ${seqBadge?.color || themeColor}40, 0 0 0 2px ${
+                          seqBadge?.color || themeColor
+                        }`
                       : '0 10px 30px -10px rgba(0, 0, 0, 0.7)',
                 }}
                 onMouseEnter={() => setHoveredNodeId(node.id)}
@@ -1118,7 +1655,7 @@ export default function QualityEcosystemPortal() {
                 onDoubleClick={() => {
                   navigate(node.path);
                 }}
-                className={`absolute rounded-2xl overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-200 z-20 group backdrop-blur-xl ${
+                className={`absolute rounded-2xl overflow-visible flex flex-col justify-between cursor-pointer transition-all duration-200 z-20 group backdrop-blur-xl ${
                   isSelected
                     ? 'bg-[#111c33] scale-[1.04]'
                     : isHovered
@@ -1126,41 +1663,47 @@ export default function QualityEcosystemPortal() {
                     : isConnected
                     ? 'bg-[#0d1627]'
                     : 'bg-[#09101d]/95 border border-white/10 hover:border-white/25'
-                } ${isDimmed ? 'opacity-25' : 'opacity-100'}`}
+                } ${isDimmed ? 'opacity-20' : 'opacity-100'}`}
               >
+                {/* Floating Sequence Role Badge on Top-Right of Card */}
+                {seqBadge && (
+                  <div
+                    style={{
+                      backgroundColor: seqBadge.color,
+                      boxShadow: `0 4px 14px ${seqBadge.color}66`,
+                    }}
+                    className="absolute -top-3 right-3 px-2.5 py-0.5 rounded-full text-[10px] font-black text-slate-950 tracking-wider uppercase z-30 flex items-center gap-1 border border-white/40 animate-fade-in"
+                  >
+                    <span>{seqBadge.text}</span>
+                  </div>
+                )}
+
                 {/* Top Neon Accent Bar */}
                 <div
-                  className="h-1.5 w-full shrink-0"
+                  className="h-1.5 w-full shrink-0 rounded-t-2xl"
                   style={{
                     background: `linear-gradient(90deg, ${themeColor}, ${themeColor}55)`,
                   }}
-                />
-
-                {/* Soft Ambient Corner Glow */}
-                <div
-                  className="absolute -top-10 -left-10 w-28 h-28 rounded-full blur-2xl pointer-events-none opacity-20 group-hover:opacity-40 transition-opacity"
-                  style={{ backgroundColor: themeColor }}
                 />
 
                 {/* Integrated Side Connection Ports */}
                 <div
                   className="absolute -left-1.5 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 border-[#040812] transition-transform group-hover:scale-125"
                   style={{
-                    backgroundColor: isConnected ? themeColor : '#334155',
-                    boxShadow: isConnected ? `0 0 10px ${themeColor}` : 'none',
+                    backgroundColor: isConnected ? seqBadge?.color || themeColor : '#334155',
+                    boxShadow: isConnected ? `0 0 10px ${seqBadge?.color || themeColor}` : 'none',
                   }}
                 />
                 <div
                   className="absolute -right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 border-[#040812] transition-transform group-hover:scale-125"
                   style={{
-                    backgroundColor: isConnected ? themeColor : '#334155',
-                    boxShadow: isConnected ? `0 0 10px ${themeColor}` : 'none',
+                    backgroundColor: isConnected ? seqBadge?.color || themeColor : '#334155',
+                    boxShadow: isConnected ? `0 0 10px ${seqBadge?.color || themeColor}` : 'none',
                   }}
                 />
 
                 {/* Card Content */}
-                <div className="p-3.5 flex-1 flex flex-col justify-between">
-                  
+                <div className="p-3.5 flex-1 flex flex-col justify-between overflow-hidden rounded-b-2xl">
                   {/* Top Row: Icon + Clear Visible English Title + Badge */}
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2.5">
@@ -1197,11 +1740,19 @@ export default function QualityEcosystemPortal() {
                     {node.description}
                   </p>
 
-                  {/* Bottom Row: Active Links Count + Direct Launch Button */}
+                  {/* Bottom Row: Active Links Count (+ Feedback Loop Indicator) + Direct Launch Button */}
                   <div className="flex items-center justify-between pt-2 border-t border-white/[0.08]">
-                    <div className="flex items-center gap-1 text-[10px] text-slate-300 font-semibold">
+                    <div className="flex items-center gap-1.5 text-[10px] text-slate-300 font-semibold">
                       <Link2 className="w-3 h-3" style={{ color: themeColor }} />
-                      <span>{linksCount} Active Links</span>
+                      <span>{linkStats.total} Links</span>
+                      {linkStats.feedback > 0 && (
+                        <span
+                          className="px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[9px] font-bold"
+                          title="Includes Closed-Loop Return / Feedback connections"
+                        >
+                          ↺ {linkStats.feedback} Loop
+                        </span>
+                      )}
                     </div>
 
                     <button
@@ -1224,11 +1775,138 @@ export default function QualityEcosystemPortal() {
               </div>
             );
           })}
+
+          {/* ------------------------------------------------------------- */}
+          {/* LAYER 3: FOREGROUND HIGHLIGHTED CABLES & NUMBERED STEP BADGES */}
+          {/* ------------------------------------------------------------- */}
+          <svg
+            className="absolute inset-0 w-full h-full pointer-events-none z-30"
+            style={{ width: `${CANVAS_WIDTH}px`, height: `${CANVAS_HEIGHT}px` }}
+          >
+            <defs>
+              <filter id="laserGlow" x="-30%" y="-30%" width="160%" height="160%">
+                <feGaussianBlur stdDeviation="4" result="blur" />
+                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+              </filter>
+
+              <marker
+                id="arrowActiveGreen"
+                viewBox="0 0 10 10"
+                refX="7"
+                refY="5"
+                markerWidth="6"
+                markerHeight="6"
+                orient="auto-start-reverse"
+              >
+                <path d="M 0 1 L 9 5 L 0 9 z" fill="#10B981" />
+              </marker>
+
+              <marker
+                id="arrowActiveBlue"
+                viewBox="0 0 10 10"
+                refX="7"
+                refY="5"
+                markerWidth="6"
+                markerHeight="6"
+                orient="auto-start-reverse"
+              >
+                <path d="M 0 1 L 9 5 L 0 9 z" fill="#38BDF8" />
+              </marker>
+
+              <marker
+                id="arrowActiveFeedback"
+                viewBox="0 0 10 10"
+                refX="7"
+                refY="5"
+                markerWidth="6.5"
+                markerHeight="6.5"
+                orient="auto-start-reverse"
+              >
+                <path d="M 0 1 L 9 5 L 0 9 z" fill="#F43F5E" />
+              </marker>
+            </defs>
+
+            {CABLES.map((cable, idx) => {
+              const seqMeta = activeCableSequenceMap.get(cable.id);
+              if (!seqMeta) return null;
+
+              const geom = computeCableGeometry(cable, idx);
+              if (!geom) return null;
+
+              const strokeColor = seqMeta.badgeColor;
+              const markerId = seqMeta.isFeedback
+                ? 'url(#arrowActiveFeedback)'
+                : seqMeta.directionRole === 'input'
+                ? 'url(#arrowActiveBlue)'
+                : 'url(#arrowActiveGreen)';
+
+              return (
+                <g key={cable.id}>
+                  {/* Glowing Base Path */}
+                  <path
+                    d={geom.pathD}
+                    fill="none"
+                    stroke={strokeColor}
+                    strokeWidth={seqMeta.isFeedback ? '3.2' : '3'}
+                    strokeDasharray={seqMeta.isFeedback ? '9, 5' : 'none'}
+                    filter="url(#laserGlow)"
+                    markerEnd={markerId}
+                  />
+
+                  {/* Animated Laser Pulse Overlay */}
+                  <path
+                    d={geom.pathD}
+                    fill="none"
+                    stroke="#ffffff"
+                    strokeWidth="2"
+                    strokeDasharray="12, 28"
+                    className="animate-laser-flow"
+                    style={{ animationDuration: seqMeta.isFeedback ? '0.9s' : '0.7s' }}
+                  />
+
+                  {/* On-Cable Numbered Sequence Pill Badge */}
+                  <g transform={`translate(${geom.midX}, ${geom.midY})`}>
+                    <rect
+                      x="-74"
+                      y="-18"
+                      width="148"
+                      height="34"
+                      rx="10"
+                      fill="#070d19"
+                      stroke={strokeColor}
+                      strokeWidth="1.8"
+                    />
+                    <text
+                      x="0"
+                      y="-4"
+                      textAnchor="middle"
+                      fill={strokeColor}
+                      fontSize="9.5"
+                      fontWeight="900"
+                      letterSpacing="0.04em"
+                    >
+                      {seqMeta.stepBadge}
+                    </text>
+                    <text
+                      x="0"
+                      y="9"
+                      textAnchor="middle"
+                      fill="#F8FAFC"
+                      fontSize="9.5"
+                      fontWeight="700"
+                    >
+                      {seqMeta.shortTag}
+                    </text>
+                  </g>
+                </g>
+              );
+            })}
+          </svg>
         </div>
       </div>
 
       {/* ========================================================================= */}
-      {/* 3. DOCKED SINGLE-LINE BOTTOM STATUS BAR (NEVER COVERS CARDS OR LINKS) */}
+      {/* 3. DOCKED SINGLE-LINE BOTTOM STATUS BAR (ORDERED 1st, 2nd, 3rd + RETURN) */}
       {/* ========================================================================= */}
       <div className="h-12 px-4 border-t border-white/10 bg-[#070d19]/95 backdrop-blur-2xl flex items-center justify-between shrink-0 z-30 gap-3 overflow-x-auto no-scrollbar">
         {activeNodeInfo ? (
@@ -1244,68 +1922,91 @@ export default function QualityEcosystemPortal() {
               >
                 <activeNodeInfo.node.icon className="w-4 h-4" />
               </div>
-              <span
-                className="text-[10px] font-bold uppercase px-2 py-0.5 rounded"
-                style={{
-                  backgroundColor: activeNodeInfo.phase?.color + '20',
-                  color: activeNodeInfo.phase?.color,
-                }}
-              >
-                {activeNodeInfo.phase?.title}
-              </span>
               <h3 className="text-xs sm:text-sm font-black text-white whitespace-nowrap">
                 {activeNodeInfo.node.title}
               </h3>
             </div>
 
-            {/* Single-Line Inputs & Outputs */}
+            {/* Ordered Single-Line Inputs & Sequenced Outputs (1st, 2nd, 3rd + Feedback) */}
             <div className="flex items-center gap-3 text-[11px] shrink-0">
               {/* Inputs */}
               <div className="flex items-center gap-1.5">
-                <span className="text-sky-400 font-bold whitespace-nowrap">📥 Inputs From:</span>
+                <span className="text-sky-400 font-bold whitespace-nowrap">📥 Inputs:</span>
                 {activeNodeInfo.incoming.length > 0 ? (
                   <div className="flex items-center gap-1">
-                    {activeNodeInfo.incoming.map((item, i) => (
+                    {activeNodeInfo.incoming.map((item) => (
                       <button
-                        key={i}
+                        key={item.cable.id}
                         type="button"
                         onClick={() => setSelectedNodeId(item.sourceId)}
                         title={item.cable.label}
-                        className="px-2 py-0.5 rounded-md bg-sky-500/15 hover:bg-sky-500/30 border border-sky-500/30 text-white font-bold whitespace-nowrap flex items-center gap-1 transition-colors"
+                        className={`px-2 py-0.5 rounded-md border text-white font-bold whitespace-nowrap flex items-center gap-1 transition-colors ${
+                          item.cable.isFeedback
+                            ? 'bg-rose-500/20 hover:bg-rose-500/35 border-rose-500/40'
+                            : 'bg-sky-500/15 hover:bg-sky-500/30 border-sky-500/30'
+                        }`}
                       >
-                        <span>{item.sourceName}</span>
-                        <span className="text-[10px] text-sky-300 font-normal hidden xl:inline">
-                          ({item.cable.label})
+                        <span
+                          className={`text-[10px] font-black px-1 rounded ${
+                            item.cable.isFeedback
+                              ? 'bg-rose-500 text-white'
+                              : 'bg-sky-500/30 text-sky-200'
+                          }`}
+                        >
+                          {item.cable.isFeedback ? `↺ IN #${item.orderNum}` : `IN #${item.orderNum}`}
                         </span>
+                        <span>{item.sourceName}</span>
                       </button>
                     ))}
                   </div>
                 ) : (
-                  <span className="text-slate-500 whitespace-nowrap">Primary Source Node</span>
+                  <span className="text-slate-500 whitespace-nowrap">Step 01 Origin</span>
                 )}
               </div>
 
               <span className="text-white/20">|</span>
 
-              {/* Outputs */}
+              {/* Outgoing Ordered Sequence (1st, 2nd, 3rd) */}
               <div className="flex items-center gap-1.5">
-                <span className="text-emerald-400 font-bold whitespace-nowrap">📤 Feeds Into:</span>
+                <span className="text-emerald-400 font-bold whitespace-nowrap">
+                  📤 Sequence Out:
+                </span>
                 {activeNodeInfo.outgoing.length > 0 ? (
                   <div className="flex items-center gap-1">
-                    {activeNodeInfo.outgoing.map((item, i) => (
-                      <button
-                        key={i}
-                        type="button"
-                        onClick={() => setSelectedNodeId(item.targetId)}
-                        title={item.cable.label}
-                        className="px-2 py-0.5 rounded-md bg-emerald-500/15 hover:bg-emerald-500/30 border border-emerald-500/30 text-white font-bold whitespace-nowrap flex items-center gap-1 transition-colors"
-                      >
-                        <span>{item.targetName}</span>
-                        <span className="text-[10px] text-emerald-300 font-normal hidden xl:inline">
-                          ({item.cable.label})
-                        </span>
-                      </button>
-                    ))}
+                    {activeNodeInfo.outgoing.map((item) => {
+                      const ord =
+                        item.orderNum === 1
+                          ? '1st'
+                          : item.orderNum === 2
+                          ? '2nd'
+                          : item.orderNum === 3
+                          ? '3rd'
+                          : `${item.orderNum}th`;
+                      return (
+                        <button
+                          key={item.cable.id}
+                          type="button"
+                          onClick={() => setSelectedNodeId(item.targetId)}
+                          title={item.cable.label}
+                          className={`px-2 py-0.5 rounded-md border text-white font-bold whitespace-nowrap flex items-center gap-1 transition-colors ${
+                            item.cable.isFeedback
+                              ? 'bg-rose-500/20 hover:bg-rose-500/35 border-rose-500/40'
+                              : 'bg-emerald-500/15 hover:bg-emerald-500/30 border-emerald-500/30'
+                          }`}
+                        >
+                          <span
+                            className={`text-[10px] font-black px-1 rounded ${
+                              item.cable.isFeedback
+                                ? 'bg-rose-500 text-white'
+                                : 'bg-emerald-500 text-slate-950'
+                            }`}
+                          >
+                            {item.cable.isFeedback ? `↺ ${ord} (Return)` : `${ord} ➔`}
+                          </span>
+                          <span>{item.targetName}</span>
+                        </button>
+                      );
+                    })}
                   </div>
                 ) : (
                   <span className="text-slate-500 whitespace-nowrap">Executive Endpoint</span>
@@ -1335,15 +2036,19 @@ export default function QualityEcosystemPortal() {
             </div>
           </>
         ) : (
-          <div className="w-full flex items-center justify-between text-xs text-slate-400">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse" />
-              <span>
-                Hover over any module card to illuminate its connected workflows and inspect data inputs/outputs
+          <div className="w-full flex items-center justify-between text-xs text-slate-400 gap-4">
+            <div className="flex items-center gap-4">
+              <span className="flex items-center gap-1.5 text-slate-300 font-semibold">
+                <span className="w-2.5 h-0.5 bg-emerald-400 inline-block" />
+                <span>Forward Sequence (1st ➔ 2nd ➔ 3rd)</span>
+              </span>
+              <span className="flex items-center gap-1.5 text-rose-300 font-semibold">
+                <span className="w-2.5 h-0.5 border-b-2 border-dashed border-rose-400 inline-block" />
+                <span>↺ Closed-Loop Return / Feedback (راجع)</span>
               </span>
             </div>
-            <span className="text-[11px] text-slate-500 hidden sm:inline">
-              Double-click any card or click "Open" to launch the module
+            <span className="text-[11px] text-slate-400 hidden md:inline">
+              Hover any card to see numbered execution order on every line • Click "↺ Feedback Loops (7)" above to inspect all return paths
             </span>
           </div>
         )}
