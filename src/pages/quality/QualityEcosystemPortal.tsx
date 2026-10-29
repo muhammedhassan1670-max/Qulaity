@@ -32,6 +32,7 @@ import {
   ZoomOut,
   ExternalLink,
   Link2,
+  Database,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -70,7 +71,7 @@ interface CableRelation {
 }
 
 // =========================================================================
-// 1. أبعاد الشبكة والمراحل الـ 6 (مرتبة من اليمين إلى اليسار RTL)
+// 1. أبعاد الشبكة والمراحل الـ 6 (مرتبة هندسياً من اليمين إلى اليسار RTL)
 // =========================================================================
 
 const NODE_WIDTH = 250;
@@ -82,8 +83,8 @@ const PHASES: PhaseZone[] = [
   {
     id: 'supply_chain',
     phaseNumber: '٠١',
-    titleAr: 'سلاسل الإمداد والخامات',
-    subtitleAr: 'الرقابة القبلية وتأهيل الموردين',
+    titleAr: 'سلاسل الإمداد والتأسيس',
+    subtitleAr: 'البيانات المرجعية ورقابة الموردين',
     color: '#10B981',
     borderColor: 'border-emerald-500/30',
     bgGradient: 'from-emerald-950/30 via-emerald-950/10 to-transparent',
@@ -153,8 +154,9 @@ const PHASES: PhaseZone[] = [
   },
 ];
 
+// جميع المسارات (path) مطابقة 100% لملف src/router/index.tsx
 const NODES: BlueprintNode[] = [
-  // المرحلة 1: سلاسل الإمداد (العمود الأيمن x: 1655)
+  // المرحلة 1: سلاسل الإمداد والتأسيس (العمود الأيمن x: 1655)
   {
     id: 'iqc',
     nameAr: 'فحص الواردات (IQC)',
@@ -189,12 +191,12 @@ const NODES: BlueprintNode[] = [
     y: 480,
   },
   {
-    id: 'inbound_audit',
-    nameAr: 'تدقيق جودة الموردين',
-    path: '/audits',
-    icon: ShieldCheck,
-    badgeAr: 'تأهيل المورد',
-    descriptionAr: 'مراجعات ميدانية لمنشآت الموردين واعتماد خطوط إنتاجهم دورياً',
+    id: 'master_data',
+    nameAr: 'البيانات المرجعية والأصناف',
+    path: '/quality-master-data',
+    icon: Database,
+    badgeAr: 'تأسيس المعايير',
+    descriptionAr: 'تعريف الأصناف وكتالوج العيوب القياسي ومعايير القبول والخطوط',
     phaseId: 'supply_chain',
     x: 1655,
     y: 665,
@@ -204,7 +206,7 @@ const NODES: BlueprintNode[] = [
   {
     id: 'daily_defects',
     nameAr: 'تسجيل العيوب اللحظي',
-    path: '/shopfloor/defects',
+    path: '/defect-log',
     icon: Activity,
     badgeAr: 'صالة الإنتاج',
     descriptionAr: 'التقاط العيوب الفوري من المشغلين مع التصوير وربط الماكينة والوردية',
@@ -215,7 +217,7 @@ const NODES: BlueprintNode[] = [
   {
     id: 'inspection_plans',
     nameAr: 'خطط الفحص المرحلي',
-    path: '/inspection-plans',
+    path: '/quality-inspection-plans',
     icon: CheckCircle2,
     badgeAr: 'فحص التشغيل',
     descriptionAr: 'قوائم فحص الجودة أثناء التشغيل والتحقق الإلزامي من العينات الأولى',
@@ -226,7 +228,7 @@ const NODES: BlueprintNode[] = [
   {
     id: 'lpa',
     nameAr: 'التدقيق الطبقي (LPA)',
-    path: '/audits/layered',
+    path: '/quality-audits',
     icon: Layers,
     badgeAr: 'رقابة ميدانية',
     descriptionAr: 'تأكيد التزام المشغلين والمشرفين بالمعايير القياسية لمنع حيود العمليات',
@@ -236,8 +238,8 @@ const NODES: BlueprintNode[] = [
   },
   {
     id: 'setup_readiness',
-    nameAr: 'جاهزية الماكينات والبدء',
-    path: '/setup-readiness',
+    nameAr: 'جاهزية الخطوط والبدء',
+    path: '/quality-execution-board',
     icon: Sliders,
     badgeAr: 'تصريح إنتاج',
     descriptionAr: 'اعتماد مطابقة المعايير الفنية وتصريح بدء الخطوط لتفادي الهدر الأولي',
@@ -364,7 +366,7 @@ const NODES: BlueprintNode[] = [
   {
     id: 'knowledge_base',
     nameAr: 'بنك المعرفة والدروس',
-    path: '/quality/library',
+    path: '/quality-knowledge-base',
     icon: BookOpen,
     badgeAr: 'الدروس المستفادة',
     descriptionAr: 'مستودع الخبرات التراكمية وسوابق الحلول لتفادي تكرار الأخطاء السابقة',
@@ -375,7 +377,7 @@ const NODES: BlueprintNode[] = [
   {
     id: 'form_designer',
     nameAr: 'مصمم النماذج الذكية',
-    path: '/forms/designer',
+    path: '/quality-form-designer',
     icon: Layers,
     badgeAr: 'أتمتة الفحص',
     descriptionAr: 'بناء وتخصيص استمارات الجودة الميدانية وربطها بالمحطات والماكينات',
@@ -399,7 +401,7 @@ const NODES: BlueprintNode[] = [
   {
     id: 'control_tower',
     nameAr: 'برج المراقبة المركزي',
-    path: '/quality/control-tower',
+    path: '/quality-control-tower',
     icon: BarChart3,
     badgeAr: 'غرفة القيادة',
     descriptionAr: 'رؤية مركزية موحدة لكافة مؤشرات الجودة ومقارنة الخطوط ومستويات الهدر',
@@ -410,7 +412,7 @@ const NODES: BlueprintNode[] = [
   {
     id: 'ai_copilot',
     nameAr: 'مساعد الجودة الذكي',
-    path: '/ai-intelligence',
+    path: '/ai/defect-prediction',
     icon: Sparkles,
     badgeAr: 'الذكاء الاصطناعي',
     descriptionAr: 'تحليل أنماط العيوب واقتراح الأسباب الجذرية وصياغة التقارير آلياً',
@@ -421,7 +423,7 @@ const NODES: BlueprintNode[] = [
   {
     id: 'audits',
     nameAr: 'التدقيق والمراجعات الشاملة',
-    path: '/audits',
+    path: '/audit',
     icon: ShieldCheck,
     badgeAr: 'مطابقة النظم',
     descriptionAr: 'جدولة ومتابعة تدقيقات الجودة الشاملة وتوثيق الملاحظات وإغلاقها',
@@ -432,41 +434,60 @@ const NODES: BlueprintNode[] = [
 ];
 
 // =========================================================================
-// 2. شبكة العلاقات وخطوط الربط بين الأقسام
+// 2. شبكة العلاقات الهندسية المتكاملة (كافة الـ 24 قسماً متصلة بدورة مغلقة)
 // =========================================================================
 
 const CABLES: CableRelation[] = [
-  // مسار العيوب والتصعيد
-  { id: 'c1', source: 'daily_defects', target: 'ncr', labelAr: 'تصعيد عيب حرج إلى تقرير عدم مطابقة', category: 'defect', color: '#EF4444' },
-  { id: 'c2', source: 'daily_defects', target: 'spc', labelAr: 'تغذية القراءات في خرائط الضبط الإحصائي', category: 'intelligence', color: '#0EA5E9' },
-  { id: 'c3', source: 'ncr', target: 'capa_records', labelAr: 'إصدار خطة تصحيحية ووقائية', category: 'defect', color: '#EF4444' },
-  { id: 'c4', source: 'ncr', target: 'eight_d', labelAr: 'تفعيل منهجية التحليل الجذري 8D', category: 'defect', color: '#8B5CF6' },
-  { id: 'c5', source: 'ncr', target: 'defect_cost', labelAr: 'احتساب تكلفة الخردة والفرز', category: 'defect', color: '#EF4444' },
-  
-  // مسار الموردين والواردات
-  { id: 'c6', source: 'iqc', target: 'suppliers', labelAr: 'تحديث تقييم المورد آلياً', category: 'supplier', color: '#10B981' },
-  { id: 'c7', source: 'iqc', target: 'ncr', labelAr: 'حجز شحنة خامات غير مطابقة', category: 'supplier', color: '#F59E0B' },
-  { id: 'c8', source: 'calibration', target: 'iqc', labelAr: 'اعتماد دقة أجهزة الفحص والقياس', category: 'governance', color: '#10B981' },
-  
-  // الشكاوى والحيود
-  { id: 'c9', source: 'complaints', target: 'ncr', labelAr: 'تحويل شكوى العميل لتقرير عدم مطابقة', category: 'defect', color: '#EF4444' },
-  { id: 'c10', source: 'deviation', target: 'inspection_plans', labelAr: 'تحديث معايير القبول المؤقت بالصالة', category: 'governance', color: '#F59E0B' },
-  
-  // مسار الإغلاق والوقاية
-  { id: 'c11', source: 'eight_d', target: 'control_plan', labelAr: 'تحديث خطة الضبط بالضوابط الجديدة', category: 'prevention', color: '#10B981' },
-  { id: 'c12', source: 'eight_d', target: 'fmea', labelAr: 'تحديث مصفوفة تحليل المخاطر', category: 'prevention', color: '#F59E0B' },
-  { id: 'c13', source: 'eight_d', target: 'knowledge_base', labelAr: 'توثيق الحل في بنك المعرفة والدروس', category: 'prevention', color: '#10B981' },
-  { id: 'c14', source: 'capa_records', target: 'change_control', labelAr: 'طلب تعديل هندسي معتمد', category: 'governance', color: '#8B5CF6' },
-  
-  // مسار الهندسة إلى خطوط الإنتاج
-  { id: 'c15', source: 'fmea', target: 'control_plan', labelAr: 'ربط النقاط الحرجة بخطة المراقبة', category: 'prevention', color: '#F59E0B' },
-  { id: 'c16', source: 'control_plan', target: 'inspection_plans', labelAr: 'تغذية قوائم الفحص المرحلي بالمعايير', category: 'governance', color: '#0EA5E9' },
-  { id: 'c17', source: 'control_plan', target: 'spc', labelAr: 'تحديد حدود المواصفات العليا والدنيا', category: 'intelligence', color: '#06B6D4' },
-  
-  // الذكاء الاصطناعي والرقابة
-  { id: 'c18', source: 'spc', target: 'ai_copilot', labelAr: 'تحليل اتجاهات الحيود والتنبؤ المبكر', category: 'intelligence', color: '#06B6D4' },
-  { id: 'c19', source: 'knowledge_base', target: 'ai_copilot', labelAr: 'تزويد المساعد الذكي بالخبرات السابقة', category: 'intelligence', color: '#06B6D4' },
-  { id: 'c20', source: 'control_tower', target: 'command_center', labelAr: 'مراقبة سرعة إغلاق خطط التحسين', category: 'intelligence', color: '#0EA5E9' },
+  // أ. روابط المرحلة 1 (التوريد والتأسيس)
+  { id: 'c1', source: 'master_data', target: 'inspection_plans', labelAr: 'تغذية معايير القبول وكتالوج العيوب', category: 'governance', color: '#10B981' },
+  { id: 'c2', source: 'master_data', target: 'fmea', labelAr: 'تزويد شجرة الأصناف والعمليات لتحليل المخاطر', category: 'governance', color: '#10B981' },
+  { id: 'c3', source: 'calibration', target: 'iqc', labelAr: 'تأكيد صلاحية ودقة أجهزة القياس', category: 'governance', color: '#10B981' },
+  { id: 'c4', source: 'calibration', target: 'spc', labelAr: 'ضمان موثوقية قراءات القياس الإحصائي', category: 'intelligence', color: '#06B6D4' },
+  { id: 'c5', source: 'iqc', target: 'suppliers', labelAr: 'تحديث تقييم المورد آلياً حسب نتيجة الفحص', category: 'supplier', color: '#10B981' },
+  { id: 'c6', source: 'iqc', target: 'ncr', labelAr: 'إصدار تقرير عدم مطابقة لشحنة خامات مرفوضة', category: 'supplier', color: '#F59E0B' },
+  { id: 'c7', source: 'iqc', target: 'deviation', labelAr: 'طلب تصريح قبول مشروط لخامة طارئة', category: 'supplier', color: '#F59E0B' },
+  { id: 'c8', source: 'suppliers', target: 'audits', labelAr: 'جدولة تدقيق ميداني للموردين منخفضي التقييم', category: 'supplier', color: '#10B981' },
+
+  // ب. روابط المرحلة 2 (التشغيل وصالة الإنتاج)
+  { id: 'c9', source: 'setup_readiness', target: 'inspection_plans', labelAr: 'تصريح بدء الخط وفحص العينة الأولى', category: 'governance', color: '#0EA5E9' },
+  { id: 'c10', source: 'inspection_plans', target: 'daily_defects', labelAr: 'رصد عيب أثناء الفحص المرحلي للتشغيل', category: 'defect', color: '#0EA5E9' },
+  { id: 'c11', source: 'daily_defects', target: 'ncr', labelAr: 'تصعيد العيب الحرج لتقرير عدم مطابقة وحجز', category: 'defect', color: '#EF4444' },
+  { id: 'c12', source: 'daily_defects', target: 'spc', labelAr: 'تغذية بيانات العيوب اللحظية في خرائط التحكم', category: 'intelligence', color: '#0EA5E9' },
+  { id: 'c13', source: 'daily_defects', target: 'defect_cost', labelAr: 'احتساب تكلفة الهدر والعيوب اليومية', category: 'defect', color: '#EF4444' },
+  { id: 'c14', source: 'lpa', target: 'capa_records', labelAr: 'فتح إجراء تصحيحي عند رصد حيود في التدقيق الطبقي', category: 'governance', color: '#0EA5E9' },
+  { id: 'c15', source: 'lpa', target: 'setup_readiness', labelAr: 'مراجعة التزام المشغلين بمعايير تجهيز الماكينات', category: 'governance', color: '#0EA5E9' },
+
+  // ج. روابط المرحلة 3 (عدم المطابقة والشكاوى والتكاليف)
+  { id: 'c16', source: 'ncr', target: 'capa_records', labelAr: 'إصدار خطة تصحيحية ووقائية لمعالجة عدم المطابقة', category: 'defect', color: '#EF4444' },
+  { id: 'c17', source: 'ncr', target: 'eight_d', labelAr: 'تفعيل فريق حل المشكلات 8D للعيوب الجسيمة', category: 'defect', color: '#8B5CF6' },
+  { id: 'c18', source: 'ncr', target: 'defect_cost', labelAr: 'تسجيل خسائر الفرز وإعادة التشغيل والخردة', category: 'defect', color: '#EF4444' },
+  { id: 'c19', source: 'complaints', target: 'ncr', labelAr: 'تحويل شكوى ومرتجع العميل لتقرير عدم مطابقة', category: 'defect', color: '#EF4444' },
+  { id: 'c20', source: 'complaints', target: 'eight_d', labelAr: 'فتح تحقيق 8D إلزامي للرد على شكوى العميل', category: 'defect', color: '#8B5CF6' },
+  { id: 'c21', source: 'deviation', target: 'change_control', labelAr: 'اعتماد الحيود المؤقت عبر لجنة التغيير الهندسي', category: 'governance', color: '#F59E0B' },
+  { id: 'c22', source: 'defect_cost', target: 'control_tower', labelAr: 'رفع تقارير تكلفة رداءة الجودة لبرج المراقبة', category: 'intelligence', color: '#EF4444' },
+
+  // د. روابط المرحلة 4 (الحل الجذري 8D و CAPA وإدارة التغيير)
+  { id: 'c23', source: 'eight_d', target: 'fmea', labelAr: 'تحديث مصفوفة المخاطر بالسبب الجذري المكتشف', category: 'prevention', color: '#F59E0B' },
+  { id: 'c24', source: 'eight_d', target: 'control_plan', labelAr: 'إضافة ضوابط رقابية جديدة في خطة الضبط', category: 'prevention', color: '#10B981' },
+  { id: 'c25', source: 'eight_d', target: 'knowledge_base', labelAr: 'أرشفة الحل الجذري في بنك الدروس المستفادة', category: 'prevention', color: '#10B981' },
+  { id: 'c26', source: 'capa_records', target: 'change_control', labelAr: 'طلب تعديل هندسي لمنع تكرار المشكلة', category: 'governance', color: '#8B5CF6' },
+  { id: 'c27', source: 'capa_records', target: 'command_center', labelAr: 'جدولة ومتابعة مواعيد إغلاق الإجراءات التصحيحية', category: 'governance', color: '#8B5CF6' },
+  { id: 'c28', source: 'change_control', target: 'control_plan', labelAr: 'تحديث مواصفات خطة الضبط بعد التعديل الهندسي', category: 'prevention', color: '#8B5CF6' },
+  { id: 'c29', source: 'command_center', target: 'control_tower', labelAr: 'بث مؤشرات سرعة إغلاق الإجراءات لغرفة القيادة', category: 'intelligence', color: '#8B5CF6' },
+
+  // هـ. روابط المرحلة 5 (الهندسة والوقاية والنماذج)
+  { id: 'c30', source: 'fmea', target: 'control_plan', labelAr: 'تحويل المخاطر الحرجة إلى نقاط فحص في خطة الضبط', category: 'prevention', color: '#F59E0B' },
+  { id: 'c31', source: 'control_plan', target: 'inspection_plans', labelAr: 'تغذية صالة الإنتاج بتعليمات ومعايير الفحص', category: 'governance', color: '#0EA5E9' },
+  { id: 'c32', source: 'control_plan', target: 'spc', labelAr: 'تحديد حدود المواصفات العليا والدنيا للمراقبة', category: 'intelligence', color: '#06B6D4' },
+  { id: 'c33', source: 'form_designer', target: 'inspection_plans', labelAr: 'توليد قوالب الفحص الرقمية لمحطات التشغيل', category: 'governance', color: '#F59E0B' },
+  { id: 'c34', source: 'form_designer', target: 'lpa', labelAr: 'تجهيز قوائم التحقق الرقمية للتدقيق الطبقي', category: 'governance', color: '#F59E0B' },
+  { id: 'c35', source: 'knowledge_base', target: 'ai_copilot', labelAr: 'تدريب المساعد الذكي على الحلول والخبرات السابقة', category: 'intelligence', color: '#06B6D4' },
+
+  // و. روابط المرحلة 6 (الضبط الإحصائي والذكاء والتدقيق)
+  { id: 'c36', source: 'spc', target: 'ai_copilot', labelAr: 'تحليل انحراف العمليات والتنبؤ بالعيوب قبل وقوعها', category: 'intelligence', color: '#06B6D4' },
+  { id: 'c37', source: 'spc', target: 'control_tower', labelAr: 'عرض مؤشرات استقرار وقدرة العمليات الحية', category: 'intelligence', color: '#06B6D4' },
+  { id: 'c38', source: 'ai_copilot', target: 'eight_d', labelAr: 'اقتراح الأسباب الجذرية آلياً لفرق حل المشكلات', category: 'intelligence', color: '#06B6D4' },
+  { id: 'c39', source: 'audits', target: 'capa_records', labelAr: 'تحويل ملاحظات التدقيق الشامل إلى خطط تحسين', category: 'governance', color: '#06B6D4' },
 ];
 
 // =========================================================================
@@ -538,7 +559,7 @@ export default function QualityEcosystemPortal() {
     if (activeSimulation === 'defect') {
       centerOnNode('ncr');
     } else if (activeSimulation === 'supplier') {
-      centerOnNode('suppliers');
+      centerOnNode('iqc');
     } else if (activeSimulation === 'prevention') {
       centerOnNode('eight_d');
     }
@@ -591,15 +612,15 @@ export default function QualityEcosystemPortal() {
     const set = new Set<string>();
 
     if (activeSimulation === 'defect') {
-      ['c1', 'c2', 'c3', 'c4', 'c5', 'c11', 'c12', 'c18'].forEach((id) => set.add(id));
+      ['c10', 'c11', 'c12', 'c16', 'c17', 'c18', 'c23', 'c36'].forEach((id) => set.add(id));
       return set;
     }
     if (activeSimulation === 'supplier') {
-      ['c6', 'c7', 'c4', 'c8'].forEach((id) => set.add(id));
+      ['c3', 'c5', 'c6', 'c8', 'c17'].forEach((id) => set.add(id));
       return set;
     }
     if (activeSimulation === 'prevention') {
-      ['c11', 'c12', 'c13', 'c15', 'c16', 'c17', 'c19'].forEach((id) => set.add(id));
+      ['c23', 'c24', 'c25', 'c30', 'c31', 'c32', 'c35'].forEach((id) => set.add(id));
       return set;
     }
 
@@ -620,19 +641,6 @@ export default function QualityEcosystemPortal() {
     const set = new Set<string>();
     if (activeNodeId) set.add(activeNodeId);
 
-    if (activeSimulation === 'defect') {
-      ['daily_defects', 'ncr', 'capa_records', 'eight_d', 'defect_cost', 'control_plan', 'fmea', 'spc', 'ai_copilot'].forEach((id) => set.add(id));
-      return set;
-    }
-    if (activeSimulation === 'supplier') {
-      ['iqc', 'suppliers', 'ncr', 'eight_d', 'calibration'].forEach((id) => set.add(id));
-      return set;
-    }
-    if (activeSimulation === 'prevention') {
-      ['eight_d', 'control_plan', 'fmea', 'knowledge_base', 'inspection_plans', 'spc', 'ai_copilot'].forEach((id) => set.add(id));
-      return set;
-    }
-
     highlightedCableIds.forEach((cId) => {
       const c = CABLES.find((item) => item.id === cId);
       if (c) {
@@ -642,7 +650,7 @@ export default function QualityEcosystemPortal() {
     });
 
     return set;
-  }, [activeNodeId, activeSimulation, highlightedCableIds]);
+  }, [activeNodeId, highlightedCableIds]);
 
   // حساب عدد الارتباطات لكل كارت
   const nodeConnectionsCount = useMemo(() => {
@@ -662,7 +670,7 @@ export default function QualityEcosystemPortal() {
     );
   }, [searchQuery]);
 
-  // بيانات الكارت المحدد لعرضها في الشريط السفلي
+  // بيانات الكارت المحدد لعرضها في الشريط السفلي مع سبب الارتباط
   const activeNodeInfo = useMemo(() => {
     if (!activeNodeId) return null;
     const node = NODES.find((n) => n.id === activeNodeId);
@@ -671,12 +679,12 @@ export default function QualityEcosystemPortal() {
 
     const incoming = CABLES.filter((c) => c.target === node.id).map((c) => {
       const srcNode = NODES.find((n) => n.id === c.source);
-      return { cable: c, sourceName: srcNode?.nameAr || c.source };
+      return { cable: c, sourceId: c.source, sourceName: srcNode?.nameAr || c.source };
     });
 
     const outgoing = CABLES.filter((c) => c.source === node.id).map((c) => {
       const tgtNode = NODES.find((n) => n.id === c.target);
-      return { cable: c, targetName: tgtNode?.nameAr || c.target };
+      return { cable: c, targetId: c.target, targetName: tgtNode?.nameAr || c.target };
     });
 
     return { node, phase, incoming, outgoing };
@@ -702,11 +710,11 @@ export default function QualityEcosystemPortal() {
               </h1>
               <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                ٢٤ قسماً متصلاً
+                ٢٤ قسماً • ٣٩ مساراً تفاعلياً
               </span>
             </div>
             <p className="text-[11px] text-slate-400 hidden md:block">
-              مرر المؤشر على أي قسم لإضاءة مسارات الارتباط • اضغط لفتح القسم مباشرة
+              مرر المؤشر على أي قسم لإضاءة مسارات الارتباط وسبب الربط • اضغط لفتح القسم مباشرة
             </p>
           </div>
         </div>
@@ -1043,8 +1051,8 @@ export default function QualityEcosystemPortal() {
                   <path
                     d={pathD}
                     fill="none"
-                    stroke={isHighlighted ? cable.color : 'rgba(148, 163, 184, 0.14)'}
-                    strokeWidth={isHighlighted ? '3' : '1.5'}
+                    stroke={isHighlighted ? cable.color : 'rgba(148, 163, 184, 0.13)'}
+                    strokeWidth={isHighlighted ? '3' : '1.4'}
                     strokeDasharray={isHighlighted ? 'none' : '5, 5'}
                     filter={isHighlighted ? 'url(#laserGlow)' : 'none'}
                     className="transition-all duration-300"
@@ -1077,7 +1085,7 @@ export default function QualityEcosystemPortal() {
           </svg>
 
           {/* ------------------------------------------------------------- */}
-          {/* 4. التصميم الجديد الفاخر للكروت (١٠٠٪ عربي، واضح، أنيق، بدون زحام) */}
+          {/* 4. الكروت الفاخرة (١٠٠٪ عربي، مسارات صحيحة، ارتباطات مكتملة) */}
           {/* ------------------------------------------------------------- */}
           {NODES.map((node) => {
             const isSelected = selectedNodeId === node.id;
@@ -1194,9 +1202,9 @@ export default function QualityEcosystemPortal() {
 
                   {/* الصف السفلي: عدد الارتباطات + زر الدخول السريع */}
                   <div className="flex items-center justify-between pt-2 border-t border-white/[0.08]">
-                    <div className="flex items-center gap-1 text-[10px] text-slate-400 font-semibold">
+                    <div className="flex items-center gap-1 text-[10px] text-slate-300 font-semibold">
                       <Link2 className="w-3 h-3" style={{ color: themeColor }} />
-                      <span>{linksCount} ارتباطات نشطة</span>
+                      <span>{linksCount} مسارات مرتبطة</span>
                     </div>
 
                     <button
@@ -1222,7 +1230,7 @@ export default function QualityEcosystemPortal() {
         </div>
 
         {/* ========================================================================= */}
-        {/* 5. شريط استكشاف العلاقات السفلي عند اختيار أي كارت */}
+        {/* 5. شريط استكشاف العلاقات السفلي مع توضيح سبب كل رابط */}
         {/* ========================================================================= */}
         <AnimatePresence>
           {activeNodeInfo && (
@@ -1234,98 +1242,110 @@ export default function QualityEcosystemPortal() {
               dir="rtl"
               className="absolute bottom-3 right-4 left-4 z-30 pointer-events-auto max-w-6xl mx-auto"
             >
-              <div className="bg-[#0b1324]/95 backdrop-blur-2xl border border-sky-500/40 rounded-2xl p-3.5 sm:px-5 shadow-[0_15px_50px_rgba(0,0,0,0.85)] flex flex-col md:flex-row items-center justify-between gap-3 text-white">
+              <div className="bg-[#0b1324]/95 backdrop-blur-2xl border border-sky-500/40 rounded-2xl p-3.5 sm:px-5 shadow-[0_15px_50px_rgba(0,0,0,0.85)] flex flex-col gap-3 text-white">
                 
-                {/* معلومات القسم المحدد */}
-                <div className="flex items-center gap-3 shrink-0 w-full md:w-auto">
-                  <div
-                    className="w-11 h-11 rounded-xl flex items-center justify-center border border-white/20 shrink-0 shadow-lg"
-                    style={{
-                      backgroundColor: activeNodeInfo.phase?.color + '25',
-                      color: activeNodeInfo.phase?.color,
-                    }}
-                  >
-                    <activeNodeInfo.node.icon className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span
-                        className="text-[11px] font-bold px-2 py-0.5 rounded-md"
-                        style={{
-                          backgroundColor: activeNodeInfo.phase?.color + '20',
-                          color: activeNodeInfo.phase?.color,
-                        }}
-                      >
-                        {activeNodeInfo.phase?.titleAr}
-                      </span>
-                      <h3 className="text-sm sm:text-base font-black text-white">
-                        {activeNodeInfo.node.nameAr}
-                      </h3>
+                <div className="flex flex-col md:flex-row items-center justify-between gap-3">
+                  {/* معلومات القسم المحدد */}
+                  <div className="flex items-center gap-3 shrink-0 w-full md:w-auto">
+                    <div
+                      className="w-11 h-11 rounded-xl flex items-center justify-center border border-white/20 shrink-0 shadow-lg"
+                      style={{
+                        backgroundColor: activeNodeInfo.phase?.color + '25',
+                        color: activeNodeInfo.phase?.color,
+                      }}
+                    >
+                      <activeNodeInfo.node.icon className="w-5 h-5" />
                     </div>
-                    <p className="text-xs text-slate-300 max-w-md line-clamp-1 mt-0.5">
-                      {activeNodeInfo.node.descriptionAr}
-                    </p>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="text-[11px] font-bold px-2 py-0.5 rounded-md"
+                          style={{
+                            backgroundColor: activeNodeInfo.phase?.color + '20',
+                            color: activeNodeInfo.phase?.color,
+                          }}
+                        >
+                          {activeNodeInfo.phase?.titleAr}
+                        </span>
+                        <h3 className="text-sm sm:text-base font-black text-white">
+                          {activeNodeInfo.node.nameAr}
+                        </h3>
+                      </div>
+                      <p className="text-xs text-slate-300 max-w-lg line-clamp-1 mt-0.5">
+                        {activeNodeInfo.node.descriptionAr}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* زر الانتقال المباشر */}
+                  <div className="flex items-center gap-2 w-full md:w-auto justify-end shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedNodeId(null)}
+                      className="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-white/10"
+                    >
+                      إغلاق
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => navigate(activeNodeInfo.node.path)}
+                      className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#0066CC] to-[#00A3E0] hover:from-[#0055b3] hover:to-[#008ec2] text-white text-xs font-black shadow-[0_0_20px_rgba(0,163,224,0.4)] flex items-center gap-2 transition-all hover:scale-105"
+                    >
+                      <span>الانتقال إلى القسم الآن</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 </div>
 
-                {/* مسارات التغذية والمخرجات */}
-                <div className="hidden lg:flex items-center gap-3 text-xs shrink-0">
-                  <div className="flex items-center gap-1.5 bg-white/[0.04] px-3 py-1.5 rounded-xl border border-white/10">
-                    <span className="text-[11px] text-slate-400">يستقبل من:</span>
+                {/* تفاصيل المدخلات والمخرجات مع سبب الربط */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 pt-2 border-t border-white/10">
+                  {/* يستقبل البيانات من */}
+                  <div className="bg-white/[0.03] rounded-xl p-2.5 border border-white/[0.07]">
+                    <span className="text-[11px] font-bold text-sky-400 block mb-1.5">
+                      📥 يستقبل التغذية والبيانات من ({activeNodeInfo.incoming.length}):
+                    </span>
                     {activeNodeInfo.incoming.length > 0 ? (
-                      <div className="flex items-center gap-1 flex-wrap">
+                      <div className="flex flex-wrap gap-1.5">
                         {activeNodeInfo.incoming.map((item, i) => (
-                          <span
+                          <button
                             key={i}
-                            className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-sky-500/20 text-sky-300"
+                            type="button"
+                            onClick={() => setSelectedNodeId(item.sourceId)}
+                            className="text-right text-[11px] px-2.5 py-1 rounded-lg bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/30 transition-colors flex items-center gap-1.5"
                           >
-                            {item.sourceName}
-                          </span>
+                            <span className="font-black text-white">{item.sourceName}:</span>
+                            <span className="text-sky-200">{item.cable.labelAr}</span>
+                          </button>
                         ))}
                       </div>
                     ) : (
-                      <span className="text-[11px] text-slate-500">نقطة انطلاق أولية</span>
+                      <span className="text-[11px] text-slate-400">نقطة انطلاق تأسيسية تغذي الأقسام التالية مباشرة</span>
                     )}
                   </div>
 
-                  <ArrowLeft className="w-4 h-4 text-slate-500" />
-
-                  <div className="flex items-center gap-1.5 bg-white/[0.04] px-3 py-1.5 rounded-xl border border-white/10">
-                    <span className="text-[11px] text-slate-400">يُغذي:</span>
+                  {/* يغذي ويرسل مخرجاته إلى */}
+                  <div className="bg-white/[0.03] rounded-xl p-2.5 border border-white/[0.07]">
+                    <span className="text-[11px] font-bold text-emerald-400 block mb-1.5">
+                      📤 يُغذي ويصدر القرارات إلى ({activeNodeInfo.outgoing.length}):
+                    </span>
                     {activeNodeInfo.outgoing.length > 0 ? (
-                      <div className="flex items-center gap-1 flex-wrap">
+                      <div className="flex flex-wrap gap-1.5">
                         {activeNodeInfo.outgoing.map((item, i) => (
-                          <span
+                          <button
                             key={i}
-                            className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300"
+                            type="button"
+                            onClick={() => setSelectedNodeId(item.targetId)}
+                            className="text-right text-[11px] px-2.5 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 transition-colors flex items-center gap-1.5"
                           >
-                            {item.targetName}
-                          </span>
+                            <span className="font-black text-white">{item.targetName}:</span>
+                            <span className="text-emerald-200">{item.cable.labelAr}</span>
+                          </button>
                         ))}
                       </div>
                     ) : (
-                      <span className="text-[11px] text-slate-500">محطة ختامية</span>
+                      <span className="text-[11px] text-slate-400">محطة رقابية ختامية لتجميع وعرض المؤشرات</span>
                     )}
                   </div>
-                </div>
-
-                {/* زر الانتقال المباشر */}
-                <div className="flex items-center gap-2 w-full md:w-auto justify-end shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedNodeId(null)}
-                    className="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-white/10"
-                  >
-                    إغلاق
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => navigate(activeNodeInfo.node.path)}
-                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#0066CC] to-[#00A3E0] hover:from-[#0055b3] hover:to-[#008ec2] text-white text-xs font-black shadow-[0_0_20px_rgba(0,163,224,0.4)] flex items-center gap-2 transition-all hover:scale-105"
-                  >
-                    <span>الانتقال إلى القسم الآن</span>
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </button>
                 </div>
               </div>
             </motion.div>
