@@ -20,7 +20,7 @@ import {
   BarChart3,
   TrendingUp,
   Sparkles,
-  ArrowLeft,
+  ArrowRight,
   Maximize2,
   Cpu,
   Search,
@@ -37,11 +37,11 @@ import {
 
 interface BlueprintNode {
   id: string;
-  nameAr: string;
+  title: string;
   path: string;
   icon: LucideIcon;
-  badgeAr: string;
-  descriptionAr: string;
+  badge: string;
+  description: string;
   phaseId: string;
   x: number;
   y: number;
@@ -50,8 +50,8 @@ interface BlueprintNode {
 interface PhaseZone {
   id: string;
   phaseNumber: string;
-  titleAr: string;
-  subtitleAr: string;
+  title: string;
+  subtitle: string;
   color: string;
   borderColor: string;
   bgGradient: string;
@@ -64,13 +64,13 @@ interface CableRelation {
   id: string;
   source: string;
   target: string;
-  labelAr: string;
+  label: string;
   category: 'defect' | 'governance' | 'prevention' | 'supplier' | 'intelligence';
   color: string;
 }
 
 // =========================================================================
-// 1. أبعاد الشبكة والمراحل الـ 6 (مرتبة هندسياً من اليمين إلى اليسار RTL)
+// 1. GRID DIMENSIONS & 6 CORE STAGES (LEFT-TO-RIGHT ENGLISH FLOW)
 // =========================================================================
 
 const NODE_WIDTH = 250;
@@ -81,437 +81,437 @@ const CANVAS_HEIGHT = 870;
 const PHASES: PhaseZone[] = [
   {
     id: 'supply_chain',
-    phaseNumber: '٠١',
-    titleAr: 'سلاسل الإمداد والتأسيس',
-    subtitleAr: 'البيانات المرجعية ورقابة الموردين',
+    phaseNumber: '01',
+    title: 'Supply Chain & Inbound',
+    subtitle: 'Master Data & Vendor Control',
     color: '#10B981',
     borderColor: 'border-emerald-500/30',
     bgGradient: 'from-emerald-950/30 via-emerald-950/10 to-transparent',
-    x: 1640,
+    x: 40,
     width: 280,
     icon: Truck,
   },
   {
     id: 'shopfloor',
-    phaseNumber: '٠٢',
-    titleAr: 'خطوط الإنتاج والتصنيع',
-    subtitleAr: 'الرقابة المرحلية أثناء التشغيل',
+    phaseNumber: '02',
+    title: 'Shopfloor & Production',
+    subtitle: 'In-Process Quality Execution',
     color: '#0EA5E9',
     borderColor: 'border-sky-500/30',
     bgGradient: 'from-sky-950/30 via-sky-950/10 to-transparent',
-    x: 1320,
+    x: 360,
     width: 280,
     icon: Factory,
   },
   {
     id: 'nonconformance',
-    phaseNumber: '٠٣',
-    titleAr: 'الحجز وعدم المطابقة',
-    subtitleAr: 'عزل المنتجات وحساب الخسائر',
+    phaseNumber: '03',
+    title: 'Containment & NCR',
+    subtitle: 'Quarantine & Cost of Poor Quality',
     color: '#EF4444',
     borderColor: 'border-red-500/30',
     bgGradient: 'from-red-950/30 via-red-950/10 to-transparent',
-    x: 1000,
+    x: 680,
     width: 280,
     icon: AlertTriangle,
   },
   {
     id: 'root_cause',
-    phaseNumber: '٠٤',
-    titleAr: 'الحل الجذري والتحسين',
-    subtitleAr: 'منهجية 8D والإجراءات التصحيحية',
+    phaseNumber: '04',
+    title: 'Root Cause & CAPA',
+    subtitle: '8D Problem Solving & Actions',
     color: '#8B5CF6',
     borderColor: 'border-purple-500/30',
     bgGradient: 'from-purple-950/30 via-purple-950/10 to-transparent',
-    x: 680,
+    x: 1000,
     width: 280,
     icon: Workflow,
   },
   {
     id: 'engineering',
-    phaseNumber: '٠٥',
-    titleAr: 'الوقاية والهندسة',
-    subtitleAr: 'تحليل المخاطر وخطط الضبط',
+    phaseNumber: '05',
+    title: 'Engineering & Prevention',
+    subtitle: 'FMEA Risk & Control Plans',
     color: '#F59E0B',
     borderColor: 'border-amber-500/30',
     bgGradient: 'from-amber-950/30 via-amber-950/10 to-transparent',
-    x: 360,
+    x: 1320,
     width: 280,
     icon: ShieldCheck,
   },
   {
     id: 'intelligence',
-    phaseNumber: '٠٦',
-    titleAr: 'الرقابة الذكية و SPC',
-    subtitleAr: 'الضبط الإحصائي والذكاء الاصطناعي',
+    phaseNumber: '06',
+    title: 'SPC & AI Intelligence',
+    subtitle: 'Control Tower & System Audits',
     color: '#06B6D4',
     borderColor: 'border-cyan-500/30',
     bgGradient: 'from-cyan-950/30 via-cyan-950/10 to-transparent',
-    x: 40,
+    x: 1640,
     width: 280,
     icon: Cpu,
   },
 ];
 
-// جميع المسارات (path) مطابقة 100% لملف src/router/index.tsx
+// All 24 paths match 100% with src/router/index.tsx
 const NODES: BlueprintNode[] = [
-  // المرحلة 1: سلاسل الإمداد والتأسيس (العمود الأيمن x: 1655)
+  // Stage 01: Supply Chain & Inbound (x: 55)
   {
     id: 'iqc',
-    nameAr: 'فحص الواردات (IQC)',
+    title: 'Incoming Inspection (IQC)',
     path: '/inspection',
     icon: Truck,
-    badgeAr: 'فحص الخامات',
-    descriptionAr: 'فحص مطابقة الشحنات والخامات الموردة مع خطط القبول وسحب العينات القياسية',
+    badge: 'INBOUND QC',
+    description: 'Inspect incoming raw materials and shipments against AQL sampling plans.',
     phaseId: 'supply_chain',
-    x: 1655,
+    x: 55,
     y: 110,
   },
   {
     id: 'suppliers',
-    nameAr: 'سجل وتقييم الموردين',
+    title: 'Supplier Quality Scorecard',
     path: '/supplier-quality',
     icon: Building,
-    badgeAr: 'تقييم الأداء',
-    descriptionAr: 'تحديث تقييم جودة الموردين آلياً وربط نقاط الأداء بقرارات التوريد',
+    badge: 'VENDOR RATING',
+    description: 'Track supplier quality ratings automatically based on lot acceptance and defects.',
     phaseId: 'supply_chain',
-    x: 1655,
+    x: 55,
     y: 295,
   },
   {
     id: 'calibration',
-    nameAr: 'معايرة أجهزة القياس',
+    title: 'Metrology & Calibration',
     path: '/calibration',
     icon: Wrench,
-    badgeAr: 'دقة القياس',
-    descriptionAr: 'شهادات وصلاحية أدوات القياس لضمان دقة الفحص وصحة قرارات القبول',
+    badge: 'GAUGE CONTROL',
+    description: 'Manage measurement tool certificates and calibration schedules for accurate testing.',
     phaseId: 'supply_chain',
-    x: 1655,
+    x: 55,
     y: 480,
   },
   {
     id: 'master_data',
-    nameAr: 'البيانات المرجعية والأصناف',
+    title: 'Master Data & Catalogs',
     path: '/quality-master-data',
     icon: Database,
-    badgeAr: 'تأسيس المعايير',
-    descriptionAr: 'تعريف الأصناف وكتالوج العيوب القياسي ومعايير القبول والخطوط',
+    badge: 'CORE STANDARDS',
+    description: 'Configure parts, standard defect catalogs, production lines, and acceptance criteria.',
     phaseId: 'supply_chain',
-    x: 1655,
+    x: 55,
     y: 665,
   },
 
-  // المرحلة 2: خطوط الإنتاج (x: 1335)
+  // Stage 02: Shopfloor & Production (x: 375)
   {
     id: 'daily_defects',
-    nameAr: 'تسجيل العيوب اللحظي',
+    title: 'Real-Time Defect Logger',
     path: '/defect-log',
     icon: Activity,
-    badgeAr: 'صالة الإنتاج',
-    descriptionAr: 'التقاط العيوب الفوري من المشغلين مع التصوير وربط الماكينة والوردية',
+    badge: 'SHOPFLOOR LOG',
+    description: 'Capture live production defects with photos, machine IDs, shifts, and Pareto analytics.',
     phaseId: 'shopfloor',
-    x: 1335,
+    x: 375,
     y: 110,
   },
   {
     id: 'inspection_plans',
-    nameAr: 'خطط الفحص المرحلي',
+    title: 'In-Process Inspection (IPQC)',
     path: '/quality-inspection-plans',
     icon: CheckCircle2,
-    badgeAr: 'فحص التشغيل',
-    descriptionAr: 'قوائم فحص الجودة أثناء التشغيل والتحقق الإلزامي من العينات الأولى',
+    badge: 'PROCESS GATES',
+    description: 'Execute in-process quality checks and mandatory First Piece Inspection approvals.',
     phaseId: 'shopfloor',
-    x: 1335,
+    x: 375,
     y: 295,
   },
   {
     id: 'lpa',
-    nameAr: 'التدقيق الطبقي (LPA)',
+    title: 'Layered Process Audits',
     path: '/quality-audits',
     icon: Layers,
-    badgeAr: 'رقابة ميدانية',
-    descriptionAr: 'تأكيد التزام المشغلين والمشرفين بالمعايير القياسية لمنع حيود العمليات',
+    badge: 'LPA AUDITS',
+    description: 'Verify operator adherence to standard work instructions across all production shifts.',
     phaseId: 'shopfloor',
-    x: 1335,
+    x: 375,
     y: 480,
   },
   {
     id: 'setup_readiness',
-    nameAr: 'جاهزية الخطوط والبدء',
+    title: 'Line Setup & Readiness',
     path: '/quality-execution-board',
     icon: Sliders,
-    badgeAr: 'تصريح إنتاج',
-    descriptionAr: 'اعتماد مطابقة المعايير الفنية وتصريح بدء الخطوط لتفادي الهدر الأولي',
+    badge: 'LINE CLEARANCE',
+    description: 'Validate machine parameters and issue formal Go/No-Go line startup authorization.',
     phaseId: 'shopfloor',
-    x: 1335,
+    x: 375,
     y: 665,
   },
 
-  // المرحلة 3: عدم المطابقة والحجز (x: 1015)
+  // Stage 03: Containment & NCR (x: 695)
   {
     id: 'ncr',
-    nameAr: 'تقارير عدم المطابقة (NCR)',
+    title: 'Non-Conformance (NCR)',
     path: '/quality/records/ncr',
     icon: AlertTriangle,
-    badgeAr: 'حجز وعزل',
-    descriptionAr: 'إصدار أوامر الحجز والفرز وتوثيق العيب وربطه برقم التشغيلة ومسار التصعيد',
+    badge: 'QUARANTINE',
+    description: 'Isolate non-conforming batches, issue hold tags, and trigger formal disposition.',
     phaseId: 'nonconformance',
-    x: 1015,
+    x: 695,
     y: 110,
   },
   {
     id: 'deviation',
-    nameAr: 'تصاريح الحيود المؤقت',
+    title: 'Process Deviations',
     path: '/deviation',
     icon: FileWarning,
-    badgeAr: 'قبول مشروط',
-    descriptionAr: 'تصاريح قبول الخامات أو التشغيل المشروط لحالات الطوارئ المعتمدة',
+    badge: 'CONCESSION',
+    description: 'Manage temporary engineering concessions and conditional material approvals.',
     phaseId: 'nonconformance',
-    x: 1015,
+    x: 695,
     y: 295,
   },
   {
     id: 'complaints',
-    nameAr: 'شكاوى ومردودات العملاء',
+    title: 'Customer Complaints',
     path: '/complaints',
     icon: Building,
-    badgeAr: 'صوت العميل',
-    descriptionAr: 'تتبع شكاوى ومردودات الجودة وتحليل أسبابها وربطها فورياً بـ NCR',
+    badge: 'VOICE OF CUSTOMER',
+    description: 'Track customer returns and RMA claims with instant linkage to NCR and 8D.',
     phaseId: 'nonconformance',
-    x: 1015,
+    x: 695,
     y: 480,
   },
   {
     id: 'defect_cost',
-    nameAr: 'تكلفة رداءة الجودة',
+    title: 'Cost of Poor Quality',
     path: '/defect-cost',
     icon: DollarSign,
-    badgeAr: 'حساب الخردة',
-    descriptionAr: 'حساب مالي لخسائر العيوب وتكلفة الفرز وإعادة التشغيل وهدر المواد',
+    badge: 'COPQ FINANCE',
+    description: 'Calculate financial impact of scrap, rework, sorting, and warranty returns.',
     phaseId: 'nonconformance',
-    x: 1015,
+    x: 695,
     y: 665,
   },
 
-  // المرحلة 4: الحل الجذري والتحسين (x: 695)
+  // Stage 04: Root Cause & CAPA (x: 1015)
   {
     id: 'capa_records',
-    nameAr: 'خطط التحسين (CAPA)',
+    title: 'CAPA Action Plans',
     path: '/quality/records/capa',
     icon: CheckCheck,
-    badgeAr: 'إجراء وقائي',
-    descriptionAr: 'خطط تصحيحية ووقائية محكمة لمنع تكرار المشكلات عبر فرق العمل',
+    badge: 'PREVENTIVE ACTION',
+    description: 'Drive verified corrective and preventive action plans across cross-functional teams.',
     phaseId: 'root_cause',
-    x: 695,
+    x: 1015,
     y: 110,
   },
   {
     id: 'eight_d',
-    nameAr: 'منهجية حل المشكلات (8D)',
+    title: '8D Root Cause Analysis',
     path: '/quality/records/8d',
     icon: RefreshCw,
-    badgeAr: 'تحليل جذري',
-    descriptionAr: 'التحقيق المنهجي الشامل للسبب الجذري باستخدام عظمة السمكة و 5 لماذا',
+    badge: '8D METHODOLOGY',
+    description: 'Conduct structured root cause investigations using Fishbone and 5-Why tools.',
     phaseId: 'root_cause',
-    x: 695,
+    x: 1015,
     y: 295,
   },
   {
     id: 'change_control',
-    nameAr: 'إدارة التغيير الهندسي',
+    title: 'Engineering Change (ECN)',
     path: '/change-control',
     icon: Sliders,
-    badgeAr: 'ضبط التعديل',
-    descriptionAr: 'حوكمة وتوثيق أي تعديل على القوالب أو الماكينات أو المواد الخام',
+    badge: '4M CHANGE GOV',
+    description: 'Govern and document changes to design, tooling, machines, or raw materials.',
     phaseId: 'root_cause',
-    x: 695,
+    x: 1015,
     y: 480,
   },
   {
     id: 'command_center',
-    nameAr: 'غرفة متابعة الإجراءات',
+    title: 'Action Command Center',
     path: '/quality-command-center',
     icon: Workflow,
-    badgeAr: 'متابعة الإغلاق',
-    descriptionAr: 'مركز قيادة فوري لمتابعة المهام المعلقة وسرعة إنجاز خطط التحسين',
+    badge: 'EXECUTION SLA',
+    description: 'Monitor overdue tasks, action closure velocity, and departmental accountability.',
     phaseId: 'root_cause',
-    x: 695,
+    x: 1015,
     y: 665,
   },
 
-  // المرحلة 5: الوقاية والهندسة (x: 375)
+  // Stage 05: Engineering & Prevention (x: 1335)
   {
     id: 'fmea',
-    nameAr: 'تحليل المخاطر (FMEA)',
+    title: 'Risk Analysis (PFMEA)',
     path: '/fmea',
     icon: ShieldCheck,
-    badgeAr: 'مصفوفة المخاطر',
-    descriptionAr: 'تقييم درجات الشدة والتكرار والكشف لمنع الفشل المحتمل قبل وقوعه',
+    badge: 'RISK MATRIX',
+    description: 'Evaluate Severity, Occurrence, and Detection (RPN) to prevent potential failures.',
     phaseId: 'engineering',
-    x: 375,
+    x: 1335,
     y: 110,
   },
   {
     id: 'control_plan',
-    nameAr: 'خطة المراقبة والضبط',
+    title: 'Dynamic Control Plan',
     path: '/control-plan',
     icon: Sliders,
-    badgeAr: 'ضبط المعايير',
-    descriptionAr: 'توثيق مواصفات الفحص وطرق القياس والحدود الحرجة لكل مرحلة تصنيع',
+    badge: 'PROCESS SPECS',
+    description: 'Define critical control characteristics, inspection frequencies, and reaction plans.',
     phaseId: 'engineering',
-    x: 375,
+    x: 1335,
     y: 295,
   },
   {
     id: 'knowledge_base',
-    nameAr: 'بنك المعرفة والدروس',
+    title: 'Lessons Learned Hub',
     path: '/quality-knowledge-base',
     icon: BookOpen,
-    badgeAr: 'الدروس المستفادة',
-    descriptionAr: 'مستودع الخبرات التراكمية وسوابق الحلول لتفادي تكرار الأخطاء السابقة',
+    badge: 'KNOWLEDGE BASE',
+    description: 'Institutionalize solved 8D cases and best practices to prevent recurring defects.',
     phaseId: 'engineering',
-    x: 375,
+    x: 1335,
     y: 480,
   },
   {
     id: 'form_designer',
-    nameAr: 'مصمم النماذج الذكية',
+    title: 'Smart Form Designer',
     path: '/quality-form-designer',
     icon: Layers,
-    badgeAr: 'أتمتة الفحص',
-    descriptionAr: 'بناء وتخصيص استمارات الجودة الميدانية وربطها بالمحطات والماكينات',
+    badge: 'NO-CODE STUDIO',
+    description: 'Build custom digital inspection checklists and deploy them to shopfloor stations.',
     phaseId: 'engineering',
-    x: 375,
+    x: 1335,
     y: 665,
   },
 
-  // المرحلة 6: الرقابة الذكية و SPC (العمود الأيسر x: 55)
+  // Stage 06: SPC & AI Intelligence (x: 1655)
   {
     id: 'spc',
-    nameAr: 'الضبط الإحصائي (SPC)',
+    title: 'Statistical Control (SPC)',
     path: '/spc',
     icon: TrendingUp,
-    badgeAr: 'خرائط التحكم',
-    descriptionAr: 'خرائط التحكم الإحصائية وحساب مؤشرات القدرة للكشف المبكر عن الحيود',
+    badge: 'SIX SIGMA CPK',
+    description: 'Real-time X-Bar R control charts and Cp/Cpk capability indices for early drift detection.',
     phaseId: 'intelligence',
-    x: 55,
+    x: 1655,
     y: 110,
   },
   {
     id: 'control_tower',
-    nameAr: 'برج المراقبة المركزي',
+    title: 'Quality Control Tower',
     path: '/quality-control-tower',
     icon: BarChart3,
-    badgeAr: 'غرفة القيادة',
-    descriptionAr: 'رؤية مركزية موحدة لكافة مؤشرات الجودة ومقارنة الخطوط ومستويات الهدر',
+    badge: '360° OVERSIGHT',
+    description: 'Unified executive command center for plant-wide quality KPIs and live stream alerts.',
     phaseId: 'intelligence',
-    x: 55,
+    x: 1655,
     y: 295,
   },
   {
     id: 'ai_copilot',
-    nameAr: 'مساعد الجودة الذكي',
+    title: 'AI Quality Copilot',
     path: '/ai/defect-prediction',
     icon: Sparkles,
-    badgeAr: 'الذكاء الاصطناعي',
-    descriptionAr: 'تحليل أنماط العيوب واقتراح الأسباب الجذرية وصياغة التقارير آلياً',
+    badge: 'PREDICTIVE AI',
+    description: 'Predict defect spikes, analyze complex correlations, and auto-draft 8D root causes.',
     phaseId: 'intelligence',
-    x: 55,
+    x: 1655,
     y: 480,
   },
   {
     id: 'audits',
-    nameAr: 'التدقيق والمراجعات الشاملة',
+    title: 'System & Process Audits',
     path: '/audit',
     icon: ShieldCheck,
-    badgeAr: 'مطابقة النظم',
-    descriptionAr: 'جدولة ومتابعة تدقيقات الجودة الشاملة وتوثيق الملاحظات وإغلاقها',
+    badge: 'ISO / IATF AUDIT',
+    description: 'Schedule internal and external compliance audits, track findings, and verify closure.',
     phaseId: 'intelligence',
-    x: 55,
+    x: 1655,
     y: 665,
   },
 ];
 
 // =========================================================================
-// 2. شبكة العلاقات الهندسية المتكاملة (كافة الـ 24 قسماً متصلة بدورة مغلقة)
+// 2. COMPLETE CLOSED-LOOP ENGINEERING RELATIONSHIPS (39 ACTIVE LINKS)
 // =========================================================================
 
 const CABLES: CableRelation[] = [
-  // أ. روابط المرحلة 1 (التوريد والتأسيس)
-  { id: 'c1', source: 'master_data', target: 'inspection_plans', labelAr: 'تغذية معايير القبول وكتالوج العيوب', category: 'governance', color: '#10B981' },
-  { id: 'c2', source: 'master_data', target: 'fmea', labelAr: 'تزويد شجرة الأصناف والعمليات لتحليل المخاطر', category: 'governance', color: '#10B981' },
-  { id: 'c3', source: 'calibration', target: 'iqc', labelAr: 'تأكيد صلاحية ودقة أجهزة القياس', category: 'governance', color: '#10B981' },
-  { id: 'c4', source: 'calibration', target: 'spc', labelAr: 'ضمان موثوقية قراءات القياس الإحصائي', category: 'intelligence', color: '#06B6D4' },
-  { id: 'c5', source: 'iqc', target: 'suppliers', labelAr: 'تحديث تقييم المورد آلياً حسب نتيجة الفحص', category: 'supplier', color: '#10B981' },
-  { id: 'c6', source: 'iqc', target: 'ncr', labelAr: 'إصدار تقرير عدم مطابقة لشحنة خامات مرفوضة', category: 'supplier', color: '#F59E0B' },
-  { id: 'c7', source: 'iqc', target: 'deviation', labelAr: 'طلب تصريح قبول مشروط لخامة طارئة', category: 'supplier', color: '#F59E0B' },
-  { id: 'c8', source: 'suppliers', target: 'audits', labelAr: 'جدولة تدقيق ميداني للموردين منخفضي التقييم', category: 'supplier', color: '#10B981' },
+  // Stage 01 Links (Supply Chain & Foundation)
+  { id: 'c1', source: 'master_data', target: 'inspection_plans', label: 'Feeds standard defect catalogs & acceptance specs', category: 'governance', color: '#10B981' },
+  { id: 'c2', source: 'master_data', target: 'fmea', label: 'Supplies part BOM & process steps for risk analysis', category: 'governance', color: '#10B981' },
+  { id: 'c3', source: 'calibration', target: 'iqc', label: 'Validates gauge accuracy for incoming inspection', category: 'governance', color: '#10B981' },
+  { id: 'c4', source: 'calibration', target: 'spc', label: 'Ensures measurement reliability for SPC charts', category: 'intelligence', color: '#06B6D4' },
+  { id: 'c5', source: 'iqc', target: 'suppliers', label: 'Auto-updates vendor scorecard from lot results', category: 'supplier', color: '#10B981' },
+  { id: 'c6', source: 'iqc', target: 'ncr', label: 'Triggers NCR & quarantine for rejected material', category: 'supplier', color: '#F59E0B' },
+  { id: 'c7', source: 'iqc', target: 'deviation', label: 'Requests conditional concession for urgent lots', category: 'supplier', color: '#F59E0B' },
+  { id: 'c8', source: 'suppliers', target: 'audits', label: 'Schedules supplier audits for low-rated vendors', category: 'supplier', color: '#10B981' },
 
-  // ب. روابط المرحلة 2 (التشغيل وصالة الإنتاج)
-  { id: 'c9', source: 'setup_readiness', target: 'inspection_plans', labelAr: 'تصريح بدء الخط وفحص العينة الأولى', category: 'governance', color: '#0EA5E9' },
-  { id: 'c10', source: 'inspection_plans', target: 'daily_defects', labelAr: 'رصد عيب أثناء الفحص المرحلي للتشغيل', category: 'defect', color: '#0EA5E9' },
-  { id: 'c11', source: 'daily_defects', target: 'ncr', labelAr: 'تصعيد العيب الحرج لتقرير عدم مطابقة وحجز', category: 'defect', color: '#EF4444' },
-  { id: 'c12', source: 'daily_defects', target: 'spc', labelAr: 'تغذية بيانات العيوب اللحظية في خرائط التحكم', category: 'intelligence', color: '#0EA5E9' },
-  { id: 'c13', source: 'daily_defects', target: 'defect_cost', labelAr: 'احتساب تكلفة الهدر والعيوب اليومية', category: 'defect', color: '#EF4444' },
-  { id: 'c14', source: 'lpa', target: 'capa_records', labelAr: 'فتح إجراء تصحيحي عند رصد حيود في التدقيق الطبقي', category: 'governance', color: '#0EA5E9' },
-  { id: 'c15', source: 'lpa', target: 'setup_readiness', labelAr: 'مراجعة التزام المشغلين بمعايير تجهيز الماكينات', category: 'governance', color: '#0EA5E9' },
+  // Stage 02 Links (Shopfloor & Production)
+  { id: 'c9', source: 'setup_readiness', target: 'inspection_plans', label: 'Authorizes line startup & First Piece check', category: 'governance', color: '#0EA5E9' },
+  { id: 'c10', source: 'inspection_plans', target: 'daily_defects', label: 'Logs defects detected during IPQC patrol', category: 'defect', color: '#0EA5E9' },
+  { id: 'c11', source: 'daily_defects', target: 'ncr', label: 'Escalates critical shopfloor defects to NCR', category: 'defect', color: '#EF4444' },
+  { id: 'c12', source: 'daily_defects', target: 'spc', label: 'Streams live defect telemetry into SPC charts', category: 'intelligence', color: '#0EA5E9' },
+  { id: 'c13', source: 'daily_defects', target: 'defect_cost', label: 'Calculates daily scrap and rework cost', category: 'defect', color: '#EF4444' },
+  { id: 'c14', source: 'lpa', target: 'capa_records', label: 'Opens CAPA for non-compliant process audit items', category: 'governance', color: '#0EA5E9' },
+  { id: 'c15', source: 'lpa', target: 'setup_readiness', label: 'Verifies operator compliance with setup checklists', category: 'governance', color: '#0EA5E9' },
 
-  // ج. روابط المرحلة 3 (عدم المطابقة والشكاوى والتكاليف)
-  { id: 'c16', source: 'ncr', target: 'capa_records', labelAr: 'إصدار خطة تصحيحية ووقائية لمعالجة عدم المطابقة', category: 'defect', color: '#EF4444' },
-  { id: 'c17', source: 'ncr', target: 'eight_d', labelAr: 'تفعيل فريق حل المشكلات 8D للعيوب الجسيمة', category: 'defect', color: '#8B5CF6' },
-  { id: 'c18', source: 'ncr', target: 'defect_cost', labelAr: 'تسجيل خسائر الفرز وإعادة التشغيل والخردة', category: 'defect', color: '#EF4444' },
-  { id: 'c19', source: 'complaints', target: 'ncr', labelAr: 'تحويل شكوى ومرتجع العميل لتقرير عدم مطابقة', category: 'defect', color: '#EF4444' },
-  { id: 'c20', source: 'complaints', target: 'eight_d', labelAr: 'فتح تحقيق 8D إلزامي للرد على شكوى العميل', category: 'defect', color: '#8B5CF6' },
-  { id: 'c21', source: 'deviation', target: 'change_control', labelAr: 'اعتماد الحيود المؤقت عبر لجنة التغيير الهندسي', category: 'governance', color: '#F59E0B' },
-  { id: 'c22', source: 'defect_cost', target: 'control_tower', labelAr: 'رفع تقارير تكلفة رداءة الجودة لبرج المراقبة', category: 'intelligence', color: '#EF4444' },
+  // Stage 03 Links (Containment, NCR & Complaints)
+  { id: 'c16', source: 'ncr', target: 'capa_records', label: 'Initiates corrective & preventive action plan', category: 'defect', color: '#EF4444' },
+  { id: 'c17', source: 'ncr', target: 'eight_d', label: 'Launches 8D investigation for major non-conformance', category: 'defect', color: '#8B5CF6' },
+  { id: 'c18', source: 'ncr', target: 'defect_cost', label: 'Records quarantine sorting & scrap losses', category: 'defect', color: '#EF4444' },
+  { id: 'c19', source: 'complaints', target: 'ncr', label: 'Converts customer RMA claim into formal NCR', category: 'defect', color: '#EF4444' },
+  { id: 'c20', source: 'complaints', target: 'eight_d', label: 'Mandates 8D root cause report for customer', category: 'defect', color: '#8B5CF6' },
+  { id: 'c21', source: 'deviation', target: 'change_control', label: 'Routes temporary deviation for engineering review', category: 'governance', color: '#F59E0B' },
+  { id: 'c22', source: 'defect_cost', target: 'control_tower', label: 'Reports COPQ financial impact to Control Tower', category: 'intelligence', color: '#EF4444' },
 
-  // د. روابط المرحلة 4 (الحل الجذري 8D و CAPA وإدارة التغيير)
-  { id: 'c23', source: 'eight_d', target: 'fmea', labelAr: 'تحديث مصفوفة المخاطر بالسبب الجذري المكتشف', category: 'prevention', color: '#F59E0B' },
-  { id: 'c24', source: 'eight_d', target: 'control_plan', labelAr: 'إضافة ضوابط رقابية جديدة في خطة الضبط', category: 'prevention', color: '#10B981' },
-  { id: 'c25', source: 'eight_d', target: 'knowledge_base', labelAr: 'أرشفة الحل الجذري في بنك الدروس المستفادة', category: 'prevention', color: '#10B981' },
-  { id: 'c26', source: 'capa_records', target: 'change_control', labelAr: 'طلب تعديل هندسي لمنع تكرار المشكلة', category: 'governance', color: '#8B5CF6' },
-  { id: 'c27', source: 'capa_records', target: 'command_center', labelAr: 'جدولة ومتابعة مواعيد إغلاق الإجراءات التصحيحية', category: 'governance', color: '#8B5CF6' },
-  { id: 'c28', source: 'change_control', target: 'control_plan', labelAr: 'تحديث مواصفات خطة الضبط بعد التعديل الهندسي', category: 'prevention', color: '#8B5CF6' },
-  { id: 'c29', source: 'command_center', target: 'control_tower', labelAr: 'بث مؤشرات سرعة إغلاق الإجراءات لغرفة القيادة', category: 'intelligence', color: '#8B5CF6' },
+  // Stage 04 Links (Root Cause, 8D & CAPA)
+  { id: 'c23', source: 'eight_d', target: 'fmea', label: 'Updates PFMEA risk matrix with new failure modes', category: 'prevention', color: '#F59E0B' },
+  { id: 'c24', source: 'eight_d', target: 'control_plan', label: 'Enforces new poka-yoke controls in Control Plan', category: 'prevention', color: '#10B981' },
+  { id: 'c25', source: 'eight_d', target: 'knowledge_base', label: 'Archives verified root cause in Lessons Learned', category: 'prevention', color: '#10B981' },
+  { id: 'c26', source: 'capa_records', target: 'change_control', label: 'Triggers formal Engineering Change Notice (ECN)', category: 'governance', color: '#8B5CF6' },
+  { id: 'c27', source: 'capa_records', target: 'command_center', label: 'Tracks CAPA due dates and closure SLA', category: 'governance', color: '#8B5CF6' },
+  { id: 'c28', source: 'change_control', target: 'control_plan', label: 'Revises Control Plan specs after ECN approval', category: 'prevention', color: '#8B5CF6' },
+  { id: 'c29', source: 'command_center', target: 'control_tower', label: 'Broadcasts action closure KPIs to executive tower', category: 'intelligence', color: '#8B5CF6' },
 
-  // هـ. روابط المرحلة 5 (الهندسة والوقاية والنماذج)
-  { id: 'c30', source: 'fmea', target: 'control_plan', labelAr: 'تحويل المخاطر الحرجة إلى نقاط فحص في خطة الضبط', category: 'prevention', color: '#F59E0B' },
-  { id: 'c31', source: 'control_plan', target: 'inspection_plans', labelAr: 'تغذية صالة الإنتاج بتعليمات ومعايير الفحص', category: 'governance', color: '#0EA5E9' },
-  { id: 'c32', source: 'control_plan', target: 'spc', labelAr: 'تحديد حدود المواصفات العليا والدنيا للمراقبة', category: 'intelligence', color: '#06B6D4' },
-  { id: 'c33', source: 'form_designer', target: 'inspection_plans', labelAr: 'توليد قوالب الفحص الرقمية لمحطات التشغيل', category: 'governance', color: '#F59E0B' },
-  { id: 'c34', source: 'form_designer', target: 'lpa', labelAr: 'تجهيز قوائم التحقق الرقمية للتدقيق الطبقي', category: 'governance', color: '#F59E0B' },
-  { id: 'c35', source: 'knowledge_base', target: 'ai_copilot', labelAr: 'تدريب المساعد الذكي على الحلول والخبرات السابقة', category: 'intelligence', color: '#06B6D4' },
+  // Stage 05 Links (Engineering & Prevention)
+  { id: 'c30', source: 'fmea', target: 'control_plan', label: 'Transfers high-RPN characteristics to Control Plan', category: 'prevention', color: '#F59E0B' },
+  { id: 'c31', source: 'control_plan', target: 'inspection_plans', label: 'Deploys updated inspection specs to shopfloor', category: 'governance', color: '#0EA5E9' },
+  { id: 'c32', source: 'control_plan', target: 'spc', label: 'Sets USL/LSL specification limits for SPC charts', category: 'intelligence', color: '#06B6D4' },
+  { id: 'c33', source: 'form_designer', target: 'inspection_plans', label: 'Publishes digital checklists to IPQC stations', category: 'governance', color: '#F59E0B' },
+  { id: 'c34', source: 'form_designer', target: 'lpa', label: 'Provides custom audit templates for LPA', category: 'governance', color: '#F59E0B' },
+  { id: 'c35', source: 'knowledge_base', target: 'ai_copilot', label: 'Trains AI Copilot on historical 8D solutions', category: 'intelligence', color: '#06B6D4' },
 
-  // و. روابط المرحلة 6 (الضبط الإحصائي والذكاء والتدقيق)
-  { id: 'c36', source: 'spc', target: 'ai_copilot', labelAr: 'تحليل انحراف العمليات والتنبؤ بالعيوب قبل وقوعها', category: 'intelligence', color: '#06B6D4' },
-  { id: 'c37', source: 'spc', target: 'control_tower', labelAr: 'عرض مؤشرات استقرار وقدرة العمليات الحية', category: 'intelligence', color: '#06B6D4' },
-  { id: 'c38', source: 'ai_copilot', target: 'eight_d', labelAr: 'اقتراح الأسباب الجذرية آلياً لفرق حل المشكلات', category: 'intelligence', color: '#06B6D4' },
-  { id: 'c39', source: 'audits', target: 'capa_records', labelAr: 'تحويل ملاحظات التدقيق الشامل إلى خطط تحسين', category: 'governance', color: '#06B6D4' },
+  // Stage 06 Links (SPC, AI & Audits)
+  { id: 'c36', source: 'spc', target: 'ai_copilot', label: 'Feeds process drift trends for predictive alerts', category: 'intelligence', color: '#06B6D4' },
+  { id: 'c37', source: 'spc', target: 'control_tower', label: 'Streams live Cp/Cpk capability metrics to Tower', category: 'intelligence', color: '#06B6D4' },
+  { id: 'c38', source: 'ai_copilot', target: 'eight_d', label: 'Recommends AI-generated root causes to 8D teams', category: 'intelligence', color: '#06B6D4' },
+  { id: 'c39', source: 'audits', target: 'capa_records', label: 'Generates CAPA records from audit non-conformities', category: 'governance', color: '#06B6D4' },
 ];
 
 // =========================================================================
-// 3. المكون الرئيسي لشبكة المنظومة التفاعلية
+// 3. MAIN INTERACTIVE ECOSYSTEM PORTAL COMPONENT
 // =========================================================================
 
 export default function QualityEcosystemPortal() {
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // حالة التحريك والتكبير (Pan & Zoom)
+  // Pan & Zoom State
   const [zoom, setZoom] = useState<number>(0.75);
   const [pan, setPan] = useState<{ x: number; y: number }>({ x: 20, y: 20 });
   const [isPanning, setIsPanning] = useState(false);
   const [startPoint, setStartPoint] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [hasMoved, setHasMoved] = useState(false);
 
-  // حالة التفاعل والاختيار
+  // Interaction State
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSimulation, setActiveSimulation] = useState<'none' | 'defect' | 'supplier' | 'prevention'>('none');
   const [activePhaseFilter, setActivePhaseFilter] = useState<string | null>(null);
 
-  // ملاءمة الشاشة تلقائياً عند الفتح بحيث تظهر الكروت بحجم كبير وواضح
+  // Auto-fit entire 24-node matrix cleanly inside the viewport
   const fitToScreen = useCallback(() => {
     if (!containerRef.current) return;
     const { clientWidth, clientHeight } = containerRef.current;
@@ -535,7 +535,7 @@ export default function QualityEcosystemPortal() {
     return () => window.removeEventListener('resize', fitToScreen);
   }, [fitToScreen]);
 
-  // التمركز التلقائي حول قسم محدد
+  // Center camera on a specific node
   const centerOnNode = useCallback((nodeId: string) => {
     const targetNode = NODES.find((n) => n.id === nodeId);
     if (!targetNode || !containerRef.current) return;
@@ -553,7 +553,7 @@ export default function QualityEcosystemPortal() {
     setSelectedNodeId(nodeId);
   }, [zoom]);
 
-  // تحريك الكاميرا عند تشغيل المحاكاة
+  // Focus camera when simulation is triggered
   useEffect(() => {
     if (activeSimulation === 'defect') {
       centerOnNode('ncr');
@@ -564,7 +564,7 @@ export default function QualityEcosystemPortal() {
     }
   }, [activeSimulation, centerOnNode]);
 
-  // التحكم بالسحب (Pan)
+  // Drag-to-pan handlers
   const handleMouseDown = (e: React.MouseEvent) => {
     if (e.button !== 0) return;
     setIsPanning(true);
@@ -586,7 +586,7 @@ export default function QualityEcosystemPortal() {
     setIsPanning(false);
   };
 
-  // التحكم بالتكبير والتصغير بعجلة الماوس
+  // Smooth wheel zoom
   const handleWheel = (e: React.WheelEvent) => {
     e.preventDefault();
     const zoomFactor = e.deltaY < 0 ? 1.08 : 0.92;
@@ -606,7 +606,7 @@ export default function QualityEcosystemPortal() {
 
   const activeNodeId = hoveredNodeId || selectedNodeId;
 
-  // تحديد الخطوط النشطة
+  // Active highlighted cables
   const highlightedCableIds = useMemo(() => {
     const set = new Set<string>();
 
@@ -635,7 +635,7 @@ export default function QualityEcosystemPortal() {
     return set;
   }, [activeNodeId, activeSimulation]);
 
-  // تحديد الكروت المتصلة لتسليط الضوء عليها
+  // Connected nodes to highlight
   const activeConnectedNodeIds = useMemo(() => {
     const set = new Set<string>();
     if (activeNodeId) set.add(activeNodeId);
@@ -651,7 +651,7 @@ export default function QualityEcosystemPortal() {
     return set;
   }, [activeNodeId, highlightedCableIds]);
 
-  // حساب عدد الارتباطات لكل كارت
+  // Count links per node
   const nodeConnectionsCount = useMemo(() => {
     const counts: Record<string, number> = {};
     NODES.forEach((n) => {
@@ -660,16 +660,19 @@ export default function QualityEcosystemPortal() {
     return counts;
   }, []);
 
-  // نتائج البحث الفوري
+  // Instant search results
   const searchResults = useMemo(() => {
     if (!searchQuery.trim()) return [];
     const q = searchQuery.toLowerCase();
     return NODES.filter(
-      (n) => n.nameAr.toLowerCase().includes(q) || n.badgeAr.toLowerCase().includes(q) || n.descriptionAr.toLowerCase().includes(q)
+      (n) =>
+        n.title.toLowerCase().includes(q) ||
+        n.badge.toLowerCase().includes(q) ||
+        n.description.toLowerCase().includes(q)
     );
   }, [searchQuery]);
 
-  // بيانات الكارت المحدد لعرضها في الشريط السفلي مع سبب الارتباط
+  // Active node details for bottom status bar
   const activeNodeInfo = useMemo(() => {
     if (!activeNodeId) return null;
     const node = NODES.find((n) => n.id === activeNodeId);
@@ -678,51 +681,51 @@ export default function QualityEcosystemPortal() {
 
     const incoming = CABLES.filter((c) => c.target === node.id).map((c) => {
       const srcNode = NODES.find((n) => n.id === c.source);
-      return { cable: c, sourceId: c.source, sourceName: srcNode?.nameAr || c.source };
+      return { cable: c, sourceId: c.source, sourceName: srcNode?.title || c.source };
     });
 
     const outgoing = CABLES.filter((c) => c.source === node.id).map((c) => {
       const tgtNode = NODES.find((n) => n.id === c.target);
-      return { cable: c, targetId: c.target, targetName: tgtNode?.nameAr || c.target };
+      return { cable: c, targetId: c.target, targetName: tgtNode?.title || c.target };
     });
 
     return { node, phase, incoming, outgoing };
   }, [activeNodeId]);
 
   return (
-    <div className="h-full max-h-full overflow-hidden flex flex-col select-none relative w-full text-white bg-[#040812] font-sans" dir="rtl">
+    <div className="h-full max-h-full overflow-hidden flex flex-col select-none relative w-full text-white bg-[#040812] font-sans" dir="ltr">
       
       {/* ========================================================================= */}
-      {/* 1. الشريط العلوي للتحكم والبحث ومحاكاة المسارات */}
+      {/* 1. TOP COMMAND BAR (SIMULATIONS, STAGE FILTERS, SEARCH & ZOOM) */}
       {/* ========================================================================= */}
       <header className="h-14 px-3 sm:px-6 border-b border-white/10 bg-[#070d19]/90 backdrop-blur-2xl flex items-center justify-between shrink-0 z-30 gap-2">
         
-        {/* عنوان المنصة */}
+        {/* Brand & Ecosystem Title */}
         <div className="flex items-center gap-3 shrink-0">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#0066CC] to-[#00A3E0] flex items-center justify-center shadow-[0_0_25px_rgba(0,163,224,0.45)] border border-sky-400/40">
             <Network className="w-5 h-5 text-white" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-sm sm:text-base font-black text-white">
-                منظومة الترابط الشامل لإدارة الجودة
+              <h1 className="text-sm sm:text-base font-black text-white tracking-tight">
+                QMS 4.0 Interactive Ecosystem
               </h1>
               <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                ٢٤ قسماً • ٣٩ مساراً تفاعلياً
+                24 Connected Modules
               </span>
             </div>
             <p className="text-[11px] text-slate-400 hidden md:block">
-              مرر المؤشر على أي قسم لإضاءة مسارات الارتباط وسبب الربط • اضغط لفتح القسم مباشرة
+              Hover any module to trace live data conduits • Click to launch directly
             </p>
           </div>
         </div>
 
-        {/* أزرار محاكاة السيناريوهات الحية */}
+        {/* Live Scenario Simulation Buttons */}
         <div className="hidden lg:flex items-center gap-1.5 p-1 bg-white/[0.04] border border-white/10 rounded-2xl">
           <span className="text-[11px] font-bold text-slate-400 px-2 flex items-center gap-1">
             <Play className="w-3 h-3 text-sky-400" />
-            <span>محاكاة المسار:</span>
+            <span>Simulate Flow:</span>
           </span>
 
           <button
@@ -735,7 +738,7 @@ export default function QualityEcosystemPortal() {
             }`}
           >
             <span className="w-2 h-2 rounded-full bg-red-400 animate-ping" />
-            <span>عيب إنتاج ⬅ عدم مطابقة ⬅ 8D</span>
+            <span>Defect ➔ NCR ➔ 8D</span>
           </button>
 
           <button
@@ -748,7 +751,7 @@ export default function QualityEcosystemPortal() {
             }`}
           >
             <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
-            <span>رفض خامة ⬅ تقييم المورد</span>
+            <span>IQC Reject ➔ Vendor Rating</span>
           </button>
 
           <button
@@ -761,7 +764,7 @@ export default function QualityEcosystemPortal() {
             }`}
           >
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-            <span>إغلاق 8D ⬅ خطة الضبط ⬅ الدروس</span>
+            <span>8D Closure ➔ Control Plan</span>
           </button>
 
           {activeSimulation !== 'none' && (
@@ -769,17 +772,17 @@ export default function QualityEcosystemPortal() {
               type="button"
               onClick={() => setActiveSimulation('none')}
               className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/10"
-              title="إعادة التعيين"
+              title="Reset Simulation"
             >
               <RotateCcw className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
 
-        {/* البحث وأدوات التكبير */}
+        {/* Stage Filter, Search & Zoom Controls */}
         <div className="flex items-center gap-2 shrink-0">
           
-          {/* تصفية سريعة للمراحل */}
+          {/* Quick Stage Filter */}
           <div className="hidden 2xl:flex items-center gap-1 bg-white/[0.04] border border-white/10 rounded-xl p-1">
             <button
               type="button"
@@ -791,7 +794,7 @@ export default function QualityEcosystemPortal() {
                 !activePhaseFilter ? 'bg-sky-500 text-white shadow' : 'text-slate-400 hover:text-white'
               }`}
             >
-              الكل
+              All
             </button>
             {PHASES.map((p) => (
               <button
@@ -814,18 +817,18 @@ export default function QualityEcosystemPortal() {
                 }`}
                 style={{ color: activePhaseFilter === p.id ? p.color : undefined }}
               >
-                {p.titleAr.split(' ')[0]}
+                {p.title.split(' ')[0]}
               </button>
             ))}
           </div>
 
-          {/* مربع البحث عن قسم */}
+          {/* Search Module Input */}
           <div className="relative">
             <div className="flex items-center gap-1.5 bg-white/[0.05] border border-white/10 rounded-xl px-3 py-1.5 focus-within:border-sky-400/60 transition-colors w-36 sm:w-48">
               <Search className="w-3.5 h-3.5 text-slate-400" />
               <input
                 type="text"
-                placeholder="ابحث عن قسم..."
+                placeholder="Search module..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="bg-transparent border-none outline-none text-xs text-white placeholder:text-slate-500 w-full"
@@ -842,23 +845,25 @@ export default function QualityEcosystemPortal() {
                       centerOnNode(res.id);
                       setSearchQuery('');
                     }}
-                    className="w-full text-right px-3 py-2 rounded-lg text-xs hover:bg-white/10 flex items-center justify-between gap-2 transition-colors"
+                    className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-white/10 flex items-center justify-between gap-2 transition-colors"
                   >
-                    <span className="font-bold text-white">{res.nameAr}</span>
-                    <span className="text-[10px] text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded-md">{res.badgeAr}</span>
+                    <span className="font-bold text-white">{res.title}</span>
+                    <span className="text-[9px] text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded-md font-bold">
+                      {res.badge}
+                    </span>
                   </button>
                 ))}
               </div>
             )}
           </div>
 
-          {/* أزرار التكبير والملاءمة */}
-          <div className="flex items-center gap-1 bg-white/[0.05] border border-white/10 rounded-xl p-1" dir="ltr">
+          {/* Zoom & Fit Controls */}
+          <div className="flex items-center gap-1 bg-white/[0.05] border border-white/10 rounded-xl p-1">
             <button
               type="button"
               onClick={() => setZoom((z) => Math.min(z + 0.12, 1.5))}
               className="p-1.5 rounded-lg hover:bg-white/10 text-slate-300 hover:text-white"
-              title="تكبير"
+              title="Zoom In"
             >
               <ZoomIn className="w-3.5 h-3.5" />
             </button>
@@ -869,7 +874,7 @@ export default function QualityEcosystemPortal() {
               type="button"
               onClick={() => setZoom((z) => Math.max(z - 0.12, 0.45))}
               className="p-1.5 rounded-lg hover:bg-white/10 text-slate-300 hover:text-white"
-              title="تصغير"
+              title="Zoom Out"
             >
               <ZoomOut className="w-3.5 h-3.5" />
             </button>
@@ -878,7 +883,7 @@ export default function QualityEcosystemPortal() {
               type="button"
               onClick={fitToScreen}
               className="p-1.5 rounded-lg hover:bg-white/10 text-sky-400 hover:text-sky-300"
-              title="احتواء كامل الشاشة"
+              title="Fit to Screen"
             >
               <Maximize2 className="w-3.5 h-3.5" />
             </button>
@@ -887,7 +892,7 @@ export default function QualityEcosystemPortal() {
       </header>
 
       {/* ========================================================================= */}
-      {/* 2. لوحة الشبكة التفاعلية الحرة (Canvas) */}
+      {/* 2. INTERACTIVE NODE CANVAS (PAN & ZOOM) */}
       {/* ========================================================================= */}
       <div
         ref={containerRef}
@@ -896,12 +901,11 @@ export default function QualityEcosystemPortal() {
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
         onWheel={handleWheel}
-        dir="ltr"
         className={`flex-1 overflow-hidden relative w-full h-full ${
           isPanning ? 'cursor-grabbing' : 'cursor-grab'
         } bg-[radial-gradient(ellipse_at_center,#0a1326_0%,#040812_100%)]`}
       >
-        {/* خلفية نقاط الشبكة الهندسية */}
+        {/* Subtle Cyber Grid Background */}
         <div
           className="absolute inset-0 pointer-events-none opacity-25"
           style={{
@@ -911,7 +915,7 @@ export default function QualityEcosystemPortal() {
           }}
         />
 
-        {/* الطبقة المتحركة التي تضم المراحل والخطوط والكروت */}
+        {/* Transform Layer: Stages, Laser Cables & Cards */}
         <div
           className="absolute top-0 left-0 transition-transform duration-75 origin-top-left pointer-events-auto"
           style={{
@@ -921,14 +925,13 @@ export default function QualityEcosystemPortal() {
           }}
         >
           {/* ------------------------------------------------------------- */}
-          {/* أعمدة المراحل الـ 6 */}
+          {/* 6 STAGE ZONES */}
           {/* ------------------------------------------------------------- */}
           {PHASES.map((phase) => {
             const isPhaseActive = !activePhaseFilter || activePhaseFilter === phase.id;
             return (
               <div
                 key={phase.id}
-                dir="rtl"
                 style={{
                   left: `${phase.x}px`,
                   top: '20px',
@@ -939,7 +942,6 @@ export default function QualityEcosystemPortal() {
                   isPhaseActive ? 'opacity-100' : 'opacity-20'
                 }`}
               >
-                {/* رأس المرحلة بالعربية */}
                 <div className="flex items-center justify-between border-b border-white/10 pb-3.5">
                   <div className="flex items-center gap-3">
                     <div
@@ -955,13 +957,15 @@ export default function QualityEcosystemPortal() {
                     <div>
                       <div className="flex items-center gap-1.5">
                         <span
-                          className="text-[11px] font-black px-2 py-0.5 rounded-md"
+                          className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md"
                           style={{ backgroundColor: phase.color + '20', color: phase.color }}
                         >
-                          المرحلة {phase.phaseNumber}
+                          STAGE {phase.phaseNumber}
                         </span>
                       </div>
-                      <h3 className="text-[15px] font-black text-white mt-0.5">{phase.titleAr}</h3>
+                      <h3 className="text-[14px] font-black text-white mt-0.5 tracking-tight">
+                        {phase.title}
+                      </h3>
                     </div>
                   </div>
                 </div>
@@ -970,7 +974,7 @@ export default function QualityEcosystemPortal() {
           })}
 
           {/* ------------------------------------------------------------- */}
-          {/* خطوط الليزر والارتباط التفاعلية (SVG Cables) */}
+          {/* DYNAMIC SVG LASER CABLES */}
           {/* ------------------------------------------------------------- */}
           <svg
             className="absolute inset-0 w-full h-full pointer-events-none z-10"
@@ -982,25 +986,25 @@ export default function QualityEcosystemPortal() {
                 <feComposite in="SourceGraphic" in2="blur" operator="over" />
               </filter>
 
-              <linearGradient id="laserPulseRed" x1="100%" y1="0%" x2="0%" y2="0%">
+              <linearGradient id="laserPulseRed" x1="0%" y1="0%" x2="100%" y2="0%">
                 <stop offset="0%" stopColor="#EF4444" stopOpacity="0.2" />
                 <stop offset="50%" stopColor="#FCA5A5" stopOpacity="1" />
                 <stop offset="100%" stopColor="#EF4444" stopOpacity="0.2" />
               </linearGradient>
 
-              <linearGradient id="laserPulseEmerald" x1="100%" y1="0%" x2="0%" y2="0%">
+              <linearGradient id="laserPulseEmerald" x1="0%" y1="0%" x2="100%" y2="0%">
                 <stop offset="0%" stopColor="#10B981" stopOpacity="0.2" />
                 <stop offset="50%" stopColor="#6EE7B7" stopOpacity="1" />
                 <stop offset="100%" stopColor="#10B981" stopOpacity="0.2" />
               </linearGradient>
 
-              <linearGradient id="laserPulseCyan" x1="100%" y1="0%" x2="0%" y2="0%">
+              <linearGradient id="laserPulseCyan" x1="0%" y1="0%" x2="100%" y2="0%">
                 <stop offset="0%" stopColor="#0EA5E9" stopOpacity="0.2" />
                 <stop offset="50%" stopColor="#BAE6FD" stopOpacity="1" />
                 <stop offset="100%" stopColor="#0EA5E9" stopOpacity="0.2" />
               </linearGradient>
 
-              <linearGradient id="laserPulsePurple" x1="100%" y1="0%" x2="0%" y2="0%">
+              <linearGradient id="laserPulsePurple" x1="0%" y1="0%" x2="100%" y2="0%">
                 <stop offset="0%" stopColor="#8B5CF6" stopOpacity="0.2" />
                 <stop offset="50%" stopColor="#DDD6FE" stopOpacity="1" />
                 <stop offset="100%" stopColor="#8B5CF6" stopOpacity="0.2" />
@@ -1013,40 +1017,36 @@ export default function QualityEcosystemPortal() {
               if (!src || !tgt) return null;
 
               const isSameColumn = src.x === tgt.x;
-              const isForwardRtl = tgt.x < src.x; // التدفق الطبيعي من اليمين إلى اليسار
+              const isForwardLtr = tgt.x > src.x;
 
-              let x1 = src.x;
+              let x1 = src.x + NODE_WIDTH;
               const y1 = src.y + NODE_HEIGHT / 2;
-              let x2 = tgt.x + NODE_WIDTH;
+              let x2 = tgt.x;
               const y2 = tgt.y + NODE_HEIGHT / 2;
 
               let pathD = '';
 
               if (isSameColumn) {
-                // ارتباط داخل نفس العمود: يخرج من اليمين ويدخل لليمين بقوس أنيق
                 x1 = src.x + NODE_WIDTH;
                 x2 = tgt.x + NODE_WIDTH;
                 const curveOffset = 45;
                 pathD = `M ${x1} ${y1} C ${x1 + curveOffset} ${y1}, ${x2 + curveOffset} ${y2}, ${x2} ${y2}`;
-              } else if (isForwardRtl) {
-                // انتقال من اليمين إلى اليسار (من مخرج اليسار للكارت الأول إلى مدخل اليمين للكارت الثاني)
-                x1 = src.x;
-                x2 = tgt.x + NODE_WIDTH;
-                const dx = Math.max(55, (x1 - x2) * 0.45);
-                pathD = `M ${x1} ${y1} C ${x1 - dx} ${y1}, ${x2 + dx} ${y2}, ${x2} ${y2}`;
-              } else {
-                // تغذية راجعة من اليسار إلى اليمين
+              } else if (isForwardLtr) {
                 x1 = src.x + NODE_WIDTH;
                 x2 = tgt.x;
+                const dx = Math.max(55, (x2 - x1) * 0.45);
+                pathD = `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`;
+              } else {
+                x1 = src.x;
+                x2 = tgt.x + NODE_WIDTH;
                 const archOffset = y1 > 450 ? 110 : -110;
-                pathD = `M ${x1} ${y1} C ${x1 + 80} ${y1 + archOffset}, ${x2 - 80} ${y2 + archOffset}, ${x2} ${y2}`;
+                pathD = `M ${x1} ${y1} C ${x1 - 80} ${y1 + archOffset}, ${x2 + 80} ${y2 + archOffset}, ${x2} ${y2}`;
               }
 
               const isHighlighted = highlightedCableIds.has(cable.id);
 
               return (
                 <g key={cable.id}>
-                  {/* الخط الأساسي */}
                   <path
                     d={pathD}
                     fill="none"
@@ -1057,7 +1057,6 @@ export default function QualityEcosystemPortal() {
                     className="transition-all duration-300"
                   />
 
-                  {/* نبضة الليزر المتحركة */}
                   {isHighlighted && (
                     <path
                       d={pathD}
@@ -1084,7 +1083,7 @@ export default function QualityEcosystemPortal() {
           </svg>
 
           {/* ------------------------------------------------------------- */}
-          {/* 4. الكروت الفاخرة (١٠٠٪ عربي، مسارات صحيحة، ارتباطات مكتملة) */}
+          {/* 4. REDESIGNED MODULE CARDS (CRISP VISIBLE ENGLISH TITLES) */}
           {/* ------------------------------------------------------------- */}
           {NODES.map((node) => {
             const isSelected = selectedNodeId === node.id;
@@ -1098,7 +1097,6 @@ export default function QualityEcosystemPortal() {
             return (
               <div
                 key={node.id}
-                dir="rtl"
                 style={{
                   left: `${node.x}px`,
                   top: `${node.y}px`,
@@ -1130,7 +1128,7 @@ export default function QualityEcosystemPortal() {
                     : 'bg-[#09101d]/95 border border-white/10 hover:border-white/25'
                 } ${isDimmed ? 'opacity-25' : 'opacity-100'}`}
               >
-                {/* شريط الإضاءة العلوي بلون المرحلة */}
+                {/* Top Neon Accent Bar */}
                 <div
                   className="h-1.5 w-full shrink-0"
                   style={{
@@ -1138,20 +1136,13 @@ export default function QualityEcosystemPortal() {
                   }}
                 />
 
-                {/* هالة ضوئية خلفية ناعمة في زاوية الكارت */}
+                {/* Soft Ambient Corner Glow */}
                 <div
-                  className="absolute -top-10 -right-10 w-28 h-28 rounded-full blur-2xl pointer-events-none opacity-20 group-hover:opacity-40 transition-opacity"
+                  className="absolute -top-10 -left-10 w-28 h-28 rounded-full blur-2xl pointer-events-none opacity-20 group-hover:opacity-40 transition-opacity"
                   style={{ backgroundColor: themeColor }}
                 />
 
-                {/* نقاط التوصيل الجانبية المدمجة */}
-                <div
-                  className="absolute -right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 border-[#040812] transition-transform group-hover:scale-125"
-                  style={{
-                    backgroundColor: isConnected ? themeColor : '#334155',
-                    boxShadow: isConnected ? `0 0 10px ${themeColor}` : 'none',
-                  }}
-                />
+                {/* Integrated Side Connection Ports */}
                 <div
                   className="absolute -left-1.5 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 border-[#040812] transition-transform group-hover:scale-125"
                   style={{
@@ -1159,11 +1150,18 @@ export default function QualityEcosystemPortal() {
                     boxShadow: isConnected ? `0 0 10px ${themeColor}` : 'none',
                   }}
                 />
+                <div
+                  className="absolute -right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 border-[#040812] transition-transform group-hover:scale-125"
+                  style={{
+                    backgroundColor: isConnected ? themeColor : '#334155',
+                    boxShadow: isConnected ? `0 0 10px ${themeColor}` : 'none',
+                  }}
+                />
 
-                {/* محتوى الكارت الداخلي */}
+                {/* Card Content */}
                 <div className="p-3.5 flex-1 flex flex-col justify-between">
                   
-                  {/* الصف الأول: الأيقونة الفاخرة + شارة التخصص */}
+                  {/* Top Row: Icon + Clear Visible English Title + Badge */}
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2.5">
                       <div
@@ -1178,32 +1176,32 @@ export default function QualityEcosystemPortal() {
                       </div>
 
                       <div>
-                        <h4 className="text-[14px] font-black text-white group-hover:text-sky-300 transition-colors leading-snug">
-                          {node.nameAr}
+                        <h4 className="text-[14px] font-black text-white group-hover:text-sky-300 transition-colors leading-snug tracking-tight">
+                          {node.title}
                         </h4>
                         <span
-                          className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-md mt-1"
+                          className="inline-block text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-md mt-1"
                           style={{
-                            backgroundColor: `${themeColor}18`,
+                            backgroundColor: `${themeColor}20`,
                             color: themeColor,
                           }}
                         >
-                          {node.badgeAr}
+                          {node.badge}
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  {/* الصف الأوسط: وصف مختصر وواضح للقسم */}
-                  <p className="text-[11px] text-slate-300/80 leading-relaxed line-clamp-2 my-1.5">
-                    {node.descriptionAr}
+                  {/* Middle Row: Concise English Description */}
+                  <p className="text-[11px] text-slate-300/85 leading-relaxed line-clamp-2 my-1.5">
+                    {node.description}
                   </p>
 
-                  {/* الصف السفلي: عدد الارتباطات + زر الدخول السريع */}
+                  {/* Bottom Row: Active Links Count + Direct Launch Button */}
                   <div className="flex items-center justify-between pt-2 border-t border-white/[0.08]">
                     <div className="flex items-center gap-1 text-[10px] text-slate-300 font-semibold">
                       <Link2 className="w-3 h-3" style={{ color: themeColor }} />
-                      <span>{linksCount} مسارات مرتبطة</span>
+                      <span>{linksCount} Active Links</span>
                     </div>
 
                     <button
@@ -1218,8 +1216,8 @@ export default function QualityEcosystemPortal() {
                       }}
                       className="px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1 transition-all shadow-sm hover:shadow-md"
                     >
-                      <span>فتح القسم</span>
-                      <ArrowLeft className="w-3 h-3" />
+                      <span>Open</span>
+                      <ArrowRight className="w-3 h-3" />
                     </button>
                   </div>
                 </div>
@@ -1230,15 +1228,12 @@ export default function QualityEcosystemPortal() {
       </div>
 
       {/* ========================================================================= */}
-      {/* 3. شريط سفلي مدمج وثابت خارج مساحة الكروت (لا يغطي أي كارت أو خط إطلاقاً) */}
+      {/* 3. DOCKED SINGLE-LINE BOTTOM STATUS BAR (NEVER COVERS CARDS OR LINKS) */}
       {/* ========================================================================= */}
-      <div
-        dir="rtl"
-        className="h-12 px-4 border-t border-white/10 bg-[#070d19]/95 backdrop-blur-2xl flex items-center justify-between shrink-0 z-30 gap-3 overflow-x-auto no-scrollbar"
-      >
+      <div className="h-12 px-4 border-t border-white/10 bg-[#070d19]/95 backdrop-blur-2xl flex items-center justify-between shrink-0 z-30 gap-3 overflow-x-auto no-scrollbar">
         {activeNodeInfo ? (
           <>
-            {/* اسم القسم النشط */}
+            {/* Active Module Identity */}
             <div className="flex items-center gap-2 shrink-0">
               <div
                 className="w-7 h-7 rounded-lg flex items-center justify-center border border-white/15 shrink-0"
@@ -1250,24 +1245,24 @@ export default function QualityEcosystemPortal() {
                 <activeNodeInfo.node.icon className="w-4 h-4" />
               </div>
               <span
-                className="text-[10px] font-bold px-2 py-0.5 rounded"
+                className="text-[10px] font-bold uppercase px-2 py-0.5 rounded"
                 style={{
                   backgroundColor: activeNodeInfo.phase?.color + '20',
                   color: activeNodeInfo.phase?.color,
                 }}
               >
-                {activeNodeInfo.phase?.titleAr}
+                {activeNodeInfo.phase?.title}
               </span>
               <h3 className="text-xs sm:text-sm font-black text-white whitespace-nowrap">
-                {activeNodeInfo.node.nameAr}
+                {activeNodeInfo.node.title}
               </h3>
             </div>
 
-            {/* العلاقات والروابط في سطر واحد مدمج بدون تغطية الشاشة */}
+            {/* Single-Line Inputs & Outputs */}
             <div className="flex items-center gap-3 text-[11px] shrink-0">
-              {/* المدخلات */}
+              {/* Inputs */}
               <div className="flex items-center gap-1.5">
-                <span className="text-sky-400 font-bold whitespace-nowrap">📥 يستقبل من:</span>
+                <span className="text-sky-400 font-bold whitespace-nowrap">📥 Inputs From:</span>
                 {activeNodeInfo.incoming.length > 0 ? (
                   <div className="flex items-center gap-1">
                     {activeNodeInfo.incoming.map((item, i) => (
@@ -1275,26 +1270,26 @@ export default function QualityEcosystemPortal() {
                         key={i}
                         type="button"
                         onClick={() => setSelectedNodeId(item.sourceId)}
-                        title={item.cable.labelAr}
+                        title={item.cable.label}
                         className="px-2 py-0.5 rounded-md bg-sky-500/15 hover:bg-sky-500/30 border border-sky-500/30 text-white font-bold whitespace-nowrap flex items-center gap-1 transition-colors"
                       >
                         <span>{item.sourceName}</span>
                         <span className="text-[10px] text-sky-300 font-normal hidden xl:inline">
-                          ({item.cable.labelAr})
+                          ({item.cable.label})
                         </span>
                       </button>
                     ))}
                   </div>
                 ) : (
-                  <span className="text-slate-500 whitespace-nowrap">نقطة انطلاق تأسيسية</span>
+                  <span className="text-slate-500 whitespace-nowrap">Primary Source Node</span>
                 )}
               </div>
 
               <span className="text-white/20">|</span>
 
-              {/* المخرجات */}
+              {/* Outputs */}
               <div className="flex items-center gap-1.5">
-                <span className="text-emerald-400 font-bold whitespace-nowrap">📤 يُغذي:</span>
+                <span className="text-emerald-400 font-bold whitespace-nowrap">📤 Feeds Into:</span>
                 {activeNodeInfo.outgoing.length > 0 ? (
                   <div className="flex items-center gap-1">
                     {activeNodeInfo.outgoing.map((item, i) => (
@@ -1302,23 +1297,23 @@ export default function QualityEcosystemPortal() {
                         key={i}
                         type="button"
                         onClick={() => setSelectedNodeId(item.targetId)}
-                        title={item.cable.labelAr}
+                        title={item.cable.label}
                         className="px-2 py-0.5 rounded-md bg-emerald-500/15 hover:bg-emerald-500/30 border border-emerald-500/30 text-white font-bold whitespace-nowrap flex items-center gap-1 transition-colors"
                       >
                         <span>{item.targetName}</span>
                         <span className="text-[10px] text-emerald-300 font-normal hidden xl:inline">
-                          ({item.cable.labelAr})
+                          ({item.cable.label})
                         </span>
                       </button>
                     ))}
                   </div>
                 ) : (
-                  <span className="text-slate-500 whitespace-nowrap">محطة رقابية ختامية</span>
+                  <span className="text-slate-500 whitespace-nowrap">Executive Endpoint</span>
                 )}
               </div>
             </div>
 
-            {/* أزرار الإجراء */}
+            {/* Action Buttons */}
             <div className="flex items-center gap-2 shrink-0">
               {selectedNodeId && (
                 <button
@@ -1326,7 +1321,7 @@ export default function QualityEcosystemPortal() {
                   onClick={() => setSelectedNodeId(null)}
                   className="px-2.5 py-1 rounded-lg text-[11px] font-bold text-slate-400 hover:text-white hover:bg-white/10"
                 >
-                  إلغاء التثبيت
+                  Unpin
                 </button>
               )}
               <button
@@ -1334,7 +1329,7 @@ export default function QualityEcosystemPortal() {
                 onClick={() => navigate(activeNodeInfo.node.path)}
                 className="px-3 py-1 rounded-lg bg-gradient-to-r from-[#0066CC] to-[#00A3E0] text-white text-[11px] font-black flex items-center gap-1.5 shadow-md hover:scale-105 transition-all whitespace-nowrap"
               >
-                <span>فتح القسم الآن</span>
+                <span>Launch Module</span>
                 <ExternalLink className="w-3 h-3" />
               </button>
             </div>
@@ -1344,11 +1339,11 @@ export default function QualityEcosystemPortal() {
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse" />
               <span>
-                مرر المؤشر فوق أي كارت لإضاءة خطوط الربط المباشرة وعرض تفاصيل التغذية والمخرجات هنا دون تغطية الشبكة
+                Hover over any module card to illuminate its connected workflows and inspect data inputs/outputs
               </span>
             </div>
             <span className="text-[11px] text-slate-500 hidden sm:inline">
-              اضغط مرتين على أي كارت أو اضغط «فتح القسم» للانتقال المباشر
+              Double-click any card or click "Open" to launch the module
             </span>
           </div>
         )}
