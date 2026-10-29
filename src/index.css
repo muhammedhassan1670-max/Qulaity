@@ -1589,3 +1589,17 @@ canvas { touch-action: pan-y !important; }
     padding-bottom: 2rem;
   }
 }
+
+/* Ecosystem Topology Laser Flow Animation */
+@keyframes laserFlow {
+  from {
+    stroke-dashoffset: 24;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.animate-laser-flow {
+  animation: laserFlow 1s linear infinite;
+}
