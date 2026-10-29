@@ -668,6 +668,8 @@ export interface InspectionData {
   sampleSize?: number;
   defectCount?: number;
   inspectionPoints?: number;
+  defectType?: string;
+  notes?: string;
   metadata?: any;
   createdAt?: string;
   updatedAt?: string;

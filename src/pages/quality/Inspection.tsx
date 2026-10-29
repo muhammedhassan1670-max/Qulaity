@@ -29,6 +29,8 @@ interface Inspection {
   sampleSize: number;
   defectCount: number;
   inspectionPoints: number;
+  defectType?: string;
+  notes?: string;
   [key: string]: unknown;
 }
 
@@ -140,6 +142,8 @@ export function InspectionPage() {
         sampleSize: ins.sampleSize ?? 0,
         defectCount: ins.defectCount ?? 0,
         inspectionPoints: ins.inspectionPoints ?? 0,
+        defectType: ins.defectType || ins.metadata?.defectType || '',
+        notes: ins.notes || ins.metadata?.notes || ins.metadata?.defectDetails || '',
         ...ins,
       }));
       setInspections(transformed);
@@ -200,6 +204,8 @@ export function InspectionPage() {
         sampleSize: (data.sampleSize as number) || 0,
         defectCount: (data.defectCount as number) || 0,
         inspectionPoints: (data.inspectionPoints as number) || 0,
+        defectType: (data.defectType as string) || undefined,
+        notes: (data.notes as string) || (data.defectDetails as string) || undefined,
         metadata: data,
       };
 
@@ -318,9 +324,16 @@ export function InspectionPage() {
                 {/* Product & Batch */}
                 <div>
                   <h4 className="text-white font-bold text-sm leading-tight">{ins.product}</h4>
-                  <p className="text-gray-400 text-xs mt-1">
-                    <span className="text-white/40">Lot / Batch:</span> <span className="font-mono text-gray-300">{ins.batch}</span>
-                  </p>
+                  <div className="flex items-center gap-2 flex-wrap mt-1">
+                    <p className="text-gray-400 text-xs">
+                      <span className="text-white/40">Lot / Batch:</span> <span className="font-mono text-gray-300">{ins.batch}</span>
+                    </p>
+                    {ins.defectType && (
+                      <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[10px] font-bold">
+                        ⚠️ {ins.defectType}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 {/* Metrics Grid */}
@@ -427,11 +440,16 @@ export function InspectionPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-gray-300 text-sm">{ins.sampleSize}</span>
                         {ins.defectCount > 0 && (
-                          <span className="px-1.5 py-0.5 bg-red-500/20 text-red-400 rounded text-xs">
+                          <span className="px-1.5 py-0.5 bg-red-500/20 text-red-400 rounded text-xs font-semibold">
                             {ins.defectCount} defects
+                          </span>
+                        )}
+                        {ins.defectType && (
+                          <span className="px-1.5 py-0.5 bg-amber-500/20 text-amber-300 rounded text-xs font-medium">
+                            {ins.defectType}
                           </span>
                         )}
                       </div>

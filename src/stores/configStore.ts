@@ -3001,9 +3001,9 @@ const defaultInspectionForm: DynamicForm = {
     },
     {
       id: 'inspection_measure',
-      title: 'Measurements',
+      title: 'Measurements & Findings',
       order: 2,
-      fields: ['sampleSize', 'defectCount', 'inspectionPoints', 'inspectedBy']
+      fields: ['sampleSize', 'defectCount', 'defectType', 'inspectionPoints', 'inspectedBy', 'notes']
     }
   ],
   fields: [
@@ -3023,8 +3023,10 @@ const defaultInspectionForm: DynamicForm = {
     ], visible: true, editable: true, order: 5 },
     { id: 'sampleSize', name: 'sampleSize', label: 'Sample Size', type: 'number', visible: true, editable: true, order: 6 },
     { id: 'defectCount', name: 'defectCount', label: 'Defect Count', type: 'number', visible: true, editable: true, order: 7 },
-    { id: 'inspectionPoints', name: 'inspectionPoints', label: 'Inspection Points', type: 'number', visible: true, editable: true, order: 8 },
-    { id: 'inspectedBy', name: 'inspectedBy', label: 'Inspected By', type: 'text', visible: true, editable: true, order: 9 },
+    { id: 'defectType', name: 'defectType', label: 'Defect Type / نوع العيب', type: 'text', visible: true, editable: true, order: 8 },
+    { id: 'inspectionPoints', name: 'inspectionPoints', label: 'Inspection Points', type: 'number', visible: true, editable: true, order: 9 },
+    { id: 'inspectedBy', name: 'inspectedBy', label: 'Inspected By', type: 'text', visible: true, editable: true, order: 10 },
+    { id: 'notes', name: 'notes', label: 'Notes / Defect Details', type: 'textarea', visible: true, editable: true, order: 11 },
   ],
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
@@ -3710,8 +3712,32 @@ export const useConfigStore = create<ConfigState>()(
               state.forms = defaults;
             } else {
               defaults.forEach((defForm) => {
-                if (!state.forms.some((f: DynamicForm) => f.type === defForm.type)) {
+                const existing = state.forms.find((f: DynamicForm) => f.type === defForm.type);
+                if (!existing) {
                   state.forms.push(defForm);
+                } else if (defForm.type === 'inspection') {
+                  if (!existing.fields.some((f: any) => f.name === 'defectType')) {
+                    existing.fields.push({
+                      id: 'defectType',
+                      name: 'defectType',
+                      label: 'Defect Type / نوع العيب',
+                      type: 'text',
+                      visible: true,
+                      editable: true,
+                      order: 8
+                    });
+                  }
+                  if (!existing.fields.some((f: any) => f.name === 'notes')) {
+                    existing.fields.push({
+                      id: 'notes',
+                      name: 'notes',
+                      label: 'Notes / Defect Details',
+                      type: 'textarea',
+                      visible: true,
+                      editable: true,
+                      order: 11
+                    });
+                  }
                 }
               });
             }
