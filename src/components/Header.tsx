@@ -80,7 +80,7 @@ export function Header({ onMenuToggle, user }: HeaderProps) {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 h-[62px] sm:h-[70px] bg-white/80 dark:bg-[#080b11]/80 dark:glass-ultra z-[100] border-b border-slate-200 dark:border-white/10 backdrop-blur-md transition-all">
+    <header className="fixed top-0 left-0 right-0 h-[62px] sm:h-[70px] bg-white/80 dark:bg-[#080b11]/80 dark:glass-ultra z-40 border-b border-slate-200 dark:border-white/10 backdrop-blur-md transition-all">
       <div className="h-full flex items-center justify-between px-3 sm:px-4">
         {/* Left Section */}
         <div className="flex items-center gap-1.5 sm:gap-4">

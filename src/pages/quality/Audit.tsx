@@ -20,6 +20,7 @@ import {
   Edit3,
   Eye,
   Filter,
+  ShieldCheck,
   ShieldAlert
 } from 'lucide-react';
 import { RelatedRecords } from '../../components/RelatedRecords';
@@ -483,26 +484,35 @@ export function AuditPage() {
 
       {/* Form Modal */}
       {isFormOpen && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-2 sm:p-4 bg-black/75 backdrop-blur-sm">
-          <div className="glass-panel w-full max-w-4xl max-h-[92vh] sm:max-h-[90vh] overflow-y-auto rounded-2xl">
-            <div className="sticky top-0 z-10 flex items-center justify-between p-4 sm:p-6 border-b border-white/10 bg-[#0a0a0f]">
-              <div>
-                <h2 className="text-lg sm:text-xl font-semibold text-white">
-                  {editingAudit ? 'Edit Audit' : 'Schedule New Audit'}
-                </h2>
-                <p className="text-xs sm:text-sm text-gray-400 mt-1">
-                  {editingAudit ? 'Edit audit information' : 'Schedule a new quality audit'}
-                </p>
+        <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-4 md:p-6 bg-black/80 backdrop-blur-md animate-fadeIn">
+          <div className="glass-panel w-full max-w-4xl max-h-[90vh] flex flex-col rounded-t-[32px] sm:rounded-3xl border border-white/15 bg-slate-950/95 shadow-2xl overflow-hidden animate-slideUp sm:animate-none">
+            <div className="w-12 h-1.5 bg-white/25 rounded-full mx-auto my-2.5 sm:hidden shrink-0" />
+            
+            <div className="shrink-0 flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b border-white/10 bg-slate-900/90 backdrop-blur-xl">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-500 to-teal-400 flex items-center justify-center text-white shadow-lg shadow-sky-500/25 shrink-0">
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <h2 className="text-base sm:text-lg font-black text-white tracking-tight truncate">
+                    {editingAudit ? 'تعديل بيانات التدقيق (Edit Audit)' : 'جدولة تدقيق جودة جديد (Schedule Audit)'}
+                  </h2>
+                  <p className="text-xs text-gray-400 font-medium truncate">
+                    {editingAudit ? 'تحديث نتائج وخطة التدقيق الداخلي أو الخارجي' : 'تحديد نطاق التدقيق، الفريق المراجع والجدول الزمني'}
+                  </p>
+                </div>
               </div>
               <button 
+                type="button"
                 onClick={() => setIsFormOpen(false)}
-                className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                aria-label="Close"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-gray-300 hover:text-white flex items-center justify-center transition-all duration-200 active:scale-95 shrink-0 ml-3 shadow-sm"
               >
-                <X className="w-5 h-5 text-gray-400" />
+                <X className="w-5 h-5" />
               </button>
             </div>
             
-            <div className="p-3 sm:p-6">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 pb-safe">
               <DynamicFormRenderer
                 formType="audit"
                 initialValues={getInitialValues()}
