@@ -37,6 +37,7 @@ import {
 
 interface BlueprintNode {
   id: string;
+  code: string;
   nameAr: string;
   nameEn: string;
   path: string;
@@ -50,6 +51,9 @@ interface BlueprintNode {
   metricLabel: string;
   metricValue: string;
   metricPositive: boolean;
+  telemetryType: 'waveform' | 'spc_chart' | 'bars' | 'pulse' | 'progress' | 'neural';
+  healthPercent: number;
+  status: 'ONLINE' | 'ACTIVE' | 'AUDITED' | 'SYNCED' | 'ALERT' | 'STABLE';
 }
 
 interface PhaseZone {
@@ -79,10 +83,10 @@ interface CableRelation {
 // 1. ARCHITECTURE DEFINITIONS: 6 PHASES & 24 INDUSTRIAL NODES
 // =========================================================================
 
-const NODE_WIDTH = 260;
-const NODE_HEIGHT = 125;
-const CANVAS_WIDTH = 2620;
-const CANVAS_HEIGHT = 960;
+const NODE_WIDTH = 290;
+const NODE_HEIGHT = 162;
+const CANVAS_WIDTH = 2760;
+const CANVAS_HEIGHT = 1040;
 
 const PHASES: PhaseZone[] = [
   {
@@ -91,11 +95,11 @@ const PHASES: PhaseZone[] = [
     titleAr: 'سلاسل الإمداد والخامات',
     titleEn: 'Supply Chain & Inbound',
     color: '#10B981',
-    glowColor: 'rgba(16,185,129,0.25)',
+    glowColor: 'rgba(16,185,129,0.3)',
     borderColor: 'border-emerald-500/30',
-    bgGradient: 'from-emerald-950/20 to-transparent',
+    bgGradient: 'from-emerald-950/25 to-transparent',
     x: 60,
-    width: 320,
+    width: 340,
     icon: Truck,
   },
   {
@@ -104,11 +108,11 @@ const PHASES: PhaseZone[] = [
     titleAr: 'خطوط الإنتاج والتصنيع',
     titleEn: 'Shopfloor Execution',
     color: '#00A3E0',
-    glowColor: 'rgba(0,163,224,0.25)',
+    glowColor: 'rgba(0,163,224,0.3)',
     borderColor: 'border-sky-500/30',
-    bgGradient: 'from-sky-950/20 to-transparent',
-    x: 480,
-    width: 320,
+    bgGradient: 'from-sky-950/25 to-transparent',
+    x: 500,
+    width: 340,
     icon: Factory,
   },
   {
@@ -117,11 +121,11 @@ const PHASES: PhaseZone[] = [
     titleAr: 'الحجز وعدم المطابقة',
     titleEn: 'Containment & NCR',
     color: '#EF4444',
-    glowColor: 'rgba(239,68,68,0.25)',
+    glowColor: 'rgba(239,68,68,0.3)',
     borderColor: 'border-red-500/30',
-    bgGradient: 'from-red-950/20 to-transparent',
-    x: 900,
-    width: 320,
+    bgGradient: 'from-red-950/25 to-transparent',
+    x: 940,
+    width: 340,
     icon: AlertTriangle,
   },
   {
@@ -130,11 +134,11 @@ const PHASES: PhaseZone[] = [
     titleAr: 'الحل الجذري والتحسين',
     titleEn: '8D & Corrective Action',
     color: '#8B5CF6',
-    glowColor: 'rgba(139,92,246,0.25)',
+    glowColor: 'rgba(139,92,246,0.3)',
     borderColor: 'border-purple-500/30',
-    bgGradient: 'from-purple-950/20 to-transparent',
-    x: 1320,
-    width: 320,
+    bgGradient: 'from-purple-950/25 to-transparent',
+    x: 1380,
+    width: 340,
     icon: Workflow,
   },
   {
@@ -143,11 +147,11 @@ const PHASES: PhaseZone[] = [
     titleAr: 'الوقاية والهندسة',
     titleEn: 'Engineering & Prevention',
     color: '#F59E0B',
-    glowColor: 'rgba(245,158,11,0.25)',
+    glowColor: 'rgba(245,158,11,0.3)',
     borderColor: 'border-amber-500/30',
-    bgGradient: 'from-amber-950/20 to-transparent',
-    x: 1740,
-    width: 320,
+    bgGradient: 'from-amber-950/25 to-transparent',
+    x: 1820,
+    width: 340,
     icon: ShieldCheck,
   },
   {
@@ -156,11 +160,11 @@ const PHASES: PhaseZone[] = [
     titleAr: 'الرقابة الذكية و SPC',
     titleEn: 'Control Tower & AI',
     color: '#06B6D4',
-    glowColor: 'rgba(6,182,212,0.25)',
+    glowColor: 'rgba(6,182,212,0.3)',
     borderColor: 'border-cyan-500/30',
-    bgGradient: 'from-cyan-950/20 to-transparent',
-    x: 2160,
-    width: 320,
+    bgGradient: 'from-cyan-950/25 to-transparent',
+    x: 2260,
+    width: 340,
     icon: Cpu,
   },
 ];
@@ -169,397 +173,493 @@ const NODES: BlueprintNode[] = [
   // Phase 1: Supply Chain
   {
     id: 'iqc',
+    code: 'MOD-01 // IQC-IN',
     nameAr: 'فحص الوارد (IQC)',
-    nameEn: 'Incoming Inspection',
+    nameEn: 'Incoming Quality Control',
     path: '/inspection',
     icon: Truck,
-    badge: 'فحص خامات',
+    badge: 'AQL 0.65',
     badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
-    descriptionAr: 'فحص مطابقة الشحنات والخامات الموردة مع خطط القبول ومعايير AQL',
+    descriptionAr: 'فحص مطابقة الشحنات والخامات الموردة مع خطط القبول وسحب العينات القياسية',
     phaseId: 'supply_chain',
-    x: 90,
-    y: 130,
-    metricLabel: 'نسبة القبول',
+    x: 85,
+    y: 110,
+    metricLabel: 'نسبة القبول الفوري',
     metricValue: '99.4%',
     metricPositive: true,
+    telemetryType: 'waveform',
+    healthPercent: 99,
+    status: 'ONLINE',
   },
   {
     id: 'suppliers',
+    code: 'MOD-02 // VENDOR',
     nameAr: 'سجل وتقييم الموردين',
-    nameEn: 'Supplier Scorecard',
+    nameEn: 'Vendor Quality Rating',
     path: '/supplier-quality',
     icon: Building,
-    badge: 'تقييم أداء',
+    badge: 'GRADE A',
     badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
-    descriptionAr: 'تحديث تقييم جودة الموردين آلياً وحساب معدلات الرفض والحيود',
+    descriptionAr: 'تحديث تقييم جودة الموردين آلياً وربط نقاط الأداء بقرارات التوريد القادمة',
     phaseId: 'supply_chain',
-    x: 90,
-    y: 330,
-    metricLabel: 'مورد معتمد',
+    x: 85,
+    y: 320,
+    metricLabel: 'الموردون المؤهلون',
     metricValue: '48 مورد',
     metricPositive: true,
+    telemetryType: 'bars',
+    healthPercent: 95,
+    status: 'ACTIVE',
   },
   {
     id: 'calibration',
+    code: 'MOD-03 // GAUGE',
     nameAr: 'معايرة أجهزة القياس',
-    nameEn: 'Metrology & Calibration',
+    nameEn: 'Metrology & Gauge R&R',
     path: '/calibration',
     icon: Wrench,
-    badge: 'دقة القياس',
+    badge: 'CALIBRATED',
     badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
-    descriptionAr: 'شهادات وصلاحية أدوات القياس لضمان دقة قرارات التفتيش والرفض',
+    descriptionAr: 'شهادات وصلاحية أدوات القياس لضمان دقة القياس وعدم رفض أجزاء سليمة',
     phaseId: 'supply_chain',
-    x: 90,
+    x: 85,
     y: 530,
     metricLabel: 'جاهزية الأجهزة',
     metricValue: '100%',
     metricPositive: true,
+    telemetryType: 'progress',
+    healthPercent: 100,
+    status: 'STABLE',
   },
   {
     id: 'inbound_audit',
+    code: 'MOD-04 // AUD-V',
     nameAr: 'تدقيق جودة الموردين',
-    nameEn: 'Supplier Audits',
+    nameEn: 'Supplier Process Audits',
     path: '/audits',
     icon: ShieldCheck,
-    badge: 'تأهيل المورد',
+    badge: 'VDA 6.3',
     badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
-    descriptionAr: 'مراجعات ميدانية لمنشآت الموردين واعتماد خطوط إنتاجهم',
+    descriptionAr: 'مراجعات ميدانية لمنشآت الموردين واعتماد خطوط إنتاجهم والتدقيق الدوري',
     phaseId: 'supply_chain',
-    x: 90,
-    y: 730,
-    metricLabel: 'مراجعات مجدولة',
-    metricValue: '4 زيارات',
+    x: 85,
+    y: 740,
+    metricLabel: 'المطابقة الميدانية',
+    metricValue: '96.8%',
     metricPositive: true,
+    telemetryType: 'spc_chart',
+    healthPercent: 97,
+    status: 'AUDITED',
   },
 
   // Phase 2: Shopfloor
   {
     id: 'daily_defects',
+    code: 'MOD-05 // DEF-LOG',
     nameAr: 'تسجيل العيوب اللحظي',
-    nameEn: 'Defect Capture',
+    nameEn: 'Real-time Defect Logger',
     path: '/shopfloor/defects',
     icon: Activity,
-    badge: 'صالة الإنتاج',
+    badge: 'LIVE FLOW',
     badgeColor: 'bg-sky-500/20 text-sky-300 border-sky-500/30',
-    descriptionAr: 'تسجيل العيوب الفوري من المشغلين مع التصوير وربط الماكينة والوردية',
+    descriptionAr: 'تسجيل العيوب الفوري من المشغلين مع التصوير وربط الماكينة والوردية والباركود',
     phaseId: 'shopfloor',
-    x: 510,
-    y: 130,
-    metricLabel: 'معدل اليوم',
+    x: 525,
+    y: 110,
+    metricLabel: 'معدل العيوب اليومي',
     metricValue: '0.18%',
     metricPositive: true,
+    telemetryType: 'pulse',
+    healthPercent: 98,
+    status: 'ONLINE',
   },
   {
     id: 'inspection_plans',
+    code: 'MOD-06 // IPQC-EX',
     nameAr: 'خطط الفحص المرحلي (IPQC)',
-    nameEn: 'In-Process Inspection',
+    nameEn: 'In-Process Quality Gates',
     path: '/inspection-plans',
     icon: CheckCircle2,
-    badge: 'فحص دوري',
+    badge: 'FIRST PIECE',
     badgeColor: 'bg-sky-500/20 text-sky-300 border-sky-500/30',
-    descriptionAr: 'قوائم فحص الجودة أثناء التشغيل والتحقق من العينات الأولى First Piece',
+    descriptionAr: 'قوائم فحص الجودة أثناء التشغيل والتحقق الإلزامي من العينات الأولى والنهائية',
     phaseId: 'shopfloor',
-    x: 510,
-    y: 330,
-    metricLabel: 'مطابقة العينات',
+    x: 525,
+    y: 320,
+    metricLabel: 'تأكيد العينات الأولى',
     metricValue: '99.8%',
     metricPositive: true,
+    telemetryType: 'waveform',
+    healthPercent: 99,
+    status: 'ACTIVE',
   },
   {
     id: 'lpa',
+    code: 'MOD-07 // LPA-AUD',
     nameAr: 'التدقيق الطبقي (LPA)',
     nameEn: 'Layered Process Audits',
     path: '/audits/layered',
     icon: Layers,
-    badge: 'رقابة قيادية',
+    badge: 'SHIFT CHECK',
     badgeColor: 'bg-sky-500/20 text-sky-300 border-sky-500/30',
-    descriptionAr: 'تأكيد التزام المشغلين والمشرفين بالمعايير القياسية لمنع الحيود',
+    descriptionAr: 'تأكيد التزام المشغلين والمشرفين بالمعايير القياسية لمنع حيود العمليات',
     phaseId: 'shopfloor',
-    x: 510,
+    x: 525,
     y: 530,
-    metricLabel: 'التزام الإجراءات',
+    metricLabel: 'الالتزام بالإجراءات',
     metricValue: '98.5%',
     metricPositive: true,
+    telemetryType: 'bars',
+    healthPercent: 98,
+    status: 'STABLE',
   },
   {
     id: 'setup_readiness',
+    code: 'MOD-08 // POKA-YOKE',
     nameAr: 'جاهزية الماكينات والبدء',
     nameEn: 'Line Setup Readiness',
     path: '/setup-readiness',
     icon: Sliders,
-    badge: 'تصريح بدء',
+    badge: 'GO / NO-GO',
     badgeColor: 'bg-sky-500/20 text-sky-300 border-sky-500/30',
-    descriptionAr: 'اعتماد مطابقة المعايير الفنية وتصريح بدء الإنتاج لتفادي الهدر',
+    descriptionAr: 'اعتماد مطابقة المعايير الفنية وتصريح بدء الإنتاج لتفادي الهدر الأولي',
     phaseId: 'shopfloor',
-    x: 510,
-    y: 730,
-    metricLabel: 'خطوط جاهزة',
+    x: 525,
+    y: 740,
+    metricLabel: 'الخطوط الجاهزة',
     metricValue: '6 خطوط',
     metricPositive: true,
+    telemetryType: 'progress',
+    healthPercent: 100,
+    status: 'ONLINE',
   },
 
   // Phase 3: Containment & NCR
   {
     id: 'ncr',
+    code: 'MOD-09 // NCR-CORE',
     nameAr: 'تقارير عدم المطابقة (NCR)',
     nameEn: 'Non-Conformance Reports',
     path: '/quality/records/ncr',
     icon: AlertTriangle,
-    badge: 'حجز المنتجات',
+    badge: 'QUARANTINE',
     badgeColor: 'bg-red-500/20 text-red-300 border-red-500/30',
-    descriptionAr: 'إصدار أوامر الحجز والفرز وتوثيق العيب وربطه برقم التشغيلة والخط',
+    descriptionAr: 'إصدار أوامر الحجز والفرز وتوثيق العيب وربطه برقم التشغيلة ومسار التصعيد',
     phaseId: 'nonconformance',
-    x: 930,
-    y: 130,
-    metricLabel: 'حالات مفتوحة',
+    x: 965,
+    y: 110,
+    metricLabel: 'حالات معلقة تحت الفرز',
     metricValue: '2 نشطة',
     metricPositive: false,
+    telemetryType: 'pulse',
+    healthPercent: 88,
+    status: 'ALERT',
   },
   {
     id: 'deviation',
+    code: 'MOD-10 // DEV-AUTH',
     nameAr: 'تصاريح الحيود المؤقت',
-    nameEn: 'Process Deviations',
+    nameEn: 'Engineering Deviations',
     path: '/deviation',
     icon: FileWarning,
-    badge: 'حيود مشروط',
+    badge: 'CONDITIONAL',
     badgeColor: 'bg-red-500/20 text-red-300 border-red-500/30',
-    descriptionAr: 'تصاريح قبول الخامات أو التشغيل المشروط لحالات الطوارئ المعتمدة',
+    descriptionAr: 'تصاريح قبول الخامات أو التشغيل المشروط لحالات الطوارئ المعتمدة بصلاحيات',
     phaseId: 'nonconformance',
-    x: 930,
-    y: 330,
-    metricLabel: 'ساري المفعول',
+    x: 965,
+    y: 320,
+    metricLabel: 'تصاريح فعالة حالياً',
     metricValue: '1 تصريح',
     metricPositive: true,
+    telemetryType: 'progress',
+    healthPercent: 92,
+    status: 'ACTIVE',
   },
   {
     id: 'complaints',
+    code: 'MOD-11 // VOC-FEED',
     nameAr: 'شكاوى ومردودات العملاء',
-    nameEn: 'Customer Complaints',
+    nameEn: 'Customer Voice & RMA',
     path: '/complaints',
     icon: Building,
-    badge: 'صوت العميل',
+    badge: 'ZERO LEAK',
     badgeColor: 'bg-red-500/20 text-red-300 border-red-500/30',
-    descriptionAr: 'تتبع شكاوى العملاء وتحليل أسبابها مع ربط فوري بـ NCR و CAPA',
+    descriptionAr: 'تتبع شكاوى ومردودات الجودة وتحليل أسبابها وربطها فورياً بـ NCR و CAPA',
     phaseId: 'nonconformance',
-    x: 930,
+    x: 965,
     y: 530,
-    metricLabel: 'معدل الرضا',
+    metricLabel: 'معدل رضا العميل',
     metricValue: '99.1%',
     metricPositive: true,
+    telemetryType: 'waveform',
+    healthPercent: 99,
+    status: 'ONLINE',
   },
   {
     id: 'defect_cost',
+    code: 'MOD-12 // COPQ-FIN',
     nameAr: 'تكلفة رداءة الجودة (COPQ)',
     nameEn: 'Cost of Poor Quality',
     path: '/defect-cost',
     icon: DollarSign,
-    badge: 'حساب الخردة',
+    badge: 'ROI GUARD',
     badgeColor: 'bg-red-500/20 text-red-300 border-red-500/30',
-    descriptionAr: 'حساب مالي لخسائر العيوب وتكلفة الفرز وإعادة التشغيل والمردودات',
+    descriptionAr: 'حساب مالي لخسائر العيوب وتكلفة الفرز وإعادة التشغيل وهدر المواد والمردودات',
     phaseId: 'nonconformance',
-    x: 930,
-    y: 730,
-    metricLabel: 'توفير محقق',
+    x: 965,
+    y: 740,
+    metricLabel: 'توفير تكلفة الخردة',
     metricValue: '-\$12.4k',
     metricPositive: true,
+    telemetryType: 'bars',
+    healthPercent: 94,
+    status: 'STABLE',
   },
 
   // Phase 4: 8D & Improvement
   {
     id: 'capa_records',
+    code: 'MOD-13 // CAPA-ACT',
     nameAr: 'خطط التحسين (CAPA)',
-    nameEn: 'Corrective Actions',
+    nameEn: 'Corrective & Preventive Action',
     path: '/quality/records/capa',
     icon: CheckCheck,
-    badge: 'حلول وقائية',
+    badge: 'ISO 9001 §10',
     badgeColor: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
-    descriptionAr: 'خطط تصحيحية ووقائية محكمة لمنع تكرار المشكلات عبر فرق العمل',
+    descriptionAr: 'خطط تصحيحية ووقائية محكمة لمنع تكرار المشكلات عبر فرق العمل متقاطعة الوظائف',
     phaseId: 'root_cause',
-    x: 1350,
-    y: 130,
-    metricLabel: 'فاعلية الإغلاق',
+    x: 1405,
+    y: 110,
+    metricLabel: 'فاعلية إغلاق الخطط',
     metricValue: '96.2%',
     metricPositive: true,
+    telemetryType: 'bars',
+    healthPercent: 96,
+    status: 'ONLINE',
   },
   {
     id: 'eight_d',
+    code: 'MOD-14 // 8D-ROOT',
     nameAr: 'منهجية حل المشكلات (8D)',
-    nameEn: '8D Root Cause Engine',
+    nameEn: '8D Root Cause Problem Solving',
     path: '/quality/records/8d',
     icon: RefreshCw,
-    badge: 'تحليل جذري',
+    badge: 'ISHIKAWA 5W',
     badgeColor: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
-    descriptionAr: 'التحقيق المنهجي الشامل للسبب الجذري باستخدام عظمة السمكة و 5Why',
+    descriptionAr: 'التحقيق المنهجي الشامل للسبب الجذري باستخدام عظمة السمكة و 5Why وتأكيد الحل',
     phaseId: 'root_cause',
-    x: 1350,
-    y: 330,
-    metricLabel: 'تقارير مكتملة',
+    x: 1405,
+    y: 320,
+    metricLabel: 'تقارير مكتملة ومغلقة',
     metricValue: '18 ملف',
     metricPositive: true,
+    telemetryType: 'spc_chart',
+    healthPercent: 98,
+    status: 'STABLE',
   },
   {
     id: 'change_control',
+    code: 'MOD-15 // ECN-GOV',
     nameAr: 'إدارة التغيير الهندسي',
-    nameEn: 'Engineering Change (ECN)',
+    nameEn: 'Engineering Change Notice',
     path: '/change-control',
     icon: Sliders,
-    badge: 'ضبط التغيير',
+    badge: '4M CONTROL',
     badgeColor: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
-    descriptionAr: 'حوكمة وتوثيق أي تعديل على القوالب أو الماكينات أو المواد الخام',
+    descriptionAr: 'حوكمة وتوثيق أي تعديل على القوالب أو الماكينات أو المواد الخام لضمان عدم حدوث حيود',
     phaseId: 'root_cause',
-    x: 1350,
+    x: 1405,
     y: 530,
-    metricLabel: 'تغييرات معتمدة',
+    metricLabel: 'تغييرات هندسية معتمدة',
     metricValue: '5 ECN',
     metricPositive: true,
+    telemetryType: 'progress',
+    healthPercent: 100,
+    status: 'ACTIVE',
   },
   {
     id: 'command_center',
+    code: 'MOD-16 // WAR-ROOM',
     nameAr: 'غرفة متابعة الإجراءات',
     nameEn: 'Action Command Center',
     path: '/quality-command-center',
     icon: Workflow,
-    badge: 'سرعة الإغلاق',
+    badge: 'LIVE SLA',
     badgeColor: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
-    descriptionAr: 'برج مراقبة فوري لمتابعة المهام المعلقة ومعدلات الإنجاز بين الأقسام',
+    descriptionAr: 'برج مراقبة فوري لمتابعة المهام المعلقة ومعدلات الإنجاز ومحاسبة المسئولين',
     phaseId: 'root_cause',
-    x: 1350,
-    y: 730,
-    metricLabel: 'معدل الالتزام',
+    x: 1405,
+    y: 740,
+    metricLabel: 'معدل الالتزام الزمني',
     metricValue: '98%',
     metricPositive: true,
+    telemetryType: 'bars',
+    healthPercent: 98,
+    status: 'ONLINE',
   },
 
   // Phase 5: Prevention & Engineering
   {
     id: 'fmea',
+    code: 'MOD-17 // PFMEA-AI',
     nameAr: 'تحليل المخاطر (FMEA)',
-    nameEn: 'Risk Matrix (FMEA)',
+    nameEn: 'Failure Mode & Effects Analysis',
     path: '/fmea',
     icon: ShieldCheck,
-    badge: 'أولوية الخطر',
+    badge: 'AIAG-VDA',
     badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
-    descriptionAr: 'تقييم درجات الشدة والتكرار والكشف RPN لمنع الفشل قبل وقوعه',
+    descriptionAr: 'تقييم درجات الشدة والتكرار والكشف RPN/AP لمنع الفشل المحتمل قبل وقوعه',
     phaseId: 'engineering',
-    x: 1770,
-    y: 130,
-    metricLabel: 'أقصى RPN',
+    x: 1845,
+    y: 110,
+    metricLabel: 'أقصى مؤشر خطر RPN',
     metricValue: '72 (آمن)',
     metricPositive: true,
+    telemetryType: 'spc_chart',
+    healthPercent: 95,
+    status: 'STABLE',
   },
   {
     id: 'control_plan',
+    code: 'MOD-18 // CP-GATE',
     nameAr: 'خطة المراقبة والضبط (CP)',
-    nameEn: 'Dynamic Control Plan',
+    nameEn: 'Dynamic Quality Control Plan',
     path: '/control-plan',
     icon: Sliders,
-    badge: 'معايير العمليات',
+    badge: 'CRITICAL CTS',
     badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
-    descriptionAr: 'توثيق مواصفات الفحص وطرق القياس والحدود الحرجة لكل مرحلة',
+    descriptionAr: 'توثيق مواصفات الفحص وطرق القياس والحدود الحرجة وردود الأفعال المعتمدة',
     phaseId: 'engineering',
-    x: 1770,
-    y: 330,
+    x: 1845,
+    y: 320,
     metricLabel: 'نقاط ضبط مفعلة',
     metricValue: '124 نقطة',
     metricPositive: true,
+    telemetryType: 'waveform',
+    healthPercent: 100,
+    status: 'ONLINE',
   },
   {
     id: 'knowledge_base',
+    code: 'MOD-19 // LL-BRAIN',
     nameAr: 'بنك المعرفة والدروس',
-    nameEn: 'Lessons Learned Hub',
+    nameEn: 'Lessons Learned Repository',
     path: '/quality/library',
     icon: BookOpen,
-    badge: 'الذاكرة المؤسسية',
+    badge: 'KNOWLEDGE',
     badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
-    descriptionAr: 'مستودع الخبرات التراكمية وسوابق الحلول لتفادي إعادة ابتكار العجلة',
+    descriptionAr: 'مستودع الخبرات التراكمية وسوابق الحلول لتفادي تكرار الأخطاء السابقة في المصنع',
     phaseId: 'engineering',
-    x: 1770,
+    x: 1845,
     y: 530,
-    metricLabel: 'حل موثق',
+    metricLabel: 'حلول وممارسات موثقة',
     metricValue: '340 درس',
     metricPositive: true,
+    telemetryType: 'neural',
+    healthPercent: 97,
+    status: 'SYNCED',
   },
   {
     id: 'form_designer',
+    code: 'MOD-20 // NO-CODE',
     nameAr: 'مصمم النماذج الذكية',
     nameEn: 'Dynamic Form Studio',
     path: '/forms/designer',
     icon: Layers,
-    badge: 'أتمتة الفحص',
+    badge: 'DRAG & DROP',
     badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
-    descriptionAr: 'بناء وتخصيص استمارات الجودة الميدانية بدون برمجة وربطها بالمحطات',
+    descriptionAr: 'بناء وتخصيص استمارات الجودة الميدانية بدون برمجة وربطها بالمحطات والماكينات',
     phaseId: 'engineering',
-    x: 1770,
-    y: 730,
-    metricLabel: 'نموذج رقمي',
+    x: 1845,
+    y: 740,
+    metricLabel: 'نماذج رقمية مفعلة',
     metricValue: '32 نموذج',
     metricPositive: true,
+    telemetryType: 'progress',
+    healthPercent: 96,
+    status: 'ONLINE',
   },
 
   // Phase 6: SPC, Tower & AI
   {
     id: 'spc',
+    code: 'MOD-21 // SPC-CPK',
     nameAr: 'الضبط الإحصائي (SPC)',
     nameEn: 'Statistical Process Control',
     path: '/spc',
     icon: TrendingUp,
-    badge: 'مؤشرات القدرة',
+    badge: 'SIX SIGMA',
     badgeColor: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30',
-    descriptionAr: 'خرائط التحكم X-Bar R وحساب Cp/Cpk للكشف المبكر عن انحراف الماكينات',
+    descriptionAr: 'خرائط التحكم X-Bar R وحساب مؤشرات القدرة Cp/Cpk للكشف المبكر عن الحيود',
     phaseId: 'intelligence',
-    x: 2190,
-    y: 130,
-    metricLabel: 'مؤشر Cpk',
-    metricValue: '1.67 (عالي)',
+    x: 2285,
+    y: 110,
+    metricLabel: 'مؤشر استقرار العملية Cpk',
+    metricValue: '1.67 (ممتاز)',
     metricPositive: true,
+    telemetryType: 'spc_chart',
+    healthPercent: 99,
+    status: 'ONLINE',
   },
   {
     id: 'control_tower',
+    code: 'MOD-22 // TOWER-360',
     nameAr: 'برج المراقبة والتحكم 360°',
-    nameEn: 'Executive Control Tower',
+    nameEn: 'Executive Quality Control Tower',
     path: '/quality/control-tower',
     icon: BarChart3,
-    badge: 'غرفة العمليات',
+    badge: 'EXECUTIVE',
     badgeColor: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30',
-    descriptionAr: 'رؤية مركزية موحدة لكافة مؤشرات الجودة ومقارنة الخطوط ومستويات الهدر',
+    descriptionAr: 'رؤية مركزية موحدة لكافة مؤشرات الجودة ومقارنة الخطوط وحجم الهدر المالي',
     phaseId: 'intelligence',
-    x: 2190,
-    y: 330,
-    metricLabel: 'صحة المنظومة',
+    x: 2285,
+    y: 320,
+    metricLabel: 'مؤشر الصحة الكلي',
     metricValue: '98.8%',
     metricPositive: true,
+    telemetryType: 'bars',
+    healthPercent: 99,
+    status: 'ACTIVE',
   },
   {
     id: 'ai_copilot',
+    code: 'MOD-23 // NEURAL-AI',
     nameAr: 'مساعد الجودة الذكي (AI)',
-    nameEn: 'QMS Neural Copilot',
+    nameEn: 'Industrial Neural Copilot',
     path: '/ai-intelligence',
     icon: Sparkles,
-    badge: 'ذكاء توليدي',
+    badge: 'LLM AGENT',
     badgeColor: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30',
-    descriptionAr: 'تحليل أنماط العيوب واقتراح الأسباب الجذرية وصياغة مسودات 8D آلياً',
+    descriptionAr: 'تحليل أنماط العيوب المعقدة واقتراح الأسباب الجذرية وصياغة مسودات 8D آلياً',
     phaseId: 'intelligence',
-    x: 2190,
+    x: 2285,
     y: 530,
-    metricLabel: 'تنبؤ استباقي',
+    metricLabel: 'دقة التنبؤ المسبق',
     metricValue: '99.9%',
     metricPositive: true,
+    telemetryType: 'neural',
+    healthPercent: 100,
+    status: 'SYNCED',
   },
   {
     id: 'audits',
+    code: 'MOD-24 // ISO-AUD',
     nameAr: 'التدقيق والمراجعات الشاملة',
-    nameEn: 'Quality Audits Hub',
+    nameEn: 'Comprehensive Audit System',
     path: '/audits',
     icon: ShieldCheck,
-    badge: 'شهادات الآيزو',
+    badge: 'IATF 16949',
     badgeColor: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30',
-    descriptionAr: 'جدولة ومتابعة تدقيقات النظم والعمليات وتوثيق حالات عدم المطابقة',
+    descriptionAr: 'جدولة ومتابعة تدقيقات النظم والمنتجات وتوثيق الملاحظات وإغلاق المعالجات',
     phaseId: 'intelligence',
-    x: 2190,
-    y: 730,
-    metricLabel: 'جاهزية الآيزو',
+    x: 2285,
+    y: 740,
+    metricLabel: 'جاهزية التدقيق الخارجي',
     metricValue: '100%',
     metricPositive: true,
+    telemetryType: 'progress',
+    healthPercent: 100,
+    status: 'AUDITED',
   },
 ];
 
@@ -601,12 +701,134 @@ const CABLES: CableRelation[] = [
   { id: 'c20', source: 'control_tower', target: 'command_center', labelAr: 'إدارة مؤشرات الأداء الحية', category: 'intelligence', color: '#00A3E0' },
 ];
 
+// =========================================================================
+// 3. DYNAMIC TELEMETRY VISUALS (REAL INDUSTRIAL MINI WAVES & CHARTS)
+// =========================================================================
+
+function CardTelemetryVisual({
+  type,
+  color,
+}: {
+  type: BlueprintNode['telemetryType'];
+  color: string;
+}) {
+  switch (type) {
+    case 'spc_chart':
+      return (
+        <svg className="w-24 h-7 shrink-0" viewBox="0 0 100 28" fill="none">
+          {/* Upper Spec Limit USL */}
+          <line x1="0" y1="5" x2="100" y2="5" stroke="#EF4444" strokeWidth="0.8" strokeDasharray="2,2" opacity="0.6" />
+          {/* Target Nominal */}
+          <line x1="0" y1="14" x2="100" y2="14" stroke="#F59E0B" strokeWidth="0.6" strokeDasharray="3,3" opacity="0.4" />
+          {/* Lower Spec Limit LSL */}
+          <line x1="0" y1="23" x2="100" y2="23" stroke="#EF4444" strokeWidth="0.8" strokeDasharray="2,2" opacity="0.6" />
+          {/* Zigzag Process Curve */}
+          <polyline
+            points="5,16 18,11 32,17 48,10 65,15 80,8 95,14"
+            fill="none"
+            stroke={color}
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          {/* Process point dots */}
+          <circle cx="48" cy="10" r="2" fill={color} />
+          <circle cx="80" cy="8" r="2" fill={color} />
+        </svg>
+      );
+
+    case 'pulse':
+      return (
+        <svg className="w-24 h-7 shrink-0" viewBox="0 0 100 28" fill="none">
+          <path
+            d="M 0,14 L 30,14 L 38,4 L 46,24 L 54,9 L 62,17 L 70,14 L 100,14"
+            fill="none"
+            stroke={color}
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      );
+
+    case 'waveform':
+      return (
+        <svg className="w-24 h-7 shrink-0" viewBox="0 0 100 28" fill="none">
+          <path
+            d="M 0,14 Q 15,2 30,14 T 60,14 T 90,14 T 100,14"
+            fill="none"
+            stroke={color}
+            strokeWidth="1.8"
+            strokeLinecap="round"
+          />
+        </svg>
+      );
+
+    case 'bars':
+      return (
+        <div className="flex items-end gap-1 w-24 h-6 shrink-0 px-1">
+          {[40, 75, 55, 95, 60, 85, 100].map((h, i) => (
+            <div
+              key={i}
+              className="flex-1 rounded-t-sm transition-all duration-300"
+              style={{
+                height: `${h}%`,
+                backgroundColor: color,
+                opacity: 0.35 + (i * 0.1),
+              }}
+            />
+          ))}
+        </div>
+      );
+
+    case 'neural':
+      return (
+        <svg className="w-24 h-7 shrink-0" viewBox="0 0 100 28" fill="none">
+          <path
+            d="M 0,14 C 20,4 35,24 55,14 C 75,4 85,24 100,14"
+            fill="none"
+            stroke={color}
+            strokeWidth="1.6"
+            opacity="0.9"
+          />
+          <path
+            d="M 0,14 C 20,24 35,4 55,14 C 75,24 85,4 100,14"
+            fill="none"
+            stroke="#8B5CF6"
+            strokeWidth="1.2"
+            opacity="0.6"
+          />
+        </svg>
+      );
+
+    case 'progress':
+    default:
+      return (
+        <div className="flex items-center gap-1 w-24 shrink-0 px-1">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div
+              key={i}
+              className="h-2 flex-1 rounded-sm shadow-sm"
+              style={{
+                backgroundColor: i <= 5 ? color : 'rgba(255,255,255,0.1)',
+              }}
+            />
+          ))}
+        </div>
+      );
+  }
+}
+
+// =========================================================================
+// 4. MAIN INTERACTIVE ECOSYSTEM PORTAL COMPONENT
+// =========================================================================
+
 export default function QualityEcosystemPortal() {
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Pan & Zoom Canvas State
-  const [zoom, setZoom] = useState<number>(0.55);
+  const [zoom, setZoom] = useState<number>(0.52);
   const [pan, setPan] = useState<{ x: number; y: number }>({ x: 40, y: 30 });
   const [isPanning, setIsPanning] = useState(false);
   const [startPoint, setStartPoint] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -625,7 +847,7 @@ export default function QualityEcosystemPortal() {
     const { clientWidth, clientHeight } = containerRef.current;
     if (clientWidth === 0 || clientHeight === 0) return;
 
-    const padding = 30;
+    const padding = 25;
     const scaleX = (clientWidth - padding * 2) / CANVAS_WIDTH;
     const scaleY = (clientHeight - padding * 2) / CANVAS_HEIGHT;
     const optimalZoom = Math.min(Math.max(Math.min(scaleX, scaleY), 0.35), 0.95);
@@ -674,7 +896,6 @@ export default function QualityEcosystemPortal() {
 
   // Pan Handlers
   const handleMouseDown = (e: React.MouseEvent) => {
-    // Only pan if clicking on the background canvas
     if (e.button !== 0) return;
     setIsPanning(true);
     setHasMoved(false);
@@ -706,7 +927,6 @@ export default function QualityEcosystemPortal() {
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
 
-    // Zoom towards mouse pointer
     const newPanX = mouseX - (mouseX - pan.x) * (newZoom / zoom);
     const newPanY = mouseY - (mouseY - pan.y) * (newZoom / zoom);
 
@@ -809,7 +1029,7 @@ export default function QualityEcosystemPortal() {
       {/* ========================================================================= */}
       {/* 1. TOP COMMAND BAR (HUD CONTROLS, SIMULATIONS & SMART SEARCH) */}
       {/* ========================================================================= */}
-      <header className="h-14 px-3 sm:px-6 border-b border-white/10 bg-black/70 backdrop-blur-2xl flex items-center justify-between shrink-0 z-30 gap-2">
+      <header className="h-14 px-3 sm:px-6 border-b border-white/10 bg-black/75 backdrop-blur-2xl flex items-center justify-between shrink-0 z-30 gap-2">
         
         {/* Brand & Ecosystem Title */}
         <div className="flex items-center gap-3 shrink-0">
@@ -820,15 +1040,15 @@ export default function QualityEcosystemPortal() {
             <div className="flex items-center gap-2">
               <h1 className="text-sm font-black text-white tracking-wide flex items-center gap-1.5">
                 <span>شبكة الترابط الرقمي</span>
-                <span className="text-[10px] text-sky-400 font-mono hidden sm:inline">QMS NODE GRAPH</span>
+                <span className="text-[10px] text-sky-400 font-mono hidden sm:inline">QMS HARDWARE MATRIX</span>
               </h1>
               <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                24 عقدة متصلة
+                24 وحدة متصلة حية
               </span>
             </div>
             <p className="text-[10px] text-white/50 hidden md:block">
-              مخطط تفاعلي حر • اسحب للتنقل وزوّم للاستكشاف • اضغط على أي عقدة للدخول المباشر
+              شرائح عتاد صناعية ذكية • اسحب للتنقل وزوّم للاستكشاف • كابلات طاقة ليزرية حية
             </p>
           </div>
         </div>
@@ -1043,7 +1263,7 @@ export default function QualityEcosystemPortal() {
                   left: `${phase.x}px`,
                   top: '40px',
                   width: `${phase.width}px`,
-                  height: '840px',
+                  height: '920px',
                 }}
                 className={`absolute rounded-3xl border ${phase.borderColor} bg-gradient-to-b ${phase.bgGradient} p-4 pointer-events-none transition-all duration-300 ${
                   isPhaseActive ? 'opacity-100' : 'opacity-20'
@@ -1053,7 +1273,7 @@ export default function QualityEcosystemPortal() {
                 <div className="flex items-center justify-between border-b border-white/10 pb-3">
                   <div className="flex items-center gap-2.5">
                     <div
-                      className="w-7 h-7 rounded-xl flex items-center justify-center"
+                      className="w-8 h-8 rounded-xl flex items-center justify-center shadow-lg border border-white/10"
                       style={{ backgroundColor: phase.color + '25', color: phase.color }}
                     >
                       <phase.icon className="w-4 h-4" />
@@ -1141,7 +1361,7 @@ export default function QualityEcosystemPortal() {
                 pathD = `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`;
               } else {
                 // Backward loop arc
-                const archOffset = y1 > 500 ? 120 : -120;
+                const archOffset = y1 > 500 ? 130 : -130;
                 pathD = `M ${x1} ${y1} C ${x1 + 100} ${y1 + archOffset}, ${x2 - 100} ${y2 + archOffset}, ${x2} ${y2}`;
               }
 
@@ -1152,7 +1372,7 @@ export default function QualityEcosystemPortal() {
                     d={pathD}
                     fill="none"
                     stroke={isHighlighted ? cable.color : 'rgba(255,255,255,0.06)'}
-                    strokeWidth={isHighlighted ? '2.5' : '1.2'}
+                    strokeWidth={isHighlighted ? '2.8' : '1.2'}
                     strokeDasharray={isHighlighted ? 'none' : '4, 4'}
                     filter={isHighlighted ? 'url(#laserGlow)' : 'none'}
                     className="transition-all duration-300"
@@ -1172,7 +1392,7 @@ export default function QualityEcosystemPortal() {
                           ? 'url(#laserPulsePurple)'
                           : 'url(#laserPulseCyan)'
                       }
-                      strokeWidth="3.5"
+                      strokeWidth="3.8"
                       strokeDasharray="16, 24"
                       className="animate-laser-flow"
                       filter="url(#laserGlow)"
@@ -1185,7 +1405,7 @@ export default function QualityEcosystemPortal() {
           </svg>
 
           {/* ------------------------------------------------------------- */}
-          {/* HIGH-TECH HARDWARE BLADE NODES */}
+          {/* 5. ULTRA-LUXURY HARDWARE BLADE NODES (DEVELOPED INDUSTRIAL DESIGN) */}
           {/* ------------------------------------------------------------- */}
           {NODES.map((node) => {
             const isSelected = selectedNodeId === node.id;
@@ -1212,64 +1432,124 @@ export default function QualityEcosystemPortal() {
                 onDoubleClick={() => {
                   navigate(node.path);
                 }}
-                className={`absolute rounded-2xl p-3 flex flex-col justify-between cursor-pointer transition-all duration-200 z-20 group ${
+                className={`absolute rounded-2xl p-3 flex flex-col justify-between cursor-pointer transition-all duration-200 z-20 group backdrop-blur-xl ${
                   isSelected
-                    ? 'bg-[#0f172a] border-2 border-sky-400 shadow-[0_0_30px_rgba(0,163,224,0.5)] scale-105'
+                    ? 'bg-[#0f192e] border-2 border-sky-400 shadow-[0_0_35px_rgba(0,163,224,0.6)] scale-105'
                     : isHovered
-                    ? 'bg-[#0c162b] border-2 border-sky-400/80 shadow-[0_0_20px_rgba(0,163,224,0.35)] scale-[1.03]'
+                    ? 'bg-[#0c162b] border-2 border-sky-400/80 shadow-[0_0_25px_rgba(0,163,224,0.4)] scale-[1.03]'
                     : isConnected
-                    ? 'bg-[#0b1222] border-2 border-white/40 shadow-[0_0_20px_rgba(255,255,255,0.2)]'
-                    : 'bg-[#080d19]/90 border border-white/10 hover:border-white/30 hover:bg-[#0c1426]'
+                    ? 'bg-[#0b1324] border-2 border-white/50 shadow-[0_0_20px_rgba(255,255,255,0.25)]'
+                    : 'bg-[#070c17]/95 border border-white/10 hover:border-white/30 hover:bg-[#0a1120]'
                 } ${isDimmed ? 'opacity-30' : 'opacity-100'}`}
               >
-                {/* WIRING PORTS (MAGNETIC CONNECTORS) */}
+                {/* CYBER CORNER BRACKETS (MILITARY HARDWARE AESTHETIC) */}
+                <div className="absolute -top-1 -left-1 w-2.5 h-2.5 border-t-2 border-l-2 border-sky-400/70 group-hover:border-sky-300 transition-colors pointer-events-none" />
+                <div className="absolute -top-1 -right-1 w-2.5 h-2.5 border-t-2 border-r-2 border-sky-400/70 group-hover:border-sky-300 transition-colors pointer-events-none" />
+                <div className="absolute -bottom-1 -left-1 w-2.5 h-2.5 border-b-2 border-l-2 border-sky-400/70 group-hover:border-sky-300 transition-colors pointer-events-none" />
+                <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 border-b-2 border-r-2 border-sky-400/70 group-hover:border-sky-300 transition-colors pointer-events-none" />
+
+                {/* MAGNETIC CONDUIT PORTS WITH GOLD PINS & LABELS */}
                 {/* Left Input Port */}
                 <div
-                  className={`absolute -left-1.5 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border border-white/60 transition-transform ${
-                    isConnected ? 'bg-sky-400 shadow-[0_0_10px_#00A3E0] scale-125' : 'bg-slate-700'
+                  className={`absolute -left-2 top-1/2 -translate-y-1/2 flex items-center justify-center transition-all ${
+                    isConnected ? 'scale-125' : ''
                   }`}
-                  title="نقطة تغذية بيانات (Input)"
-                />
+                  title="نقطة استلام وتغذية البيانات (Input Port)"
+                >
+                  <div
+                    className={`w-3.5 h-3.5 rounded-full border border-white/80 flex items-center justify-center ${
+                      isConnected
+                        ? 'bg-sky-400 shadow-[0_0_12px_#00A3E0]'
+                        : 'bg-slate-800'
+                    }`}
+                  >
+                    <div className="w-1 h-1 rounded-full bg-white animate-ping" />
+                  </div>
+                  <span className="absolute -top-3.5 text-[8px] font-mono text-sky-400/70 font-bold">
+                    IN
+                  </span>
+                </div>
 
                 {/* Right Output Port */}
                 <div
-                  className={`absolute -right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border border-white/60 transition-transform ${
-                    isConnected ? 'bg-emerald-400 shadow-[0_0_10px_#10B981] scale-125' : 'bg-slate-700'
+                  className={`absolute -right-2 top-1/2 -translate-y-1/2 flex items-center justify-center transition-all ${
+                    isConnected ? 'scale-125' : ''
                   }`}
-                  title="نقطة إخراج بيانات (Output)"
-                />
+                  title="نقطة ترحيل ومخرجات البيانات (Output Port)"
+                >
+                  <div
+                    className={`w-3.5 h-3.5 rounded-full border border-white/80 flex items-center justify-center ${
+                      isConnected
+                        ? 'bg-emerald-400 shadow-[0_0_12px_#10B981]'
+                        : 'bg-slate-800'
+                    }`}
+                  >
+                    <div className="w-1 h-1 rounded-full bg-white animate-ping" />
+                  </div>
+                  <span className="absolute -top-3.5 text-[8px] font-mono text-emerald-400/70 font-bold">
+                    OUT
+                  </span>
+                </div>
 
-                {/* Node Header: Icon & Badge */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="w-7 h-7 rounded-xl flex items-center justify-center border border-white/10"
-                      style={{
-                        backgroundColor: (phase?.color || '#00A3E0') + '20',
-                        color: phase?.color || '#00A3E0',
-                      }}
-                    >
-                      <node.icon className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-black text-white tracking-wide group-hover:text-sky-300 transition-colors">
-                        {node.nameAr}
-                      </h4>
-                      <p className="text-[9px] text-white/40 font-mono leading-none">{node.nameEn}</p>
-                    </div>
+                {/* 1. TOP HARDWARE HEADER: LEDS, CODE & STATUS BADGE */}
+                <div className="flex items-center justify-between pb-1.5 border-b border-white/10">
+                  <div className="flex items-center gap-1.5">
+                    {/* Micro Hardware Status LEDs */}
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_6px_#10B981]" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-sky-400 opacity-60" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-purple-400 opacity-40" />
+                    
+                    {/* Monospace Hardware ID */}
+                    <span className="text-[9px] font-mono text-white/50 tracking-wider">
+                      {node.code}
+                    </span>
                   </div>
 
-                  <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md border ${node.badgeColor}`}>
+                  {/* High-visibility Status Badge */}
+                  <span
+                    className={`text-[8px] font-mono font-bold uppercase px-1.5 py-0.5 rounded border ${node.badgeColor}`}
+                  >
                     {node.badge}
                   </span>
                 </div>
 
-                {/* Node Body: Real-time Metric & Quick Launch */}
-                <div className="flex items-center justify-between border-t border-white/5 pt-2 mt-1">
+                {/* 2. MIDDLE IDENTITY: ICON + TITLES */}
+                <div className="flex items-start justify-between gap-2 my-1">
+                  <div className="flex items-center gap-2.5">
+                    {/* Multilayered Holographic Icon Container */}
+                    <div
+                      className="w-8 h-8 rounded-xl flex items-center justify-center border border-white/15 relative shrink-0 shadow-inner"
+                      style={{
+                        backgroundColor: (phase?.color || '#00A3E0') + '25',
+                        color: phase?.color || '#00A3E0',
+                      }}
+                    >
+                      <node.icon className="w-4 h-4 relative z-10" />
+                      <div
+                        className="absolute inset-0 rounded-xl opacity-20 animate-pulse"
+                        style={{ backgroundColor: phase?.color || '#00A3E0' }}
+                      />
+                    </div>
+
+                    <div>
+                      <h4 className="text-xs font-black text-white tracking-wide group-hover:text-sky-300 transition-colors leading-tight">
+                        {node.nameAr}
+                      </h4>
+                      <p className="text-[9px] text-white/40 font-mono tracking-tight leading-tight mt-0.5">
+                        {node.nameEn}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. DYNAMIC TELEMETRY DISPLAY & LIVE SENSOR WAVE */}
+                <div className="flex items-center justify-between bg-black/40 border border-white/5 rounded-xl px-2.5 py-1.5 my-1">
                   <div>
-                    <span className="text-[9px] text-white/40 block leading-tight">{node.metricLabel}</span>
+                    <span className="text-[8px] font-mono text-white/40 block leading-tight">
+                      {node.metricLabel}
+                    </span>
                     <span
-                      className={`text-xs font-black font-mono ${
+                      className={`text-xs font-black font-mono tracking-wide ${
                         node.metricPositive ? 'text-emerald-400' : 'text-amber-400'
                       }`}
                     >
@@ -1277,13 +1557,40 @@ export default function QualityEcosystemPortal() {
                     </span>
                   </div>
 
+                  {/* Active SVG Telemetry Waveform */}
+                  <CardTelemetryVisual
+                    type={node.telemetryType}
+                    color={phase?.color || '#00A3E0'}
+                  />
+                </div>
+
+                {/* 4. LOWER DOCK: CAPACITY GAUGE & LAUNCH ACTION BUTTON */}
+                <div className="flex items-center justify-between pt-1 border-t border-white/5">
+                  {/* Segmented Micro Health Gauge */}
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[8px] font-mono text-white/40">صحة الوحدة:</span>
+                    <div className="w-14 h-1.5 rounded-full bg-slate-800 overflow-hidden flex border border-white/5">
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{
+                          width: `${node.healthPercent}%`,
+                          backgroundColor: phase?.color || '#10B981',
+                        }}
+                      />
+                    </div>
+                    <span className="text-[8px] font-mono text-white/60 font-bold">
+                      {node.healthPercent}%
+                    </span>
+                  </div>
+
+                  {/* High-Tech Tactical Launch Button */}
                   <button
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       navigate(node.path);
                     }}
-                    className="px-2 py-1 rounded-lg bg-white/5 hover:bg-sky-500 hover:text-white text-white/60 text-[10px] font-bold flex items-center gap-1 transition-all border border-white/10 hover:border-sky-400 shadow-sm"
+                    className="px-2 py-0.5 rounded-lg bg-white/5 hover:bg-sky-500 hover:text-white text-white/70 text-[10px] font-bold flex items-center gap-1 transition-all border border-white/10 hover:border-sky-400 shadow-sm"
                   >
                     <span>دخول</span>
                     <ArrowRight className="w-2.5 h-2.5 rtl:rotate-180" />
@@ -1295,16 +1602,16 @@ export default function QualityEcosystemPortal() {
         </div>
 
         {/* ========================================================================= */}
-        {/* 3. RADAR MINIMAP (BOTTOM-LEFT CORNER) */}
+        {/* 6. RADAR MINIMAP (BOTTOM-LEFT CORNER) */}
         {/* ========================================================================= */}
         <div className="absolute bottom-4 left-4 z-30 hidden sm:block">
-          <div className="w-48 h-24 rounded-2xl bg-black/80 backdrop-blur-xl border border-white/15 p-2 shadow-2xl relative overflow-hidden flex flex-col justify-between">
+          <div className="w-52 h-24 rounded-2xl bg-black/85 backdrop-blur-xl border border-white/15 p-2 shadow-2xl relative overflow-hidden flex flex-col justify-between">
             <div className="flex items-center justify-between">
               <span className="text-[9px] font-mono text-sky-400 font-bold flex items-center gap-1">
                 <Radio className="w-3 h-3 text-sky-400 animate-pulse" />
                 RADAR MINIMAP
               </span>
-              <span className="text-[8px] font-mono text-white/40">2620x960</span>
+              <span className="text-[8px] font-mono text-white/40">2760x1040</span>
             </div>
 
             {/* Radar miniature dots */}
@@ -1321,7 +1628,7 @@ export default function QualityEcosystemPortal() {
                       top: `${ry}%`,
                       backgroundColor: phase?.color || '#00A3E0',
                     }}
-                    className="absolute w-1 h-1 rounded-full"
+                    className="absolute w-1.5 h-1.5 rounded-full"
                   />
                 );
               })}
@@ -1343,7 +1650,7 @@ export default function QualityEcosystemPortal() {
         </div>
 
         {/* ========================================================================= */}
-        {/* 4. LIVE RELATIONSHIP INSPECTOR HUD (BOTTOM DRAWER) */}
+        {/* 7. LIVE RELATIONSHIP INSPECTOR HUD (BOTTOM DRAWER) */}
         {/* ========================================================================= */}
         <AnimatePresence>
           {activeNodeInfo && (
@@ -1352,14 +1659,14 @@ export default function QualityEcosystemPortal() {
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 80, opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="absolute bottom-3 right-3 left-3 sm:left-56 sm:right-6 z-30 pointer-events-auto"
+              className="absolute bottom-3 right-3 left-3 sm:left-60 sm:right-6 z-30 pointer-events-auto"
             >
               <div className="bg-[#0b101d]/95 backdrop-blur-2xl border border-sky-500/40 rounded-2xl p-3 sm:p-4 shadow-[0_10px_40px_rgba(0,0,0,0.8)] flex flex-col md:flex-row items-center justify-between gap-3 text-white">
                 
                 {/* Node Summary */}
                 <div className="flex items-center gap-3 shrink-0 w-full md:w-auto">
                   <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center border border-white/20 shrink-0"
+                    className="w-11 h-11 rounded-xl flex items-center justify-center border border-white/20 shrink-0 shadow-lg"
                     style={{
                       backgroundColor: activeNodeInfo.phase?.color + '25',
                       color: activeNodeInfo.phase?.color,
@@ -1370,7 +1677,7 @@ export default function QualityEcosystemPortal() {
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-mono font-bold text-sky-400">
-                        STAGE {activeNodeInfo.phase?.phaseNumber}
+                        {activeNodeInfo.node.code}
                       </span>
                       <h3 className="text-sm font-black text-white">{activeNodeInfo.node.nameAr}</h3>
                     </div>
