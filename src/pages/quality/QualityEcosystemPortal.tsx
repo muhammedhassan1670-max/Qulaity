@@ -82,22 +82,33 @@ interface CableRelation {
   label: string;
   isFeedback: boolean;
   feedbackLane?: 'top' | 'bottom' | 'local';
-  alleyRow?: 1 | 2 | 3; // Inter-row horizontal PCB corridor so long forward lines never cross cards
+  alleyRow?: 1 | 2 | 3;
+  corridorTrack: number; // -1, 0, 1 to separate parallel vertical lines in the 80px corridor
   category: 'defect' | 'governance' | 'prevention' | 'supplier' | 'intelligence';
   color: string;
 }
 
 // =========================================================================
-// 1. GRID DIMENSIONS & 6 CORE STAGES (SURGICAL PCB CORRIDOR LAYOUT)
+// 1. PRECISION PCB GRID DIMENSIONS (80px VERTICAL CORRIDORS & 28px ALLEYS)
 // =========================================================================
+// Stage X stride = 332px:
+// Stage 0: zone x=40..316, card x=52..304 | Corridor 0->1: x=304..384 (80px wide!)
+// Stage 1: zone x=372..648, card x=384..636 | Corridor 1->2: x=636..716 (80px wide!)
+// Stage 2: zone x=704..980, card x=716..968 | Corridor 2->3: x=968..1048 (80px wide!)
+// Stage 3: zone x=1036..1312, card x=1048..1300 | Corridor 3->4: x=1300..1380 (80px wide!)
+// Stage 4: zone x=1368..1644, card x=1380..1632 | Corridor 4->5: x=1632..1712 (80px wide!)
+// Stage 5: zone x=1700..1976, card x=1712..1964
+//
+// Row Y coordinates (NODE_HEIGHT = 156):
+// Row 0: y=120..276 | Alley 1: y=276..304 (center 290)
+// Row 1: y=304..460 | Alley 2: y=460..488 (center 474)
+// Row 2: y=488..644 | Alley 3: y=644..672 (center 658)
+// Row 3: y=672..828
 
 const NODE_WIDTH = 252;
-const NODE_HEIGHT = 158;
-const CANVAS_WIDTH = 1960;
+const NODE_HEIGHT = 156;
+const CANVAS_WIDTH = 2020;
 const CANVAS_HEIGHT = 900;
-
-// Row Y coordinates leave 26px horizontal PCB alleys at y=291, y=475, y=659
-// Row 0: 120..278 | Alley 1: 291 | Row 1: 304..462 | Alley 2: 475 | Row 2: 488..646 | Alley 3: 659 | Row 3: 672..830
 
 const PHASES: PhaseZone[] = [
   {
@@ -110,7 +121,7 @@ const PHASES: PhaseZone[] = [
     borderColor: 'border-emerald-500/30',
     bgGradient: 'from-emerald-950/35 via-emerald-950/10 to-transparent',
     x: 40,
-    width: 280,
+    width: 276,
     icon: Truck,
   },
   {
@@ -122,8 +133,8 @@ const PHASES: PhaseZone[] = [
     color: '#0EA5E9',
     borderColor: 'border-sky-500/30',
     bgGradient: 'from-sky-950/35 via-sky-950/10 to-transparent',
-    x: 360,
-    width: 280,
+    x: 372,
+    width: 276,
     icon: Factory,
   },
   {
@@ -135,8 +146,8 @@ const PHASES: PhaseZone[] = [
     color: '#EF4444',
     borderColor: 'border-red-500/30',
     bgGradient: 'from-red-950/35 via-red-950/10 to-transparent',
-    x: 680,
-    width: 280,
+    x: 704,
+    width: 276,
     icon: AlertTriangle,
   },
   {
@@ -148,8 +159,8 @@ const PHASES: PhaseZone[] = [
     color: '#8B5CF6',
     borderColor: 'border-purple-500/30',
     bgGradient: 'from-purple-950/35 via-purple-950/10 to-transparent',
-    x: 1000,
-    width: 280,
+    x: 1036,
+    width: 276,
     icon: Workflow,
   },
   {
@@ -161,8 +172,8 @@ const PHASES: PhaseZone[] = [
     color: '#F59E0B',
     borderColor: 'border-amber-500/30',
     bgGradient: 'from-amber-950/35 via-amber-950/10 to-transparent',
-    x: 1320,
-    width: 280,
+    x: 1368,
+    width: 276,
     icon: ShieldCheck,
   },
   {
@@ -174,15 +185,15 @@ const PHASES: PhaseZone[] = [
     color: '#06B6D4',
     borderColor: 'border-cyan-500/30',
     bgGradient: 'from-cyan-950/35 via-cyan-950/10 to-transparent',
-    x: 1640,
-    width: 280,
+    x: 1700,
+    width: 276,
     icon: Cpu,
   },
 ];
 
 // All 24 paths match 100% with src/router/index.tsx
 const NODES: BlueprintNode[] = [
-  // Stage 01: Supply Chain & Inbound (colIdx: 0, x: 54)
+  // Stage 01: Supply Chain & Inbound (colIdx: 0, x: 52)
   {
     id: 'iqc',
     seqCode: 'M-01',
@@ -197,7 +208,7 @@ const NODES: BlueprintNode[] = [
     phaseId: 'supply_chain',
     rowIdx: 0,
     colIdx: 0,
-    x: 54,
+    x: 52,
     y: 120,
   },
   {
@@ -214,7 +225,7 @@ const NODES: BlueprintNode[] = [
     phaseId: 'supply_chain',
     rowIdx: 1,
     colIdx: 0,
-    x: 54,
+    x: 52,
     y: 304,
   },
   {
@@ -231,7 +242,7 @@ const NODES: BlueprintNode[] = [
     phaseId: 'supply_chain',
     rowIdx: 2,
     colIdx: 0,
-    x: 54,
+    x: 52,
     y: 488,
   },
   {
@@ -248,11 +259,11 @@ const NODES: BlueprintNode[] = [
     phaseId: 'supply_chain',
     rowIdx: 3,
     colIdx: 0,
-    x: 54,
+    x: 52,
     y: 672,
   },
 
-  // Stage 02: Shopfloor & Production (colIdx: 1, x: 374)
+  // Stage 02: Shopfloor & Production (colIdx: 1, x: 384)
   {
     id: 'daily_defects',
     seqCode: 'M-05',
@@ -267,7 +278,7 @@ const NODES: BlueprintNode[] = [
     phaseId: 'shopfloor',
     rowIdx: 0,
     colIdx: 1,
-    x: 374,
+    x: 384,
     y: 120,
   },
   {
@@ -284,7 +295,7 @@ const NODES: BlueprintNode[] = [
     phaseId: 'shopfloor',
     rowIdx: 1,
     colIdx: 1,
-    x: 374,
+    x: 384,
     y: 304,
   },
   {
@@ -301,7 +312,7 @@ const NODES: BlueprintNode[] = [
     phaseId: 'shopfloor',
     rowIdx: 2,
     colIdx: 1,
-    x: 374,
+    x: 384,
     y: 488,
   },
   {
@@ -318,11 +329,11 @@ const NODES: BlueprintNode[] = [
     phaseId: 'shopfloor',
     rowIdx: 3,
     colIdx: 1,
-    x: 374,
+    x: 384,
     y: 672,
   },
 
-  // Stage 03: Containment & NCR (colIdx: 2, x: 694)
+  // Stage 03: Containment & NCR (colIdx: 2, x: 716)
   {
     id: 'ncr',
     seqCode: 'M-09',
@@ -337,7 +348,7 @@ const NODES: BlueprintNode[] = [
     phaseId: 'nonconformance',
     rowIdx: 0,
     colIdx: 2,
-    x: 694,
+    x: 716,
     y: 120,
   },
   {
@@ -354,7 +365,7 @@ const NODES: BlueprintNode[] = [
     phaseId: 'nonconformance',
     rowIdx: 1,
     colIdx: 2,
-    x: 694,
+    x: 716,
     y: 304,
   },
   {
@@ -371,7 +382,7 @@ const NODES: BlueprintNode[] = [
     phaseId: 'nonconformance',
     rowIdx: 2,
     colIdx: 2,
-    x: 694,
+    x: 716,
     y: 488,
   },
   {
@@ -388,11 +399,11 @@ const NODES: BlueprintNode[] = [
     phaseId: 'nonconformance',
     rowIdx: 3,
     colIdx: 2,
-    x: 694,
+    x: 716,
     y: 672,
   },
 
-  // Stage 04: Root Cause & CAPA (colIdx: 3, x: 1014)
+  // Stage 04: Root Cause & CAPA (colIdx: 3, x: 1048)
   {
     id: 'capa_records',
     seqCode: 'M-13',
@@ -407,7 +418,7 @@ const NODES: BlueprintNode[] = [
     phaseId: 'root_cause',
     rowIdx: 0,
     colIdx: 3,
-    x: 1014,
+    x: 1048,
     y: 120,
   },
   {
@@ -424,7 +435,7 @@ const NODES: BlueprintNode[] = [
     phaseId: 'root_cause',
     rowIdx: 1,
     colIdx: 3,
-    x: 1014,
+    x: 1048,
     y: 304,
   },
   {
@@ -441,7 +452,7 @@ const NODES: BlueprintNode[] = [
     phaseId: 'root_cause',
     rowIdx: 2,
     colIdx: 3,
-    x: 1014,
+    x: 1048,
     y: 488,
   },
   {
@@ -458,11 +469,11 @@ const NODES: BlueprintNode[] = [
     phaseId: 'root_cause',
     rowIdx: 3,
     colIdx: 3,
-    x: 1014,
+    x: 1048,
     y: 672,
   },
 
-  // Stage 05: Engineering & Prevention (colIdx: 4, x: 1334)
+  // Stage 05: Engineering & Prevention (colIdx: 4, x: 1380)
   {
     id: 'fmea',
     seqCode: 'M-17',
@@ -477,7 +488,7 @@ const NODES: BlueprintNode[] = [
     phaseId: 'engineering',
     rowIdx: 0,
     colIdx: 4,
-    x: 1334,
+    x: 1380,
     y: 120,
   },
   {
@@ -494,7 +505,7 @@ const NODES: BlueprintNode[] = [
     phaseId: 'engineering',
     rowIdx: 1,
     colIdx: 4,
-    x: 1334,
+    x: 1380,
     y: 304,
   },
   {
@@ -511,7 +522,7 @@ const NODES: BlueprintNode[] = [
     phaseId: 'engineering',
     rowIdx: 2,
     colIdx: 4,
-    x: 1334,
+    x: 1380,
     y: 488,
   },
   {
@@ -528,11 +539,11 @@ const NODES: BlueprintNode[] = [
     phaseId: 'engineering',
     rowIdx: 3,
     colIdx: 4,
-    x: 1334,
+    x: 1380,
     y: 672,
   },
 
-  // Stage 06: SPC & AI Intelligence (colIdx: 5, x: 1654)
+  // Stage 06: SPC & AI Intelligence (colIdx: 5, x: 1712)
   {
     id: 'spc',
     seqCode: 'M-21',
@@ -547,7 +558,7 @@ const NODES: BlueprintNode[] = [
     phaseId: 'intelligence',
     rowIdx: 0,
     colIdx: 5,
-    x: 1654,
+    x: 1712,
     y: 120,
   },
   {
@@ -564,7 +575,7 @@ const NODES: BlueprintNode[] = [
     phaseId: 'intelligence',
     rowIdx: 1,
     colIdx: 5,
-    x: 1654,
+    x: 1712,
     y: 304,
   },
   {
@@ -581,7 +592,7 @@ const NODES: BlueprintNode[] = [
     phaseId: 'intelligence',
     rowIdx: 2,
     colIdx: 5,
-    x: 1654,
+    x: 1712,
     y: 488,
   },
   {
@@ -598,13 +609,13 @@ const NODES: BlueprintNode[] = [
     phaseId: 'intelligence',
     rowIdx: 3,
     colIdx: 5,
-    x: 1654,
+    x: 1712,
     y: 672,
   },
 ];
 
 // =========================================================================
-// 2. ORDERED & SEQUENCED RELATIONSHIPS WITH ZERO-OVERLAP PCB CORRIDORS
+// 2. 100% ORTHOGONAL PCB CONDUITS WITH DEDICATED CORRIDOR TRACKS
 // =========================================================================
 
 const CABLES: CableRelation[] = [
@@ -618,6 +629,7 @@ const CABLES: CableRelation[] = [
     payloadSpec: 'Payload: { partId, defectCodes[], aqlLevel, tolerances }',
     label: '1st: Feeds standard defect catalogs & acceptance specs to IPQC',
     isFeedback: false,
+    corridorTrack: -1,
     category: 'governance',
     color: '#10B981',
   },
@@ -631,6 +643,7 @@ const CABLES: CableRelation[] = [
     label: '2nd: Supplies part BOM & process steps for PFMEA risk analysis',
     isFeedback: false,
     alleyRow: 3,
+    corridorTrack: 0,
     category: 'governance',
     color: '#10B981',
   },
@@ -643,6 +656,7 @@ const CABLES: CableRelation[] = [
     payloadSpec: 'Payload: { gaugeId, calCertValid: true, uncertainty }',
     label: '1st: Validates measurement gauge accuracy before Incoming QC',
     isFeedback: false,
+    corridorTrack: -1,
     category: 'governance',
     color: '#10B981',
   },
@@ -656,6 +670,7 @@ const CABLES: CableRelation[] = [
     label: '2nd: Ensures measurement system reliability for SPC charts',
     isFeedback: false,
     alleyRow: 2,
+    corridorTrack: 1,
     category: 'intelligence',
     color: '#06B6D4',
   },
@@ -669,6 +684,7 @@ const CABLES: CableRelation[] = [
     label: '1st: Triggers NCR & quarantine hold for rejected inbound material',
     isFeedback: false,
     alleyRow: 1,
+    corridorTrack: -1,
     category: 'supplier',
     color: '#EF4444',
   },
@@ -682,6 +698,7 @@ const CABLES: CableRelation[] = [
     label: '2nd: Requests conditional concession for urgent production lots',
     isFeedback: false,
     alleyRow: 1,
+    corridorTrack: 0,
     category: 'supplier',
     color: '#F59E0B',
   },
@@ -695,6 +712,7 @@ const CABLES: CableRelation[] = [
     label: '3rd (Feedback): Auto-updates vendor scorecard from lot results',
     isFeedback: true,
     feedbackLane: 'local',
+    corridorTrack: 1,
     category: 'supplier',
     color: '#F43F5E',
   },
@@ -708,6 +726,7 @@ const CABLES: CableRelation[] = [
     label: '1st: Schedules supplier quality audits for low-rated vendors',
     isFeedback: false,
     alleyRow: 2,
+    corridorTrack: 0,
     category: 'supplier',
     color: '#10B981',
   },
@@ -722,6 +741,7 @@ const CABLES: CableRelation[] = [
     payloadSpec: 'Payload: { lineId, fpiApproved: true, recipeVerified }',
     label: '1st: Authorizes line startup & mandatory First Piece check',
     isFeedback: false,
+    corridorTrack: -1,
     category: 'governance',
     color: '#0EA5E9',
   },
@@ -734,6 +754,7 @@ const CABLES: CableRelation[] = [
     payloadSpec: 'Payload: { stationId, checkId, failedSpec, samplePhoto }',
     label: '1st: Logs live defects detected during IPQC patrol checks',
     isFeedback: false,
+    corridorTrack: 0,
     category: 'defect',
     color: '#0EA5E9',
   },
@@ -746,6 +767,7 @@ const CABLES: CableRelation[] = [
     payloadSpec: 'Payload: { defectId, severity: "CRITICAL", batchHold }',
     label: '1st: Escalates critical shopfloor defects into formal NCR',
     isFeedback: false,
+    corridorTrack: -1,
     category: 'defect',
     color: '#EF4444',
   },
@@ -759,6 +781,7 @@ const CABLES: CableRelation[] = [
     label: '2nd: Streams live defect telemetry into SPC control charts',
     isFeedback: false,
     alleyRow: 1,
+    corridorTrack: 0,
     category: 'intelligence',
     color: '#0EA5E9',
   },
@@ -771,7 +794,8 @@ const CABLES: CableRelation[] = [
     payloadSpec: 'Payload: { scrapQty, reworkHours, unitMaterialCost }',
     label: '3rd: Calculates daily scrap and rework financial impact',
     isFeedback: false,
-     category: 'defect',
+    corridorTrack: 1,
+    category: 'defect',
     color: '#EF4444',
   },
   {
@@ -784,6 +808,7 @@ const CABLES: CableRelation[] = [
     label: '1st: Opens CAPA for non-compliant process audit findings',
     isFeedback: false,
     alleyRow: 2,
+    corridorTrack: -1,
     category: 'governance',
     color: '#0EA5E9',
   },
@@ -797,6 +822,7 @@ const CABLES: CableRelation[] = [
     label: '2nd (Feedback): Reinforces operator setup checklist compliance',
     isFeedback: true,
     feedbackLane: 'local',
+    corridorTrack: 1,
     category: 'governance',
     color: '#F43F5E',
   },
@@ -811,6 +837,7 @@ const CABLES: CableRelation[] = [
     payloadSpec: 'Payload: { ncrId, containmentActions, d1TeamList[] }',
     label: '1st: Launches structured 8D root cause investigation',
     isFeedback: false,
+    corridorTrack: -1,
     category: 'defect',
     color: '#8B5CF6',
   },
@@ -823,6 +850,7 @@ const CABLES: CableRelation[] = [
     payloadSpec: 'Payload: { ncrId, rootCauseSummary, targetDueDate }',
     label: '2nd: Initiates corrective & preventive action plan (CAPA)',
     isFeedback: false,
+    corridorTrack: 0,
     category: 'defect',
     color: '#EF4444',
   },
@@ -835,6 +863,7 @@ const CABLES: CableRelation[] = [
     payloadSpec: 'Payload: { ncrId, disposition: "SCRAP", financialLoss }',
     label: '3rd: Records quarantine sorting & batch scrap losses',
     isFeedback: false,
+    corridorTrack: 1,
     category: 'defect',
     color: '#EF4444',
   },
@@ -847,6 +876,7 @@ const CABLES: CableRelation[] = [
     payloadSpec: 'Payload: { rmaNumber, customerCode, returnedBatchId }',
     label: '1st: Converts customer RMA claim into formal containment NCR',
     isFeedback: false,
+    corridorTrack: -1,
     category: 'defect',
     color: '#EF4444',
   },
@@ -859,6 +889,7 @@ const CABLES: CableRelation[] = [
     payloadSpec: 'Payload: { vocClaimId, sla48hContainment, d8ReportReq }',
     label: '2nd: Mandates formal 8D root cause report for customer',
     isFeedback: false,
+    corridorTrack: 0,
     category: 'defect',
     color: '#8B5CF6',
   },
@@ -871,6 +902,7 @@ const CABLES: CableRelation[] = [
     payloadSpec: 'Payload: { concessionId, specChangeRequest, mrbApproval }',
     label: '1st: Routes temporary deviation for permanent ECN review',
     isFeedback: false,
+    corridorTrack: 1,
     category: 'governance',
     color: '#F59E0B',
   },
@@ -884,6 +916,7 @@ const CABLES: CableRelation[] = [
     label: '1st: Reports COPQ financial impact to Executive Control Tower',
     isFeedback: false,
     alleyRow: 3,
+    corridorTrack: 0,
     category: 'intelligence',
     color: '#EF4444',
   },
@@ -898,6 +931,7 @@ const CABLES: CableRelation[] = [
     payloadSpec: 'Payload: { d4RootCause, failureModeId, newOccurrenceRPN }',
     label: '1st: Updates PFMEA risk matrix with newly discovered failure modes',
     isFeedback: false,
+    corridorTrack: -1,
     category: 'prevention',
     color: '#F59E0B',
   },
@@ -910,6 +944,7 @@ const CABLES: CableRelation[] = [
     payloadSpec: 'Payload: { d5PermanentFix, errorProofingSpec, reactionPlan }',
     label: '2nd: Enforces new poka-yoke controls in Dynamic Control Plan',
     isFeedback: false,
+    corridorTrack: 0,
     category: 'prevention',
     color: '#10B981',
   },
@@ -922,6 +957,7 @@ const CABLES: CableRelation[] = [
     payloadSpec: 'Payload: { d8LessonLearned, horizontalDeployment[] }',
     label: '3rd: Archives verified root cause in Lessons Learned Hub',
     isFeedback: false,
+    corridorTrack: 1,
     category: 'prevention',
     color: '#10B981',
   },
@@ -934,6 +970,7 @@ const CABLES: CableRelation[] = [
     payloadSpec: 'Payload: { capaId, toolingModification, drawingRev }',
     label: '1st: Triggers formal Engineering Change Notice (ECN)',
     isFeedback: false,
+    corridorTrack: -1,
     category: 'governance',
     color: '#8B5CF6',
   },
@@ -946,6 +983,7 @@ const CABLES: CableRelation[] = [
     payloadSpec: 'Payload: { actionOwner, dueDate, effectivenessCheck }',
     label: '2nd: Tracks CAPA due dates and departmental closure SLA',
     isFeedback: false,
+    corridorTrack: 1,
     category: 'governance',
     color: '#8B5CF6',
   },
@@ -958,6 +996,7 @@ const CABLES: CableRelation[] = [
     payloadSpec: 'Payload: { ecnNumber, updatedTolerances, effectiveDate }',
     label: '1st: Revises Control Plan specifications after ECN approval',
     isFeedback: false,
+    corridorTrack: 0,
     category: 'prevention',
     color: '#8B5CF6',
   },
@@ -971,6 +1010,7 @@ const CABLES: CableRelation[] = [
     label: '1st: Broadcasts action closure KPIs to Quality Control Tower',
     isFeedback: false,
     alleyRow: 3,
+    corridorTrack: 1,
     category: 'intelligence',
     color: '#8B5CF6',
   },
@@ -985,6 +1025,7 @@ const CABLES: CableRelation[] = [
     payloadSpec: 'Payload: { criticalCTQs[], rpnThreshold, sampleFreq }',
     label: '1st: Transfers high-RPN characteristics to Dynamic Control Plan',
     isFeedback: false,
+    corridorTrack: -1,
     category: 'prevention',
     color: '#F59E0B',
   },
@@ -997,6 +1038,7 @@ const CABLES: CableRelation[] = [
     payloadSpec: 'Payload: { characteristicId, usl, lsl, targetCpk: 1.67 }',
     label: '1st: Sets USL/LSL specification limits for SPC control charts',
     isFeedback: false,
+    corridorTrack: -1,
     category: 'intelligence',
     color: '#06B6D4',
   },
@@ -1010,6 +1052,7 @@ const CABLES: CableRelation[] = [
     label: '2nd (Feedback Loop): Deploys updated inspection specs back to Shopfloor IPQC',
     isFeedback: true,
     feedbackLane: 'top',
+    corridorTrack: 0,
     category: 'prevention',
     color: '#F43F5E',
   },
@@ -1023,6 +1066,7 @@ const CABLES: CableRelation[] = [
     label: '1st (Feedback Loop): Publishes digital checklists back to Shopfloor IPQC',
     isFeedback: true,
     feedbackLane: 'bottom',
+    corridorTrack: -1,
     category: 'governance',
     color: '#F43F5E',
   },
@@ -1036,6 +1080,7 @@ const CABLES: CableRelation[] = [
     label: '2nd (Feedback Loop): Deploys custom audit templates back to Shopfloor LPA',
     isFeedback: true,
     feedbackLane: 'bottom',
+    corridorTrack: 1,
     category: 'governance',
     color: '#F43F5E',
   },
@@ -1048,6 +1093,7 @@ const CABLES: CableRelation[] = [
     payloadSpec: 'Payload: { solved8DVectors[], rootCauseEmbeddings }',
     label: '1st: Trains AI Copilot on historical 8D solutions & patterns',
     isFeedback: false,
+    corridorTrack: 0,
     category: 'intelligence',
     color: '#06B6D4',
   },
@@ -1062,6 +1108,7 @@ const CABLES: CableRelation[] = [
     payloadSpec: 'Payload: { cpkIndex, nelsonRuleViolations, oocAlerts }',
     label: '1st: Streams live Cp/Cpk capability metrics to Control Tower',
     isFeedback: false,
+    corridorTrack: -1,
     category: 'intelligence',
     color: '#06B6D4',
   },
@@ -1074,6 +1121,7 @@ const CABLES: CableRelation[] = [
     payloadSpec: 'Payload: { xBarTrend, toolWearSlope, anomalyScore }',
     label: '2nd: Feeds process drift trends to AI for predictive alerts',
     isFeedback: false,
+    corridorTrack: 1,
     category: 'intelligence',
     color: '#06B6D4',
   },
@@ -1087,6 +1135,7 @@ const CABLES: CableRelation[] = [
     label: '1st (Feedback Loop): Recommends AI-generated root causes back to 8D teams',
     isFeedback: true,
     feedbackLane: 'top',
+    corridorTrack: 1,
     category: 'intelligence',
     color: '#F43F5E',
   },
@@ -1100,12 +1149,13 @@ const CABLES: CableRelation[] = [
     label: '1st (Feedback Loop): Generates CAPA actions from audit non-conformities',
     isFeedback: true,
     feedbackLane: 'bottom',
+    corridorTrack: 0,
     category: 'governance',
     color: '#F43F5E',
   },
 ];
 
-// Core Master Backbone (Always softly illuminated with sequence pills in Default View!)
+// Core Master Backbone (Always softly illuminated with compact medallions in Default View!)
 const MASTER_BACKBONE_SEQUENCE = ['c9', 'c10', 'c11', 'c17', 'c23', 'c30', 'c32', 'c31'];
 
 // Ordered Simulation Scenarios with Step-by-Step Auto-Player support
@@ -1136,7 +1186,7 @@ export default function QualityEcosystemPortal() {
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Pan & Zoom State
-  const [zoom, setZoom] = useState<number>(0.75);
+  const [zoom, setZoom] = useState<number>(0.74);
   const [pan, setPan] = useState<{ x: number; y: number }>({ x: 20, y: 20 });
   const [isPanning, setIsPanning] = useState(false);
   const [startPoint, setStartPoint] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -1162,7 +1212,7 @@ export default function QualityEcosystemPortal() {
     const padding = 16;
     const scaleX = (clientWidth - padding * 2) / CANVAS_WIDTH;
     const scaleY = (clientHeight - padding * 2) / CANVAS_HEIGHT;
-    const optimalZoom = Math.min(Math.max(Math.min(scaleX, scaleY), 0.45), 1.05);
+    const optimalZoom = Math.min(Math.max(Math.min(scaleX, scaleY), 0.44), 1.05);
 
     const centerX = (clientWidth - CANVAS_WIDTH * optimalZoom) / 2;
     const centerY = (clientHeight - CANVAS_HEIGHT * optimalZoom) / 2;
@@ -1260,13 +1310,14 @@ export default function QualityEcosystemPortal() {
   const isDefaultIdleView =
     !activeNodeId && !selectedCableId && activeSimulation === 'none' && !showAllFeedbackLoops;
 
-  // Compute exact sequence metadata for highlighted cables (Always alive even in Default Idle View!)
+  // Compute exact sequence metadata for highlighted cables
+  // Compact Corridor Medallions (58px wide) fit 100% inside the 80px corridor without ever touching a card!
   const activeCableSequenceMap = useMemo(() => {
     const map = new Map<
       string,
       {
         stepNumber: number;
-        stepPillText: string;
+        medallionText: string;
         shortTag: string;
         isFeedback: boolean;
         isCurrentStepSpotlight: boolean;
@@ -1275,7 +1326,7 @@ export default function QualityEcosystemPortal() {
       }
     >();
 
-    // 0. DEFAULT IDLE VIEW: Illuminate the 8-step Master Closed-Loop Backbone so the screen is numbered & alive immediately!
+    // 0. DEFAULT IDLE VIEW: Illuminate the 8-step Master Closed-Loop Backbone
     if (isDefaultIdleView) {
       MASTER_BACKBONE_SEQUENCE.forEach((cableId, idx) => {
         const cable = CABLES.find((c) => c.id === cableId);
@@ -1283,8 +1334,8 @@ export default function QualityEcosystemPortal() {
         const stepNum = idx + 1;
         map.set(cableId, {
           stepNumber: stepNum,
-          stepPillText: cable.isFeedback ? `↺ STEP 0${stepNum}` : `STEP 0${stepNum}`,
-          shortTag: cable.isFeedback ? `${cable.shortTag} (Return)` : `${cable.shortTag} ➔`,
+          medallionText: cable.isFeedback ? `↺ 0${stepNum}` : `0${stepNum} ➔`,
+          shortTag: cable.shortTag,
           isFeedback: cable.isFeedback,
           isCurrentStepSpotlight: true,
           directionRole: cable.isFeedback ? 'feedback' : 'ambient',
@@ -1302,7 +1353,7 @@ export default function QualityEcosystemPortal() {
         const ordinalText = ord === 1 ? '1st' : ord === 2 ? '2nd' : ord === 3 ? '3rd' : `${ord}th`;
         map.set(cable.id, {
           stepNumber: ord,
-          stepPillText: cable.isFeedback ? `↺ ${ordinalText} LOOP` : `${ordinalText} STEP`,
+          medallionText: cable.isFeedback ? `↺ ${ordinalText}` : `${ordinalText} ➔`,
           shortTag: cable.shortTag,
           isFeedback: cable.isFeedback,
           isCurrentStepSpotlight: true,
@@ -1324,8 +1375,8 @@ export default function QualityEcosystemPortal() {
         const isSpotlight = simStepIndex === null || simStepIndex === idx;
         map.set(cableId, {
           stepNumber: stepNum,
-          stepPillText: cable.isFeedback ? `↺ STEP 0${stepNum}` : `STEP 0${stepNum}`,
-          shortTag: cable.isFeedback ? `${cable.shortTag} (Return)` : `${cable.shortTag} ➔`,
+          medallionText: cable.isFeedback ? `↺ #${stepNum}` : `STEP ${stepNum}`,
+          shortTag: cable.shortTag,
           isFeedback: cable.isFeedback,
           isCurrentStepSpotlight: isSpotlight,
           directionRole: cable.isFeedback ? 'feedback' : 'sim',
@@ -1341,7 +1392,7 @@ export default function QualityEcosystemPortal() {
       CABLES.filter((c) => c.isFeedback).forEach((cable) => {
         map.set(cable.id, {
           stepNumber: fbIndex,
-          stepPillText: `↺ LOOP #${fbIndex}`,
+          medallionText: `↺ #${fbIndex}`,
           shortTag: cable.shortTag,
           isFeedback: true,
           isCurrentStepSpotlight: true,
@@ -1360,7 +1411,7 @@ export default function QualityEcosystemPortal() {
         const inNum = idx + 1;
         map.set(cable.id, {
           stepNumber: inNum,
-          stepPillText: cable.isFeedback ? `↺ IN #${inNum}` : `IN #${inNum}`,
+          medallionText: cable.isFeedback ? `↺ IN ${inNum}` : `IN #${inNum}`,
           shortTag: cable.shortTag,
           isFeedback: cable.isFeedback,
           isCurrentStepSpotlight: true,
@@ -1377,8 +1428,8 @@ export default function QualityEcosystemPortal() {
         const ordinalText = ord === 1 ? '1st' : ord === 2 ? '2nd' : ord === 3 ? '3rd' : `${ord}th`;
         map.set(cable.id, {
           stepNumber: ord,
-          stepPillText: cable.isFeedback ? `↺ ${ordinalText}` : `${ordinalText} OUT`,
-          shortTag: cable.isFeedback ? `${cable.shortTag} (Return)` : `${cable.shortTag} ➔`,
+          medallionText: cable.isFeedback ? `↺ ${ordinalText}` : `${ordinalText} ➔`,
+          shortTag: cable.shortTag,
           isFeedback: cable.isFeedback,
           isCurrentStepSpotlight: true,
           directionRole: cable.isFeedback ? 'feedback' : 'output',
@@ -1397,7 +1448,7 @@ export default function QualityEcosystemPortal() {
             if (!map.has(hop2.id)) {
               map.set(hop2.id, {
                 stepNumber: hop1Cable.orderFromSource + 10,
-                stepPillText: hop2.isFeedback ? `↺ HOP 2` : `HOP 2 ➔`,
+                medallionText: hop2.isFeedback ? `↺ HOP2` : `HOP 2`,
                 shortTag: hop2.shortTag,
                 isFeedback: hop2.isFeedback,
                 isCurrentStepSpotlight: false,
@@ -1422,7 +1473,7 @@ export default function QualityEcosystemPortal() {
     multiHopRipple,
   ]);
 
-  // Connected nodes & their role badge when highlighted
+  // Connected nodes & their top rim action badge (shows both step number AND action text on the card rim!)
   const nodeSequenceBadges = useMemo(() => {
     const badgeMap = new Map<
       string,
@@ -1430,6 +1481,21 @@ export default function QualityEcosystemPortal() {
     >();
 
     if (isDefaultIdleView) {
+      MASTER_BACKBONE_SEQUENCE.forEach((cableId, idx) => {
+        const cable = CABLES.find((c) => c.id === cableId);
+        if (!cable) return;
+        if (idx === 0) {
+          badgeMap.set(cable.source, { text: '01 • STARTUP GATE', color: '#0EA5E9' });
+        }
+        const stepNum = idx + 1;
+        badgeMap.set(cable.target, {
+          text: cable.isFeedback
+            ? `↺ 0${stepNum} • ${cable.shortTag.toUpperCase()}`
+            : `0${stepNum} • ${cable.shortTag.toUpperCase()}`,
+          color: cable.isFeedback ? '#F43F5E' : cable.color,
+          isFeedback: cable.isFeedback,
+        });
+      });
       return badgeMap;
     }
 
@@ -1442,7 +1508,9 @@ export default function QualityEcosystemPortal() {
           isPulseSpotlight: true,
         });
         badgeMap.set(cable.target, {
-          text: cable.isFeedback ? '↺ RETURN TARGET' : 'CONDUIT TARGET',
+          text: cable.isFeedback
+            ? `↺ RETURN • ${cable.shortTag}`
+            : `STEP #${cable.orderFromSource} • ${cable.shortTag}`,
           color: cable.isFeedback ? '#F43F5E' : '#10B981',
           isPulseSpotlight: true,
         });
@@ -1465,7 +1533,9 @@ export default function QualityEcosystemPortal() {
         }
         const stepNum = idx + 1;
         badgeMap.set(cable.target, {
-          text: cable.isFeedback ? `↺ STEP 0${stepNum} (RETURN)` : `STEP 0${stepNum} TARGET`,
+          text: cable.isFeedback
+            ? `↺ STEP 0${stepNum} • ${cable.shortTag}`
+            : `STEP 0${stepNum} • ${cable.shortTag}`,
           color: cable.isFeedback ? '#F43F5E' : '#10B981',
           isFeedback: cable.isFeedback,
           isPulseSpotlight: simStepIndex === idx,
@@ -1482,7 +1552,7 @@ export default function QualityEcosystemPortal() {
           isFeedback: true,
         });
         badgeMap.set(cable.target, {
-          text: `↺ LOOP #${idx + 1} RETURN`,
+          text: `↺ LOOP #${idx + 1} • ${cable.shortTag}`,
           color: '#F59E0B',
           isFeedback: true,
         });
@@ -1492,7 +1562,7 @@ export default function QualityEcosystemPortal() {
 
     if (activeNodeId) {
       badgeMap.set(activeNodeId, {
-        text: '★ ACTIVE MODULE',
+        text: '★ SELECTED MODULE',
         color: '#38BDF8',
         isPulseSpotlight: true,
       });
@@ -1500,7 +1570,9 @@ export default function QualityEcosystemPortal() {
       const incomingCables = CABLES.filter((c) => c.target === activeNodeId);
       incomingCables.forEach((cable, idx) => {
         badgeMap.set(cable.source, {
-          text: cable.isFeedback ? `↺ RETURN IN #${idx + 1}` : `📥 INPUT #${idx + 1}`,
+          text: cable.isFeedback
+            ? `↺ IN #${idx + 1} • ${cable.shortTag}`
+            : `📥 IN #${idx + 1} • ${cable.shortTag}`,
           color: cable.isFeedback ? '#F43F5E' : '#0EA5E9',
           isFeedback: cable.isFeedback,
         });
@@ -1513,7 +1585,9 @@ export default function QualityEcosystemPortal() {
         const ord = cable.orderFromSource;
         const ordinalText = ord === 1 ? '1st' : ord === 2 ? '2nd' : ord === 3 ? '3rd' : `${ord}th`;
         badgeMap.set(cable.target, {
-          text: cable.isFeedback ? `↺ ${ordinalText}: FEEDBACK` : `📤 ${ordinalText} STEP`,
+          text: cable.isFeedback
+            ? `↺ ${ordinalText} • ${cable.shortTag}`
+            : `📤 ${ordinalText} • ${cable.shortTag}`,
           color: cable.isFeedback ? '#F43F5E' : '#10B981',
           isFeedback: cable.isFeedback,
         });
@@ -1525,7 +1599,9 @@ export default function QualityEcosystemPortal() {
           hop2Cables.forEach((hop2) => {
             if (!badgeMap.has(hop2.target)) {
               badgeMap.set(hop2.target, {
-                text: hop2.isFeedback ? '↺ HOP 2 RETURN' : '⚡ HOP 2 CASCADE',
+                text: hop2.isFeedback
+                  ? `↺ HOP 2 • ${hop2.shortTag}`
+                  : `⚡ HOP 2 • ${hop2.shortTag}`,
                 color: hop2.isFeedback ? '#F43F5E' : '#F59E0B',
                 isFeedback: hop2.isFeedback,
               });
@@ -1644,10 +1720,7 @@ export default function QualityEcosystemPortal() {
   }, [selectedCableId]);
 
   // =========================================================================
-  // SURGICAL ZERO-OVERLAP PCB ROUTING ENGINE
-  // - Adjacent column forward links: smooth corridor S-curve in the 68px gap
-  // - Multi-column forward links: route through Inter-Row Horizontal Alleys (y=291, 475, 659) so they NEVER cross over intermediate cards!
-  // - Feedback / Return links: route through Upper/Lower Highway Bus (y=24, 868)
+  // 100% ORTHOGONAL PCB TRACE ROUTING ENGINE (ZERO DIAGONAL LINES, ZERO OVERLAP)
   // =========================================================================
   const computeCableGeometry = (cable: CableRelation, indexOffset: number) => {
     const src = NODES.find((n) => n.id === cable.source);
@@ -1659,16 +1732,16 @@ export default function QualityEcosystemPortal() {
 
     // Separate outgoing ports vertically by orderFromSource (1st = -20px, 2nd = 0px, 3rd = +20px)
     const outPinOffset = (cable.orderFromSource - 2) * 20;
-    const inPinOffset = ((src.rowIdx - tgt.rowIdx) * 8);
+    const inPinOffset = (src.rowIdx - tgt.rowIdx) * 6;
 
-    // 1. Same Column Local Conduit (runs in the right stage margin)
+    // 1. Same Column Local PCB Trace (runs in the right stage corridor)
     if (isSameColumn) {
       const x1 = src.x + NODE_WIDTH;
       const y1 = src.y + NODE_HEIGHT / 2 + outPinOffset * 0.4;
       const x2 = tgt.x + NODE_WIDTH;
       const y2 = tgt.y + NODE_HEIGHT / 2;
-      const laneX = x1 + (cable.isFeedback ? 32 : 22);
-      const r = 12;
+      const laneX = x1 + (cable.isFeedback ? 34 : 22);
+      const r = 10;
       const dirY = y2 > y1 ? 1 : -1;
 
       const pathD = [
@@ -1682,41 +1755,53 @@ export default function QualityEcosystemPortal() {
 
       const midX = laneX;
       const midY = (y1 + y2) / 2;
-      return { pathD, midX, midY, x1, y1, x2, y2 };
+      return { pathD, midX, midY, x1, y1, x2, y2, isCompactMedallion: true };
     }
 
-    // 2. Adjacent Column Forward Conduit (colSpan === 1): runs cleanly inside the 68px inter-stage gap
+    // 2. Adjacent Column Orthogonal PCB Trace (colSpan === 1):
+    // Exits right pin -> steps into 80px Vertical Corridor (center = x1 + 40 + track*11) -> turns 90° vertically -> enters target left pin!
     if (colSpan === 1) {
       const x1 = src.x + NODE_WIDTH;
       const y1 = src.y + NODE_HEIGHT / 2 + outPinOffset;
       const x2 = tgt.x;
       const y2 = tgt.y + NODE_HEIGHT / 2 + inPinOffset;
-      const dx = (x2 - x1) * 0.55;
-      const cx1 = x1 + dx;
-      const cy1 = y1;
-      const cx2 = x2 - dx;
-      const cy2 = y2;
-      const pathD = `M ${x1} ${y1} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${x2} ${y2}`;
 
-      const tValues = [0.5, 0.36, 0.64];
-      const t = tValues[(cable.orderFromSource - 1) % tValues.length];
-      const mt = 1 - t;
-      const midX =
-        mt * mt * mt * x1 +
-        3 * mt * mt * t * cx1 +
-        3 * mt * t * t * cx2 +
-        t * t * t * x2;
-      const midY =
-        mt * mt * mt * y1 +
-        3 * mt * mt * t * cy1 +
-        3 * mt * t * t * cy2 +
-        t * t * t * y2;
+      const corridorCenter = (x1 + x2) / 2;
+      const laneX = corridorCenter + cable.corridorTrack * 11;
 
-      return { pathD, midX, midY, x1, y1, x2, y2 };
+      if (Math.abs(y2 - y1) < 16) {
+        const pathD = `M ${x1} ${y1} L ${x2} ${y1}`;
+        return {
+          pathD,
+          midX: corridorCenter,
+          midY: y1,
+          x1,
+          y1,
+          x2,
+          y2: y1,
+          isCompactMedallion: true,
+        };
+      }
+
+      const r = 10;
+      const dirY = y2 > y1 ? 1 : -1;
+      const pathD = [
+        `M ${x1} ${y1}`,
+        `L ${laneX - r} ${y1}`,
+        `Q ${laneX} ${y1} ${laneX} ${y1 + dirY * r}`,
+        `L ${laneX} ${y2 - dirY * r}`,
+        `Q ${laneX} ${y2} ${laneX + r} ${y2}`,
+        `L ${x2} ${y2}`,
+      ].join(' ');
+
+      const midX = corridorCenter;
+      const midY = (y1 + y2) / 2 + cable.corridorTrack * 14;
+
+      return { pathD, midX, midY, x1, y1, x2, y2, isCompactMedallion: true };
     }
 
-    // 3. Multi-Column Forward Express Conduit (colSpan >= 2):
-    // Routes into the nearest Inter-Row Horizontal Alley (y=291, y=475, y=659) so it NEVER crosses over intermediate cards!
+    // 3. Multi-Column Forward Express PCB Trace (colSpan >= 2):
+    // Routes through the 28px Horizontal Inter-Row Alley (y=290, 474, 658) with 0% card overlap!
     if (colSpan >= 2) {
       const x1 = src.x + NODE_WIDTH;
       const y1 = src.y + NODE_HEIGHT / 2 + outPinOffset;
@@ -1724,12 +1809,12 @@ export default function QualityEcosystemPortal() {
       const y2 = tgt.y + NODE_HEIGHT / 2 + inPinOffset;
 
       const alleyIndex = cable.alleyRow || (src.rowIdx === 0 ? 1 : src.rowIdx === 3 ? 3 : 2);
-      const baseAlleyY = alleyIndex === 1 ? 291 : alleyIndex === 2 ? 475 : 659;
-      const alleyY = baseAlleyY + ((indexOffset % 3) - 1) * 4;
+      const baseAlleyY = alleyIndex === 1 ? 290 : alleyIndex === 2 ? 474 : 658;
+      const alleyY = baseAlleyY + cable.corridorTrack * 4;
 
-      const exitX = x1 + 26;
-      const entryX = x2 - 26;
-      const r = 12;
+      const exitX = x1 + 28 + cable.corridorTrack * 8;
+      const entryX = x2 - 28 + cable.corridorTrack * 8;
+      const r = 10;
       const dir1 = alleyY >= y1 ? 1 : -1;
       const dir2 = y2 >= alleyY ? 1 : -1;
 
@@ -1746,9 +1831,11 @@ export default function QualityEcosystemPortal() {
         `L ${x2} ${y2}`,
       ].join(' ');
 
-      const midX = (exitX + entryX) / 2;
+      // Place medallion cleanly inside the inter-stage corridor along the horizontal alley
+      const midCorridorX = src.x + NODE_WIDTH + 40 + 332;
+      const midX = midCorridorX;
       const midY = alleyY;
-      return { pathD, midX, midY, x1, y1, x2, y2 };
+      return { pathD, midX, midY, x1, y1, x2, y2, isCompactMedallion: true };
     }
 
     // 4. Orthogonal PCB Highway Routing for Closed-Loop Return / Feedback Cables (colSpan < 0)
@@ -1758,12 +1845,12 @@ export default function QualityEcosystemPortal() {
     const y2 = tgt.y + NODE_HEIGHT / 2;
 
     const useTopHighway = cable.feedbackLane === 'top' || (!cable.feedbackLane && y1 < 450);
-    const laneTrackOffset = (indexOffset % 3) * 9;
-    const highwayY = useTopHighway ? 22 + laneTrackOffset : 872 - laneTrackOffset;
+    const laneTrackOffset = (indexOffset % 3) * 8;
+    const highwayY = useTopHighway ? 22 + laneTrackOffset : 874 - laneTrackOffset;
 
-    const exitCorridorX = x1 - 24;
-    const entryCorridorX = x2 + 24;
-    const r = 14;
+    const exitCorridorX = x1 - 32;
+    const entryCorridorX = x2 + 32;
+    const r = 12;
     const dirToHighway = highwayY < y1 ? -1 : 1;
     const dirFromHighway = y2 > highwayY ? 1 : -1;
 
@@ -1780,10 +1867,10 @@ export default function QualityEcosystemPortal() {
       `L ${x2} ${y2}`,
     ].join(' ');
 
-    const midX = (exitCorridorX + entryCorridorX) / 2 + ((indexOffset % 3) - 1) * 95;
+    const midX = (exitCorridorX + entryCorridorX) / 2 + cable.corridorTrack * 110;
     const midY = highwayY;
 
-    return { pathD, midX, midY, x1, y1, x2, y2 };
+    return { pathD, midX, midY, x1, y1, x2, y2, isCompactMedallion: false };
   };
 
   // Start or toggle a simulation flow with auto-play
@@ -1820,15 +1907,15 @@ export default function QualityEcosystemPortal() {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-sm sm:text-base font-black text-white tracking-tight">
-                QMS 4.0 Autonomous Digital Twin
+                QMS 4.0 Orthogonal PCB Matrix
               </h1>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 hidden sm:flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                Zero-Overlap PCB Routing
+                Zero Card Overlap
               </span>
             </div>
             <p className="text-[11px] text-slate-400 hidden 2xl:block">
-              Numbered 1st➔3rd Port Terminals • Inter-Row PCB Corridors • Closed-Loop Return Highways
+              100% Orthogonal Corridor Traces • Compact Corridor Medallions • Card Rim Action Banners
             </p>
           </div>
         </div>
@@ -2119,7 +2206,7 @@ export default function QualityEcosystemPortal() {
           }}
         >
           {/* Dedicated Top & Bottom PCB Feedback Bus Tracks */}
-          <div className="absolute left-[360px] right-[40px] top-[6px] h-[24px] rounded-full border border-rose-500/25 bg-rose-950/20 flex items-center justify-between px-6 pointer-events-none">
+          <div className="absolute left-[372px] right-[40px] top-[6px] h-[24px] rounded-full border border-rose-500/25 bg-rose-950/20 flex items-center justify-between px-6 pointer-events-none">
             <span className="text-[9px] font-black uppercase tracking-widest text-rose-400 flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-ping" />
               <span>↺ ORTHOGONAL FEEDBACK BUS A (STAGE 06 / 05 ➔ STAGE 04 / 02)</span>
@@ -2129,7 +2216,7 @@ export default function QualityEcosystemPortal() {
             </span>
           </div>
 
-          <div className="absolute left-[360px] right-[40px] bottom-[6px] h-[24px] rounded-full border border-rose-500/25 bg-rose-950/20 flex items-center justify-between px-6 pointer-events-none">
+          <div className="absolute left-[372px] right-[40px] bottom-[6px] h-[24px] rounded-full border border-rose-500/25 bg-rose-950/20 flex items-center justify-between px-6 pointer-events-none">
             <span className="text-[9px] font-black uppercase tracking-widest text-rose-400 flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-ping" />
               <span>↺ ORTHOGONAL FEEDBACK BUS B (STAGE 06 / 05 ➔ STAGE 04 / 02)</span>
@@ -2151,7 +2238,7 @@ export default function QualityEcosystemPortal() {
                   left: `${phase.x}px`,
                   top: '36px',
                   width: `${phase.width}px`,
-                  height: '826px',
+                  height: '822px',
                   boxShadow: isStageIlluminated
                     ? `0 0 35px -5px ${phase.color}30, inset 0 0 20px ${phase.color}15`
                     : 'none',
@@ -2192,7 +2279,7 @@ export default function QualityEcosystemPortal() {
           })}
 
           {/* ------------------------------------------------------------- */}
-          {/* LAYER 1: BACKGROUND CABLES (CLICKABLE PCB CONDUITS) */}
+          {/* LAYER 1: BACKGROUND CABLES (100% ORTHOGONAL PCB TRACES) */}
           {/* ------------------------------------------------------------- */}
           <svg
             className="absolute inset-0 w-full h-full pointer-events-none z-10"
@@ -2208,7 +2295,7 @@ export default function QualityEcosystemPortal() {
                 markerHeight="5"
                 orient="auto-start-reverse"
               >
-                <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="rgba(148, 163, 184, 0.38)" />
+                <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="rgba(148, 163, 184, 0.4)" />
               </marker>
               <marker
                 id="arrowFeedbackMuted"
@@ -2219,7 +2306,7 @@ export default function QualityEcosystemPortal() {
                 markerHeight="5"
                 orient="auto-start-reverse"
               >
-                <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="rgba(244, 63, 94, 0.48)" />
+                <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="rgba(244, 63, 94, 0.5)" />
               </marker>
             </defs>
 
@@ -2235,8 +2322,8 @@ export default function QualityEcosystemPortal() {
                     fill="none"
                     stroke={
                       cable.isFeedback
-                        ? 'rgba(244, 63, 94, 0.25)'
-                        : 'rgba(148, 163, 184, 0.16)'
+                        ? 'rgba(244, 63, 94, 0.26)'
+                        : 'rgba(148, 163, 184, 0.17)'
                     }
                     strokeWidth={cable.isFeedback ? '1.7' : '1.3'}
                     strokeDasharray={cable.isFeedback ? '8, 5' : '4, 5'}
@@ -2244,7 +2331,7 @@ export default function QualityEcosystemPortal() {
                       cable.isFeedback ? 'url(#arrowFeedbackMuted)' : 'url(#arrowMuted)'
                     }
                   />
-                  {/* Invisible wider hit-target so user can click any cable directly */}
+                  {/* Invisible wider hit-target so user can click any PCB trace directly */}
                   <path
                     d={geom.pathD}
                     fill="none"
@@ -2264,7 +2351,7 @@ export default function QualityEcosystemPortal() {
           </svg>
 
           {/* ------------------------------------------------------------- */}
-          {/* LAYER 2: 24 HOLOGRAPHIC SMART CARDS WITH DIRECT SEQUENCE CHIPS */}
+          {/* LAYER 2: 24 HOLOGRAPHIC SMART CARDS WITH RIM ACTION BANNERS */}
           {/* ------------------------------------------------------------- */}
           {NODES.map((node) => {
             const isSelected = selectedNodeId === node.id;
@@ -2313,22 +2400,22 @@ export default function QualityEcosystemPortal() {
                 }}
                 className={`absolute rounded-2xl overflow-visible flex flex-col justify-between cursor-pointer transition-all duration-200 z-20 group backdrop-blur-xl ${
                   isSelected || seqBadge?.isPulseSpotlight
-                    ? 'bg-[#121f38] scale-[1.04]'
+                    ? 'bg-[#121f38] scale-[1.03]'
                     : isHovered
-                    ? 'bg-[#0f192d] scale-[1.03]'
+                    ? 'bg-[#0f192d] scale-[1.02]'
                     : isConnected
                     ? 'bg-[#0d1627]'
                     : 'bg-[#09101d]/95 border border-white/10 hover:border-white/25'
                 } ${isDimmed ? 'opacity-20' : 'opacity-100'}`}
               >
-                {/* Floating Sequence Role Badge on Top-Right of Card */}
+                {/* Floating Sequence & Action Banner on Top Rim of Card (Never Covers Text!) */}
                 {seqBadge && (
                   <div
                     style={{
                       backgroundColor: seqBadge.color,
-                      boxShadow: `0 4px 16px ${seqBadge.color}85`,
+                      boxShadow: `0 4px 16px ${seqBadge.color}80`,
                     }}
-                    className="absolute -top-3 right-3 px-2.5 py-0.5 rounded-full text-[10px] font-black text-slate-950 tracking-wider uppercase z-30 flex items-center gap-1 border border-white/60"
+                    className="absolute -top-3 right-2.5 px-2.5 py-0.5 rounded-full text-[9.5px] font-black text-slate-950 tracking-wider uppercase z-30 flex items-center gap-1 border border-white/60 whitespace-nowrap"
                   >
                     <span>{seqBadge.text}</span>
                   </div>
@@ -2481,7 +2568,7 @@ export default function QualityEcosystemPortal() {
           })}
 
           {/* ------------------------------------------------------------- */}
-          {/* LAYER 3: FOREGROUND HIGHLIGHTED CABLES, ORBS & HUD STEP PILLS */}
+          {/* LAYER 3: FOREGROUND PCB TRACES, ORBS & COMPACT CORRIDOR MEDALLIONS */}
           {/* ------------------------------------------------------------- */}
           <svg
             className="absolute inset-0 w-full h-full pointer-events-none z-30"
@@ -2489,7 +2576,7 @@ export default function QualityEcosystemPortal() {
           >
             <defs>
               <filter id="laserGlow" x="-30%" y="-30%" width="160%" height="160%">
-                <feGaussianBlur stdDeviation="4" result="blur" />
+                <feGaussianBlur stdDeviation="3.5" result="blur" />
                 <feComposite in="SourceGraphic" in2="blur" operator="over" />
               </filter>
 
@@ -2563,13 +2650,13 @@ export default function QualityEcosystemPortal() {
                   key={cable.id}
                   opacity={
                     seqMeta.directionRole === 'ambient'
-                      ? 0.88
+                      ? 0.9
                       : seqMeta.isCurrentStepSpotlight
                       ? 1
                       : 0.72
                   }
                 >
-                  {/* Glowing Base Path */}
+                  {/* Glowing Orthogonal PCB Path */}
                   <path
                     id={`path-${cable.id}`}
                     d={geom.pathD}
@@ -2578,18 +2665,18 @@ export default function QualityEcosystemPortal() {
                     strokeWidth={
                       seqMeta.isCurrentStepSpotlight
                         ? seqMeta.isFeedback
-                          ? '3.4'
-                          : '3'
-                        : '2.2'
+                          ? '3.2'
+                          : '2.8'
+                        : '2.1'
                     }
-                    strokeDasharray={seqMeta.isFeedback ? '10, 5' : 'none'}
+                    strokeDasharray={seqMeta.isFeedback ? '9, 5' : 'none'}
                     filter="url(#laserGlow)"
                     markerEnd={markerId}
                   />
 
-                  {/* Dual Live Travelling Energy Orbs along exact Conduit Path */}
+                  {/* Dual Live Travelling Energy Orbs along exact PCB Path */}
                   <circle
-                    r={seqMeta.isCurrentStepSpotlight ? '4.8' : '3.5'}
+                    r={seqMeta.isCurrentStepSpotlight ? '4.5' : '3.2'}
                     fill="#ffffff"
                     filter="url(#laserGlow)"
                   >
@@ -2600,7 +2687,7 @@ export default function QualityEcosystemPortal() {
                     />
                   </circle>
                   <circle
-                    r={seqMeta.isCurrentStepSpotlight ? '3.8' : '3'}
+                    r={seqMeta.isCurrentStepSpotlight ? '3.5' : '2.8'}
                     fill={strokeColor}
                     filter="url(#laserGlow)"
                   >
@@ -2612,7 +2699,7 @@ export default function QualityEcosystemPortal() {
                     />
                   </circle>
 
-                  {/* 2-Part Cyber HUD Sequence Capsule on the Line (Clickable to inspect payload) */}
+                  {/* Compact Corridor Medallion (56px wide — fits 100% inside the 80px corridor!) */}
                   <g
                     transform={`translate(${geom.midX}, ${geom.midY})`}
                     className="pointer-events-auto cursor-pointer"
@@ -2623,48 +2710,73 @@ export default function QualityEcosystemPortal() {
                       setSelectedCableId(cable.id === selectedCableId ? null : cable.id);
                     }}
                   >
-                    {/* Outer Glass Capsule */}
-                    <rect
-                      x="-92"
-                      y="-13"
-                      width="184"
-                      height="26"
-                      rx="13"
-                      fill="#050b16"
-                      stroke={strokeColor}
-                      strokeWidth={seqMeta.isCurrentStepSpotlight ? '1.8' : '1.3'}
-                    />
-                    {/* Left Solid Numbered Step Pill */}
-                    <rect
-                      x="-90"
-                      y="-11"
-                      width="66"
-                      height="22"
-                      rx="11"
-                      fill={strokeColor}
-                    />
-                    <text
-                      x="-57"
-                      y="3.5"
-                      textAnchor="middle"
-                      fill="#040812"
-                      fontSize="9"
-                      fontWeight="900"
-                      letterSpacing="0.03em"
-                    >
-                      {seqMeta.stepPillText}
-                    </text>
-                    {/* Right Action Label */}
-                    <text
-                      x="34"
-                      y="3.5"
-                      textAnchor="middle"
-                      fill="#F8FAFC"
-                      fontSize="9"
-                      fontWeight="800"
-                    >
-                      {seqMeta.shortTag}
-                    </text>
+                    {geom.isCompactMedallion ? (
+                      <>
+                        <rect
+                          x="-29"
+                          y="-11"
+                          width="58"
+                          height="22"
+                          rx="11"
+                          fill="#050b16"
+                          stroke={strokeColor}
+                          strokeWidth="1.8"
+                        />
+                        <text
+                          x="0"
+                          y="3.5"
+                          textAnchor="middle"
+                          fill={strokeColor}
+                          fontSize="9.5"
+                          fontWeight="900"
+                          letterSpacing="0.03em"
+                        >
+                          {seqMeta.medallionText}
+                        </text>
+                      </>
+                    ) : (
+                      /* Highway Return Bus Capsule (sits in the Top/Bottom Highway above/below all cards) */
+                      <>
+                        <rect
+                          x="-88"
+                          y="-11"
+                          width="176"
+                          height="22"
+                          rx="11"
+                          fill="#050b16"
+                          stroke={strokeColor}
+                          strokeWidth="1.8"
+                        />
+                        <rect
+                          x="-86"
+                          y="-9"
+                          width="54"
+                          height="18"
+                          rx="9"
+                          fill={strokeColor}
+                        />
+                        <text
+                          x="-59"
+                          y="3"
+                          textAnchor="middle"
+                          fill="#040812"
+                          fontSize="8.5"
+                          fontWeight="900"
+                        >
+                          {seqMeta.medallionText}
+                        </text>
+                        <text
+                          x="28"
+                          y="3"
+                          textAnchor="middle"
+                          fill="#F8FAFC"
+                          fontSize="8.5"
+                          fontWeight="800"
+                        >
+                          {seqMeta.shortTag}
+                        </text>
+                      </>
+                    )}
                   </g>
                 </g>
               );
@@ -2879,15 +2991,15 @@ export default function QualityEcosystemPortal() {
             <div className="flex items-center gap-4">
               <span className="flex items-center gap-1.5 text-emerald-300 font-bold">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                <span>Live Backbone Active (Steps 01 ➔ 08 + ↺ Return)</span>
+                <span>100% Orthogonal PCB Traces (0% Card Overlap)</span>
               </span>
               <span className="flex items-center gap-1.5 text-rose-300 font-semibold">
                 <span className="w-2.5 h-0.5 border-b-2 border-dashed border-rose-400 inline-block" />
-                <span>↺ Orthogonal PCB Feedback Bus</span>
+                <span>↺ Dedicated Return Highways</span>
               </span>
             </div>
             <span className="text-[11px] text-slate-300 hidden md:inline">
-              Every card displays its numbered outgoing chips (`1➔`, `2➔`, `↺3➔`) directly on the card footer
+              Compact sequence medallions (`01 ➔`, `1st ➔`, `↺ #1`) sit strictly inside the 80px corridors while action names illuminate on card rims
             </span>
           </div>
         )}
