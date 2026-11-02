@@ -81,6 +81,7 @@ interface CableRelation {
   target: string;
   orderFromSource: number;
   shortTag: string;
+  corridorActionTag: string; // Max 12 chars for bottom deck of 68px corridor medallion
   payloadSpec: string;
   label: string;
   isFeedback: boolean;
@@ -642,7 +643,7 @@ const NODES: BlueprintNode[] = [
 ];
 
 // =========================================================================
-// 2. 100% ORTHOGONAL PCB CONDUITS WITH DEDICATED CORRIDOR TRACKS
+// 2. 100% ORTHOGONAL PCB CONDUITS WITH DOUBLE-DECKER CORRIDOR TAGS
 // =========================================================================
 
 const CABLES: CableRelation[] = [
@@ -653,6 +654,7 @@ const CABLES: CableRelation[] = [
     target: 'inspection_plans',
     orderFromSource: 1,
     shortTag: 'Defect Catalogs',
+    corridorActionTag: 'DEFECT SPECS',
     payloadSpec: 'Payload: { partId, defectCodes[], aqlLevel, tolerances }',
     label: '1st: Feeds standard defect catalogs & acceptance specs to IPQC',
     isFeedback: false,
@@ -666,6 +668,7 @@ const CABLES: CableRelation[] = [
     target: 'fmea',
     orderFromSource: 2,
     shortTag: 'BOM & Process',
+    corridorActionTag: 'BOM TO PFMEA',
     payloadSpec: 'Payload: { bomTree, processSteps[], severityBaseline }',
     label: '2nd: Supplies part BOM & process steps for PFMEA risk analysis',
     isFeedback: false,
@@ -680,6 +683,7 @@ const CABLES: CableRelation[] = [
     target: 'iqc',
     orderFromSource: 1,
     shortTag: 'Gauge Validation',
+    corridorActionTag: 'GAUGE VALID',
     payloadSpec: 'Payload: { gaugeId, calCertValid: true, uncertainty }',
     label: '1st: Validates measurement gauge accuracy before Incoming QC',
     isFeedback: false,
@@ -693,6 +697,7 @@ const CABLES: CableRelation[] = [
     target: 'spc',
     orderFromSource: 2,
     shortTag: 'MSA Reliability',
+    corridorActionTag: 'MSA TO SPC',
     payloadSpec: 'Payload: { grrScore, gaugeBias, linearityStatus }',
     label: '2nd: Ensures measurement system reliability for SPC charts',
     isFeedback: false,
@@ -707,6 +712,7 @@ const CABLES: CableRelation[] = [
     target: 'ncr',
     orderFromSource: 1,
     shortTag: 'Quarantine Lot',
+    corridorActionTag: 'HOLD TO NCR',
     payloadSpec: 'Payload: { shipmentId, rejectedQty, holdTagId, vendorId }',
     label: '1st: Triggers NCR & quarantine hold for rejected inbound material',
     isFeedback: false,
@@ -721,6 +727,7 @@ const CABLES: CableRelation[] = [
     target: 'deviation',
     orderFromSource: 2,
     shortTag: 'Request Concession',
+    corridorActionTag: 'WAIVER REQ',
     payloadSpec: 'Payload: { lotId, deviationReason, RiskSignoff }',
     label: '2nd: Requests conditional concession for urgent production lots',
     isFeedback: false,
@@ -735,6 +742,7 @@ const CABLES: CableRelation[] = [
     target: 'suppliers',
     orderFromSource: 3,
     shortTag: 'Update Rating',
+    corridorActionTag: 'RATE VENDOR',
     payloadSpec: 'Feedback: { vendorId, lotAcceptRate, ppmScoreDelta }',
     label: '3rd (Feedback): Auto-updates vendor scorecard from lot results',
     isFeedback: true,
@@ -749,6 +757,7 @@ const CABLES: CableRelation[] = [
     target: 'audits',
     orderFromSource: 1,
     shortTag: 'Schedule Audit',
+    corridorActionTag: 'VENDOR AUDIT',
     payloadSpec: 'Payload: { vendorId, ratingTier: "C", auditScope }',
     label: '1st: Schedules supplier quality audits for low-rated vendors',
     isFeedback: false,
@@ -765,6 +774,7 @@ const CABLES: CableRelation[] = [
     target: 'inspection_plans',
     orderFromSource: 1,
     shortTag: 'Startup Go/No-Go',
+    corridorActionTag: 'LINE GO/NOGO',
     payloadSpec: 'Payload: { lineId, fpiApproved: true, recipeVerified }',
     label: '1st: Authorizes line startup & mandatory First Piece check',
     isFeedback: false,
@@ -778,6 +788,7 @@ const CABLES: CableRelation[] = [
     target: 'daily_defects',
     orderFromSource: 1,
     shortTag: 'Log Patrol Defect',
+    corridorActionTag: 'LOG DEFECT',
     payloadSpec: 'Payload: { stationId, checkId, failedSpec, samplePhoto }',
     label: '1st: Logs live defects detected during IPQC patrol checks',
     isFeedback: false,
@@ -791,6 +802,7 @@ const CABLES: CableRelation[] = [
     target: 'ncr',
     orderFromSource: 1,
     shortTag: 'Escalate to NCR',
+    corridorActionTag: 'ESCALATE NCR',
     payloadSpec: 'Payload: { defectId, severity: "CRITICAL", batchHold }',
     label: '1st: Escalates critical shopfloor defects into formal NCR',
     isFeedback: false,
@@ -804,6 +816,7 @@ const CABLES: CableRelation[] = [
     target: 'spc',
     orderFromSource: 2,
     shortTag: 'Live SPC Stream',
+    corridorActionTag: 'SPC STREAM',
     payloadSpec: 'Payload: { subgroupValues[], timestamp, shiftId }',
     label: '2nd: Streams live defect telemetry into SPC control charts',
     isFeedback: false,
@@ -818,6 +831,7 @@ const CABLES: CableRelation[] = [
     target: 'defect_cost',
     orderFromSource: 3,
     shortTag: 'Scrap Cost (COPQ)',
+    corridorActionTag: 'COPQ SCRAP',
     payloadSpec: 'Payload: { scrapQty, reworkHours, unitMaterialCost }',
     label: '3rd: Calculates daily scrap and rework financial impact',
     isFeedback: false,
@@ -831,6 +845,7 @@ const CABLES: CableRelation[] = [
     target: 'capa_records',
     orderFromSource: 1,
     shortTag: 'Audit CAPA',
+    corridorActionTag: 'LPA TO CAPA',
     payloadSpec: 'Payload: { lpaAuditId, nonCompliantStep, shiftSupervisor }',
     label: '1st: Opens CAPA for non-compliant process audit findings',
     isFeedback: false,
@@ -845,6 +860,7 @@ const CABLES: CableRelation[] = [
     target: 'setup_readiness',
     orderFromSource: 2,
     shortTag: 'Verify Clearance',
+    corridorActionTag: 'SETUP CHECK',
     payloadSpec: 'Feedback: { setupChecklistId, pokaYokeVerified: true }',
     label: '2nd (Feedback): Reinforces operator setup checklist compliance',
     isFeedback: true,
@@ -861,6 +877,7 @@ const CABLES: CableRelation[] = [
     target: 'eight_d',
     orderFromSource: 1,
     shortTag: 'Launch 8D',
+    corridorActionTag: 'LAUNCH 8D',
     payloadSpec: 'Payload: { ncrId, containmentActions, d1TeamList[] }',
     label: '1st: Launches structured 8D root cause investigation',
     isFeedback: false,
@@ -874,6 +891,7 @@ const CABLES: CableRelation[] = [
     target: 'capa_records',
     orderFromSource: 2,
     shortTag: 'Open CAPA Plan',
+    corridorActionTag: 'OPEN CAPA',
     payloadSpec: 'Payload: { ncrId, rootCauseSummary, targetDueDate }',
     label: '2nd: Initiates corrective & preventive action plan (CAPA)',
     isFeedback: false,
@@ -887,6 +905,7 @@ const CABLES: CableRelation[] = [
     target: 'defect_cost',
     orderFromSource: 3,
     shortTag: 'Log Quarantine Loss',
+    corridorActionTag: 'HOLD LOSS',
     payloadSpec: 'Payload: { ncrId, disposition: "SCRAP", financialLoss }',
     label: '3rd: Records quarantine sorting & batch scrap losses',
     isFeedback: false,
@@ -900,6 +919,7 @@ const CABLES: CableRelation[] = [
     target: 'ncr',
     orderFromSource: 1,
     shortTag: 'RMA to NCR',
+    corridorActionTag: 'RMA TO NCR',
     payloadSpec: 'Payload: { rmaNumber, customerCode, returnedBatchId }',
     label: '1st: Converts customer RMA claim into formal containment NCR',
     isFeedback: false,
@@ -913,6 +933,7 @@ const CABLES: CableRelation[] = [
     target: 'eight_d',
     orderFromSource: 2,
     shortTag: 'Mandate 8D Report',
+    corridorActionTag: 'MANDATE 8D',
     payloadSpec: 'Payload: { vocClaimId, sla48hContainment, d8ReportReq }',
     label: '2nd: Mandates formal 8D root cause report for customer',
     isFeedback: false,
@@ -926,6 +947,7 @@ const CABLES: CableRelation[] = [
     target: 'change_control',
     orderFromSource: 1,
     shortTag: 'Route to ECN',
+    corridorActionTag: 'ROUTE TO ECN',
     payloadSpec: 'Payload: { concessionId, specChangeRequest, mrbApproval }',
     label: '1st: Routes temporary deviation for permanent ECN review',
     isFeedback: false,
@@ -939,6 +961,7 @@ const CABLES: CableRelation[] = [
     target: 'control_tower',
     orderFromSource: 1,
     shortTag: 'COPQ KPI Feed',
+    corridorActionTag: 'COPQ STREAM',
     payloadSpec: 'Payload: { monthlyCopqTotal, scrapRatio, warrantyCost }',
     label: '1st: Reports COPQ financial impact to Executive Control Tower',
     isFeedback: false,
@@ -955,6 +978,7 @@ const CABLES: CableRelation[] = [
     target: 'fmea',
     orderFromSource: 1,
     shortTag: 'Update PFMEA RPN',
+    corridorActionTag: 'UPDATE RPN',
     payloadSpec: 'Payload: { d4RootCause, failureModeId, newOccurrenceRPN }',
     label: '1st: Updates PFMEA risk matrix with newly discovered failure modes',
     isFeedback: false,
@@ -968,6 +992,7 @@ const CABLES: CableRelation[] = [
     target: 'control_plan',
     orderFromSource: 2,
     shortTag: 'Add Poka-Yoke',
+    corridorActionTag: 'ADD POKAYOKE',
     payloadSpec: 'Payload: { d5PermanentFix, errorProofingSpec, reactionPlan }',
     label: '2nd: Enforces new poka-yoke controls in Dynamic Control Plan',
     isFeedback: false,
@@ -981,6 +1006,7 @@ const CABLES: CableRelation[] = [
     target: 'knowledge_base',
     orderFromSource: 3,
     shortTag: 'Archive Lesson',
+    corridorActionTag: 'SAVE LESSON',
     payloadSpec: 'Payload: { d8LessonLearned, horizontalDeployment[] }',
     label: '3rd: Archives verified root cause in Lessons Learned Hub',
     isFeedback: false,
@@ -994,6 +1020,7 @@ const CABLES: CableRelation[] = [
     target: 'change_control',
     orderFromSource: 1,
     shortTag: 'Trigger ECN',
+    corridorActionTag: 'TRIGGER ECN',
     payloadSpec: 'Payload: { capaId, toolingModification, drawingRev }',
     label: '1st: Triggers formal Engineering Change Notice (ECN)',
     isFeedback: false,
@@ -1007,6 +1034,7 @@ const CABLES: CableRelation[] = [
     target: 'command_center',
     orderFromSource: 2,
     shortTag: 'Track Action SLA',
+    corridorActionTag: 'TRACK SLA',
     payloadSpec: 'Payload: { actionOwner, dueDate, effectivenessCheck }',
     label: '2nd: Tracks CAPA due dates and departmental closure SLA',
     isFeedback: false,
@@ -1020,6 +1048,7 @@ const CABLES: CableRelation[] = [
     target: 'control_plan',
     orderFromSource: 1,
     shortTag: 'Revise Specs',
+    corridorActionTag: 'REVISE SPECS',
     payloadSpec: 'Payload: { ecnNumber, updatedTolerances, effectiveDate }',
     label: '1st: Revises Control Plan specifications after ECN approval',
     isFeedback: false,
@@ -1033,6 +1062,7 @@ const CABLES: CableRelation[] = [
     target: 'control_tower',
     orderFromSource: 1,
     shortTag: 'Closure Velocity',
+    corridorActionTag: 'SLA STREAM',
     payloadSpec: 'Payload: { onTimeClosureRate, overdueCount, escalations }',
     label: '1st: Broadcasts action closure KPIs to Quality Control Tower',
     isFeedback: false,
@@ -1049,6 +1079,7 @@ const CABLES: CableRelation[] = [
     target: 'control_plan',
     orderFromSource: 1,
     shortTag: 'Critical Specs',
+    corridorActionTag: 'CTQ TO PLAN',
     payloadSpec: 'Payload: { criticalCTQs[], rpnThreshold, sampleFreq }',
     label: '1st: Transfers high-RPN characteristics to Dynamic Control Plan',
     isFeedback: false,
@@ -1062,6 +1093,7 @@ const CABLES: CableRelation[] = [
     target: 'spc',
     orderFromSource: 1,
     shortTag: 'Set USL / LSL',
+    corridorActionTag: 'SET USL/LSL',
     payloadSpec: 'Payload: { characteristicId, usl, lsl, targetCpk: 1.67 }',
     label: '1st: Sets USL/LSL specification limits for SPC control charts',
     isFeedback: false,
@@ -1075,6 +1107,7 @@ const CABLES: CableRelation[] = [
     target: 'inspection_plans',
     orderFromSource: 2,
     shortTag: 'Return Specs to IPQC',
+    corridorActionTag: 'RETURN SPECS',
     payloadSpec: 'Feedback Loop: { controlPlanRev, newCheckpoints[], gaugeType }',
     label: '2nd (Feedback Loop): Deploys updated inspection specs back to Shopfloor IPQC',
     isFeedback: true,
@@ -1089,6 +1122,7 @@ const CABLES: CableRelation[] = [
     target: 'inspection_plans',
     orderFromSource: 1,
     shortTag: 'Publish Checklists',
+    corridorActionTag: 'DEPLOY FORMS',
     payloadSpec: 'Feedback Loop: { templateId, digitalFields[], mandatoryPhotos }',
     label: '1st (Feedback Loop): Publishes digital checklists back to Shopfloor IPQC',
     isFeedback: true,
@@ -1103,6 +1137,7 @@ const CABLES: CableRelation[] = [
     target: 'lpa',
     orderFromSource: 2,
     shortTag: 'Deploy LPA Forms',
+    corridorActionTag: 'LPA SHEETS',
     payloadSpec: 'Feedback Loop: { lpaFormSchema, shiftLayerRules[] }',
     label: '2nd (Feedback Loop): Deploys custom audit templates back to Shopfloor LPA',
     isFeedback: true,
@@ -1117,6 +1152,7 @@ const CABLES: CableRelation[] = [
     target: 'ai_copilot',
     orderFromSource: 1,
     shortTag: 'Train AI Model',
+    corridorActionTag: 'TRAIN AI',
     payloadSpec: 'Payload: { solved8DVectors[], rootCauseEmbeddings }',
     label: '1st: Trains AI Copilot on historical 8D solutions & patterns',
     isFeedback: false,
@@ -1132,6 +1168,7 @@ const CABLES: CableRelation[] = [
     target: 'control_tower',
     orderFromSource: 1,
     shortTag: 'Live Cpk Feed',
+    corridorActionTag: 'CPK STREAM',
     payloadSpec: 'Payload: { cpkIndex, nelsonRuleViolations, oocAlerts }',
     label: '1st: Streams live Cp/Cpk capability metrics to Control Tower',
     isFeedback: false,
@@ -1145,6 +1182,7 @@ const CABLES: CableRelation[] = [
     target: 'ai_copilot',
     orderFromSource: 2,
     shortTag: 'Drift Telemetry',
+    corridorActionTag: 'DRIFT TO AI',
     payloadSpec: 'Payload: { xBarTrend, toolWearSlope, anomalyScore }',
     label: '2nd: Feeds process drift trends to AI for predictive alerts',
     isFeedback: false,
@@ -1158,6 +1196,7 @@ const CABLES: CableRelation[] = [
     target: 'eight_d',
     orderFromSource: 1,
     shortTag: 'AI Root Cause',
+    corridorActionTag: 'AI 8D DRAFT',
     payloadSpec: 'Feedback Loop: { predictedRootCause, confidence: 0.96, suggestedD5 }',
     label: '1st (Feedback Loop): Recommends AI-generated root causes back to 8D teams',
     isFeedback: true,
@@ -1172,6 +1211,7 @@ const CABLES: CableRelation[] = [
     target: 'capa_records',
     orderFromSource: 1,
     shortTag: 'Audit to CAPA',
+    corridorActionTag: 'AUDIT CAPA',
     payloadSpec: 'Feedback Loop: { auditFindingId, clauseRef, mandatoryCapa }',
     label: '1st (Feedback Loop): Generates CAPA actions from audit non-conformities',
     isFeedback: true,
@@ -1183,7 +1223,6 @@ const CABLES: CableRelation[] = [
 ];
 
 // Master End-to-End 6-Stage Value Stream Backbone (1 clean medallion per corridor in Default View!)
-// Stage 01 (Master Data) -> Stage 02 (IPQC -> Defect Log) -> Stage 03 (NCR) -> Stage 04 (8D) -> Stage 05 (PFMEA -> Ctrl Plan) -> Stage 06 (SPC) + ↺ Return Loop
 const MASTER_BACKBONE_SEQUENCE = ['c1', 'c10', 'c11', 'c17', 'c23', 'c30', 'c32', 'c31'];
 
 // Ordered Simulation Scenarios with Step-by-Step Auto-Player support
@@ -1214,8 +1253,8 @@ export default function QualityEcosystemPortal() {
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Pan & Zoom State
-  const [zoom, setZoom] = useState<number>(0.74);
-  const [pan, setPan] = useState<{ x: number; y: number }>({ x: 20, y: 20 });
+  const [zoom, setZoom] = useState<number>(0.72);
+  const [pan, setPan] = useState<{ x: number; y: number }>({ x: 20, y: 12 });
   const [isPanning, setIsPanning] = useState(false);
   const [startPoint, setStartPoint] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [hasMoved, setHasMoved] = useState(false);
@@ -1237,10 +1276,10 @@ export default function QualityEcosystemPortal() {
     const { clientWidth, clientHeight } = containerRef.current;
     if (clientWidth === 0 || clientHeight === 0) return;
 
-    const padding = 16;
+    const padding = 14;
     const scaleX = (clientWidth - padding * 2) / CANVAS_WIDTH;
     const scaleY = (clientHeight - padding * 2) / CANVAS_HEIGHT;
-    const optimalZoom = Math.min(Math.max(Math.min(scaleX, scaleY), 0.44), 1.05);
+    const optimalZoom = Math.min(Math.max(Math.min(scaleX, scaleY), 0.42), 1.05);
 
     const centerX = (clientWidth - CANVAS_WIDTH * optimalZoom) / 2;
     const centerY = (clientHeight - CANVAS_HEIGHT * optimalZoom) / 2;
@@ -1338,12 +1377,14 @@ export default function QualityEcosystemPortal() {
   const isIdleLensActive = !activeNodeId && !selectedCableId && activeSimulation === 'none';
 
   // Compute exact sequence metadata for highlighted cables
+  // Double-Decker Medallions (68px wide x 26px tall) show BOTH order (Top Deck) and action verb (Bottom Deck)!
   const activeCableSequenceMap = useMemo(() => {
     const map = new Map<
       string,
       {
         stepNumber: number;
         medallionText: string;
+        actionSubText: string;
         shortTag: string;
         isFeedback: boolean;
         isCurrentStepSpotlight: boolean;
@@ -1364,16 +1405,17 @@ export default function QualityEcosystemPortal() {
           const isAdjSameCol =
             src && tgt && src.colIdx === tgt.colIdx && Math.abs(src.rowIdx - tgt.rowIdx) === 1;
           const dirArrow = cable.isFeedback
-            ? `↺ 0${stepNum}`
+            ? `↺ STEP 0${stepNum}`
             : isAdjSameCol
             ? tgt.rowIdx > src.rowIdx
-              ? `0${stepNum} ▼`
-              : `0${stepNum} ▲`
-            : `0${stepNum} ➔`;
+              ? `STEP 0${stepNum} ▼`
+              : `STEP 0${stepNum} ▲`
+            : `STEP 0${stepNum} ➔`;
 
           map.set(cableId, {
             stepNumber: stepNum,
             medallionText: dirArrow,
+            actionSubText: cable.corridorActionTag,
             shortTag: cable.shortTag,
             isFeedback: cable.isFeedback,
             isCurrentStepSpotlight: true,
@@ -1397,6 +1439,7 @@ export default function QualityEcosystemPortal() {
                 ? '1st ▼'
                 : '1st ▲'
               : '1st ➔',
+            actionSubText: cable.corridorActionTag,
             shortTag: cable.shortTag,
             isFeedback: false,
             isCurrentStepSpotlight: true,
@@ -1412,7 +1455,8 @@ export default function QualityEcosystemPortal() {
         CABLES.filter((c) => c.isFeedback).forEach((cable) => {
           map.set(cable.id, {
             stepNumber: fbIndex,
-            medallionText: `↺ #${fbIndex}`,
+            medallionText: `↺ LOOP #${fbIndex}`,
+            actionSubText: cable.corridorActionTag,
             shortTag: cable.shortTag,
             isFeedback: true,
             isCurrentStepSpotlight: true,
@@ -1434,6 +1478,7 @@ export default function QualityEcosystemPortal() {
         map.set(cable.id, {
           stepNumber: ord,
           medallionText: cable.isFeedback ? `↺ ${ordinalText}` : `${ordinalText} ➔`,
+          actionSubText: cable.corridorActionTag,
           shortTag: cable.shortTag,
           isFeedback: cable.isFeedback,
           isCurrentStepSpotlight: true,
@@ -1455,7 +1500,8 @@ export default function QualityEcosystemPortal() {
         const isSpotlight = simStepIndex === null || simStepIndex === idx;
         map.set(cableId, {
           stepNumber: stepNum,
-          medallionText: cable.isFeedback ? `↺ #${stepNum}` : `STEP ${stepNum}`,
+          medallionText: cable.isFeedback ? `↺ STEP 0${stepNum}` : `STEP 0${stepNum} ➔`,
+          actionSubText: cable.corridorActionTag,
           shortTag: cable.shortTag,
           isFeedback: cable.isFeedback,
           isCurrentStepSpotlight: isSpotlight,
@@ -1473,7 +1519,8 @@ export default function QualityEcosystemPortal() {
         const inNum = idx + 1;
         map.set(cable.id, {
           stepNumber: inNum,
-          medallionText: cable.isFeedback ? `↺ IN ${inNum}` : `IN #${inNum}`,
+          medallionText: cable.isFeedback ? `↺ IN #${inNum}` : `📥 IN #${inNum}`,
+          actionSubText: cable.corridorActionTag,
           shortTag: cable.shortTag,
           isFeedback: cable.isFeedback,
           isCurrentStepSpotlight: true,
@@ -1497,6 +1544,7 @@ export default function QualityEcosystemPortal() {
         map.set(cable.id, {
           stepNumber: ord,
           medallionText: cable.isFeedback ? `↺ ${ordinalText}` : `${ordinalText} ${arrowChar}`,
+          actionSubText: cable.corridorActionTag,
           shortTag: cable.shortTag,
           isFeedback: cable.isFeedback,
           isCurrentStepSpotlight: true,
@@ -1516,7 +1564,8 @@ export default function QualityEcosystemPortal() {
             if (!map.has(hop2.id)) {
               map.set(hop2.id, {
                 stepNumber: hop1Cable.orderFromSource + 10,
-                medallionText: hop2.isFeedback ? `↺ HOP2` : `HOP 2`,
+                medallionText: hop2.isFeedback ? `↺ HOP 2` : `HOP 2 ➔`,
+                actionSubText: hop2.corridorActionTag,
                 shortTag: hop2.shortTag,
                 isFeedback: hop2.isFeedback,
                 isCurrentStepSpotlight: false,
@@ -1735,6 +1784,7 @@ export default function QualityEcosystemPortal() {
         orderNum: number;
         targetId: string;
         targetShortName: string;
+        shortTag: string;
         isFeedback: boolean;
       }>
     > = {};
@@ -1749,6 +1799,7 @@ export default function QualityEcosystemPortal() {
             orderNum: c.orderFromSource,
             targetId: c.target,
             targetShortName: tgt?.shortName || c.target,
+            shortTag: c.shortTag,
             isFeedback: c.isFeedback,
           };
         });
@@ -1770,7 +1821,7 @@ export default function QualityEcosystemPortal() {
     );
   }, [searchQuery]);
 
-  // Active node details for bottom status bar
+  // Active node details for Top Sequence Ribbon & Bottom Status Bar
   const activeNodeInfo = useMemo(() => {
     if (!activeNodeId) return null;
     const node = NODES.find((n) => n.id === activeNodeId);
@@ -1783,6 +1834,7 @@ export default function QualityEcosystemPortal() {
         cable: c,
         orderNum: idx + 1,
         sourceId: c.source,
+        sourceShortName: srcNode?.shortName || c.source,
         sourceName: srcNode?.title || c.source,
       };
     });
@@ -1795,6 +1847,7 @@ export default function QualityEcosystemPortal() {
           cable: c,
           orderNum: c.orderFromSource,
           targetId: c.target,
+          targetShortName: tgtNode?.shortName || c.target,
           targetName: tgtNode?.title || c.target,
         };
       });
@@ -1820,7 +1873,7 @@ export default function QualityEcosystemPortal() {
   // =========================================================================
   // 100% ORTHOGONAL PCB TRACE ROUTING ENGINE (ZERO DIAGONAL LINES, ZERO OVERLAP)
   // =========================================================================
-  const computeCableGeometry = (cable: CableRelation, indexOffset: number) => {
+  const computeCableGeometry = useCallback((cable: CableRelation, indexOffset: number) => {
     const src = NODES.find((n) => n.id === cable.source);
     const tgt = NODES.find((n) => n.id === cable.target);
     if (!src || !tgt) return null;
@@ -1833,7 +1886,6 @@ export default function QualityEcosystemPortal() {
     const inPinOffset = (src.rowIdx - tgt.rowIdx) * 6;
 
     // 1A. Adjacent-Row Same-Column Direct Vertical Bridge across the 36px Inter-Row Alley!
-    // Keeps the inter-stage vertical corridors 100% free of same-column vertical jumpers!
     if (isSameColumn && Math.abs(src.rowIdx - tgt.rowIdx) === 1) {
       const goingDown = tgt.rowIdx > src.rowIdx;
       const xBridge = src.x + 64; // Left-center of card (far away from right-2 top rim banner!)
@@ -1943,7 +1995,6 @@ export default function QualityEcosystemPortal() {
         `L ${x2} ${y2}`,
       ].join(' ');
 
-      // Stagger corridor placement by orderFromSource so two multi-column cables never share a corridor!
       const corridorHop = cable.orderFromSource % 2 === 1 ? 0 : 1;
       const midCorridorX = src.x + NODE_WIDTH + 40 + corridorHop * 332;
       const midX = midCorridorX;
@@ -1984,7 +2035,37 @@ export default function QualityEcosystemPortal() {
     const midY = highwayY;
 
     return { pathD, midX, midY, x1, y1, x2, y2, isCompactMedallion: false };
-  };
+  }, []);
+
+  // Anti-collision pass for active medallions so no two medallions can ever overlap!
+  const deOverlappedActiveGeometries = useMemo(() => {
+    const result = new Map<
+      string,
+      NonNullable<ReturnType<typeof computeCableGeometry>>
+    >();
+    const placedPoints: Array<{ x: number; y: number }> = [];
+
+    CABLES.forEach((cable, idx) => {
+      if (!activeCableSequenceMap.has(cable.id)) return;
+      const geom = computeCableGeometry(cable, idx);
+      if (!geom) return;
+
+      let adjustedY = geom.midY;
+      // Nudge vertically if within 32px vertically and 64px horizontally of an already placed medallion
+      for (let attempt = 0; attempt < 6; attempt++) {
+        const collision = placedPoints.find(
+          (pt) => Math.abs(pt.x - geom.midX) < 64 && Math.abs(pt.y - adjustedY) < 30
+        );
+        if (!collision) break;
+        adjustedY += attempt % 2 === 0 ? 30 : -30;
+      }
+
+      placedPoints.push({ x: geom.midX, y: adjustedY });
+      result.set(cable.id, { ...geom, midY: adjustedY });
+    });
+
+    return result;
+  }, [activeCableSequenceMap, computeCableGeometry]);
 
   // Start or toggle a simulation flow with auto-play
   const triggerSimulation = (simType: 'defect' | 'supplier' | 'prevention') => {
@@ -2002,6 +2083,28 @@ export default function QualityEcosystemPortal() {
     }
   };
 
+  // Sequence chain for the Docked Top Pipeline Ribbon
+  const activePipelineSequence = useMemo(() => {
+    const seqIds =
+      activeSimulation !== 'none'
+        ? SIMULATION_SCENARIOS[activeSimulation].cableSequence
+        : MASTER_BACKBONE_SEQUENCE;
+    return seqIds
+      .map((id, idx) => {
+        const cable = CABLES.find((c) => c.id === id);
+        if (!cable) return null;
+        const src = NODES.find((n) => n.id === cable.source);
+        const tgt = NODES.find((n) => n.id === cable.target);
+        return {
+          stepNum: idx + 1,
+          cable,
+          src,
+          tgt,
+        };
+      })
+      .filter(Boolean);
+  }, [activeSimulation]);
+
   return (
     <div
       className="h-full max-h-full overflow-hidden flex flex-col select-none relative w-full text-white bg-[#040812] font-sans"
@@ -2010,25 +2113,22 @@ export default function QualityEcosystemPortal() {
       {/* ========================================================================= */}
       {/* 1. TOP COMMAND BAR (SCENARIO SIMULATOR, 4 ARCHITECTURAL LENSES & ZOOM) */}
       {/* ========================================================================= */}
-      <header className="h-14 px-3 sm:px-5 border-b border-white/10 bg-[#070d19]/95 backdrop-blur-2xl flex items-center justify-between shrink-0 z-30 gap-2">
+      <header className="h-13 px-3 sm:px-5 border-b border-white/10 bg-[#070d19]/95 backdrop-blur-2xl flex items-center justify-between shrink-0 z-30 gap-2 py-1.5">
         {/* Brand & Ecosystem Title */}
         <div className="flex items-center gap-3 shrink-0">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#0066CC] to-[#00A3E0] flex items-center justify-center shadow-[0_0_25px_rgba(0,163,224,0.45)] border border-sky-400/40">
-            <Network className="w-5 h-5 text-white" />
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#0066CC] to-[#00A3E0] flex items-center justify-center shadow-[0_0_25px_rgba(0,163,224,0.45)] border border-sky-400/40">
+            <Network className="w-4 h-4 text-white" />
           </div>
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-sm sm:text-base font-black text-white tracking-tight">
                 QMS 4.0 Digital Twin Matrix
               </h1>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 hidden xl:flex items-center gap-1">
+              <span className="text-[9.5px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 hidden xl:flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                Zero-Overlap PCB
+                Double-Decker Corridor HUD
               </span>
             </div>
-            <p className="text-[10.5px] text-slate-400 hidden 2xl:block">
-              6-Stage Closed-Loop Value Stream • 24 Modules • 39 Sequenced Conduits
-            </p>
           </div>
         </div>
 
@@ -2191,9 +2291,8 @@ export default function QualityEcosystemPortal() {
 
         {/* Search & Zoom Controls */}
         <div className="flex items-center gap-2 shrink-0">
-          {/* Search Module Input */}
           <div className="relative">
-            <div className="flex items-center gap-1.5 bg-white/[0.05] border border-white/10 rounded-xl px-3 py-1.5 focus-within:border-sky-400/60 transition-colors w-36 sm:w-44">
+            <div className="flex items-center gap-1.5 bg-white/[0.05] border border-white/10 rounded-xl px-3 py-1 focus-within:border-sky-400/60 transition-colors w-36 sm:w-44">
               <Search className="w-3.5 h-3.5 text-slate-400" />
               <input
                 type="text"
@@ -2229,12 +2328,11 @@ export default function QualityEcosystemPortal() {
             )}
           </div>
 
-          {/* Zoom & Fit Controls */}
           <div className="flex items-center gap-1 bg-white/[0.05] border border-white/10 rounded-xl p-1">
             <button
               type="button"
               onClick={() => setZoom((z) => Math.min(z + 0.12, 1.5))}
-              className="p-1.5 rounded-lg hover:bg-white/10 text-slate-300 hover:text-white"
+              className="p-1 rounded-lg hover:bg-white/10 text-slate-300 hover:text-white"
               title="Zoom In"
             >
               <ZoomIn className="w-3.5 h-3.5" />
@@ -2245,7 +2343,7 @@ export default function QualityEcosystemPortal() {
             <button
               type="button"
               onClick={() => setZoom((z) => Math.max(z - 0.12, 0.45))}
-              className="p-1.5 rounded-lg hover:bg-white/10 text-slate-300 hover:text-white"
+              className="p-1 rounded-lg hover:bg-white/10 text-slate-300 hover:text-white"
               title="Zoom Out"
             >
               <ZoomOut className="w-3.5 h-3.5" />
@@ -2254,7 +2352,7 @@ export default function QualityEcosystemPortal() {
             <button
               type="button"
               onClick={fitToScreen}
-              className="p-1.5 rounded-lg hover:bg-white/10 text-sky-400 hover:text-sky-300"
+              className="p-1 rounded-lg hover:bg-white/10 text-sky-400 hover:text-sky-300"
               title="Fit to Screen"
             >
               <Maximize2 className="w-3.5 h-3.5" />
@@ -2264,7 +2362,193 @@ export default function QualityEcosystemPortal() {
       </header>
 
       {/* ========================================================================= */}
-      {/* 2. INTERACTIVE NODE CANVAS (PAN & ZOOM + FLOATING STORYBOARD HUD) */}
+      {/* 1B. DOCKED INTERACTIVE SEQUENCE PIPELINE RIBBON (NEVER COVERS CARDS!) */}
+      {/* ========================================================================= */}
+      <div className="h-9 px-4 border-b border-white/10 bg-[#060b16] flex items-center justify-between gap-2 shrink-0 z-30 overflow-x-auto no-scrollbar">
+        {activeNodeInfo ? (
+          /* Live Node Input ➔ Module ➔ Ordered Output Equation at Eye Level! */
+          <div className="flex items-center gap-2 text-[11px] w-full justify-between">
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+              <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-500/30 shrink-0">
+                📥 Incoming ({activeNodeInfo.incoming.length})
+              </span>
+              {activeNodeInfo.incoming.map((inc) => (
+                <button
+                  key={inc.cable.id}
+                  type="button"
+                  onClick={() => setSelectedNodeId(inc.sourceId)}
+                  className={`px-2 py-0.5 rounded text-[10.5px] font-bold flex items-center gap-1 shrink-0 border ${
+                    inc.cable.isFeedback
+                      ? 'bg-rose-500/20 text-rose-200 border-rose-500/40'
+                      : 'bg-white/[0.06] text-slate-200 border-white/15 hover:bg-white/15'
+                  }`}
+                >
+                  <span className="font-black text-sky-400">
+                    {inc.cable.isFeedback ? `↺ IN#${inc.orderNum}` : `IN#${inc.orderNum}`}
+                  </span>
+                  <span>{inc.sourceShortName}</span>
+                  <span className="text-[9.5px] text-slate-400">({inc.cable.shortTag})</span>
+                </button>
+              ))}
+
+              <ArrowRight className="w-3.5 h-3.5 text-sky-400 shrink-0 mx-1" />
+
+              {/* Center Selected Module Pill */}
+              <div className="px-2.5 py-0.5 rounded-lg bg-sky-500 text-slate-950 font-black text-[11px] flex items-center gap-1.5 shrink-0 shadow-[0_0_15px_rgba(56,189,248,0.5)]">
+                <span>★ {activeNodeInfo.node.seqCode}</span>
+                <span>{activeNodeInfo.node.title}</span>
+              </div>
+
+              <ArrowRight className="w-3.5 h-3.5 text-emerald-400 shrink-0 mx-1" />
+
+              {/* Ordered Outgoing Sequence Pills (1st, 2nd, 3rd) */}
+              <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shrink-0">
+                📤 Ordered Sequence ({activeNodeInfo.outgoing.length})
+              </span>
+              {activeNodeInfo.outgoing.map((out) => {
+                const ord =
+                  out.orderNum === 1
+                    ? '1st'
+                    : out.orderNum === 2
+                    ? '2nd'
+                    : out.orderNum === 3
+                    ? '3rd'
+                    : `${out.orderNum}th`;
+                return (
+                  <button
+                    key={out.cable.id}
+                    type="button"
+                    onClick={() => setSelectedNodeId(out.targetId)}
+                    className={`px-2 py-0.5 rounded text-[10.5px] font-bold flex items-center gap-1 shrink-0 border ${
+                      out.cable.isFeedback
+                        ? 'bg-rose-500/20 text-rose-200 border-rose-500/40'
+                        : 'bg-emerald-500/15 text-emerald-200 border-emerald-500/30 hover:bg-emerald-500/25'
+                    }`}
+                  >
+                    <span
+                      className={`px-1 rounded text-[9.5px] font-black ${
+                        out.cable.isFeedback
+                          ? 'bg-rose-500 text-white'
+                          : 'bg-emerald-400 text-slate-950'
+                      }`}
+                    >
+                      {out.cable.isFeedback ? `↺ ${ord}` : `${ord} ➔`}
+                    </span>
+                    <span>{out.targetShortName}</span>
+                    <span className="text-[9.5px] text-emerald-300/80">
+                      ({out.cable.shortTag})
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          /* Default / Simulation Ordered Step-by-Step Pipeline Ribbon (Steps 01 ➔ 08) */
+          <div className="flex items-center justify-between w-full gap-2">
+            <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
+              <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-sky-500/15 text-sky-300 border border-sky-500/30 shrink-0 mr-1">
+                {activeSimulation !== 'none'
+                  ? SIMULATION_SCENARIOS[activeSimulation].title
+                  : '⚡ Master Sequence (01 ➔ 08)'}
+              </span>
+
+              {activePipelineSequence.map((item, idx) => {
+                if (!item) return null;
+                const isSelectedStep =
+                  selectedCableId === item.cable.id ||
+                  (activeSimulation !== 'none' && simStepIndex === idx);
+                return (
+                  <div key={item.cable.id} className="flex items-center gap-1 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (activeSimulation !== 'none') {
+                          setIsAutoPlaying(false);
+                          setSimStepIndex(idx);
+                        } else {
+                          setSelectedNodeId(null);
+                          setSelectedCableId(
+                            selectedCableId === item.cable.id ? null : item.cable.id
+                          );
+                        }
+                      }}
+                      className={`px-2 py-0.5 rounded-md text-[10px] font-bold flex items-center gap-1 transition-all border ${
+                        isSelectedStep
+                          ? item.cable.isFeedback
+                            ? 'bg-rose-500 text-white border-white shadow scale-105'
+                            : 'bg-sky-400 text-slate-950 border-white shadow scale-105 font-black'
+                          : item.cable.isFeedback
+                          ? 'bg-rose-500/15 text-rose-300 border-rose-500/30 hover:bg-rose-500/25'
+                          : 'bg-white/[0.04] text-slate-300 border-white/10 hover:bg-white/10'
+                      }`}
+                    >
+                      <span
+                        className={`px-1 rounded text-[9px] font-black ${
+                          item.cable.isFeedback
+                            ? 'bg-rose-500 text-white'
+                            : 'bg-sky-500/30 text-sky-300'
+                        }`}
+                      >
+                        {item.cable.isFeedback ? `↺ 0${item.stepNum}` : `0${item.stepNum}`}
+                      </span>
+                      <span className="font-extrabold text-white">
+                        {item.src?.shortName}➔{item.tgt?.shortName}
+                      </span>
+                      <span className="text-[9px] opacity-80 hidden 2xl:inline">
+                        ({item.cable.corridorActionTag})
+                      </span>
+                    </button>
+                    {idx < activePipelineSequence.length - 1 && (
+                      <span className="text-slate-600 text-[10px] font-black">➔</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {activeSimulation !== 'none' && (
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsAutoPlaying(false);
+                    const total = SIMULATION_SCENARIOS[activeSimulation].cableSequence.length;
+                    setSimStepIndex((prev) =>
+                      prev === null ? total - 1 : (prev - 1 + total) % total
+                    );
+                  }}
+                  className="p-1 rounded bg-white/5 hover:bg-white/15 text-white"
+                >
+                  <SkipBack className="w-3 h-3" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsAutoPlaying((p) => !p)}
+                  className="px-2 py-0.5 rounded bg-sky-500 text-slate-950 text-[10px] font-black flex items-center gap-1"
+                >
+                  {isAutoPlaying ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
+                  <span>{isAutoPlaying ? 'Pause' : 'Play'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsAutoPlaying(false);
+                    const total = SIMULATION_SCENARIOS[activeSimulation].cableSequence.length;
+                    setSimStepIndex((prev) => (prev === null ? 0 : (prev + 1) % total));
+                  }}
+                  className="p-1 rounded bg-white/5 hover:bg-white/15 text-white"
+                >
+                  <SkipForward className="w-3 h-3" />
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ========================================================================= */}
+      {/* 2. INTERACTIVE NODE CANVAS (PAN & ZOOM) */}
       {/* ========================================================================= */}
       <div
         ref={containerRef}
@@ -2277,95 +2561,6 @@ export default function QualityEcosystemPortal() {
           isPanning ? 'cursor-grabbing' : 'cursor-grab'
         } bg-[radial-gradient(ellipse_at_center,#0a1326_0%,#040812_100%)]`}
       >
-        {/* NON-BLOCKING TOP STORYBOARD HUD PILL (Appears during Simulation or Conduit Inspection) */}
-        {(activeSimulation !== 'none' || activeCableInfo) && (
-          <div
-            onMouseDown={(e) => e.stopPropagation()}
-            className="absolute top-2.5 left-1/2 -translate-x-1/2 z-40 bg-[#070f1e]/95 backdrop-blur-2xl border border-sky-400/40 rounded-2xl px-4 py-1.5 shadow-[0_12px_35px_rgba(0,0,0,0.85)] flex items-center gap-3 max-w-[95vw]"
-          >
-            {activeSimulation !== 'none' && (
-              <div className="flex items-center gap-1 pr-2 border-r border-white/15">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsAutoPlaying(false);
-                    const total = SIMULATION_SCENARIOS[activeSimulation].cableSequence.length;
-                    setSimStepIndex((prev) =>
-                      prev === null ? total - 1 : (prev - 1 + total) % total
-                    );
-                  }}
-                  className="p-1 rounded-lg hover:bg-white/10 text-slate-300 hover:text-white"
-                  title="Previous Step"
-                >
-                  <SkipBack className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (simStepIndex === null) setSimStepIndex(0);
-                    setIsAutoPlaying((p) => !p);
-                  }}
-                  className="px-2 py-0.5 rounded-lg bg-sky-500 text-slate-950 text-[11px] font-black flex items-center gap-1"
-                >
-                  {isAutoPlaying ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
-                  <span>
-                    {simStepIndex === null
-                      ? 'ALL'
-                      : `${simStepIndex + 1}/${
-                          SIMULATION_SCENARIOS[activeSimulation].cableSequence.length
-                        }`}
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsAutoPlaying(false);
-                    const total = SIMULATION_SCENARIOS[activeSimulation].cableSequence.length;
-                    setSimStepIndex((prev) => (prev === null ? 0 : (prev + 1) % total));
-                  }}
-                  className="p-1 rounded-lg hover:bg-white/10 text-slate-300 hover:text-white"
-                  title="Next Step"
-                >
-                  <SkipForward className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            )}
-
-            {activeCableInfo && (
-              <div className="flex items-center gap-2 text-xs overflow-x-auto no-scrollbar">
-                <span
-                  className="px-2 py-0.5 rounded-md text-[10px] font-black text-slate-950 whitespace-nowrap"
-                  style={{ backgroundColor: activeCableInfo.cable.color }}
-                >
-                  {activeCableInfo.cable.isFeedback
-                    ? '↺ RETURN LOOP'
-                    : `STEP #${activeCableInfo.cable.orderFromSource}`}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => activeCableInfo.srcNode && centerOnNode(activeCableInfo.srcNode.id)}
-                  className="font-black text-white hover:text-sky-300 whitespace-nowrap"
-                >
-                  {activeCableInfo.srcNode?.seqCode} {activeCableInfo.srcNode?.shortName}
-                </button>
-                <span className="text-sky-400 font-bold whitespace-nowrap">
-                  ──({activeCableInfo.cable.shortTag})──►
-                </span>
-                <button
-                  type="button"
-                  onClick={() => activeCableInfo.tgtNode && centerOnNode(activeCableInfo.tgtNode.id)}
-                  className="font-black text-emerald-300 hover:text-emerald-200 whitespace-nowrap"
-                >
-                  {activeCableInfo.tgtNode?.seqCode} {activeCableInfo.tgtNode?.shortName}
-                </button>
-                <span className="text-[10.5px] font-mono text-amber-300 bg-white/[0.05] px-2 py-0.5 rounded border border-white/10 hidden xl:inline whitespace-nowrap">
-                  {activeCableInfo.cable.payloadSpec}
-                </span>
-              </div>
-            )}
-          </div>
-        )}
-
         {/* Subtle Cyber Grid Background */}
         <div
           className="absolute inset-0 pointer-events-none opacity-25"
@@ -2478,7 +2673,7 @@ export default function QualityEcosystemPortal() {
           })}
 
           {/* ------------------------------------------------------------- */}
-          {/* LAYER 1: BACKGROUND CABLES (100% ORTHOGONAL PCB TRACES) */}
+          {/* LAYER 1: BACKGROUND CABLES (SUBTLE PCB TRACES) */}
           {/* ------------------------------------------------------------- */}
           <svg
             className="absolute inset-0 w-full h-full pointer-events-none z-10"
@@ -2494,7 +2689,7 @@ export default function QualityEcosystemPortal() {
                 markerHeight="5"
                 orient="auto-start-reverse"
               >
-                <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="rgba(148, 163, 184, 0.4)" />
+                <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="rgba(148, 163, 184, 0.35)" />
               </marker>
               <marker
                 id="arrowFeedbackMuted"
@@ -2505,7 +2700,7 @@ export default function QualityEcosystemPortal() {
                 markerHeight="5"
                 orient="auto-start-reverse"
               >
-                <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="rgba(244, 63, 94, 0.5)" />
+                <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="rgba(244, 63, 94, 0.42)" />
               </marker>
             </defs>
 
@@ -2521,10 +2716,10 @@ export default function QualityEcosystemPortal() {
                     fill="none"
                     stroke={
                       cable.isFeedback
-                        ? 'rgba(244, 63, 94, 0.24)'
-                        : 'rgba(148, 163, 184, 0.16)'
+                        ? 'rgba(244, 63, 94, 0.18)'
+                        : 'rgba(148, 163, 184, 0.12)'
                     }
-                    strokeWidth={cable.isFeedback ? '1.6' : '1.25'}
+                    strokeWidth={cable.isFeedback ? '1.5' : '1.15'}
                     strokeDasharray={cable.isFeedback ? '8, 5' : '4, 5'}
                     markerEnd={
                       cable.isFeedback ? 'url(#arrowFeedbackMuted)' : 'url(#arrowMuted)'
@@ -2550,7 +2745,7 @@ export default function QualityEcosystemPortal() {
           </svg>
 
           {/* ------------------------------------------------------------- */}
-          {/* LAYER 2: 24 SCADA HOLOGRAPHIC CARDS WITH RIM ACTION BANNERS */}
+          {/* LAYER 2: 24 SCADA HOLOGRAPHIC CARDS WITH RADIAL SLA GAUGES */}
           {/* ------------------------------------------------------------- */}
           {NODES.map((node) => {
             const isSelected = selectedNodeId === node.id;
@@ -2563,7 +2758,6 @@ export default function QualityEcosystemPortal() {
               !isConnected;
             const phase = PHASES.find((p) => p.id === node.phaseId);
 
-            // Heatmap color override when Health Heatmap Lens is active
             const heatmapColor =
               node.healthScore >= 97
                 ? '#10B981'
@@ -2573,6 +2767,16 @@ export default function QualityEcosystemPortal() {
             const themeColor =
               viewLens === 'heatmap' ? heatmapColor : phase?.color || '#0EA5E9';
             const outgoingChips = nodeOutgoingChipsMap[node.id] || [];
+
+            // SVG Radial Gauge math (r = 12, circumference = 75.4)
+            const circumference = 75.4;
+            const dashOffset = circumference - (node.healthScore / 100) * circumference;
+            const healthColor =
+              node.healthScore >= 97
+                ? '#10B981'
+                : node.healthScore >= 93
+                ? '#38BDF8'
+                : '#EF4444';
 
             return (
               <div
@@ -2584,7 +2788,7 @@ export default function QualityEcosystemPortal() {
                   height: `${NODE_HEIGHT}px`,
                   boxShadow:
                     isSelected || isHovered || seqBadge?.isPulseSpotlight
-                      ? `0 18px 40px -5px ${seqBadge?.color || themeColor}60, 0 0 0 2.5px ${
+                      ? `0 18px 40px -5px ${seqBadge?.color || themeColor}65, 0 0 0 2.5px ${
                           seqBadge?.color || themeColor
                         }`
                       : viewLens === 'heatmap' && node.healthScore <= 92
@@ -2593,7 +2797,7 @@ export default function QualityEcosystemPortal() {
                       ? `0 10px 28px -5px ${seqBadge?.color || themeColor}40, 0 0 0 1.8px ${
                           seqBadge?.color || themeColor
                         }`
-                      : '0 10px 30px -10px rgba(0, 0, 0, 0.82)',
+                      : '0 10px 30px -10px rgba(0, 0, 0, 0.85)',
                 }}
                 onMouseEnter={() => setHoveredNodeId(node.id)}
                 onMouseLeave={() => setHoveredNodeId(null)}
@@ -2615,7 +2819,7 @@ export default function QualityEcosystemPortal() {
                     : 'bg-[#09101d]/95 border border-white/10 hover:border-white/25'
                 } ${isDimmed ? 'opacity-20' : 'opacity-100'}`}
               >
-                {/* Floating Sequence & Action Banner on Top-Right Rim of Card (Never Covers Text!) */}
+                {/* Floating Sequence & Action Banner on Top-Right Rim of Card */}
                 {seqBadge && (
                   <div
                     style={{
@@ -2665,7 +2869,7 @@ export default function QualityEcosystemPortal() {
                         borderColor: chip?.isFeedback ? '#FDA4AF' : themeColor,
                       }}
                       className="absolute -right-2 -translate-y-1/2 w-4 h-4 rounded-full border text-[8px] font-black text-white flex items-center justify-center shadow"
-                      title={`Output #${pinIdx + 1} ➔ ${chip?.targetShortName}`}
+                      title={`Output #${pinIdx + 1} ➔ ${chip?.targetShortName} (${chip?.shortTag})`}
                     >
                       {pinIdx + 1}
                     </div>
@@ -2674,9 +2878,9 @@ export default function QualityEcosystemPortal() {
 
                 {/* Card Content */}
                 <div className="p-2.5 flex-1 flex flex-col justify-between overflow-hidden rounded-b-2xl">
-                  {/* Top Row: Icon + Clear Visible English Title + Live Telemetry */}
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2 min-w-0">
+                  {/* Top Row: Icon + Clear Visible English Title + Radial Health Gauge */}
+                  <div className="flex items-start justify-between gap-1.5">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
                       <div
                         className="w-9 h-9 rounded-xl flex flex-col items-center justify-center shrink-0 border border-white/15 transition-transform group-hover:scale-105"
                         style={{
@@ -2692,12 +2896,12 @@ export default function QualityEcosystemPortal() {
                       </div>
 
                       <div className="min-w-0 flex-1">
-                        <h4 className="text-[13px] font-black text-white group-hover:text-sky-300 transition-colors leading-tight tracking-tight truncate">
+                        <h4 className="text-[12.5px] font-black text-white group-hover:text-sky-300 transition-colors leading-tight tracking-tight truncate">
                           {node.title}
                         </h4>
                         <div className="flex items-center gap-1 mt-1 flex-wrap">
                           <span
-                            className="inline-block text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded"
+                            className="inline-block text-[7.5px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded"
                             style={{
                               backgroundColor: `${themeColor}20`,
                               color: themeColor,
@@ -2705,45 +2909,50 @@ export default function QualityEcosystemPortal() {
                           >
                             {node.badge}
                           </span>
-                          <span className="text-[8px] font-bold text-slate-200 bg-white/[0.07] px-1.5 py-0.5 rounded border border-white/10">
+                          <span className="text-[7.5px] font-bold text-slate-200 bg-white/[0.07] px-1.5 py-0.5 rounded border border-white/10">
                             {node.kpiMetric}
-                          </span>
-                          <span className="text-[8px] font-semibold text-sky-300/90 bg-sky-500/10 px-1.5 py-0.5 rounded">
-                            {node.liveThroughput}
                           </span>
                         </div>
                       </div>
                     </div>
+
+                    {/* Circular SVG Radial SLA Ring */}
+                    <div
+                      className="relative w-8 h-8 flex items-center justify-center shrink-0"
+                      title={`Module Health & SLA Score: ${node.healthScore}% (${node.liveThroughput})`}
+                    >
+                      <svg className="w-8 h-8 -rotate-90" viewBox="0 0 30 30">
+                        <circle
+                          cx="15"
+                          cy="15"
+                          r="12"
+                          fill="none"
+                          stroke="rgba(255,255,255,0.08)"
+                          strokeWidth="2.6"
+                        />
+                        <circle
+                          cx="15"
+                          cy="15"
+                          r="12"
+                          fill="none"
+                          stroke={healthColor}
+                          strokeWidth="2.6"
+                          strokeDasharray={circumference}
+                          strokeDashoffset={dashOffset}
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                      <span className="absolute text-[8px] font-black text-white">
+                        {node.healthScore}%
+                      </span>
+                    </div>
                   </div>
 
-                  {/* Middle Row: Concise English Description + Micro Health Bar */}
-                  <div className="my-1">
+                  {/* Middle Row: Concise English Description + Live Throughput Pill */}
+                  <div className="my-0.5">
                     <p className="text-[10px] text-slate-300/85 leading-snug line-clamp-2">
                       {node.description}
                     </p>
-                    <div className="mt-1.5 flex items-center gap-1.5">
-                      <div className="flex-1 h-1 rounded-full bg-white/10 overflow-hidden">
-                        <div
-                          className="h-full rounded-full transition-all duration-500"
-                          style={{
-                            width: `${node.healthScore}%`,
-                            backgroundColor:
-                              node.healthScore >= 97
-                                ? '#10B981'
-                                : node.healthScore >= 93
-                                ? '#0EA5E9'
-                                : '#EF4444',
-                          }}
-                        />
-                      </div>
-                      <span
-                        className={`text-[8.5px] font-black ${
-                          node.healthScore <= 92 ? 'text-red-400' : 'text-emerald-400'
-                        }`}
-                      >
-                        {node.healthScore}% SLA
-                      </span>
-                    </div>
                   </div>
 
                   {/* Bottom Row: Direct Ordered Sequence Chips (1➔, 2➔, ↺3➔) + Open Button */}
@@ -2762,7 +2971,7 @@ export default function QualityEcosystemPortal() {
                                 chip.cableId === selectedCableId ? null : chip.cableId
                               );
                             }}
-                            title={`Click to inspect Step #${chip.orderNum} conduit to ${chip.targetShortName}`}
+                            title={`Step #${chip.orderNum}: ${chip.shortTag} ➔ ${chip.targetShortName}`}
                             className={`px-1.5 py-0.5 rounded text-[8px] font-extrabold whitespace-nowrap border transition-all ${
                               chip.isFeedback
                                 ? 'bg-rose-500/20 text-rose-300 border-rose-500/40 hover:bg-rose-500 hover:text-white'
@@ -2803,7 +3012,7 @@ export default function QualityEcosystemPortal() {
           })}
 
           {/* ------------------------------------------------------------- */}
-          {/* LAYER 3: FOREGROUND PCB TRACES, ORBS & COMPACT CORRIDOR MEDALLIONS */}
+          {/* LAYER 3: FOREGROUND PCB TRACES & DOUBLE-DECKER CORRIDOR MEDALLIONS */}
           {/* ------------------------------------------------------------- */}
           <svg
             className="absolute inset-0 w-full h-full pointer-events-none z-30"
@@ -2864,11 +3073,11 @@ export default function QualityEcosystemPortal() {
               </marker>
             </defs>
 
-            {CABLES.map((cable, idx) => {
+            {CABLES.map((cable) => {
               const seqMeta = activeCableSequenceMap.get(cable.id);
               if (!seqMeta) return null;
 
-              const geom = computeCableGeometry(cable, idx);
+              const geom = deOverlappedActiveGeometries.get(cable.id);
               if (!geom) return null;
 
               const strokeColor = seqMeta.badgeColor;
@@ -2885,10 +3094,10 @@ export default function QualityEcosystemPortal() {
                   key={cable.id}
                   opacity={
                     seqMeta.directionRole === 'ambient'
-                      ? 0.92
+                      ? 0.94
                       : seqMeta.isCurrentStepSpotlight
                       ? 1
-                      : 0.72
+                      : 0.75
                   }
                 >
                   {/* Glowing Orthogonal PCB Path */}
@@ -2934,7 +3143,7 @@ export default function QualityEcosystemPortal() {
                     />
                   </circle>
 
-                  {/* Compact Corridor Medallion (54px wide — fits 100% inside the 80px corridor or 36px alley!) */}
+                  {/* DOUBLE-DECKER CORRIDOR MEDALLION (68px wide x 26px tall — fits 100% inside the 80px corridor!) */}
                   <g
                     transform={`translate(${geom.midX}, ${geom.midY})`}
                     className="pointer-events-auto cursor-pointer"
@@ -2947,26 +3156,48 @@ export default function QualityEcosystemPortal() {
                   >
                     {geom.isCompactMedallion ? (
                       <>
+                        {/* Outer Dark Glass Shell (68x26) */}
                         <rect
-                          x="-27"
-                          y="-10"
-                          width="54"
-                          height="20"
-                          rx="10"
+                          x="-34"
+                          y="-13"
+                          width="68"
+                          height="26"
+                          rx="7"
                           fill="#050b16"
                           stroke={strokeColor}
-                          strokeWidth="1.8"
+                          strokeWidth="1.6"
+                        />
+                        {/* Top Deck Colored Header Band (Order Number: 01 ➔ / 1st ➔ / IN #1) */}
+                        <rect
+                          x="-33"
+                          y="-12"
+                          width="66"
+                          height="12"
+                          rx="5.5"
+                          fill={strokeColor}
                         />
                         <text
                           x="0"
-                          y="3.5"
+                          y="-3.5"
                           textAnchor="middle"
-                          fill={strokeColor}
-                          fontSize="9"
+                          fill="#040812"
+                          fontSize="7.8"
                           fontWeight="900"
                           letterSpacing="0.03em"
                         >
                           {seqMeta.medallionText}
+                        </text>
+                        {/* Bottom Deck Action Verb (DEFECT SPECS / ESCALATE NCR / LAUNCH 8D) */}
+                        <text
+                          x="0"
+                          y="8.5"
+                          textAnchor="middle"
+                          fill="#F8FAFC"
+                          fontSize="6.8"
+                          fontWeight="800"
+                          letterSpacing="0.02em"
+                        >
+                          {seqMeta.actionSubText}
                         </text>
                       </>
                     ) : (
@@ -2985,17 +3216,17 @@ export default function QualityEcosystemPortal() {
                         <rect
                           x="-86"
                           y="-8"
-                          width="54"
+                          width="56"
                           height="16"
                           rx="8"
                           fill={strokeColor}
                         />
                         <text
-                          x="-59"
+                          x="-58"
                           y="3"
                           textAnchor="middle"
                           fill="#040812"
-                          fontSize="8.5"
+                          fontSize="8"
                           fontWeight="900"
                         >
                           {seqMeta.medallionText}
@@ -3023,9 +3254,9 @@ export default function QualityEcosystemPortal() {
       {/* ========================================================================= */}
       {/* 3. DOCKED SINGLE-LINE BOTTOM STATUS BAR (ORDERED 1st, 2nd, 3rd + PAYLOAD) */}
       {/* ========================================================================= */}
-      <div className="h-12 px-4 border-t border-white/10 bg-[#070d19]/95 backdrop-blur-2xl flex items-center justify-between shrink-0 z-30 gap-3 overflow-x-auto no-scrollbar">
-        {activeCableInfo && !activeNodeInfo ? (
-          /* Conduit Data Contract Inspector when a specific line or chip is clicked */
+      <div className="h-11 px-4 border-t border-white/10 bg-[#070d19]/95 backdrop-blur-2xl flex items-center justify-between shrink-0 z-30 gap-3 overflow-x-auto no-scrollbar">
+        {activeCableInfo ? (
+          /* Conduit Data Contract Inspector when a specific line, chip, or simulation step is active */
           <div className="w-full flex items-center justify-between gap-3 text-xs">
             <div className="flex items-center gap-2 shrink-0">
               <span
@@ -3054,115 +3285,29 @@ export default function QualityEcosystemPortal() {
               <span className="text-slate-300 text-[11px] hidden xl:inline">
                 {activeCableInfo.cable.label}
               </span>
-              <button
-                type="button"
-                onClick={() => setSelectedCableId(null)}
-                className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white text-[11px] font-bold"
-              >
-                Close Inspector
-              </button>
+              {selectedCableId && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedCableId(null)}
+                  className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white text-[11px] font-bold"
+                >
+                  Close
+                </button>
+              )}
             </div>
           </div>
         ) : activeNodeInfo ? (
-          <>
-            {/* Active Module Identity */}
+          <div className="w-full flex items-center justify-between gap-3 text-xs">
             <div className="flex items-center gap-2 shrink-0">
               <span className="px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-500/40 text-[10px] font-black">
                 {activeNodeInfo.node.seqCode}
               </span>
-              <h3 className="text-xs sm:text-sm font-black text-white whitespace-nowrap">
-                {activeNodeInfo.node.title}
-              </h3>
+              <span className="font-black text-white">{activeNodeInfo.node.title}</span>
+              <span className="text-slate-400 hidden md:inline">
+                — {activeNodeInfo.node.description}
+              </span>
             </div>
 
-            {/* Ordered Single-Line Inputs & Sequenced Outputs (1st, 2nd, 3rd + Feedback) */}
-            <div className="flex items-center gap-3 text-[11px] shrink-0">
-              {/* Inputs */}
-              <div className="flex items-center gap-1.5">
-                <span className="text-sky-400 font-bold whitespace-nowrap">📥 Inputs:</span>
-                {activeNodeInfo.incoming.length > 0 ? (
-                  <div className="flex items-center gap-1">
-                    {activeNodeInfo.incoming.map((item) => (
-                      <button
-                        key={item.cable.id}
-                        type="button"
-                        onClick={() => setSelectedNodeId(item.sourceId)}
-                        title={`${item.cable.label} | ${item.cable.payloadSpec}`}
-                        className={`px-2 py-0.5 rounded-md border text-white font-bold whitespace-nowrap flex items-center gap-1 transition-colors ${
-                          item.cable.isFeedback
-                            ? 'bg-rose-500/20 hover:bg-rose-500/35 border-rose-500/40'
-                            : 'bg-sky-500/15 hover:bg-sky-500/30 border-sky-500/30'
-                        }`}
-                      >
-                        <span
-                          className={`text-[10px] font-black px-1 rounded ${
-                            item.cable.isFeedback
-                              ? 'bg-rose-500 text-white'
-                              : 'bg-sky-500/30 text-sky-200'
-                          }`}
-                        >
-                          {item.cable.isFeedback ? `↺ IN #${item.orderNum}` : `IN #${item.orderNum}`}
-                        </span>
-                        <span>{item.sourceName}</span>
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  <span className="text-slate-500 whitespace-nowrap">Primary Stage Origin</span>
-                )}
-              </div>
-
-              <span className="text-white/20">|</span>
-
-              {/* Outgoing Ordered Sequence (1st, 2nd, 3rd) */}
-              <div className="flex items-center gap-1.5">
-                <span className="text-emerald-400 font-bold whitespace-nowrap">
-                  📤 Execution Order:
-                </span>
-                {activeNodeInfo.outgoing.length > 0 ? (
-                  <div className="flex items-center gap-1">
-                    {activeNodeInfo.outgoing.map((item) => {
-                      const ord =
-                        item.orderNum === 1
-                          ? '1st'
-                          : item.orderNum === 2
-                          ? '2nd'
-                          : item.orderNum === 3
-                          ? '3rd'
-                          : `${item.orderNum}th`;
-                      return (
-                        <button
-                          key={item.cable.id}
-                          type="button"
-                          onClick={() => setSelectedNodeId(item.targetId)}
-                          title={`${item.cable.label} | ${item.cable.payloadSpec}`}
-                          className={`px-2 py-0.5 rounded-md border text-white font-bold whitespace-nowrap flex items-center gap-1 transition-colors ${
-                            item.cable.isFeedback
-                              ? 'bg-rose-500/20 hover:bg-rose-500/35 border-rose-500/40'
-                              : 'bg-emerald-500/15 hover:bg-emerald-500/30 border-emerald-500/30'
-                          }`}
-                        >
-                          <span
-                            className={`text-[10px] font-black px-1 rounded ${
-                              item.cable.isFeedback
-                                ? 'bg-rose-500 text-white'
-                                : 'bg-emerald-500 text-slate-950'
-                            }`}
-                          >
-                            {item.cable.isFeedback ? `↺ ${ord} (Return)` : `${ord} ➔`}
-                          </span>
-                          <span>{item.targetName}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <span className="text-slate-500 whitespace-nowrap">Executive Endpoint</span>
-                )}
-              </div>
-            </div>
-
-            {/* Action Buttons */}
             <div className="flex items-center gap-2 shrink-0">
               {selectedNodeId && (
                 <button
@@ -3182,59 +3327,21 @@ export default function QualityEcosystemPortal() {
                 <ExternalLink className="w-3 h-3" />
               </button>
             </div>
-          </>
-        ) : activeSimulation !== 'none' ? (
-          /* Interactive Step-by-Step Timeline Bar when a Simulation is running */
-          <div className="w-full flex items-center justify-between gap-2 text-xs">
-            <span className="font-black text-sky-400 whitespace-nowrap">
-              {SIMULATION_SCENARIOS[activeSimulation].title}:
-            </span>
-            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-              {SIMULATION_SCENARIOS[activeSimulation].cableSequence.map((cableId, idx) => {
-                const c = CABLES.find((item) => item.id === cableId);
-                if (!c) return null;
-                const isCurr = simStepIndex === idx;
-                return (
-                  <button
-                    key={cableId}
-                    type="button"
-                    onClick={() => {
-                      setIsAutoPlaying(false);
-                      setSimStepIndex(idx);
-                    }}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap flex items-center gap-1 transition-all border ${
-                      isCurr
-                        ? c.isFeedback
-                          ? 'bg-rose-500 text-white border-white shadow-lg scale-105'
-                          : 'bg-emerald-500 text-slate-950 border-white shadow-lg scale-105'
-                        : c.isFeedback
-                        ? 'bg-rose-500/15 text-rose-300 border-rose-500/30 hover:bg-rose-500/30'
-                        : 'bg-white/[0.06] text-slate-300 border-white/10 hover:bg-white/15'
-                    }`}
-                  >
-                    <span className="font-black">
-                      {c.isFeedback ? `↺ Step ${idx + 1}:` : `Step ${idx + 1}:`}
-                    </span>
-                    <span>{c.shortTag}</span>
-                  </button>
-                );
-              })}
-            </div>
           </div>
         ) : (
           <div className="w-full flex items-center justify-between text-xs text-slate-400 gap-4">
             <div className="flex items-center gap-4">
               <span className="flex items-center gap-1.5 text-emerald-300 font-bold">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                <span>6-Stage Closed-Loop Value Stream (`01 ➔ 08`)</span>
+                <span>Double-Decker Corridor HUD (`Order #` + `Action Verb` inside 80px Corridors)</span>
               </span>
               <span className="flex items-center gap-1.5 text-rose-300 font-semibold">
                 <span className="w-2.5 h-0.5 border-b-2 border-dashed border-rose-400 inline-block" />
-                <span>↺ Dedicated Return Highways</span>
+                <span>↺ Closed-Loop Return Highways</span>
               </span>
             </div>
             <span className="text-[11px] text-slate-300 hidden md:inline">
-              Switch between <strong>Backbone (1➔8)</strong>, <strong>All 1st Links</strong>, <strong>↺ Feedback (7)</strong>, and <strong>Health Heatmap</strong> in the top bar
+              Hover any card to see its full <strong>📥 Inputs ➔ ★ Module ➔ 📤 Ordered Outputs (1st, 2nd, 3rd)</strong> in the top pipeline ribbon
             </span>
           </div>
         )}
