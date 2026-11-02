@@ -43,6 +43,7 @@ import {
 interface BlueprintNode {
   id: string;
   seqCode: string;
+  shortName: string;
   title: string;
   path: string;
   icon: LucideIcon;
@@ -51,6 +52,8 @@ interface BlueprintNode {
   healthScore: number;
   description: string;
   phaseId: string;
+  rowIdx: number; // 0, 1, 2, 3
+  colIdx: number; // 0..5
   x: number;
   y: number;
 }
@@ -79,18 +82,22 @@ interface CableRelation {
   label: string;
   isFeedback: boolean;
   feedbackLane?: 'top' | 'bottom' | 'local';
+  alleyRow?: 1 | 2 | 3; // Inter-row horizontal PCB corridor so long forward lines never cross cards
   category: 'defect' | 'governance' | 'prevention' | 'supplier' | 'intelligence';
   color: string;
 }
 
 // =========================================================================
-// 1. GRID DIMENSIONS & 6 CORE STAGES (LEFT-TO-RIGHT WORLD-CLASS ARCHITECTURE)
+// 1. GRID DIMENSIONS & 6 CORE STAGES (SURGICAL PCB CORRIDOR LAYOUT)
 // =========================================================================
 
 const NODE_WIDTH = 252;
-const NODE_HEIGHT = 160;
+const NODE_HEIGHT = 158;
 const CANVAS_WIDTH = 1960;
-const CANVAS_HEIGHT = 896;
+const CANVAS_HEIGHT = 900;
+
+// Row Y coordinates leave 26px horizontal PCB alleys at y=291, y=475, y=659
+// Row 0: 120..278 | Alley 1: 291 | Row 1: 304..462 | Alley 2: 475 | Row 2: 488..646 | Alley 3: 659 | Row 3: 672..830
 
 const PHASES: PhaseZone[] = [
   {
@@ -98,7 +105,7 @@ const PHASES: PhaseZone[] = [
     phaseNumber: '01',
     title: 'Supply Chain & Inbound',
     subtitle: 'Master Data & Vendor Control',
-    gateLabel: 'GATE 01: INBOUND RELEASE',
+    gateLabel: 'STAGE 01 • INBOUND GATE',
     color: '#10B981',
     borderColor: 'border-emerald-500/30',
     bgGradient: 'from-emerald-950/35 via-emerald-950/10 to-transparent',
@@ -111,7 +118,7 @@ const PHASES: PhaseZone[] = [
     phaseNumber: '02',
     title: 'Shopfloor & Production',
     subtitle: 'In-Process Quality Execution',
-    gateLabel: 'GATE 02: PROCESS CONTROL',
+    gateLabel: 'STAGE 02 • PROCESS GATE',
     color: '#0EA5E9',
     borderColor: 'border-sky-500/30',
     bgGradient: 'from-sky-950/35 via-sky-950/10 to-transparent',
@@ -124,7 +131,7 @@ const PHASES: PhaseZone[] = [
     phaseNumber: '03',
     title: 'Containment & NCR',
     subtitle: 'Quarantine & Cost of Poor Quality',
-    gateLabel: 'GATE 03: MRB DISPOSITION',
+    gateLabel: 'STAGE 03 • MRB HOLD GATE',
     color: '#EF4444',
     borderColor: 'border-red-500/30',
     bgGradient: 'from-red-950/35 via-red-950/10 to-transparent',
@@ -137,7 +144,7 @@ const PHASES: PhaseZone[] = [
     phaseNumber: '04',
     title: 'Root Cause & CAPA',
     subtitle: '8D Problem Solving & Actions',
-    gateLabel: 'GATE 04: ROOT CAUSE RCA',
+    gateLabel: 'STAGE 04 • RCA & CAPA',
     color: '#8B5CF6',
     borderColor: 'border-purple-500/30',
     bgGradient: 'from-purple-950/35 via-purple-950/10 to-transparent',
@@ -150,7 +157,7 @@ const PHASES: PhaseZone[] = [
     phaseNumber: '05',
     title: 'Engineering & Prevention',
     subtitle: 'FMEA Risk & Control Plans',
-    gateLabel: 'GATE 05: POKA-YOKE DESIGN',
+    gateLabel: 'STAGE 05 • POKA-YOKE',
     color: '#F59E0B',
     borderColor: 'border-amber-500/30',
     bgGradient: 'from-amber-950/35 via-amber-950/10 to-transparent',
@@ -163,7 +170,7 @@ const PHASES: PhaseZone[] = [
     phaseNumber: '06',
     title: 'SPC & AI Intelligence',
     subtitle: 'Control Tower & System Audits',
-    gateLabel: 'GATE 06: PREDICTIVE LOOP',
+    gateLabel: 'STAGE 06 • AI & SPC TOWER',
     color: '#06B6D4',
     borderColor: 'border-cyan-500/30',
     bgGradient: 'from-cyan-950/35 via-cyan-950/10 to-transparent',
@@ -175,68 +182,81 @@ const PHASES: PhaseZone[] = [
 
 // All 24 paths match 100% with src/router/index.tsx
 const NODES: BlueprintNode[] = [
-  // Stage 01: Supply Chain & Inbound (x: 54)
+  // Stage 01: Supply Chain & Inbound (colIdx: 0, x: 54)
   {
     id: 'iqc',
     seqCode: 'M-01',
+    shortName: 'IQC',
     title: 'Incoming Inspection (IQC)',
     path: '/inspection',
     icon: Truck,
     badge: 'INBOUND QC',
-    kpiMetric: '98.4% Lot Pass',
+    kpiMetric: '98.4% Pass',
     healthScore: 98,
     description: 'Inspect incoming raw materials and shipments against AQL sampling plans.',
     phaseId: 'supply_chain',
+    rowIdx: 0,
+    colIdx: 0,
     x: 54,
     y: 120,
   },
   {
     id: 'suppliers',
     seqCode: 'M-02',
+    shortName: 'Suppliers',
     title: 'Supplier Quality Scorecard',
     path: '/supplier-quality',
     icon: Building,
     badge: 'VENDOR RATING',
-    kpiMetric: 'A-Tier: 94.2%',
+    kpiMetric: '94.2% A-Tier',
     healthScore: 94,
     description: 'Track supplier quality ratings automatically based on lot acceptance and defects.',
     phaseId: 'supply_chain',
+    rowIdx: 1,
+    colIdx: 0,
     x: 54,
-    y: 302,
+    y: 304,
   },
   {
     id: 'calibration',
     seqCode: 'M-03',
+    shortName: 'Calibration',
     title: 'Metrology & Calibration',
     path: '/calibration',
     icon: Wrench,
-    badge: 'GAUGE CONTROL',
-    kpiMetric: '100% Calibrated',
+    badge: 'GAUGE MSA',
+    kpiMetric: '100% Valid',
     healthScore: 100,
     description: 'Manage measurement tool certificates and calibration schedules for accurate testing.',
     phaseId: 'supply_chain',
+    rowIdx: 2,
+    colIdx: 0,
     x: 54,
-    y: 484,
+    y: 488,
   },
   {
     id: 'master_data',
     seqCode: 'M-04',
+    shortName: 'Master Data',
     title: 'Master Data & Catalogs',
     path: '/quality-master-data',
     icon: Database,
-    badge: 'CORE STANDARDS',
+    badge: 'STANDARDS',
     kpiMetric: '1,420 Specs',
     healthScore: 99,
     description: 'Configure parts, standard defect catalogs, production lines, and acceptance criteria.',
     phaseId: 'supply_chain',
+    rowIdx: 3,
+    colIdx: 0,
     x: 54,
-    y: 666,
+    y: 672,
   },
 
-  // Stage 02: Shopfloor & Production (x: 374)
+  // Stage 02: Shopfloor & Production (colIdx: 1, x: 374)
   {
     id: 'daily_defects',
     seqCode: 'M-05',
+    shortName: 'Defect Log',
     title: 'Real-Time Defect Logger',
     path: '/defect-log',
     icon: Activity,
@@ -245,12 +265,15 @@ const NODES: BlueprintNode[] = [
     healthScore: 96,
     description: 'Capture live production defects with photos, machine IDs, shifts, and Pareto analytics.',
     phaseId: 'shopfloor',
+    rowIdx: 0,
+    colIdx: 1,
     x: 374,
     y: 120,
   },
   {
     id: 'inspection_plans',
     seqCode: 'M-06',
+    shortName: 'IPQC Gates',
     title: 'In-Process Inspection (IPQC)',
     path: '/quality-inspection-plans',
     icon: CheckCircle2,
@@ -259,56 +282,68 @@ const NODES: BlueprintNode[] = [
     healthScore: 95,
     description: 'Execute in-process quality checks and mandatory First Piece Inspection approvals.',
     phaseId: 'shopfloor',
+    rowIdx: 1,
+    colIdx: 1,
     x: 374,
-    y: 302,
+    y: 304,
   },
   {
     id: 'lpa',
     seqCode: 'M-07',
+    shortName: 'LPA Audits',
     title: 'Layered Process Audits',
     path: '/quality-audits',
     icon: Layers,
     badge: 'LPA AUDITS',
-    kpiMetric: '96% Compliance',
+    kpiMetric: '96% Adhere',
     healthScore: 96,
     description: 'Verify operator adherence to standard work instructions across all production shifts.',
     phaseId: 'shopfloor',
+    rowIdx: 2,
+    colIdx: 1,
     x: 374,
-    y: 484,
+    y: 488,
   },
   {
     id: 'setup_readiness',
     seqCode: 'M-08',
+    shortName: 'Line Setup',
     title: 'Line Setup & Readiness',
     path: '/quality-execution-board',
     icon: Sliders,
-    badge: 'LINE CLEARANCE',
+    badge: 'CLEARANCE',
     kpiMetric: 'Go / No-Go',
     healthScore: 97,
     description: 'Validate machine parameters and issue formal Go/No-Go line startup authorization.',
     phaseId: 'shopfloor',
+    rowIdx: 3,
+    colIdx: 1,
     x: 374,
-    y: 666,
+    y: 672,
   },
 
-  // Stage 03: Containment & NCR (x: 694)
+  // Stage 03: Containment & NCR (colIdx: 2, x: 694)
   {
     id: 'ncr',
     seqCode: 'M-09',
+    shortName: 'NCR Hold',
     title: 'Non-Conformance (NCR)',
     path: '/quality/records/ncr',
     icon: AlertTriangle,
     badge: 'QUARANTINE',
-    kpiMetric: 'MRB Hold Gate',
+    kpiMetric: 'MRB Hold',
     healthScore: 92,
     description: 'Isolate non-conforming batches, issue hold tags, and trigger formal disposition.',
     phaseId: 'nonconformance',
+    rowIdx: 0,
+    colIdx: 2,
     x: 694,
     y: 120,
   },
   {
     id: 'deviation',
     seqCode: 'M-10',
+    shortName: 'Deviation',
     title: 'Process Deviations',
     path: '/deviation',
     icon: FileWarning,
@@ -317,100 +352,121 @@ const NODES: BlueprintNode[] = [
     healthScore: 90,
     description: 'Manage temporary engineering concessions and conditional material approvals.',
     phaseId: 'nonconformance',
+    rowIdx: 1,
+    colIdx: 2,
     x: 694,
-    y: 302,
+    y: 304,
   },
   {
     id: 'complaints',
     seqCode: 'M-11',
+    shortName: 'Complaints',
     title: 'Customer Complaints',
     path: '/complaints',
     icon: Building,
-    badge: 'VOICE OF CUSTOMER',
-    kpiMetric: 'RMA & Warranty',
+    badge: 'VOC & RMA',
+    kpiMetric: 'RMA Claims',
     healthScore: 93,
     description: 'Track customer returns and RMA claims with instant linkage to NCR and 8D.',
     phaseId: 'nonconformance',
+    rowIdx: 2,
+    colIdx: 2,
     x: 694,
-    y: 484,
+    y: 488,
   },
   {
     id: 'defect_cost',
     seqCode: 'M-12',
+    shortName: 'COPQ Cost',
     title: 'Cost of Poor Quality',
     path: '/defect-cost',
     icon: DollarSign,
     badge: 'COPQ FINANCE',
-    kpiMetric: 'Scrap & Rework',
+    kpiMetric: 'Scrap Ledger',
     healthScore: 94,
     description: 'Calculate financial impact of scrap, rework, sorting, and warranty returns.',
     phaseId: 'nonconformance',
+    rowIdx: 3,
+    colIdx: 2,
     x: 694,
-    y: 666,
+    y: 672,
   },
 
-  // Stage 04: Root Cause & CAPA (x: 1014)
+  // Stage 04: Root Cause & CAPA (colIdx: 3, x: 1014)
   {
     id: 'capa_records',
     seqCode: 'M-13',
+    shortName: 'CAPA Plan',
     title: 'CAPA Action Plans',
     path: '/quality/records/capa',
     icon: CheckCheck,
-    badge: 'PREVENTIVE ACTION',
-    kpiMetric: 'Verified Closure',
+    badge: 'CAPA SYSTEM',
+    kpiMetric: 'Verified Fix',
     healthScore: 96,
     description: 'Drive verified corrective and preventive action plans across cross-functional teams.',
     phaseId: 'root_cause',
+    rowIdx: 0,
+    colIdx: 3,
     x: 1014,
     y: 120,
   },
   {
     id: 'eight_d',
     seqCode: 'M-14',
+    shortName: '8D RCA',
     title: '8D Root Cause Analysis',
     path: '/quality/records/8d',
     icon: RefreshCw,
-    badge: '8D METHODOLOGY',
-    kpiMetric: '5-Why & Ishikawa',
+    badge: '8D SOLVER',
+    kpiMetric: '5-Why & Fishbone',
     healthScore: 97,
     description: 'Conduct structured root cause investigations using Fishbone and 5-Why tools.',
     phaseId: 'root_cause',
+    rowIdx: 1,
+    colIdx: 3,
     x: 1014,
-    y: 302,
+    y: 304,
   },
   {
     id: 'change_control',
     seqCode: 'M-15',
+    shortName: 'ECN Change',
     title: 'Engineering Change (ECN)',
     path: '/change-control',
     icon: Sliders,
-    badge: '4M CHANGE GOV',
-    kpiMetric: 'Design & Tooling',
+    badge: '4M CHANGE',
+    kpiMetric: 'Rev Control',
     healthScore: 95,
     description: 'Govern and document changes to design, tooling, machines, or raw materials.',
     phaseId: 'root_cause',
+    rowIdx: 2,
+    colIdx: 3,
     x: 1014,
-    y: 484,
+    y: 488,
   },
   {
     id: 'command_center',
     seqCode: 'M-16',
+    shortName: 'SLA Center',
     title: 'Action Command Center',
     path: '/quality-command-center',
     icon: Workflow,
-    badge: 'EXECUTION SLA',
-    kpiMetric: '95% On-Time SLA',
+    badge: 'ACTION SLA',
+    kpiMetric: '95% On-Time',
     healthScore: 95,
     description: 'Monitor overdue tasks, action closure velocity, and departmental accountability.',
     phaseId: 'root_cause',
+    rowIdx: 3,
+    colIdx: 3,
     x: 1014,
-    y: 666,
+    y: 672,
   },
 
-  // Stage 05: Engineering & Prevention (x: 1334)
+  // Stage 05: Engineering & Prevention (colIdx: 4, x: 1334)
   {
     id: 'fmea',
     seqCode: 'M-17',
+    shortName: 'PFMEA Risk',
     title: 'Risk Analysis (PFMEA)',
     path: '/fmea',
     icon: ShieldCheck,
@@ -419,113 +475,136 @@ const NODES: BlueprintNode[] = [
     healthScore: 98,
     description: 'Evaluate Severity, Occurrence, and Detection (RPN) to prevent potential failures.',
     phaseId: 'engineering',
+    rowIdx: 0,
+    colIdx: 4,
     x: 1334,
     y: 120,
   },
   {
     id: 'control_plan',
     seqCode: 'M-18',
+    shortName: 'Ctrl Plan',
     title: 'Dynamic Control Plan',
     path: '/control-plan',
     icon: Sliders,
     badge: 'PROCESS SPECS',
-    kpiMetric: 'Poka-Yoke Specs',
+    kpiMetric: 'Poka-Yoke',
     healthScore: 99,
     description: 'Define critical control characteristics, inspection frequencies, and reaction plans.',
     phaseId: 'engineering',
+    rowIdx: 1,
+    colIdx: 4,
     x: 1334,
-    y: 302,
+    y: 304,
   },
   {
     id: 'knowledge_base',
     seqCode: 'M-19',
+    shortName: 'Lessons Hub',
     title: 'Lessons Learned Hub',
     path: '/quality-knowledge-base',
     icon: BookOpen,
-    badge: 'KNOWLEDGE BASE',
-    kpiMetric: 'Solved 8D Vault',
+    badge: 'KNOWLEDGE',
+    kpiMetric: '8D Archive',
     healthScore: 97,
     description: 'Institutionalize solved 8D cases and best practices to prevent recurring defects.',
     phaseId: 'engineering',
+    rowIdx: 2,
+    colIdx: 4,
     x: 1334,
-    y: 484,
+    y: 488,
   },
   {
     id: 'form_designer',
     seqCode: 'M-20',
+    shortName: 'Form Studio',
     title: 'Smart Form Designer',
     path: '/quality-form-designer',
     icon: Layers,
-    badge: 'NO-CODE STUDIO',
-    kpiMetric: 'Digital Checklists',
+    badge: 'NO-CODE',
+    kpiMetric: 'Checklists',
     healthScore: 98,
     description: 'Build custom digital inspection checklists and deploy them to shopfloor stations.',
     phaseId: 'engineering',
+    rowIdx: 3,
+    colIdx: 4,
     x: 1334,
-    y: 666,
+    y: 672,
   },
 
-  // Stage 06: SPC & AI Intelligence (x: 1654)
+  // Stage 06: SPC & AI Intelligence (colIdx: 5, x: 1654)
   {
     id: 'spc',
     seqCode: 'M-21',
+    shortName: 'SPC Charts',
     title: 'Statistical Control (SPC)',
     path: '/spc',
     icon: TrendingUp,
-    badge: 'SIX SIGMA CPK',
-    kpiMetric: 'Cpk 1.67 Live',
+    badge: 'SIX SIGMA',
+    kpiMetric: 'Cpk 1.67',
     healthScore: 99,
     description: 'Real-time X-Bar R control charts and Cp/Cpk capability indices for early drift detection.',
     phaseId: 'intelligence',
+    rowIdx: 0,
+    colIdx: 5,
     x: 1654,
     y: 120,
   },
   {
     id: 'control_tower',
     seqCode: 'M-22',
+    shortName: 'Ctrl Tower',
     title: 'Quality Control Tower',
     path: '/quality-control-tower',
     icon: BarChart3,
-    badge: '360° OVERSIGHT',
-    kpiMetric: 'Plant Telemetry',
+    badge: '360° TOWER',
+    kpiMetric: 'Live Stream',
     healthScore: 100,
     description: 'Unified executive command center for plant-wide quality KPIs and live stream alerts.',
     phaseId: 'intelligence',
+    rowIdx: 1,
+    colIdx: 5,
     x: 1654,
-    y: 302,
+    y: 304,
   },
   {
     id: 'ai_copilot',
     seqCode: 'M-23',
+    shortName: 'AI Copilot',
     title: 'AI Quality Copilot',
     path: '/ai/defect-prediction',
     icon: Sparkles,
     badge: 'PREDICTIVE AI',
-    kpiMetric: '97% Forecast Acc',
+    kpiMetric: '97% Forecast',
     healthScore: 97,
     description: 'Predict defect spikes, analyze complex correlations, and auto-draft 8D root causes.',
     phaseId: 'intelligence',
+    rowIdx: 2,
+    colIdx: 5,
     x: 1654,
-    y: 484,
+    y: 488,
   },
   {
     id: 'audits',
     seqCode: 'M-24',
+    shortName: 'ISO Audits',
     title: 'System & Process Audits',
     path: '/audit',
     icon: ShieldCheck,
-    badge: 'ISO / IATF AUDIT',
-    kpiMetric: 'IATF 16949 Ready',
+    badge: 'IATF AUDIT',
+    kpiMetric: 'ISO 9001/IATF',
     healthScore: 98,
     description: 'Schedule internal and external compliance audits, track findings, and verify closure.',
     phaseId: 'intelligence',
+    rowIdx: 3,
+    colIdx: 5,
     x: 1654,
-    y: 666,
+    y: 672,
   },
 ];
 
 // =========================================================================
-// 2. ORDERED & SEQUENCED RELATIONSHIPS WITH PAYLOAD CONTRACTS (39 CONDUITS)
+// 2. ORDERED & SEQUENCED RELATIONSHIPS WITH ZERO-OVERLAP PCB CORRIDORS
 // =========================================================================
 
 const CABLES: CableRelation[] = [
@@ -551,6 +630,7 @@ const CABLES: CableRelation[] = [
     payloadSpec: 'Payload: { bomTree, processSteps[], severityBaseline }',
     label: '2nd: Supplies part BOM & process steps for PFMEA risk analysis',
     isFeedback: false,
+    alleyRow: 3,
     category: 'governance',
     color: '#10B981',
   },
@@ -575,6 +655,7 @@ const CABLES: CableRelation[] = [
     payloadSpec: 'Payload: { grrScore, gaugeBias, linearityStatus }',
     label: '2nd: Ensures measurement system reliability for SPC charts',
     isFeedback: false,
+    alleyRow: 2,
     category: 'intelligence',
     color: '#06B6D4',
   },
@@ -587,6 +668,7 @@ const CABLES: CableRelation[] = [
     payloadSpec: 'Payload: { shipmentId, rejectedQty, holdTagId, vendorId }',
     label: '1st: Triggers NCR & quarantine hold for rejected inbound material',
     isFeedback: false,
+    alleyRow: 1,
     category: 'supplier',
     color: '#EF4444',
   },
@@ -599,6 +681,7 @@ const CABLES: CableRelation[] = [
     payloadSpec: 'Payload: { lotId, deviationReason, RiskSignoff }',
     label: '2nd: Requests conditional concession for urgent production lots',
     isFeedback: false,
+    alleyRow: 1,
     category: 'supplier',
     color: '#F59E0B',
   },
@@ -624,6 +707,7 @@ const CABLES: CableRelation[] = [
     payloadSpec: 'Payload: { vendorId, ratingTier: "C", auditScope }',
     label: '1st: Schedules supplier quality audits for low-rated vendors',
     isFeedback: false,
+    alleyRow: 2,
     category: 'supplier',
     color: '#10B981',
   },
@@ -674,6 +758,7 @@ const CABLES: CableRelation[] = [
     payloadSpec: 'Payload: { subgroupValues[], timestamp, shiftId }',
     label: '2nd: Streams live defect telemetry into SPC control charts',
     isFeedback: false,
+    alleyRow: 1,
     category: 'intelligence',
     color: '#0EA5E9',
   },
@@ -686,7 +771,7 @@ const CABLES: CableRelation[] = [
     payloadSpec: 'Payload: { scrapQty, reworkHours, unitMaterialCost }',
     label: '3rd: Calculates daily scrap and rework financial impact',
     isFeedback: false,
-    category: 'defect',
+     category: 'defect',
     color: '#EF4444',
   },
   {
@@ -698,6 +783,7 @@ const CABLES: CableRelation[] = [
     payloadSpec: 'Payload: { lpaAuditId, nonCompliantStep, shiftSupervisor }',
     label: '1st: Opens CAPA for non-compliant process audit findings',
     isFeedback: false,
+    alleyRow: 2,
     category: 'governance',
     color: '#0EA5E9',
   },
@@ -746,7 +832,7 @@ const CABLES: CableRelation[] = [
     target: 'defect_cost',
     orderFromSource: 3,
     shortTag: 'Log Quarantine Loss',
-    payloadSpec: 'Payload: { ncrId,disposition: "SCRAP", financialLoss }',
+    payloadSpec: 'Payload: { ncrId, disposition: "SCRAP", financialLoss }',
     label: '3rd: Records quarantine sorting & batch scrap losses',
     isFeedback: false,
     category: 'defect',
@@ -797,6 +883,7 @@ const CABLES: CableRelation[] = [
     payloadSpec: 'Payload: { monthlyCopqTotal, scrapRatio, warrantyCost }',
     label: '1st: Reports COPQ financial impact to Executive Control Tower',
     isFeedback: false,
+    alleyRow: 3,
     category: 'intelligence',
     color: '#EF4444',
   },
@@ -883,6 +970,7 @@ const CABLES: CableRelation[] = [
     payloadSpec: 'Payload: { onTimeClosureRate, overdueCount, escalations }',
     label: '1st: Broadcasts action closure KPIs to Quality Control Tower',
     isFeedback: false,
+    alleyRow: 3,
     category: 'intelligence',
     color: '#8B5CF6',
   },
@@ -1016,6 +1104,9 @@ const CABLES: CableRelation[] = [
     color: '#F43F5E',
   },
 ];
+
+// Core Master Backbone (Always softly illuminated with sequence pills in Default View!)
+const MASTER_BACKBONE_SEQUENCE = ['c9', 'c10', 'c11', 'c17', 'c23', 'c30', 'c32', 'c31'];
 
 // Ordered Simulation Scenarios with Step-by-Step Auto-Player support
 const SIMULATION_SCENARIOS: Record<
@@ -1166,8 +1257,10 @@ export default function QualityEcosystemPortal() {
   };
 
   const activeNodeId = hoveredNodeId || selectedNodeId;
+  const isDefaultIdleView =
+    !activeNodeId && !selectedCableId && activeSimulation === 'none' && !showAllFeedbackLoops;
 
-  // Compute exact sequence metadata for highlighted cables (supports 1-Hop + Multi-Hop Ripple Cascade!)
+  // Compute exact sequence metadata for highlighted cables (Always alive even in Default Idle View!)
   const activeCableSequenceMap = useMemo(() => {
     const map = new Map<
       string,
@@ -1177,10 +1270,29 @@ export default function QualityEcosystemPortal() {
         shortTag: string;
         isFeedback: boolean;
         isCurrentStepSpotlight: boolean;
-        directionRole: 'sim' | 'input' | 'output' | 'downstream' | 'feedback';
+        directionRole: 'sim' | 'input' | 'output' | 'downstream' | 'feedback' | 'ambient';
         badgeColor: string;
       }
     >();
+
+    // 0. DEFAULT IDLE VIEW: Illuminate the 8-step Master Closed-Loop Backbone so the screen is numbered & alive immediately!
+    if (isDefaultIdleView) {
+      MASTER_BACKBONE_SEQUENCE.forEach((cableId, idx) => {
+        const cable = CABLES.find((c) => c.id === cableId);
+        if (!cable) return;
+        const stepNum = idx + 1;
+        map.set(cableId, {
+          stepNumber: stepNum,
+          stepPillText: cable.isFeedback ? `↺ STEP 0${stepNum}` : `STEP 0${stepNum}`,
+          shortTag: cable.isFeedback ? `${cable.shortTag} (Return)` : `${cable.shortTag} ➔`,
+          isFeedback: cable.isFeedback,
+          isCurrentStepSpotlight: true,
+          directionRole: cable.isFeedback ? 'feedback' : 'ambient',
+          badgeColor: cable.isFeedback ? '#F43F5E' : cable.color,
+        });
+      });
+      return map;
+    }
 
     // 1. If user clicked a specific cable to inspect its payload contract
     if (selectedCableId && !activeNodeId && activeSimulation === 'none') {
@@ -1241,10 +1353,7 @@ export default function QualityEcosystemPortal() {
       return map;
     }
 
-    // 4. If a card is hovered or selected:
-    //    - Incoming cables: IN #1, IN #2...
-    //    - Direct Outgoing cables: 1st OUT, 2nd OUT, 3rd OUT...
-    //    - If Multi-Hop Ripple is enabled AND card is clicked/selected, trace Hop 2 (primary 1st outgoing from targets)!
+    // 4. If a card is hovered or selected
     if (activeNodeId) {
       const incomingCables = CABLES.filter((c) => c.target === activeNodeId);
       incomingCables.forEach((cable, idx) => {
@@ -1303,6 +1412,7 @@ export default function QualityEcosystemPortal() {
 
     return map;
   }, [
+    isDefaultIdleView,
     activeNodeId,
     selectedNodeId,
     selectedCableId,
@@ -1318,6 +1428,10 @@ export default function QualityEcosystemPortal() {
       string,
       { text: string; color: string; isFeedback?: boolean; isPulseSpotlight?: boolean }
     >();
+
+    if (isDefaultIdleView) {
+      return badgeMap;
+    }
 
     if (selectedCableId && !activeNodeId && activeSimulation === 'none') {
       const cable = CABLES.find((c) => c.id === selectedCableId);
@@ -1423,6 +1537,7 @@ export default function QualityEcosystemPortal() {
 
     return badgeMap;
   }, [
+    isDefaultIdleView,
     activeNodeId,
     selectedNodeId,
     selectedCableId,
@@ -1442,16 +1557,35 @@ export default function QualityEcosystemPortal() {
     return set;
   }, [nodeSequenceBadges]);
 
-  // Count links per node (In, Out, Feedback)
-  const nodeConnectionsCount = useMemo(() => {
-    const counts: Record<string, { inCount: number; outCount: number; feedback: number }> = {};
+  // Map each node's ordered outgoing chips for direct display on the card face
+  const nodeOutgoingChipsMap = useMemo(() => {
+    const map: Record<
+      string,
+      Array<{
+        cableId: string;
+        orderNum: number;
+        targetId: string;
+        targetShortName: string;
+        isFeedback: boolean;
+      }>
+    > = {};
+
     NODES.forEach((n) => {
-      const incoming = CABLES.filter((c) => c.target === n.id);
-      const outgoing = CABLES.filter((c) => c.source === n.id);
-      const fb = [...incoming, ...outgoing].filter((c) => c.isFeedback).length;
-      counts[n.id] = { inCount: incoming.length, outCount: outgoing.length, feedback: fb };
+      const out = CABLES.filter((c) => c.source === n.id)
+        .sort((a, b) => a.orderFromSource - b.orderFromSource)
+        .map((c) => {
+          const tgt = NODES.find((item) => item.id === c.target);
+          return {
+            cableId: c.id,
+            orderNum: c.orderFromSource,
+            targetId: c.target,
+            targetShortName: tgt?.shortName || c.target,
+            isFeedback: c.isFeedback,
+          };
+        });
+      map[n.id] = out;
     });
-    return counts;
+    return map;
   }, []);
 
   // Instant search results
@@ -1509,27 +1643,32 @@ export default function QualityEcosystemPortal() {
     return { cable, srcNode, tgtNode };
   }, [selectedCableId]);
 
-  // Smart Orthogonal PCB / Metro-Track Routing with Rounded 90° Corners for Feedback Highways
+  // =========================================================================
+  // SURGICAL ZERO-OVERLAP PCB ROUTING ENGINE
+  // - Adjacent column forward links: smooth corridor S-curve in the 68px gap
+  // - Multi-column forward links: route through Inter-Row Horizontal Alleys (y=291, 475, 659) so they NEVER cross over intermediate cards!
+  // - Feedback / Return links: route through Upper/Lower Highway Bus (y=24, 868)
+  // =========================================================================
   const computeCableGeometry = (cable: CableRelation, indexOffset: number) => {
     const src = NODES.find((n) => n.id === cable.source);
     const tgt = NODES.find((n) => n.id === cable.target);
     if (!src || !tgt) return null;
 
-    const isSameColumn = src.x === tgt.x;
-    const isForwardLtr = tgt.x > src.x;
+    const isSameColumn = src.colIdx === tgt.colIdx;
+    const colSpan = tgt.colIdx - src.colIdx;
 
-    // Separate outgoing ports vertically by orderFromSource (1st = top pin, 2nd = mid pin, 3rd = bottom pin)
-    const outPinOffset = (cable.orderFromSource - 2) * 18;
-    const inPinOffset = ((src.y - tgt.y) / 220) * 15;
+    // Separate outgoing ports vertically by orderFromSource (1st = -20px, 2nd = 0px, 3rd = +20px)
+    const outPinOffset = (cable.orderFromSource - 2) * 20;
+    const inPinOffset = ((src.rowIdx - tgt.rowIdx) * 8);
 
+    // 1. Same Column Local Conduit (runs in the right stage margin)
     if (isSameColumn) {
-      // Clean rounded local loop on the right corridor of the stage column
       const x1 = src.x + NODE_WIDTH;
       const y1 = src.y + NODE_HEIGHT / 2 + outPinOffset * 0.4;
       const x2 = tgt.x + NODE_WIDTH;
       const y2 = tgt.y + NODE_HEIGHT / 2;
-      const laneX = x1 + (cable.isFeedback ? 34 : 26);
-      const r = 14;
+      const laneX = x1 + (cable.isFeedback ? 32 : 22);
+      const r = 12;
       const dirY = y2 > y1 ? 1 : -1;
 
       const pathD = [
@@ -1546,20 +1685,21 @@ export default function QualityEcosystemPortal() {
       return { pathD, midX, midY, x1, y1, x2, y2 };
     }
 
-    if (isForwardLtr) {
+    // 2. Adjacent Column Forward Conduit (colSpan === 1): runs cleanly inside the 68px inter-stage gap
+    if (colSpan === 1) {
       const x1 = src.x + NODE_WIDTH;
       const y1 = src.y + NODE_HEIGHT / 2 + outPinOffset;
       const x2 = tgt.x;
       const y2 = tgt.y + NODE_HEIGHT / 2 + inPinOffset;
-      const dx = Math.max(68, (x2 - x1) * 0.46);
+      const dx = (x2 - x1) * 0.55;
       const cx1 = x1 + dx;
       const cy1 = y1;
       const cx2 = x2 - dx;
       const cy2 = y2;
       const pathD = `M ${x1} ${y1} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${x2} ${y2}`;
 
-      const tValues = [0.48, 0.36, 0.62, 0.42, 0.56];
-      const t = tValues[indexOffset % tValues.length];
+      const tValues = [0.5, 0.36, 0.64];
+      const t = tValues[(cable.orderFromSource - 1) % tValues.length];
       const mt = 1 - t;
       const midX =
         mt * mt * mt * x1 +
@@ -1575,16 +1715,51 @@ export default function QualityEcosystemPortal() {
       return { pathD, midX, midY, x1, y1, x2, y2 };
     }
 
-    // Orthogonal PCB Highway Routing for Closed-Loop Return / Feedback Cables (Right-to-Left)
-    // Exits left port of source into corridor, rises/drops smoothly to Top/Bottom Highway Bus, runs horizontally, and drops into target!
+    // 3. Multi-Column Forward Express Conduit (colSpan >= 2):
+    // Routes into the nearest Inter-Row Horizontal Alley (y=291, y=475, y=659) so it NEVER crosses over intermediate cards!
+    if (colSpan >= 2) {
+      const x1 = src.x + NODE_WIDTH;
+      const y1 = src.y + NODE_HEIGHT / 2 + outPinOffset;
+      const x2 = tgt.x;
+      const y2 = tgt.y + NODE_HEIGHT / 2 + inPinOffset;
+
+      const alleyIndex = cable.alleyRow || (src.rowIdx === 0 ? 1 : src.rowIdx === 3 ? 3 : 2);
+      const baseAlleyY = alleyIndex === 1 ? 291 : alleyIndex === 2 ? 475 : 659;
+      const alleyY = baseAlleyY + ((indexOffset % 3) - 1) * 4;
+
+      const exitX = x1 + 26;
+      const entryX = x2 - 26;
+      const r = 12;
+      const dir1 = alleyY >= y1 ? 1 : -1;
+      const dir2 = y2 >= alleyY ? 1 : -1;
+
+      const pathD = [
+        `M ${x1} ${y1}`,
+        `L ${exitX - r} ${y1}`,
+        `Q ${exitX} ${y1} ${exitX} ${y1 + dir1 * r}`,
+        `L ${exitX} ${alleyY - dir1 * r}`,
+        `Q ${exitX} ${alleyY} ${exitX + r} ${alleyY}`,
+        `L ${entryX - r} ${alleyY}`,
+        `Q ${entryX} ${alleyY} ${entryX} ${alleyY + dir2 * r}`,
+        `L ${entryX} ${y2 - dir2 * r}`,
+        `Q ${entryX} ${y2} ${entryX + r} ${y2}`,
+        `L ${x2} ${y2}`,
+      ].join(' ');
+
+      const midX = (exitX + entryX) / 2;
+      const midY = alleyY;
+      return { pathD, midX, midY, x1, y1, x2, y2 };
+    }
+
+    // 4. Orthogonal PCB Highway Routing for Closed-Loop Return / Feedback Cables (colSpan < 0)
     const x1 = src.x;
     const y1 = src.y + NODE_HEIGHT / 2;
     const x2 = tgt.x + NODE_WIDTH;
     const y2 = tgt.y + NODE_HEIGHT / 2;
 
     const useTopHighway = cable.feedbackLane === 'top' || (!cable.feedbackLane && y1 < 450);
-    const laneTrackOffset = (indexOffset % 3) * 10;
-    const highwayY = useTopHighway ? 22 + laneTrackOffset : 868 - laneTrackOffset;
+    const laneTrackOffset = (indexOffset % 3) * 9;
+    const highwayY = useTopHighway ? 22 + laneTrackOffset : 872 - laneTrackOffset;
 
     const exitCorridorX = x1 - 24;
     const entryCorridorX = x2 + 24;
@@ -1605,7 +1780,7 @@ export default function QualityEcosystemPortal() {
       `L ${x2} ${y2}`,
     ].join(' ');
 
-    const midX = (exitCorridorX + entryCorridorX) / 2 + ((indexOffset % 3) - 1) * 90;
+    const midX = (exitCorridorX + entryCorridorX) / 2 + ((indexOffset % 3) - 1) * 95;
     const midY = highwayY;
 
     return { pathD, midX, midY, x1, y1, x2, y2 };
@@ -1645,15 +1820,15 @@ export default function QualityEcosystemPortal() {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-sm sm:text-base font-black text-white tracking-tight">
-                QMS 4.0 Enterprise Digital Twin
+                QMS 4.0 Autonomous Digital Twin
               </h1>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 hidden sm:flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                PCB Orthogonal Return Bus
+                Zero-Overlap PCB Routing
               </span>
             </div>
             <p className="text-[11px] text-slate-400 hidden 2xl:block">
-              Click any module or conduit to inspect live data contracts & multi-hop cascades
+              Numbered 1st➔3rd Port Terminals • Inter-Row PCB Corridors • Closed-Loop Return Highways
             </p>
           </div>
         </div>
@@ -1976,7 +2151,7 @@ export default function QualityEcosystemPortal() {
                   left: `${phase.x}px`,
                   top: '36px',
                   width: `${phase.width}px`,
-                  height: '822px',
+                  height: '826px',
                   boxShadow: isStageIlluminated
                     ? `0 0 35px -5px ${phase.color}30, inset 0 0 20px ${phase.color}15`
                     : 'none',
@@ -2017,7 +2192,7 @@ export default function QualityEcosystemPortal() {
           })}
 
           {/* ------------------------------------------------------------- */}
-          {/* LAYER 1: BACKGROUND CABLES (CLICKABLE CONDUITS) */}
+          {/* LAYER 1: BACKGROUND CABLES (CLICKABLE PCB CONDUITS) */}
           {/* ------------------------------------------------------------- */}
           <svg
             className="absolute inset-0 w-full h-full pointer-events-none z-10"
@@ -2033,7 +2208,7 @@ export default function QualityEcosystemPortal() {
                 markerHeight="5"
                 orient="auto-start-reverse"
               >
-                <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="rgba(148, 163, 184, 0.35)" />
+                <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="rgba(148, 163, 184, 0.38)" />
               </marker>
               <marker
                 id="arrowFeedbackMuted"
@@ -2044,7 +2219,7 @@ export default function QualityEcosystemPortal() {
                 markerHeight="5"
                 orient="auto-start-reverse"
               >
-                <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="rgba(244, 63, 94, 0.45)" />
+                <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="rgba(244, 63, 94, 0.48)" />
               </marker>
             </defs>
 
@@ -2089,7 +2264,7 @@ export default function QualityEcosystemPortal() {
           </svg>
 
           {/* ------------------------------------------------------------- */}
-          {/* LAYER 2: 24 WORLD-CLASS GLASSMORPHIC SMART TILES (M-01..M-24) */}
+          {/* LAYER 2: 24 HOLOGRAPHIC SMART CARDS WITH DIRECT SEQUENCE CHIPS */}
           {/* ------------------------------------------------------------- */}
           {NODES.map((node) => {
             const isSelected = selectedNodeId === node.id;
@@ -2097,6 +2272,7 @@ export default function QualityEcosystemPortal() {
             const seqBadge = nodeSequenceBadges.get(node.id);
             const isConnected = Boolean(seqBadge);
             const isDimmed =
+              !isDefaultIdleView &&
               (activeNodeId ||
                 selectedCableId ||
                 activeSimulation !== 'none' ||
@@ -2104,11 +2280,7 @@ export default function QualityEcosystemPortal() {
               !isConnected;
             const phase = PHASES.find((p) => p.id === node.phaseId);
             const themeColor = phase?.color || '#0EA5E9';
-            const linkStats = nodeConnectionsCount[node.id] || {
-              inCount: 0,
-              outCount: 0,
-              feedback: 0,
-            };
+            const outgoingChips = nodeOutgoingChipsMap[node.id] || [];
 
             return (
               <div
@@ -2127,7 +2299,7 @@ export default function QualityEcosystemPortal() {
                       ? `0 10px 28px -5px ${seqBadge?.color || themeColor}40, 0 0 0 2px ${
                           seqBadge?.color || themeColor
                         }`
-                      : '0 10px 30px -10px rgba(0, 0, 0, 0.8)',
+                      : '0 10px 30px -10px rgba(0, 0, 0, 0.82)',
                 }}
                 onMouseEnter={() => setHoveredNodeId(node.id)}
                 onMouseLeave={() => setHoveredNodeId(null)}
@@ -2170,30 +2342,44 @@ export default function QualityEcosystemPortal() {
                   }}
                 />
 
-                {/* Multi-Pin Left Input Terminals & Right Output Terminals */}
-                {[-18, 0, 18].map((offsetY, pinIdx) => (
-                  <div
-                    key={`in-${pinIdx}`}
-                    style={{
-                      top: `calc(50% + ${offsetY}px)`,
-                      backgroundColor: isConnected ? seqBadge?.color || themeColor : '#334155',
-                    }}
-                    className="absolute -left-1.5 -translate-y-1/2 w-2.5 h-2.5 rounded-full border border-[#040812]"
-                  />
-                ))}
-                {[-18, 0, 18].map((offsetY, pinIdx) => (
-                  <div
-                    key={`out-${pinIdx}`}
-                    style={{
-                      top: `calc(50% + ${offsetY}px)`,
-                      backgroundColor: isConnected ? seqBadge?.color || themeColor : '#334155',
-                    }}
-                    className="absolute -right-1.5 -translate-y-1/2 w-2.5 h-2.5 rounded-full border border-[#040812]"
-                  />
-                ))}
+                {/* Left Input Terminal Pin */}
+                <div
+                  style={{
+                    top: '50%',
+                    backgroundColor: isConnected ? seqBadge?.color || themeColor : '#334155',
+                  }}
+                  className="absolute -left-2 -translate-y-1/2 w-3.5 h-3.5 rounded-full border-2 border-[#040812] flex items-center justify-center text-[7px] font-black text-slate-950"
+                >
+                  ►
+                </div>
+
+                {/* Right Numbered Output Terminal Pins (1, 2, 3) */}
+                {[-20, 0, 20].map((offsetY, pinIdx) => {
+                  const hasPort = outgoingChips.some((ch) => ch.orderNum === pinIdx + 1);
+                  if (!hasPort) return null;
+                  const chip = outgoingChips.find((ch) => ch.orderNum === pinIdx + 1);
+                  return (
+                    <div
+                      key={`out-${pinIdx}`}
+                      style={{
+                        top: `calc(50% + ${offsetY}px)`,
+                        backgroundColor: chip?.isFeedback
+                          ? '#F43F5E'
+                          : isConnected
+                          ? seqBadge?.color || themeColor
+                          : '#1E293B',
+                        borderColor: chip?.isFeedback ? '#FDA4AF' : themeColor,
+                      }}
+                      className="absolute -right-2 -translate-y-1/2 w-4 h-4 rounded-full border text-[8px] font-black text-white flex items-center justify-center shadow"
+                      title={`Output #${pinIdx + 1} ➔ ${chip?.targetShortName}`}
+                    >
+                      {pinIdx + 1}
+                    </div>
+                  );
+                })}
 
                 {/* Card Content */}
-                <div className="p-3.5 flex-1 flex flex-col justify-between overflow-hidden rounded-b-2xl">
+                <div className="p-3 flex-1 flex flex-col justify-between overflow-hidden rounded-b-2xl">
                   {/* Top Row: Icon + Clear Visible English Title + M-Code & Live Telemetry */}
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2.5">
@@ -2215,7 +2401,7 @@ export default function QualityEcosystemPortal() {
                         <h4 className="text-[13.5px] font-black text-white group-hover:text-sky-300 transition-colors leading-snug tracking-tight">
                           {node.title}
                         </h4>
-                        <div className="flex items-center gap-1.5 mt-1">
+                        <div className="flex items-center gap-1.5 mt-0.5">
                           <span
                             className="inline-block text-[8.5px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded"
                             style={{
@@ -2225,7 +2411,7 @@ export default function QualityEcosystemPortal() {
                           >
                             {node.badge}
                           </span>
-                          <span className="text-[9px] font-bold text-slate-200 bg-white/[0.07] px-1.5 py-0.5 rounded border border-white/10">
+                          <span className="text-[8.5px] font-bold text-slate-200 bg-white/[0.07] px-1.5 py-0.5 rounded border border-white/10">
                             {node.kpiMetric}
                           </span>
                         </div>
@@ -2233,43 +2419,42 @@ export default function QualityEcosystemPortal() {
                     </div>
                   </div>
 
-                  {/* Middle Row: Concise English Description + Micro Health Bar */}
-                  <div className="my-1">
-                    <p className="text-[10.5px] text-slate-300/85 leading-relaxed line-clamp-2">
-                      {node.description}
-                    </p>
-                    <div className="w-full h-1 bg-white/[0.06] rounded-full overflow-hidden mt-1.5">
-                      <div
-                        className="h-full rounded-full transition-all duration-500"
-                        style={{
-                          width: `${node.healthScore}%`,
-                          backgroundColor: themeColor,
-                        }}
-                      />
-                    </div>
-                  </div>
+                  {/* Middle Row: Concise English Description */}
+                  <p className="text-[10.5px] text-slate-300/85 leading-snug line-clamp-2 my-1">
+                    {node.description}
+                  </p>
 
-                  {/* Bottom Row: In / Out / Loop Breakdown + Direct Launch Button */}
-                  <div className="flex items-center justify-between pt-1.5 border-t border-white/[0.08]">
-                    <div className="flex items-center gap-1 text-[9.5px] font-bold">
-                      <span
-                        className="px-1.5 py-0.5 rounded bg-sky-500/15 text-sky-300 border border-sky-500/25"
-                        title="Incoming Inputs"
-                      >
-                        {linkStats.inCount} In
-                      </span>
-                      <span
-                        className="px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/25"
-                        title="Ordered Outgoing Steps (1st, 2nd, 3rd)"
-                      >
-                        {linkStats.outCount} Out
-                      </span>
-                      {linkStats.feedback > 0 && (
-                        <span
-                          className="px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/35"
-                          title="Includes Closed-Loop Return / Feedback connections"
-                        >
-                          ↺ {linkStats.feedback}
+                  {/* Bottom Row: Direct Ordered Sequence Chips (1➔, 2➔, ↺3➔) + Open Button */}
+                  <div className="flex items-center justify-between gap-1 pt-1.5 border-t border-white/[0.08]">
+                    <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
+                      {outgoingChips.length > 0 ? (
+                        outgoingChips.map((chip) => (
+                          <button
+                            key={chip.cableId}
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedNodeId(null);
+                              setActiveSimulation('none');
+                              setSelectedCableId(
+                                chip.cableId === selectedCableId ? null : chip.cableId
+                              );
+                            }}
+                            title={`Click to inspect Step #${chip.orderNum} conduit to ${chip.targetShortName}`}
+                            className={`px-1.5 py-0.5 rounded text-[8.5px] font-extrabold whitespace-nowrap border transition-all ${
+                              chip.isFeedback
+                                ? 'bg-rose-500/20 text-rose-300 border-rose-500/40 hover:bg-rose-500 hover:text-white'
+                                : 'bg-white/[0.06] text-slate-200 border-white/15 hover:bg-emerald-500 hover:text-slate-950'
+                            }`}
+                          >
+                            {chip.isFeedback
+                              ? `↺${chip.orderNum}➔${chip.targetShortName}`
+                              : `${chip.orderNum}➔${chip.targetShortName}`}
+                          </button>
+                        ))
+                      ) : (
+                        <span className="text-[9px] text-cyan-300/80 font-bold px-1.5 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/20">
+                          ★ 360° Executive Hub
                         </span>
                       )}
                     </div>
@@ -2281,13 +2466,13 @@ export default function QualityEcosystemPortal() {
                         navigate(node.path);
                       }}
                       style={{
-                        backgroundColor: isHovered ? themeColor : 'rgba(255,255,255,0.08)',
+                        backgroundColor: isHovered ? themeColor : 'rgba(255,255,255,0.09)',
                         color: isHovered ? '#ffffff' : '#e2e8f0',
                       }}
-                      className="px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1 transition-all shadow-sm hover:shadow-md"
+                      className="px-2 py-0.5 rounded-lg text-[10.5px] font-black flex items-center gap-0.5 shrink-0 transition-all shadow-sm hover:shadow-md"
                     >
                       <span>Open</span>
-                      <ArrowRight className="w-3 h-3" />
+                      <ArrowRight className="w-2.5 h-2.5" />
                     </button>
                   </div>
                 </div>
@@ -2376,7 +2561,13 @@ export default function QualityEcosystemPortal() {
               return (
                 <g
                   key={cable.id}
-                  opacity={seqMeta.isCurrentStepSpotlight ? 1 : 0.72}
+                  opacity={
+                    seqMeta.directionRole === 'ambient'
+                      ? 0.88
+                      : seqMeta.isCurrentStepSpotlight
+                      ? 1
+                      : 0.72
+                  }
                 >
                   {/* Glowing Base Path */}
                   <path
@@ -2387,8 +2578,8 @@ export default function QualityEcosystemPortal() {
                     strokeWidth={
                       seqMeta.isCurrentStepSpotlight
                         ? seqMeta.isFeedback
-                          ? '3.5'
-                          : '3.2'
+                          ? '3.4'
+                          : '3'
                         : '2.2'
                     }
                     strokeDasharray={seqMeta.isFeedback ? '10, 5' : 'none'}
@@ -2398,24 +2589,24 @@ export default function QualityEcosystemPortal() {
 
                   {/* Dual Live Travelling Energy Orbs along exact Conduit Path */}
                   <circle
-                    r={seqMeta.isCurrentStepSpotlight ? '5' : '3.5'}
+                    r={seqMeta.isCurrentStepSpotlight ? '4.8' : '3.5'}
                     fill="#ffffff"
                     filter="url(#laserGlow)"
                   >
                     <animateMotion
-                      dur={seqMeta.isFeedback ? '1.9s' : '1.3s'}
+                      dur={seqMeta.isFeedback ? '2.1s' : '1.4s'}
                       repeatCount="indefinite"
                       path={geom.pathD}
                     />
                   </circle>
                   <circle
-                    r={seqMeta.isCurrentStepSpotlight ? '4' : '3'}
+                    r={seqMeta.isCurrentStepSpotlight ? '3.8' : '3'}
                     fill={strokeColor}
                     filter="url(#laserGlow)"
                   >
                     <animateMotion
-                      dur={seqMeta.isFeedback ? '1.9s' : '1.3s'}
-                      begin="0.65s"
+                      dur={seqMeta.isFeedback ? '2.1s' : '1.4s'}
+                      begin="0.7s"
                       repeatCount="indefinite"
                       path={geom.pathD}
                     />
@@ -2434,30 +2625,30 @@ export default function QualityEcosystemPortal() {
                   >
                     {/* Outer Glass Capsule */}
                     <rect
-                      x="-94"
-                      y="-14"
-                      width="188"
-                      height="28"
-                      rx="14"
+                      x="-92"
+                      y="-13"
+                      width="184"
+                      height="26"
+                      rx="13"
                       fill="#050b16"
                       stroke={strokeColor}
-                      strokeWidth={seqMeta.isCurrentStepSpotlight ? '2' : '1.4'}
+                      strokeWidth={seqMeta.isCurrentStepSpotlight ? '1.8' : '1.3'}
                     />
                     {/* Left Solid Numbered Step Pill */}
                     <rect
-                      x="-92"
-                      y="-12"
-                      width="68"
-                      height="24"
-                      rx="12"
+                      x="-90"
+                      y="-11"
+                      width="66"
+                      height="22"
+                      rx="11"
                       fill={strokeColor}
                     />
                     <text
-                      x="-58"
+                      x="-57"
                       y="3.5"
                       textAnchor="middle"
                       fill="#040812"
-                      fontSize="9.5"
+                      fontSize="9"
                       fontWeight="900"
                       letterSpacing="0.03em"
                     >
@@ -2465,11 +2656,11 @@ export default function QualityEcosystemPortal() {
                     </text>
                     {/* Right Action Label */}
                     <text
-                      x="35"
+                      x="34"
                       y="3.5"
                       textAnchor="middle"
                       fill="#F8FAFC"
-                      fontSize="9.5"
+                      fontSize="9"
                       fontWeight="800"
                     >
                       {seqMeta.shortTag}
@@ -2487,7 +2678,7 @@ export default function QualityEcosystemPortal() {
       {/* ========================================================================= */}
       <div className="h-12 px-4 border-t border-white/10 bg-[#070d19]/95 backdrop-blur-2xl flex items-center justify-between shrink-0 z-30 gap-3 overflow-x-auto no-scrollbar">
         {activeCableInfo ? (
-          /* Conduit Data Contract Inspector when a specific line is clicked */
+          /* Conduit Data Contract Inspector when a specific line or chip is clicked */
           <div className="w-full flex items-center justify-between gap-3 text-xs">
             <div className="flex items-center gap-2 shrink-0">
               <span
@@ -2496,7 +2687,7 @@ export default function QualityEcosystemPortal() {
               >
                 {activeCableInfo.cable.isFeedback
                   ? `↺ FEEDBACK CONDUIT (${activeCableInfo.cable.id.toUpperCase()})`
-                  : `CONDUIT #${activeCableInfo.cable.orderFromSource} (${activeCableInfo.cable.id.toUpperCase()})`}
+                  : `STEP #${activeCableInfo.cable.orderFromSource} CONDUIT (${activeCableInfo.cable.id.toUpperCase()})`}
               </span>
               <span className="font-black text-white">
                 {activeCableInfo.srcNode?.title}
@@ -2686,21 +2877,17 @@ export default function QualityEcosystemPortal() {
         ) : (
           <div className="w-full flex items-center justify-between text-xs text-slate-400 gap-4">
             <div className="flex items-center gap-4">
-              <span className="flex items-center gap-1.5 text-slate-300 font-semibold">
-                <span className="w-2.5 h-0.5 bg-emerald-400 inline-block" />
-                <span>Forward Sequence (1st ➔ 2nd ➔ 3rd)</span>
+              <span className="flex items-center gap-1.5 text-emerald-300 font-bold">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                <span>Live Backbone Active (Steps 01 ➔ 08 + ↺ Return)</span>
               </span>
               <span className="flex items-center gap-1.5 text-rose-300 font-semibold">
                 <span className="w-2.5 h-0.5 border-b-2 border-dashed border-rose-400 inline-block" />
-                <span>↺ Orthogonal PCB Feedback Bus (Upper & Lower Return Tracks)</span>
-              </span>
-              <span className="hidden lg:flex items-center gap-1.5 text-amber-300 font-semibold">
-                <span className="w-2 h-2 rounded-full bg-amber-400 inline-block" />
-                <span>2-Hop Downstream Cascade</span>
+                <span>↺ Orthogonal PCB Feedback Bus</span>
               </span>
             </div>
-            <span className="text-[11px] text-slate-400 hidden md:inline">
-              Click any module for 2-Hop Cascade • Click any line/pill to inspect its Live Data Payload Contract
+            <span className="text-[11px] text-slate-300 hidden md:inline">
+              Every card displays its numbered outgoing chips (`1➔`, `2➔`, `↺3➔`) directly on the card footer
             </span>
           </div>
         )}
