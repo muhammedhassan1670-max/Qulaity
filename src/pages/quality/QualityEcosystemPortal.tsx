@@ -2873,7 +2873,7 @@ export default function QualityEcosystemPortal() {
                     ? `0 0 20px ${roleBadge.color}50, 0 8px 24px rgba(0,0,0,0.85)`
                     : `0 6px 20px rgba(0, 0, 0, 0.75)`,
                 }}
-                className={`absolute rounded-2xl bg-[#070e1c]/95 backdrop-blur-3xl border transition-all duration-300 cursor-pointer flex flex-col justify-between overflow-hidden group shadow-2xl ${
+                className={`absolute rounded-2xl bg-[#081022] border transition-all duration-200 cursor-pointer flex flex-col justify-between overflow-hidden group shadow-xl ${
                   isDimmed
                     ? 'opacity-20 scale-[0.98]'
                     : 'opacity-100 hover:scale-[1.03] hover:border-sky-400/80 hover:shadow-[0_0_24px_rgba(56,189,248,0.3)] hover:z-40'
@@ -3003,24 +3003,14 @@ export default function QualityEcosystemPortal() {
           })}
 
           {/* ------------------------------------------------------------- */}
-          {/* LAYER 2: CLEAN FOREGROUND PCB TRACES (ZERO BACKGROUND NOISE!) */}
-          {/* Target-Anchored Badges • Zero Collisions • Clear Isolation */}
+          {/* LAYER 2: HIGH-PERFORMANCE HARDWARE-ACCELERATED PCB TRACES (60 FPS) */}
+          {/* Pure Vector Glow • Zero Software Raster Filters • 0% CPU Lag */}
           {/* ------------------------------------------------------------- */}
           <svg
             className="absolute inset-0 w-full h-full pointer-events-none z-30"
             style={{ width: `${CANVAS_WIDTH}px`, height: `${CANVAS_HEIGHT}px` }}
           >
             <defs>
-              <filter id="laserGlow" x="-50%" y="-50%" width="200%" height="200%">
-                <feGaussianBlur stdDeviation="1.5" result="blur1" />
-                <feGaussianBlur stdDeviation="3.5" result="blur2" />
-                <feMerge>
-                  <feMergeNode in="blur2" />
-                  <feMergeNode in="blur1" />
-                  <feMergeNode in="SourceGraphic" />
-                </feMerge>
-              </filter>
-
               <marker
                 id="arrowActiveGreen"
                 viewBox="0 0 10 10"
@@ -3107,9 +3097,22 @@ export default function QualityEcosystemPortal() {
                       ? 0.92
                       : 0.8
                   }
-                  className="transition-opacity duration-300"
+                  className="transition-opacity duration-200"
                 >
-                  {/* Glowing Orthogonal PCB Path */}
+                  {/* Outer Ambient Vector Neon Halo (Zero GPU Blur Cost) */}
+                  {isDirectlyActive && (
+                    <path
+                      d={geom.pathD}
+                      fill="none"
+                      stroke={strokeColor}
+                      strokeWidth="6"
+                      strokeOpacity="0.28"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  )}
+
+                  {/* Core Sharp Vector Trace */}
                   <path
                     id={`path-${cable.id}`}
                     d={geom.pathD}
@@ -3118,50 +3121,25 @@ export default function QualityEcosystemPortal() {
                     strokeWidth={
                       isDirectlyActive
                         ? seqMeta.isFeedback
-                          ? '3.2'
-                          : '2.8'
+                          ? '2.8'
+                          : '2.4'
                         : seqMeta.isFeedback
-                        ? '2.4'
-                        : '1.9'
+                        ? '2'
+                        : '1.6'
                     }
                     strokeDasharray={seqMeta.isFeedback ? '7, 5' : 'none'}
-                    filter="url(#laserGlow)"
                     markerEnd={markerId}
                   />
 
-                  {/* Multi-Particle Fluid Laser Comet Pulse */}
+                  {/* Ultra-Lightweight Single Animated Pulse (Native GPU Vector, Zero Lag) */}
                   <circle
-                    r={isDirectlyActive ? '4.2' : '3'}
+                    r={isDirectlyActive ? '3.5' : '2.5'}
                     fill="#ffffff"
-                    filter="url(#laserGlow)"
+                    stroke={strokeColor}
+                    strokeWidth="1.5"
                   >
                     <animateMotion
                       dur={seqMeta.isFeedback ? '2.0s' : '1.4s'}
-                      repeatCount="indefinite"
-                      path={geom.pathD}
-                    />
-                  </circle>
-                  <circle
-                    r={isDirectlyActive ? '3' : '2'}
-                    fill={strokeColor}
-                    filter="url(#laserGlow)"
-                  >
-                    <animateMotion
-                      dur={seqMeta.isFeedback ? '2.0s' : '1.4s'}
-                      begin="0.08s"
-                      repeatCount="indefinite"
-                      path={geom.pathD}
-                    />
-                  </circle>
-                  <circle
-                    r="1.5"
-                    fill={strokeColor}
-                    opacity="0.6"
-                    filter="url(#laserGlow)"
-                  >
-                    <animateMotion
-                      dur={seqMeta.isFeedback ? '2.0s' : '1.4s'}
-                      begin="0.18s"
                       repeatCount="indefinite"
                       path={geom.pathD}
                     />
@@ -3191,7 +3169,6 @@ export default function QualityEcosystemPortal() {
                       fill="#020612"
                       stroke={strokeColor}
                       strokeWidth={isDirectlyActive ? '2.2' : '1.5'}
-                      filter="url(#laserGlow)"
                     />
                     <text
                       x="0"
