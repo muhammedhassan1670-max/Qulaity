@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ShieldCheck,
@@ -2269,27 +2269,33 @@ export default function QualityEcosystemPortal() {
   return (
     <div
       dir="ltr"
-      className="relative w-full h-full max-h-full flex flex-col bg-[#030711] text-slate-100 overflow-hidden select-none font-sans"
+      className="relative w-full h-full max-h-full flex flex-col bg-[#020612] text-slate-100 overflow-hidden select-none font-sans"
     >
       {/* ========================================================================= */}
-      {/* 1A. COMPACT TOP COMMAND HEADER BAR */}
+      {/* 1A. CYBER-INDUSTRIAL TOP COMMAND COCKPIT */}
       {/* ========================================================================= */}
-      <header className="h-10 px-3 border-b border-white/10 bg-[#070d19]/95 backdrop-blur-xl flex items-center justify-between gap-2 shrink-0 z-30">
+      <header className="h-10 px-3 border-b border-white/10 bg-[#040916]/95 backdrop-blur-2xl flex items-center justify-between gap-2 shrink-0 z-30 shadow-[0_4px_20px_rgba(0,0,0,0.6)]">
         {/* Brand + Architectural Lens Switcher */}
         <div className="flex items-center gap-2 min-w-0">
           <div className="flex items-center gap-2 shrink-0">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#0066CC] to-[#00A3E0] flex items-center justify-center shadow-[0_0_12px_rgba(0,163,224,0.45)] border border-sky-300/30">
+            <div className="relative w-7 h-7 rounded-lg bg-gradient-to-br from-[#0066CC] to-[#00D2FF] flex items-center justify-center shadow-[0_0_14px_rgba(0,210,255,0.5)] border border-sky-300/40">
               <Compass className="w-4 h-4 text-white" />
+              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 ring-2 ring-[#040916] animate-pulse" />
             </div>
-            <span className="text-xs font-black tracking-tight text-white hidden xl:inline">
-              ISO 9001:2015 MATRIX
-            </span>
+            <div className="hidden xl:flex flex-col">
+              <span className="text-xs font-black tracking-tight text-white leading-none">
+                ISO 9001:2015 ECOSYSTEM
+              </span>
+              <span className="text-[9px] font-mono font-bold text-sky-400 leading-none mt-0.5">
+                CYBER-INDUSTRIAL MATRIX
+              </span>
+            </div>
           </div>
 
-          <div className="h-4 w-px bg-white/10 hidden sm:block" />
+          <div className="h-4 w-px bg-white/10 hidden sm:block mx-1" />
 
           {/* 4 Architectural View Lenses */}
-          <div className="flex items-center gap-1 bg-slate-900/90 p-0.5 rounded-lg border border-white/10">
+          <div className="flex items-center gap-1 bg-[#091122]/90 p-0.5 rounded-lg border border-white/10 shadow-inner">
             <button
               type="button"
               onClick={() => {
@@ -2299,14 +2305,17 @@ export default function QualityEcosystemPortal() {
                 setFocusedStageId(null);
                 setActiveSimulation('none');
               }}
-              className={`px-2 py-1 rounded-md text-[11px] font-extrabold transition-all flex items-center gap-1 ${
+              className={`px-2.5 py-1 rounded-md text-[11px] font-extrabold transition-all flex items-center gap-1.5 ${
                 viewLens === 'backbone' && isIdleLensActive
-                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                  ? 'bg-emerald-500/25 text-emerald-300 border border-emerald-400/50 shadow-[0_0_12px_rgba(16,185,129,0.35)]'
                   : 'text-slate-300 hover:text-white hover:bg-white/5'
               }`}
             >
               <Layers className="w-3 h-3 text-emerald-400" />
-              <span>PDCA Backbone (1➔{MASTER_BACKBONE_SEQUENCE.length})</span>
+              <span>PDCA Backbone</span>
+              <span className="px-1 rounded bg-emerald-500/20 text-emerald-300 text-[9px] font-black">
+                {MASTER_BACKBONE_SEQUENCE.length}
+              </span>
             </button>
 
             <button
@@ -2318,9 +2327,9 @@ export default function QualityEcosystemPortal() {
                 setFocusedStageId(null);
                 setActiveSimulation('none');
               }}
-              className={`px-2 py-1 rounded-md text-[11px] font-extrabold transition-all flex items-center gap-1 ${
+              className={`px-2.5 py-1 rounded-md text-[11px] font-extrabold transition-all flex items-center gap-1.5 ${
                 viewLens === 'all_primary' && isIdleLensActive
-                  ? 'bg-sky-500/20 text-sky-300 border border-sky-500/40'
+                  ? 'bg-sky-500/25 text-sky-300 border border-sky-400/50 shadow-[0_0_12px_rgba(56,189,248,0.35)]'
                   : 'text-slate-300 hover:text-white hover:bg-white/5'
               }`}
             >
@@ -2337,14 +2346,17 @@ export default function QualityEcosystemPortal() {
                 setFocusedStageId(null);
                 setActiveSimulation('none');
               }}
-              className={`px-2 py-1 rounded-md text-[11px] font-extrabold transition-all flex items-center gap-1 ${
+              className={`px-2.5 py-1 rounded-md text-[11px] font-extrabold transition-all flex items-center gap-1.5 ${
                 viewLens === 'feedback_bus' && isIdleLensActive
-                  ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
+                  ? 'bg-rose-500/25 text-rose-300 border border-rose-400/50 shadow-[0_0_12px_rgba(244,63,94,0.35)]'
                   : 'text-slate-300 hover:text-white hover:bg-white/5'
               }`}
             >
               <RotateCcw className="w-3 h-3 text-rose-400" />
-              <span>↺ Return Loops ({CABLES.filter((c) => c.isFeedback).length})</span>
+              <span>Return Loops</span>
+              <span className="px-1 rounded bg-rose-500/20 text-rose-300 text-[9px] font-black">
+                {CABLES.filter((c) => c.isFeedback).length}
+              </span>
             </button>
 
             <button
@@ -2356,9 +2368,9 @@ export default function QualityEcosystemPortal() {
                 setFocusedStageId(null);
                 setActiveSimulation('none');
               }}
-              className={`px-2 py-1 rounded-md text-[11px] font-extrabold transition-all flex items-center gap-1 ${
+              className={`px-2.5 py-1 rounded-md text-[11px] font-extrabold transition-all flex items-center gap-1.5 ${
                 viewLens === 'heatmap'
-                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                  ? 'bg-amber-500/25 text-amber-300 border border-amber-400/50 shadow-[0_0_12px_rgba(245,158,11,0.35)]'
                   : 'text-slate-300 hover:text-white hover:bg-white/5'
               }`}
             >
@@ -2369,7 +2381,7 @@ export default function QualityEcosystemPortal() {
         </div>
 
         {/* Center: Live Scenario Simulators + Cinema Camera Toggle */}
-        <div className="hidden lg:flex items-center gap-1 bg-slate-900/90 p-0.5 rounded-lg border border-white/10">
+        <div className="hidden lg:flex items-center gap-1 bg-[#091122]/90 p-0.5 rounded-lg border border-white/10 shadow-inner">
           {(
             Object.keys(SIMULATION_SCENARIOS) as Array<Exclude<SimulationScenarioId, 'none'>>
           ).map((simKey) => {
@@ -2385,16 +2397,16 @@ export default function QualityEcosystemPortal() {
                   setFocusedStageId(null);
                   setActiveSimulation(isActive ? 'none' : simKey);
                 }}
-                className={`px-2 py-1 rounded-md text-[11px] font-extrabold transition-all flex items-center gap-1 whitespace-nowrap ${
+                className={`px-2 py-1 rounded-md text-[11px] font-extrabold transition-all flex items-center gap-1.5 whitespace-nowrap ${
                   isActive
-                    ? 'bg-gradient-to-r from-[#0066CC] to-[#00A3E0] text-white shadow-[0_0_10px_rgba(0,163,224,0.45)]'
+                    ? 'bg-gradient-to-r from-[#0066CC] to-[#00A3E0] text-white shadow-[0_0_14px_rgba(0,163,224,0.55)] border border-sky-300/40'
                     : 'text-slate-300 hover:text-white hover:bg-white/5'
                 }`}
               >
                 {isActive ? (
-                  <Square className="w-2.5 h-2.5 fill-current animate-pulse" />
+                  <Square className="w-2.5 h-2.5 fill-current animate-pulse text-amber-300" />
                 ) : (
-                  <Play className="w-2.5 h-2.5 fill-current" />
+                  <Play className="w-2.5 h-2.5 fill-current text-sky-400" />
                 )}
                 <span>{sim.shortTitle}</span>
               </button>
@@ -2415,9 +2427,9 @@ export default function QualityEcosystemPortal() {
                 focusCameraOnCable(activeCableInfo.cable.id);
               }
             }}
-            className={`px-2 py-1 rounded-md text-[11px] font-extrabold transition-all flex items-center gap-1 ${
+            className={`px-2 py-1 rounded-md text-[11px] font-extrabold transition-all flex items-center gap-1.5 ${
               cinemaCamera
-                ? 'bg-purple-500/25 text-purple-200 border border-purple-400/50 shadow-[0_0_10px_rgba(168,85,247,0.35)]'
+                ? 'bg-purple-500/25 text-purple-200 border border-purple-400/50 shadow-[0_0_12px_rgba(168,85,247,0.4)]'
                 : 'text-slate-400 hover:text-white hover:bg-white/5'
             }`}
             title="Smoothly zoom & track the active step on the canvas"
@@ -2430,8 +2442,8 @@ export default function QualityEcosystemPortal() {
         {/* Right: Quick Search & Zoom Controls */}
         <div className="flex items-center gap-1.5">
           <div className="relative hidden sm:block">
-            <div className="flex items-center bg-slate-900/90 border border-white/15 rounded-lg px-2 py-0.5 w-36 focus-within:w-48 focus-within:border-sky-400 transition-all">
-              <Search className="w-3 h-3 text-slate-400 mr-1.5 shrink-0" />
+            <div className="flex items-center bg-[#091122]/90 border border-white/15 rounded-lg px-2.5 py-0.5 w-36 focus-within:w-48 focus-within:border-sky-400 transition-all shadow-inner">
+              <Search className="w-3 h-3 text-sky-400 mr-1.5 shrink-0" />
               <input
                 type="text"
                 value={searchQuery}
@@ -2483,15 +2495,15 @@ export default function QualityEcosystemPortal() {
             onClick={() => setMultiHopRipple((v) => !v)}
             className={`px-2 py-1 rounded-lg text-[10px] font-extrabold border transition-all hidden xl:flex items-center gap-1 ${
               multiHopRipple
-                ? 'bg-amber-500/15 border-amber-500/40 text-amber-300'
-                : 'bg-slate-900/60 border-white/10 text-slate-400'
+                ? 'bg-amber-500/20 border-amber-400/50 text-amber-300 shadow-[0_0_10px_rgba(245,158,11,0.3)]'
+                : 'bg-[#091122]/90 border-white/10 text-slate-400'
             }`}
           >
-            <Sparkles className="w-3 h-3" />
+            <Sparkles className="w-3 h-3 text-amber-400" />
             <span>2-Hop</span>
           </button>
 
-          <div className="flex items-center bg-slate-900/90 border border-white/10 rounded-lg p-0.5">
+          <div className="flex items-center bg-[#091122]/90 border border-white/10 rounded-lg p-0.5 shadow-inner">
             <button
               type="button"
               onClick={() => setZoom((z) => Math.max(z - 0.1, 0.5))}
@@ -2526,19 +2538,19 @@ export default function QualityEcosystemPortal() {
       {/* ========================================================================= */}
       {/* 1B. DOCKED SEQUENCE PIPELINE RIBBON WITH PREV/NEXT STEPPER */}
       {/* ========================================================================= */}
-      <div className="h-8 px-3 border-b border-white/10 bg-[#050a14]/95 flex items-center justify-between gap-2 shrink-0 z-20 overflow-x-auto no-scrollbar">
+      <div className="h-8 px-3 border-b border-white/10 bg-[#030713]/95 flex items-center justify-between gap-2 shrink-0 z-20 overflow-x-auto no-scrollbar shadow-inner">
         <div className="flex items-center gap-1.5 shrink-0">
           {/* Prev / Next Stepper Buttons */}
-          <div className="flex items-center bg-slate-900 border border-white/15 rounded-md p-0.5">
+          <div className="flex items-center bg-[#0a1224] border border-white/15 rounded-md p-0.5 shadow-sm">
             <button
               type="button"
               onClick={() => handleStepDelta(-1)}
-              className="p-0.5 text-slate-300 hover:text-white hover:bg-white/10 rounded"
+              className="p-0.5 text-slate-300 hover:text-white hover:bg-white/10 rounded transition-colors"
               title="Previous Relationship Step"
             >
               <ChevronLeft className="w-3.5 h-3.5" />
             </button>
-            <span className="text-[10px] font-black uppercase tracking-wider text-sky-300 px-1.5">
+            <span className="text-[10px] font-black uppercase tracking-wider text-sky-300 px-2 font-mono">
               {activeSimulation !== 'none'
                 ? `SIMULATION`
                 : activeNodeInfo
@@ -2548,7 +2560,7 @@ export default function QualityEcosystemPortal() {
             <button
               type="button"
               onClick={() => handleStepDelta(1)}
-              className="p-0.5 text-slate-300 hover:text-white hover:bg-white/10 rounded"
+              className="p-0.5 text-slate-300 hover:text-white hover:bg-white/10 rounded transition-colors"
               title="Next Relationship Step"
             >
               <ChevronRight className="w-3.5 h-3.5" />
@@ -2574,11 +2586,11 @@ export default function QualityEcosystemPortal() {
                     }}
                     className={`px-2 py-0.5 rounded-md text-[10px] font-extrabold transition-all flex items-center gap-1 shrink-0 border ${
                       item.isActiveStep
-                        ? 'bg-emerald-500/25 border-emerald-400 text-white shadow-[0_0_10px_rgba(16,185,129,0.4)] scale-105'
+                        ? 'bg-emerald-500/30 border-emerald-400 text-white shadow-[0_0_12px_rgba(16,185,129,0.5)] scale-105'
                         : isBackboneFeedback
                         ? 'bg-rose-950/60 border-rose-500/40 text-rose-200 hover:bg-rose-500/20'
                         : item.isPassedStep
-                        ? 'bg-slate-900/90 border-white/15 text-slate-200 hover:border-sky-400/50 hover:text-white'
+                        ? 'bg-[#091122]/90 border-white/15 text-slate-200 hover:border-sky-400/50 hover:text-white'
                         : 'bg-slate-950/50 border-white/5 text-slate-500'
                     }`}
                   >
@@ -2613,7 +2625,7 @@ export default function QualityEcosystemPortal() {
               setActiveSimulation('none');
               fitToScreen();
             }}
-            className="px-2 py-0.5 rounded bg-rose-500/20 border border-rose-500/40 text-rose-300 hover:bg-rose-500/30 text-[10px] font-black shrink-0"
+            className="px-2 py-0.5 rounded bg-rose-500/20 border border-rose-500/40 text-rose-300 hover:bg-rose-500/30 text-[10px] font-black shrink-0 shadow-sm transition-all"
           >
             Reset View ✕
           </button>
@@ -2621,7 +2633,7 @@ export default function QualityEcosystemPortal() {
       </div>
 
       {/* ========================================================================= */}
-      {/* 2. SPACIOUS ZERO-CLUTTER MATRIX CANVAS (1460 x 560) */}
+      {/* 2. SPACIOUS ZERO-CLUTTER MATRIX CANVAS (1540 x 580) */}
       {/* ========================================================================= */}
       <div
         ref={containerRef}
@@ -2641,9 +2653,9 @@ export default function QualityEcosystemPortal() {
         }`}
         style={{
           backgroundImage: `
-            radial-gradient(circle at 50% 0%, rgba(14, 165, 233, 0.15) 0%, transparent 60%),
-            radial-gradient(circle at 85% 85%, rgba(16, 185, 129, 0.12) 0%, transparent 50%),
-            radial-gradient(circle at 15% 85%, rgba(244, 63, 94, 0.08) 0%, transparent 50%),
+            radial-gradient(circle at 50% 0%, rgba(14, 165, 233, 0.16) 0%, transparent 55%),
+            radial-gradient(circle at 85% 85%, rgba(16, 185, 129, 0.12) 0%, transparent 45%),
+            radial-gradient(circle at 15% 85%, rgba(244, 63, 94, 0.08) 0%, transparent 45%),
             linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
             linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px)
           `,
@@ -2654,32 +2666,32 @@ export default function QualityEcosystemPortal() {
         {activeCableInfo && (
           <div
             data-interactive="true"
-            className="absolute top-2.5 left-1/2 -translate-x-1/2 z-40 max-w-4xl w-[95%] bg-[#071124]/95 backdrop-blur-2xl border-2 rounded-2xl px-4 py-2 shadow-[0_14px_40px_rgba(0,0,0,0.85)] flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2 duration-200"
+            className="absolute top-2.5 left-1/2 -translate-x-1/2 z-40 max-w-4xl w-[95%] bg-[#050b18]/95 backdrop-blur-2xl border-2 rounded-2xl px-4 py-2.5 shadow-[0_16px_48px_rgba(0,0,0,0.9),0_0_24px_rgba(16,185,129,0.25)] flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2 duration-200"
             style={{
               borderColor: activeCableInfo.cable.isFeedback ? '#F43F5E' : '#10B981',
             }}
           >
             <div className="flex items-center gap-2.5 min-w-0">
               <span
-                className="px-2.5 py-1 rounded-lg text-xs font-black uppercase tracking-wider shrink-0 shadow"
+                className="px-2.5 py-1 rounded-lg text-xs font-black uppercase tracking-wider shrink-0 shadow-md font-mono"
                 style={{
                   backgroundColor: activeCableInfo.cable.isFeedback ? '#F43F5E' : '#10B981',
-                  color: '#030711',
+                  color: '#020612',
                 }}
               >
                 {activeCableInfo.cable.isoTransition}
               </span>
               <div className="min-w-0">
                 <div className="flex items-center gap-2 text-sm font-black text-white truncate">
-                  <span>
+                  <span className="text-sky-300">
                     {activeCableInfo.srcNode?.title} ({activeCableInfo.srcNode?.isoClause})
                   </span>
-                  <span className="text-sky-400">━━▶</span>
+                  <span className="text-emerald-400">━━▶</span>
                   <span className="text-emerald-300">
                     {activeCableInfo.tgtNode?.title} ({activeCableInfo.tgtNode?.isoClause})
                   </span>
                 </div>
-                <div className="text-xs font-semibold text-slate-300 truncate">
+                <div className="text-xs font-semibold text-slate-300 truncate mt-0.5">
                   {activeCableInfo.cable.label}
                 </div>
               </div>
@@ -2689,14 +2701,14 @@ export default function QualityEcosystemPortal() {
               <button
                 type="button"
                 onClick={() => handleStepDelta(-1)}
-                className="px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-bold"
+                className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-colors"
               >
                 ◀ Prev
               </button>
               <button
                 type="button"
                 onClick={() => handleStepDelta(1)}
-                className="px-2.5 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black"
+                className="px-3 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black shadow-md transition-all"
               >
                 Next Step ▶
               </button>
@@ -2707,7 +2719,7 @@ export default function QualityEcosystemPortal() {
                   setActiveSimulation('none');
                   fitToScreen();
                 }}
-                className="px-2 py-1 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 text-xs font-bold"
+                className="px-2 py-1 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 text-xs font-bold transition-colors"
               >
                 ✕
               </button>
@@ -2734,23 +2746,33 @@ export default function QualityEcosystemPortal() {
                 key={phase.id}
                 style={{
                   left: `${phase.x - 5}px`,
-                  top: '26px',
+                  top: '24px',
                   width: `${phase.width + 10}px`,
-                  height: `${CANVAS_HEIGHT - 36}px`,
+                  height: `${CANVAS_HEIGHT - 32}px`,
                   borderColor: isFocused
                     ? phase.color
                     : isStageActive
-                    ? `${phase.color}55`
-                    : 'rgba(255,255,255,0.06)',
+                    ? `${phase.color}60`
+                    : 'rgba(255,255,255,0.08)',
                   background: isFocused
-                    ? `linear-gradient(180deg, ${phase.badgeBg} 0%, rgba(10, 18, 34, 0.72) 100%)`
+                    ? `linear-gradient(180deg, ${phase.badgeBg} 0%, rgba(8, 14, 28, 0.85) 100%)`
                     : isStageActive
-                    ? `linear-gradient(180deg, ${phase.badgeBg} 0%, rgba(10, 18, 34, 0.38) 100%)`
-                    : 'linear-gradient(180deg, rgba(15, 23, 42, 0.35) 0%, rgba(8, 13, 25, 0.18) 100%)',
+                    ? `linear-gradient(180deg, ${phase.badgeBg} 0%, rgba(8, 14, 28, 0.45) 100%)`
+                    : 'linear-gradient(180deg, rgba(15, 23, 42, 0.4) 0%, rgba(6, 11, 22, 0.25) 100%)',
+                  boxShadow: isFocused ? `0 0 30px ${phase.glowColor}` : 'none',
                 }}
-                className="absolute rounded-xl border transition-all duration-300 pointer-events-none"
+                className="absolute rounded-2xl border transition-all duration-300 pointer-events-none overflow-hidden"
               >
-                {/* Clickable Stage Header with PDCA Badge + ISO Clause Range */}
+                {/* Stage Top Neon Accent Bar */}
+                <div
+                  className="h-1 w-full transition-all duration-300"
+                  style={{
+                    backgroundColor: phase.color,
+                    boxShadow: `0 0 10px ${phase.color}`,
+                  }}
+                />
+
+                {/* Clickable Stage Header with Stage Number, PDCA Badge & ISO Range */}
                 <button
                   type="button"
                   data-interactive="true"
@@ -2759,32 +2781,34 @@ export default function QualityEcosystemPortal() {
                     toggleFocusStage(phase);
                   }}
                   title={`Click to ${isFocused ? 'reset zoom' : `zoom & spotlight ${phase.title} (${phase.isoClauseRange})`}`}
-                  className="pointer-events-auto w-full px-2.5 py-1.5 border-b border-white/10 flex items-center justify-between rounded-t-xl bg-slate-950/90 hover:bg-slate-900 transition-colors cursor-pointer group"
+                  className="pointer-events-auto w-full px-2.5 py-1.5 border-b border-white/10 flex items-center justify-between bg-[#040813]/95 hover:bg-slate-900/90 transition-colors cursor-pointer group"
                 >
                   <div className="flex items-center gap-1.5 min-w-0">
                     <span
-                      className="text-[9.5px] font-black tracking-wider px-1.5 py-0.5 rounded uppercase shrink-0"
+                      className="text-[9px] font-black tracking-wider px-1.5 py-0.5 rounded uppercase shrink-0 font-mono shadow-sm"
                       style={{
                         backgroundColor: phase.color,
-                        color: '#020617',
+                        color: '#020612',
                       }}
                     >
                       {phase.pdcaPhase}
                     </span>
-                    <span className="text-[12.5px] font-black text-white tracking-tight truncate">
+                    <span className="text-[12px] font-black text-white tracking-tight truncate group-hover:text-sky-300 transition-colors">
                       {phase.title}
                     </span>
                   </div>
-                  <span className="text-[9.5px] font-mono font-bold text-slate-400 group-hover:text-sky-300 transition-colors shrink-0">
-                    {isFocused ? 'Reset ✕' : `${phase.subtitle}`}
-                  </span>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <span className="text-[9px] font-mono font-bold text-slate-400 group-hover:text-sky-300 transition-colors">
+                      {isFocused ? 'Reset ✕' : phase.subtitle}
+                    </span>
+                  </div>
                 </button>
               </div>
             );
           })}
 
           {/* ------------------------------------------------------------- */}
-          {/* LAYER 1: ULTRA-CLEAN MINIMALIST HERO CARDS (198 x 94px) */}
+          {/* LAYER 1: ULTRA-CLEAN HARDWARE COCKPIT CARDS (204 x 100px) */}
           {/* Zero External Top Banners • Zero Wrapping Text • Zero Cut-off Pills */}
           {/* ------------------------------------------------------------- */}
           {NODES.map((node) => {
@@ -2842,37 +2866,41 @@ export default function QualityEcosystemPortal() {
                     ? roleBadge.color
                     : viewLens === 'heatmap'
                     ? heatmapBorderColor
-                    : `${phase.color}40`,
+                    : `${phase.color}45`,
                   boxShadow: isSelected
-                    ? `0 0 24px rgba(56, 189, 248, 0.45), 0 8px 24px rgba(0,0,0,0.85)`
+                    ? `0 0 28px rgba(56, 189, 248, 0.5), 0 10px 30px rgba(0,0,0,0.9)`
                     : roleBadge?.isPulseSpotlight
-                    ? `0 0 16px ${roleBadge.color}45, 0 6px 18px rgba(0,0,0,0.75)`
-                    : `0 4px 16px rgba(0, 0, 0, 0.65)`,
+                    ? `0 0 20px ${roleBadge.color}50, 0 8px 24px rgba(0,0,0,0.85)`
+                    : `0 6px 20px rgba(0, 0, 0, 0.75)`,
                 }}
-                className={`absolute rounded-2xl bg-[#091122]/90 backdrop-blur-3xl border transition-all duration-300 cursor-pointer flex flex-col justify-between overflow-hidden group shadow-2xl ${
+                className={`absolute rounded-2xl bg-[#070e1c]/95 backdrop-blur-3xl border transition-all duration-300 cursor-pointer flex flex-col justify-between overflow-hidden group shadow-2xl ${
                   isDimmed
                     ? 'opacity-20 scale-[0.98]'
-                    : 'opacity-100 hover:scale-[1.03] hover:border-sky-400/70 hover:shadow-[0_0_20px_rgba(56,189,248,0.25)] hover:z-40'
+                    : 'opacity-100 hover:scale-[1.03] hover:border-sky-400/80 hover:shadow-[0_0_24px_rgba(56,189,248,0.3)] hover:z-40'
                 } ${isSelected || roleBadge?.isPulseSpotlight ? 'z-30' : 'z-20'}`}
               >
+                {/* Subtle Top Glass Rim Reflection Highlight */}
+                <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/25 to-transparent pointer-events-none" />
+
                 {/* Ambient Corner & Top Spotlight Glow */}
                 <div
-                  className="absolute -top-12 -right-12 w-28 h-28 rounded-full blur-2xl opacity-15 pointer-events-none transition-all duration-500 group-hover:opacity-40"
+                  className="absolute -top-12 -right-12 w-28 h-28 rounded-full blur-2xl opacity-20 pointer-events-none transition-all duration-500 group-hover:opacity-45"
                   style={{ backgroundColor: cardAccentColor }}
                 />
-                {/* Left Vertical Neon Spine Bar */}
+
+                {/* Left Vertical Precision Neon Spine */}
                 <div
-                  className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl transition-all duration-300 shadow-[0_0_8px_currentColor]"
+                  className="absolute left-0 top-0 bottom-0 w-1.5 rounded-l-2xl transition-all duration-300 shadow-[0_0_10px_currentColor]"
                   style={{ backgroundColor: cardAccentColor, color: cardAccentColor }}
                 />
 
                 {/* ROW 1: Sleek Header Strip (Icon + ISO Clause + Status/Role Pill) */}
-                <div className="pl-3 pr-2.5 pt-2 flex items-center justify-between gap-1.5 whitespace-nowrap">
+                <div className="pl-3.5 pr-2.5 pt-2 flex items-center justify-between gap-1.5 whitespace-nowrap">
                   <div className="flex items-center gap-1.5 min-w-0">
                     <div
-                      className="w-5 h-5 rounded-md flex items-center justify-center shrink-0 border border-white/10"
+                      className="w-5 h-5 rounded-md flex items-center justify-center shrink-0 border border-white/15 shadow-inner"
                       style={{
-                        backgroundColor: `${cardAccentColor}18`,
+                        backgroundColor: `${cardAccentColor}22`,
                         color: cardAccentColor,
                       }}
                     >
@@ -2886,36 +2914,37 @@ export default function QualityEcosystemPortal() {
                     </span>
                   </div>
 
-                  {/* Internal Role/Step Badge OR Metric */}
+                  {/* Internal Role/Step Badge OR Metric with Pulsing Telemetry Dot */}
                   {roleBadge ? (
                     <span
                       style={{
                         backgroundColor: roleBadge.color,
-                        color: '#020617',
+                        color: '#020612',
                       }}
-                      className="px-2 py-0.5 rounded text-[9.5px] font-black uppercase tracking-wider shrink-0 shadow-sm"
+                      className="px-2 py-0.5 rounded text-[9.5px] font-black uppercase tracking-wider shrink-0 shadow-md font-mono"
                     >
                       {roleBadge.text}
                     </span>
                   ) : (
-                    <span className="px-2 py-0.5 rounded bg-white/[0.05] border border-white/10 text-slate-300 text-[9.5px] font-black font-mono shrink-0">
-                      {viewLens === 'heatmap' ? `${node.healthScore}%` : node.kpiValue}
+                    <span className="px-2 py-0.5 rounded bg-white/[0.06] border border-white/10 text-slate-200 text-[9.5px] font-black font-mono shrink-0 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      <span>{viewLens === 'heatmap' ? `${node.healthScore}%` : node.kpiValue}</span>
                     </span>
                   )}
                 </div>
 
                 {/* ROW 2: High-Clarity Module Title & Concise Concept Tagline */}
-                <div className="pl-3 pr-2.5 flex flex-col justify-center">
-                  <h4 className="text-[15.5px] font-black text-white leading-tight tracking-tight whitespace-nowrap">
+                <div className="pl-3.5 pr-2.5 flex flex-col justify-center">
+                  <h4 className="text-[15px] font-black text-white leading-tight tracking-tight whitespace-nowrap group-hover:text-sky-300 transition-colors">
                     {node.title}
                   </h4>
-                  <p className="text-[11px] font-semibold text-slate-300 leading-tight whitespace-nowrap mt-0.5">
+                  <p className="text-[10.5px] font-medium text-slate-400 leading-tight whitespace-nowrap mt-0.5 tracking-wide">
                     {node.conceptTagline}
                   </p>
                 </div>
 
                 {/* ROW 3: Streamlined Interactive Sequence Bar & Launch Button */}
-                <div className="pl-3 pr-2 pb-1.5 pt-1 border-t border-white/[0.07] bg-black/30 flex items-center justify-between gap-1.5 whitespace-nowrap">
+                <div className="pl-3.5 pr-2 pb-1.5 pt-1 border-t border-white/[0.08] bg-[#020612]/60 flex items-center justify-between gap-1.5 whitespace-nowrap">
                   <div className="flex items-center gap-1 min-w-0">
                     {outgoingChips.slice(0, 2).map((chip) => (
                       <button
@@ -2935,13 +2964,13 @@ export default function QualityEcosystemPortal() {
                         title={`${getOrdinalLabel(chip.orderNum)}: ${chip.shortTag} ➔ ${chip.targetShortName}`}
                         className={`px-1.5 py-0.5 rounded text-[9px] font-extrabold transition-all flex items-center gap-1 shrink-0 ${
                           selectedCableId === chip.cableId
-                            ? 'bg-emerald-400 text-slate-950 font-black shadow'
+                            ? 'bg-emerald-400 text-slate-950 font-black shadow-md'
                             : chip.isFeedback
                             ? 'bg-rose-500/15 text-rose-300 border border-rose-500/30 hover:bg-rose-500/30'
-                            : 'bg-white/[0.05] text-slate-300 border border-white/10 hover:bg-sky-500/20 hover:text-white'
+                            : 'bg-white/[0.06] text-slate-300 border border-white/10 hover:bg-sky-500/20 hover:text-white'
                         }`}
                       >
-                        <span className={chip.isFeedback ? 'text-rose-400' : 'text-sky-400'}>
+                        <span className={chip.isFeedback ? 'text-rose-400 font-mono' : 'text-sky-400 font-mono'}>
                           {chip.isFeedback ? `↺${chip.orderNum}` : `${chip.orderNum}➔`}
                         </span>
                         <span className="truncate max-w-[55px]">{chip.targetShortName}</span>
@@ -2955,9 +2984,9 @@ export default function QualityEcosystemPortal() {
                       e.stopPropagation();
                       navigate(node.path);
                     }}
-                    className="px-2 py-0.5 rounded bg-sky-500/15 hover:bg-sky-500 text-sky-300 hover:text-slate-950 text-[9.5px] font-black border border-sky-400/25 transition-all flex items-center gap-1 shrink-0"
+                    className="px-2.5 py-0.5 rounded-md bg-gradient-to-r from-sky-500/20 to-blue-500/20 hover:from-sky-400 hover:to-blue-400 text-sky-300 hover:text-slate-950 text-[9.5px] font-black border border-sky-400/30 transition-all flex items-center gap-1 shrink-0 shadow-sm"
                   >
-                    <span>Go</span>
+                    <span>Launch</span>
                     <ArrowRight className="w-2.5 h-2.5" />
                   </button>
                 </div>
@@ -2967,16 +2996,21 @@ export default function QualityEcosystemPortal() {
 
           {/* ------------------------------------------------------------- */}
           {/* LAYER 2: CLEAN FOREGROUND PCB TRACES (ZERO BACKGROUND NOISE!) */}
-          {/* Only active cables are drawn, with compact 24x15px number badges */}
+          {/* Only active cables are drawn, with compact 26x16px number badges */}
           {/* ------------------------------------------------------------- */}
           <svg
             className="absolute inset-0 w-full h-full pointer-events-none z-30"
             style={{ width: `${CANVAS_WIDTH}px`, height: `${CANVAS_HEIGHT}px` }}
           >
             <defs>
-              <filter id="laserGlow" x="-30%" y="-30%" width="160%" height="160%">
-                <feGaussianBlur stdDeviation="2.5" result="blur" />
-                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+              <filter id="laserGlow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="1.5" result="blur1" />
+                <feGaussianBlur stdDeviation="3.5" result="blur2" />
+                <feMerge>
+                  <feMergeNode in="blur2" />
+                  <feMergeNode in="blur1" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
               </filter>
 
               <marker
@@ -3049,10 +3083,10 @@ export default function QualityEcosystemPortal() {
                   key={cable.id}
                   opacity={
                     seqMeta.directionRole === 'ambient'
-                      ? 0.92
+                      ? 0.95
                       : seqMeta.isCurrentStepSpotlight
                       ? 1
-                      : 0.78
+                      : 0.8
                   }
                 >
                   {/* Glowing Orthogonal PCB Path */}
@@ -3064,8 +3098,8 @@ export default function QualityEcosystemPortal() {
                     strokeWidth={
                       seqMeta.isCurrentStepSpotlight
                         ? seqMeta.isFeedback
-                          ? '2.6'
-                          : '2.2'
+                          ? '2.8'
+                          : '2.4'
                         : '1.8'
                     }
                     strokeDasharray={seqMeta.isFeedback ? '7, 5' : 'none'}
@@ -3073,9 +3107,10 @@ export default function QualityEcosystemPortal() {
                     markerEnd={markerId}
                   />
 
-                  {/* Dual Speed Laser Energy Pulses with Comet Tail */}
+                  {/* Multi-Particle Fluid Laser Comet Pulse */}
+                  {/* Particle 1: Bright White Core */}
                   <circle
-                    r={seqMeta.isCurrentStepSpotlight ? '4' : '3'}
+                    r={seqMeta.isCurrentStepSpotlight ? '3.8' : '3'}
                     fill="#ffffff"
                     filter="url(#laserGlow)"
                   >
@@ -3085,6 +3120,7 @@ export default function QualityEcosystemPortal() {
                       path={geom.pathD}
                     />
                   </circle>
+                  {/* Particle 2: Laser Halo */}
                   <circle
                     r={seqMeta.isCurrentStepSpotlight ? '2.6' : '2'}
                     fill={strokeColor}
@@ -3092,13 +3128,27 @@ export default function QualityEcosystemPortal() {
                   >
                     <animateMotion
                       dur={seqMeta.isFeedback ? '2.0s' : '1.4s'}
-                      begin="0.12s"
+                      begin="0.08s"
+                      repeatCount="indefinite"
+                      path={geom.pathD}
+                    />
+                  </circle>
+                  {/* Particle 3: Trailing Comet Sparkle */}
+                  <circle
+                    r={seqMeta.isCurrentStepSpotlight ? '1.8' : '1.4'}
+                    fill={strokeColor}
+                    opacity="0.6"
+                    filter="url(#laserGlow)"
+                  >
+                    <animateMotion
+                      dur={seqMeta.isFeedback ? '2.0s' : '1.4s'}
+                      begin="0.18s"
                       repeatCount="indefinite"
                       path={geom.pathD}
                     />
                   </circle>
 
-                  {/* Tiny Sleek 24x15px Number Badge inside the 48px Corridor */}
+                  {/* Compact 26x16px Corridor Step Badge */}
                   <g
                     transform={`translate(${geom.midX}, ${geom.midY})`}
                     className="pointer-events-auto cursor-pointer"
@@ -3114,21 +3164,23 @@ export default function QualityEcosystemPortal() {
                   >
                     <rect
                       x="-13"
-                      y="-7.5"
+                      y="-8"
                       width="26"
-                      height="15"
-                      rx="7.5"
-                      fill="#040812"
+                      height="16"
+                      rx="8"
+                      fill="#020612"
                       stroke={strokeColor}
-                      strokeWidth="1.5"
+                      strokeWidth="1.6"
+                      filter="url(#laserGlow)"
                     />
                     <text
                       x="0"
-                      y="3"
+                      y="3.5"
                       textAnchor="middle"
                       fill={strokeColor}
-                      fontSize="9"
+                      fontSize="9.5"
                       fontWeight="900"
+                      fontFamily="monospace"
                     >
                       {seqMeta.pillText}
                     </text>
@@ -3143,11 +3195,11 @@ export default function QualityEcosystemPortal() {
       {/* ========================================================================= */}
       {/* 3. DOCKED SINGLE-LINE BOTTOM STATUS BAR */}
       {/* ========================================================================= */}
-      <div className="h-9 px-4 border-t border-white/10 bg-[#070d19]/95 backdrop-blur-2xl flex items-center justify-between shrink-0 z-30 gap-3 overflow-x-auto no-scrollbar">
+      <div className="h-9 px-4 border-t border-white/10 bg-[#040916]/95 backdrop-blur-2xl flex items-center justify-between shrink-0 z-30 gap-3 overflow-x-auto no-scrollbar shadow-[0_-4px_20px_rgba(0,0,0,0.6)]">
         {activeNodeInfo ? (
           <div className="w-full flex items-center justify-between gap-3 text-xs">
             <div className="flex items-center gap-2.5 shrink-0">
-              <span className="px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-500/40 text-xs font-black">
+              <span className="px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-500/40 text-xs font-black font-mono">
                 {activeNodeInfo.node.seqCode} • {activeNodeInfo.node.isoClause}
               </span>
               <span className="font-black text-white text-sm">
@@ -3163,7 +3215,7 @@ export default function QualityEcosystemPortal() {
                 <button
                   type="button"
                   onClick={() => setSelectedNodeId(null)}
-                  className="px-2 py-0.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white hover:bg-white/10"
+                  className="px-2.5 py-1 rounded-lg text-xs font-bold text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
                 >
                   Unpin
                 </button>
@@ -3171,7 +3223,7 @@ export default function QualityEcosystemPortal() {
               <button
                 type="button"
                 onClick={() => navigate(activeNodeInfo.node.path)}
-                className="px-3 py-0.5 rounded-lg bg-gradient-to-r from-[#0066CC] to-[#00A3E0] text-white text-xs font-black flex items-center gap-1.5 shadow-md hover:scale-105 transition-all whitespace-nowrap"
+                className="px-3.5 py-1 rounded-lg bg-gradient-to-r from-[#0066CC] to-[#00A3E0] hover:from-[#0077EE] hover:to-[#00B4F5] text-white text-xs font-black flex items-center gap-1.5 shadow-[0_0_14px_rgba(0,163,224,0.4)] transition-all whitespace-nowrap"
               >
                 <span>Launch Module</span>
                 <ExternalLink className="w-3.5 h-3.5" />
@@ -3180,13 +3232,17 @@ export default function QualityEcosystemPortal() {
           </div>
         ) : (
           <div className="w-full flex items-center justify-between text-xs text-slate-300 gap-4">
-            <div className="flex items-center gap-4">
-              <span className="flex items-center gap-1.5 text-emerald-300 font-bold">
+            <div className="flex items-center gap-3">
+              <span className="flex items-center gap-2 text-emerald-300 font-black">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                <span>Zero-Clutter ISO 9001:2015 Matrix • Clean 48px Corridors • Internal Step Badges</span>
+                <span>Zero-Clutter ISO 9001:2015 Matrix</span>
+              </span>
+              <span className="text-slate-500">•</span>
+              <span className="text-slate-400 font-mono text-[11px]">
+                48px Clean Corridors • 100% Closed-Loop PDCA
               </span>
             </div>
-            <span className="text-xs text-slate-300 hidden md:inline">
+            <span className="text-xs text-slate-400 hidden md:inline">
               Hover any card to spotlight its exact <strong>1st / 2nd / ↺ Return</strong> links with zero background clutter
             </span>
           </div>
