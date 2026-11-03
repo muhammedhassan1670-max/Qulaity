@@ -2641,11 +2641,13 @@ export default function QualityEcosystemPortal() {
         }`}
         style={{
           backgroundImage: `
-            radial-gradient(circle at 18% 22%, rgba(0, 102, 204, 0.12) 0%, transparent 45%),
-            radial-gradient(circle at 82% 78%, rgba(16, 185, 129, 0.09) 0%, transparent 45%),
-            radial-gradient(rgba(148, 163, 184, 0.1) 1px, transparent 1px)
+            radial-gradient(circle at 50% 0%, rgba(14, 165, 233, 0.15) 0%, transparent 60%),
+            radial-gradient(circle at 85% 85%, rgba(16, 185, 129, 0.12) 0%, transparent 50%),
+            radial-gradient(circle at 15% 85%, rgba(244, 63, 94, 0.08) 0%, transparent 50%),
+            linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px)
           `,
-          backgroundSize: '100% 100%, 100% 100%, 24px 24px',
+          backgroundSize: '100% 100%, 100% 100%, 100% 100%, 36px 36px, 36px 36px',
         }}
       >
         {/* LIVE TELEPROMPTER STORY BANNER (Appears when stepping through a Cable or Simulation) */}
@@ -2847,16 +2849,21 @@ export default function QualityEcosystemPortal() {
                     ? `0 0 16px ${roleBadge.color}45, 0 6px 18px rgba(0,0,0,0.75)`
                     : `0 4px 16px rgba(0, 0, 0, 0.65)`,
                 }}
-                className={`absolute rounded-xl bg-gradient-to-b from-[#0d1629] to-[#070d18] backdrop-blur-2xl border transition-all duration-200 cursor-pointer flex flex-col justify-between overflow-hidden group ${
+                className={`absolute rounded-2xl bg-[#091122]/90 backdrop-blur-3xl border transition-all duration-300 cursor-pointer flex flex-col justify-between overflow-hidden group shadow-2xl ${
                   isDimmed
                     ? 'opacity-20 scale-[0.98]'
                     : 'opacity-100 hover:scale-[1.03] hover:border-sky-400/70 hover:shadow-[0_0_20px_rgba(56,189,248,0.25)] hover:z-40'
                 } ${isSelected || roleBadge?.isPulseSpotlight ? 'z-30' : 'z-20'}`}
               >
+                {/* Ambient Corner & Top Spotlight Glow */}
+                <div
+                  className="absolute -top-12 -right-12 w-28 h-28 rounded-full blur-2xl opacity-15 pointer-events-none transition-all duration-500 group-hover:opacity-40"
+                  style={{ backgroundColor: cardAccentColor }}
+                />
                 {/* Left Vertical Neon Spine Bar */}
                 <div
-                  className="absolute left-0 top-0 bottom-0 w-1 rounded-l-xl transition-all duration-300"
-                  style={{ backgroundColor: cardAccentColor }}
+                  className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl transition-all duration-300 shadow-[0_0_8px_currentColor]"
+                  style={{ backgroundColor: cardAccentColor, color: cardAccentColor }}
                 />
 
                 {/* ROW 1: Sleek Header Strip (Icon + ISO Clause + Status/Role Pill) */}
@@ -3066,14 +3073,26 @@ export default function QualityEcosystemPortal() {
                     markerEnd={markerId}
                   />
 
-                  {/* Single Crisp Travelling Energy Pulse */}
+                  {/* Dual Speed Laser Energy Pulses with Comet Tail */}
                   <circle
-                    r={seqMeta.isCurrentStepSpotlight ? '3.8' : '2.8'}
+                    r={seqMeta.isCurrentStepSpotlight ? '4' : '3'}
                     fill="#ffffff"
                     filter="url(#laserGlow)"
                   >
                     <animateMotion
-                      dur={seqMeta.isFeedback ? '2.2s' : '1.5s'}
+                      dur={seqMeta.isFeedback ? '2.0s' : '1.4s'}
+                      repeatCount="indefinite"
+                      path={geom.pathD}
+                    />
+                  </circle>
+                  <circle
+                    r={seqMeta.isCurrentStepSpotlight ? '2.6' : '2'}
+                    fill={strokeColor}
+                    filter="url(#laserGlow)"
+                  >
+                    <animateMotion
+                      dur={seqMeta.isFeedback ? '2.0s' : '1.4s'}
+                      begin="0.12s"
                       repeatCount="indefinite"
                       path={geom.pathD}
                     />
@@ -3176,6 +3195,8 @@ export default function QualityEcosystemPortal() {
     </div>
   );
 }
+
+
 
 
 
