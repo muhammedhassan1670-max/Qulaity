@@ -117,7 +117,7 @@ interface CableRelation {
 // ============================================================================
 
 const CANVAS_WIDTH = 1540;
-const CANVAS_HEIGHT = 580;
+const CANVAS_HEIGHT = 600;
 const NODE_WIDTH = 204;
 const NODE_HEIGHT = 100;
 
@@ -2055,7 +2055,7 @@ export default function QualityEcosystemPortal() {
   }, [selectedCableId, activeSimulation, simStepIndex]);
 
   // =========================================================================
-  // SPACIOUS ORTHOGONAL PCB TRACE ENGINE (48px Wide Corridors + 28px Row Gaps)
+  // SPACIOUS ORTHOGONAL PCB TRACE ENGINE (Target-Anchored Non-Colliding Badges)
   // =========================================================================
   const computeCableGeometry = useCallback((cable: CableRelation, indexOffset: number) => {
     const src = NODES.find((n) => n.id === cable.source);
@@ -2065,10 +2065,10 @@ export default function QualityEcosystemPortal() {
     const isSameColumn = src.colIdx === tgt.colIdx;
     const colSpan = tgt.colIdx - src.colIdx;
 
-    const outPinOffset = (cable.orderFromSource - 2) * 14;
-    const inPinOffset = (src.rowIdx - tgt.rowIdx) * 4;
+    const outPinOffset = (cable.orderFromSource - 2) * 12;
+    const inPinOffset = (src.rowIdx - tgt.rowIdx) * 5;
 
-    // 1A. Adjacent-Row Same-Column Direct Vertical Bridge across the 28px Open Gap
+    // 1A. Adjacent-Row Same-Column Direct Vertical Bridge across the Open Gap
     if (isSameColumn && Math.abs(src.rowIdx - tgt.rowIdx) === 1) {
       const goingDown = tgt.rowIdx > src.rowIdx;
       const xBridge = src.x + NODE_WIDTH / 2;
@@ -2086,7 +2086,7 @@ export default function QualityEcosystemPortal() {
       const y1 = src.y + NODE_HEIGHT / 2 + outPinOffset * 0.4;
       const x2 = tgt.x + NODE_WIDTH;
       const y2 = tgt.y + NODE_HEIGHT / 2;
-      const corridorCenter = src.colIdx < 5 ? x1 + 24 : x1 + 14;
+      const corridorCenter = src.colIdx < 5 ? x1 + 26 : x1 + 16;
       const laneX = corridorCenter + cable.corridorTrack * 5;
       const r = 8;
       const dirY = y2 > y1 ? 1 : -1;
@@ -2100,8 +2100,9 @@ export default function QualityEcosystemPortal() {
         `L ${x2} ${y2}`,
       ].join(' ');
 
-      const midX = laneX;
-      const midY = (y1 + y2) / 2;
+      // Badge sits on the horizontal entry line into target
+      const midX = x2 + 16;
+      const midY = y2;
       return { pathD, midX, midY, x1, y1, x2, y2, isHighway: false };
     }
 
@@ -2113,13 +2114,13 @@ export default function QualityEcosystemPortal() {
       const y2 = tgt.y + NODE_HEIGHT / 2 + inPinOffset;
 
       const corridorCenter = (x1 + x2) / 2;
-      const laneX = corridorCenter + cable.corridorTrack * 6;
+      const laneX = corridorCenter + cable.corridorTrack * 7;
 
       if (Math.abs(y2 - y1) < 12) {
         const pathD = `M ${x1} ${y1} L ${x2} ${y1}`;
         return {
           pathD,
-          midX: corridorCenter,
+          midX: x2 - 16,
           midY: y1,
           x1,
           y1,
@@ -2140,15 +2141,18 @@ export default function QualityEcosystemPortal() {
         `L ${x2} ${y2}`,
       ].join(' ');
 
-      const midX = laneX;
-      const midY = (y1 + y2) / 2;
+      // Badge is anchored right at the entrance of the target node!
+      const midX = x2 - 16;
+      const midY = y2;
       return { pathD, midX, midY, x1, y1, x2, y2, isHighway: false };
     }
 
     // 3. Feedback Return Loops & Multi-Column Jumps -> Top/Bottom Highway Bus
-    const isTopBus = !cable.isFeedback && src.rowIdx <= 1 && tgt.rowIdx <= 1;
+    // If both source & target are in upper half (row <= 1), use TOP highway (y=14)
+    // If in lower half, use BOTTOM highway (y=570)
+    const isTopBus = src.rowIdx <= 1 && tgt.rowIdx <= 1;
     const laneIdx = cable.highwayLane ?? indexOffset % 3;
-    const busY = isTopBus ? 14 + laneIdx * 5 : 564 + laneIdx * 4;
+    const busY = isTopBus ? 14 + laneIdx * 10 : 570 + laneIdx * 10;
 
     const x1 = cable.isFeedback ? src.x : src.x + NODE_WIDTH;
     const y1 = src.y + NODE_HEIGHT / 2 + outPinOffset * 0.4;
@@ -2156,12 +2160,12 @@ export default function QualityEcosystemPortal() {
     const y2 = tgt.y + NODE_HEIGHT / 2 + inPinOffset * 0.4;
 
     const exitCorridorX = cable.isFeedback
-      ? src.x - 22 + cable.corridorTrack * 4
-      : src.x + NODE_WIDTH + 22 + cable.corridorTrack * 4;
+      ? src.x - 24 + cable.corridorTrack * 6
+      : src.x + NODE_WIDTH + 24 + cable.corridorTrack * 6;
 
     const entryCorridorX = cable.isFeedback
-      ? tgt.x + NODE_WIDTH + 22 + cable.corridorTrack * 4
-      : tgt.x - 22 + cable.corridorTrack * 4;
+      ? tgt.x + NODE_WIDTH + 24 + cable.corridorTrack * 6
+      : tgt.x - 24 + cable.corridorTrack * 6;
 
     const r = 8;
     const dirToBusY = busY > y1 ? 1 : -1;
@@ -2183,13 +2187,14 @@ export default function QualityEcosystemPortal() {
       `L ${x2} ${y2}`,
     ].join(' ');
 
-    const midX = (exitCorridorX + entryCorridorX) / 2;
-    const midY = busY;
+    // Anchor badge right at the entrance of the target node (never floating in the middle!)
+    const midX = cable.isFeedback ? x2 + 16 : x2 - 16;
+    const midY = y2;
 
     return { pathD, midX, midY, x1, y1, x2, y2, isHighway: true };
   }, []);
 
-  // Anti-collision spacing for small 24x15px step dots
+  // Anti-collision spacing for target-anchored badges
   const deOverlappedActiveGeometries = useMemo(() => {
     const geomMap = new Map<
       string,
@@ -2214,18 +2219,13 @@ export default function QualityEcosystemPortal() {
 
       let { midX, midY } = baseGeom;
 
-      for (let attempt = 0; attempt < 8; attempt++) {
+      for (let attempt = 0; attempt < 6; attempt++) {
         const collision = placedDots.find(
-          (p) => Math.abs(p.x - midX) < 28 && Math.abs(p.y - midY) < 18
+          (p) => Math.abs(p.x - midX) < 22 && Math.abs(p.y - midY) < 14
         );
         if (!collision) break;
-        if (!baseGeom.isHighway) {
-          midY += (attempt % 2 === 0 ? 1 : -1) * (18 + attempt * 4);
-          midY = Math.min(Math.max(midY, 76), 516);
-        } else {
-          midX += (attempt % 2 === 0 ? 1 : -1) * 70;
-          midX = Math.min(Math.max(midX, 90), CANVAS_WIDTH - 90);
-        }
+        // If two badges target same node entrance, offset along X slightly
+        midX += (attempt % 2 === 0 ? 1 : -1) * (18 + attempt * 4);
       }
 
       placedDots.push({ x: midX, y: midY });
@@ -2944,9 +2944,9 @@ export default function QualityEcosystemPortal() {
                 </div>
 
                 {/* ROW 3: Streamlined Interactive Sequence Bar & Launch Button */}
-                <div className="pl-3.5 pr-2 pb-1.5 pt-1 border-t border-white/[0.08] bg-[#020612]/60 flex items-center justify-between gap-1.5 whitespace-nowrap">
+                <div className="pl-3.5 pr-2 pb-1.5 pt-1 border-t border-white/[0.08] bg-[#020612]/60 flex items-center justify-between gap-1 whitespace-nowrap">
                   <div className="flex items-center gap-1 min-w-0">
-                    {outgoingChips.slice(0, 2).map((chip) => (
+                    {outgoingChips.slice(0, 1).map((chip) => (
                       <button
                         key={chip.cableId}
                         type="button"
@@ -2971,11 +2971,19 @@ export default function QualityEcosystemPortal() {
                         }`}
                       >
                         <span className={chip.isFeedback ? 'text-rose-400 font-mono' : 'text-sky-400 font-mono'}>
-                          {chip.isFeedback ? `↺${chip.orderNum}` : `${chip.orderNum}➔`}
+                          {chip.isFeedback ? `↺` : `${chip.orderNum}➔`}
                         </span>
-                        <span className="truncate max-w-[55px]">{chip.targetShortName}</span>
+                        <span className="truncate max-w-[58px]">{chip.targetShortName}</span>
                       </button>
                     ))}
+                    {outgoingChips.length > 1 && (
+                      <span
+                        title={`${outgoingChips.length - 1} more outgoing links (click card or ribbon to explore)`}
+                        className="px-1 py-0.5 rounded text-[8.5px] font-mono font-bold bg-white/[0.06] border border-white/10 text-slate-400 shrink-0"
+                      >
+                        +{outgoingChips.length - 1}
+                      </span>
+                    )}
                   </div>
 
                   <button
@@ -2996,7 +3004,7 @@ export default function QualityEcosystemPortal() {
 
           {/* ------------------------------------------------------------- */}
           {/* LAYER 2: CLEAN FOREGROUND PCB TRACES (ZERO BACKGROUND NOISE!) */}
-          {/* Only active cables are drawn, with compact 26x16px number badges */}
+          {/* Target-Anchored Badges • Zero Collisions • Clear Isolation */}
           {/* ------------------------------------------------------------- */}
           <svg
             className="absolute inset-0 w-full h-full pointer-events-none z-30"
@@ -3069,6 +3077,15 @@ export default function QualityEcosystemPortal() {
               const geom = deOverlappedActiveGeometries.get(cable.id);
               if (!geom) return null;
 
+              const isDirectlyActive =
+                selectedCableId === cable.id ||
+                (activeNodeId && (cable.source === activeNodeId || cable.target === activeNodeId)) ||
+                (activeSimulation !== 'none' && seqMeta.isCurrentStepSpotlight);
+
+              const isDimmedOut =
+                (selectedCableId && selectedCableId !== cable.id) ||
+                (activeNodeId && cable.source !== activeNodeId && cable.target !== activeNodeId);
+
               const strokeColor = seqMeta.badgeColor;
               const markerId = seqMeta.isFeedback
                 ? 'url(#arrowActiveFeedback)'
@@ -3082,12 +3099,15 @@ export default function QualityEcosystemPortal() {
                 <g
                   key={cable.id}
                   opacity={
-                    seqMeta.directionRole === 'ambient'
-                      ? 0.95
-                      : seqMeta.isCurrentStepSpotlight
+                    isDimmedOut
+                      ? 0.1
+                      : isDirectlyActive
                       ? 1
+                      : seqMeta.directionRole === 'ambient'
+                      ? 0.92
                       : 0.8
                   }
+                  className="transition-opacity duration-300"
                 >
                   {/* Glowing Orthogonal PCB Path */}
                   <path
@@ -3096,11 +3116,13 @@ export default function QualityEcosystemPortal() {
                     fill="none"
                     stroke={strokeColor}
                     strokeWidth={
-                      seqMeta.isCurrentStepSpotlight
+                      isDirectlyActive
                         ? seqMeta.isFeedback
-                          ? '2.8'
-                          : '2.4'
-                        : '1.8'
+                          ? '3.2'
+                          : '2.8'
+                        : seqMeta.isFeedback
+                        ? '2.4'
+                        : '1.9'
                     }
                     strokeDasharray={seqMeta.isFeedback ? '7, 5' : 'none'}
                     filter="url(#laserGlow)"
@@ -3108,9 +3130,8 @@ export default function QualityEcosystemPortal() {
                   />
 
                   {/* Multi-Particle Fluid Laser Comet Pulse */}
-                  {/* Particle 1: Bright White Core */}
                   <circle
-                    r={seqMeta.isCurrentStepSpotlight ? '3.8' : '3'}
+                    r={isDirectlyActive ? '4.2' : '3'}
                     fill="#ffffff"
                     filter="url(#laserGlow)"
                   >
@@ -3120,9 +3141,8 @@ export default function QualityEcosystemPortal() {
                       path={geom.pathD}
                     />
                   </circle>
-                  {/* Particle 2: Laser Halo */}
                   <circle
-                    r={seqMeta.isCurrentStepSpotlight ? '2.6' : '2'}
+                    r={isDirectlyActive ? '3' : '2'}
                     fill={strokeColor}
                     filter="url(#laserGlow)"
                   >
@@ -3133,9 +3153,8 @@ export default function QualityEcosystemPortal() {
                       path={geom.pathD}
                     />
                   </circle>
-                  {/* Particle 3: Trailing Comet Sparkle */}
                   <circle
-                    r={seqMeta.isCurrentStepSpotlight ? '1.8' : '1.4'}
+                    r="1.5"
                     fill={strokeColor}
                     opacity="0.6"
                     filter="url(#laserGlow)"
@@ -3148,7 +3167,7 @@ export default function QualityEcosystemPortal() {
                     />
                   </circle>
 
-                  {/* Compact 26x16px Corridor Step Badge */}
+                  {/* Destination-Anchored Number Badge (Zero Clutter • Crisp Legibility) */}
                   <g
                     transform={`translate(${geom.midX}, ${geom.midY})`}
                     className="pointer-events-auto cursor-pointer"
@@ -3162,6 +3181,7 @@ export default function QualityEcosystemPortal() {
                       }
                     }}
                   >
+                    <title>{`${cable.isoTransition}: ${cable.label}`}</title>
                     <rect
                       x="-13"
                       y="-8"
@@ -3170,7 +3190,7 @@ export default function QualityEcosystemPortal() {
                       rx="8"
                       fill="#020612"
                       stroke={strokeColor}
-                      strokeWidth="1.6"
+                      strokeWidth={isDirectlyActive ? '2.2' : '1.5'}
                       filter="url(#laserGlow)"
                     />
                     <text
