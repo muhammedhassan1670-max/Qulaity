@@ -116,16 +116,16 @@ interface CableRelation {
 // 48px Wide Corridors + 28px Open Row Gaps + Zero External Overlapping Banners
 // ============================================================================
 
-const CANVAS_WIDTH = 1460;
-const CANVAS_HEIGHT = 560;
-const NODE_WIDTH = 198;
-const NODE_HEIGHT = 94;
+const CANVAS_WIDTH = 1540;
+const CANVAS_HEIGHT = 580;
+const NODE_WIDTH = 204;
+const NODE_HEIGHT = 100;
 
 // 6 Columns: 198px Card + 48px Spacious Corridor = 246px pitch
-const COL_X = [16, 262, 508, 754, 1000, 1246];
+const COL_X = [16, 272, 528, 784, 1040, 1296];
 
 // 4 Rows: 94px Card + 28px Pure Open Vertical Gap = 122px pitch
-const ROW_Y = [68, 190, 312, 434];
+const ROW_Y = [68, 194, 320, 446];
 
 const PHASES: PhaseZone[] = [
   {
@@ -2148,7 +2148,7 @@ export default function QualityEcosystemPortal() {
     // 3. Feedback Return Loops & Multi-Column Jumps -> Top/Bottom Highway Bus
     const isTopBus = !cable.isFeedback && src.rowIdx <= 1 && tgt.rowIdx <= 1;
     const laneIdx = cable.highwayLane ?? indexOffset % 3;
-    const busY = isTopBus ? 14 + laneIdx * 5 : 542 + laneIdx * 4;
+    const busY = isTopBus ? 14 + laneIdx * 5 : 564 + laneIdx * 4;
 
     const x1 = cable.isFeedback ? src.x : src.x + NODE_WIDTH;
     const y1 = src.y + NODE_HEIGHT / 2 + outPinOffset * 0.4;
@@ -2840,32 +2840,32 @@ export default function QualityEcosystemPortal() {
                     ? roleBadge.color
                     : viewLens === 'heatmap'
                     ? heatmapBorderColor
-                    : `${phase.color}55`,
+                    : `${phase.color}40`,
                   boxShadow: isSelected
-                    ? `0 0 24px rgba(56, 189, 248, 0.5), 0 8px 20px rgba(0,0,0,0.8)`
+                    ? `0 0 24px rgba(56, 189, 248, 0.45), 0 8px 24px rgba(0,0,0,0.85)`
                     : roleBadge?.isPulseSpotlight
-                    ? `0 0 18px ${roleBadge.color}55, 0 6px 16px rgba(0,0,0,0.75)`
-                    : `0 4px 14px rgba(0, 0, 0, 0.6)`,
+                    ? `0 0 16px ${roleBadge.color}45, 0 6px 18px rgba(0,0,0,0.75)`
+                    : `0 4px 16px rgba(0, 0, 0, 0.65)`,
                 }}
-                className={`absolute rounded-xl bg-[#091224]/95 backdrop-blur-xl border-2 transition-all duration-200 cursor-pointer flex flex-col justify-between overflow-hidden group ${
+                className={`absolute rounded-xl bg-gradient-to-b from-[#0d1629] to-[#070d18] backdrop-blur-2xl border transition-all duration-200 cursor-pointer flex flex-col justify-between overflow-hidden group ${
                   isDimmed
-                    ? 'opacity-20 scale-[0.97]'
-                    : 'opacity-100 hover:scale-[1.04] hover:z-40'
+                    ? 'opacity-20 scale-[0.98]'
+                    : 'opacity-100 hover:scale-[1.03] hover:border-sky-400/70 hover:shadow-[0_0_20px_rgba(56,189,248,0.25)] hover:z-40'
                 } ${isSelected || roleBadge?.isPulseSpotlight ? 'z-30' : 'z-20'}`}
               >
                 {/* Left Vertical Neon Spine Bar */}
                 <div
-                  className="absolute left-0 top-0 bottom-0 w-1"
+                  className="absolute left-0 top-0 bottom-0 w-1 rounded-l-xl transition-all duration-300"
                   style={{ backgroundColor: cardAccentColor }}
                 />
 
-                {/* ROW 1: Single-Line Clean Header (Icon + Short ISO Clause + Internal Step/KPI Pill) */}
-                <div className="pl-2.5 pr-2 pt-1.5 flex items-center justify-between gap-1 whitespace-nowrap">
+                {/* ROW 1: Sleek Header Strip (Icon + ISO Clause + Status/Role Pill) */}
+                <div className="pl-3 pr-2.5 pt-2 flex items-center justify-between gap-1.5 whitespace-nowrap">
                   <div className="flex items-center gap-1.5 min-w-0">
                     <div
-                      className="w-4 h-4 rounded flex items-center justify-center shrink-0"
+                      className="w-5 h-5 rounded-md flex items-center justify-center shrink-0 border border-white/10"
                       style={{
-                        backgroundColor: `${cardAccentColor}25`,
+                        backgroundColor: `${cardAccentColor}18`,
                         color: cardAccentColor,
                       }}
                     >
@@ -2879,37 +2879,37 @@ export default function QualityEcosystemPortal() {
                     </span>
                   </div>
 
-                  {/* Internal Role/Step Badge OR Single-Line KPI (Never wraps!) */}
+                  {/* Internal Role/Step Badge OR Metric */}
                   {roleBadge ? (
                     <span
                       style={{
                         backgroundColor: roleBadge.color,
                         color: '#020617',
                       }}
-                      className="px-1.5 py-0.5 rounded text-[9.5px] font-black uppercase tracking-wider shrink-0 shadow-sm"
+                      className="px-2 py-0.5 rounded text-[9.5px] font-black uppercase tracking-wider shrink-0 shadow-sm"
                     >
                       {roleBadge.text}
                     </span>
                   ) : (
-                    <span className="px-1.5 py-0.5 rounded bg-white/[0.06] text-slate-200 text-[9.5px] font-black font-mono shrink-0">
+                    <span className="px-2 py-0.5 rounded bg-white/[0.05] border border-white/10 text-slate-300 text-[9.5px] font-black font-mono shrink-0">
                       {viewLens === 'heatmap' ? `${node.healthScore}%` : node.kpiValue}
                     </span>
                   )}
                 </div>
 
-                {/* ROW 2: HERO FULL-WIDTH TITLE (16px Black) & CONCEPT SUBTITLE (11.5px Bold) */}
-                <div className="pl-2.5 pr-2 flex flex-col justify-center">
-                  <h4 className="text-[16px] font-black text-white leading-none tracking-tight whitespace-nowrap">
+                {/* ROW 2: High-Clarity Module Title & Concise Concept Tagline */}
+                <div className="pl-3 pr-2.5 flex flex-col justify-center">
+                  <h4 className="text-[15.5px] font-black text-white leading-tight tracking-tight whitespace-nowrap">
                     {node.title}
                   </h4>
-                  <p className="text-[11px] font-bold text-slate-300 leading-tight whitespace-nowrap mt-1">
+                  <p className="text-[11px] font-semibold text-slate-300 leading-tight whitespace-nowrap mt-0.5">
                     {node.conceptTagline}
                   </p>
                 </div>
 
-                {/* ROW 3: Clean Uncluttered Sequence Bar (Short Codes that Never Cut Off!) */}
-                <div className="pl-2.5 pr-1.5 pb-1 pt-0.5 border-t border-white/[0.06] bg-slate-950/60 flex items-center justify-between gap-1 whitespace-nowrap">
-                  <div className="flex items-center gap-1">
+                {/* ROW 3: Streamlined Interactive Sequence Bar & Launch Button */}
+                <div className="pl-3 pr-2 pb-1.5 pt-1 border-t border-white/[0.07] bg-black/30 flex items-center justify-between gap-1.5 whitespace-nowrap">
+                  <div className="flex items-center gap-1 min-w-0">
                     {outgoingChips.slice(0, 2).map((chip) => (
                       <button
                         key={chip.cableId}
@@ -2926,18 +2926,18 @@ export default function QualityEcosystemPortal() {
                           }
                         }}
                         title={`${getOrdinalLabel(chip.orderNum)}: ${chip.shortTag} ➔ ${chip.targetShortName}`}
-                        className={`px-1.5 py-0.5 rounded text-[9px] font-black transition-all flex items-center gap-0.5 shrink-0 ${
+                        className={`px-1.5 py-0.5 rounded text-[9px] font-extrabold transition-all flex items-center gap-1 shrink-0 ${
                           selectedCableId === chip.cableId
-                            ? 'bg-emerald-400 text-slate-950 shadow'
+                            ? 'bg-emerald-400 text-slate-950 font-black shadow'
                             : chip.isFeedback
-                            ? 'bg-rose-500/20 text-rose-200 border border-rose-500/35 hover:bg-rose-500/35'
-                            : 'bg-white/[0.06] text-slate-300 border border-white/10 hover:bg-sky-500/25 hover:text-white'
+                            ? 'bg-rose-500/15 text-rose-300 border border-rose-500/30 hover:bg-rose-500/30'
+                            : 'bg-white/[0.05] text-slate-300 border border-white/10 hover:bg-sky-500/20 hover:text-white'
                         }`}
                       >
-                        <span className={chip.isFeedback ? 'text-rose-300' : 'text-sky-300'}>
+                        <span className={chip.isFeedback ? 'text-rose-400' : 'text-sky-400'}>
                           {chip.isFeedback ? `↺${chip.orderNum}` : `${chip.orderNum}➔`}
                         </span>
-                        <span>{chip.targetShortName}</span>
+                        <span className="truncate max-w-[55px]">{chip.targetShortName}</span>
                       </button>
                     ))}
                   </div>
@@ -2948,7 +2948,7 @@ export default function QualityEcosystemPortal() {
                       e.stopPropagation();
                       navigate(node.path);
                     }}
-                    className="px-1.5 py-0.5 rounded bg-sky-500/15 hover:bg-sky-500 text-sky-300 hover:text-slate-950 text-[9px] font-black transition-all flex items-center gap-0.5 shrink-0"
+                    className="px-2 py-0.5 rounded bg-sky-500/15 hover:bg-sky-500 text-sky-300 hover:text-slate-950 text-[9.5px] font-black border border-sky-400/25 transition-all flex items-center gap-1 shrink-0"
                   >
                     <span>Go</span>
                     <ArrowRight className="w-2.5 h-2.5" />
@@ -2975,49 +2975,49 @@ export default function QualityEcosystemPortal() {
               <marker
                 id="arrowActiveGreen"
                 viewBox="0 0 10 10"
-                refX="7"
-                refY="5"
-                markerWidth="5.5"
-                markerHeight="5.5"
-                orient="auto-start-reverse"
-              >
-                <path d="M 0 1 L 9 5 L 0 9 z" fill="#10B981" />
-              </marker>
-
-              <marker
-                id="arrowActiveBlue"
-                viewBox="0 0 10 10"
-                refX="7"
-                refY="5"
-                markerWidth="5.5"
-                markerHeight="5.5"
-                orient="auto-start-reverse"
-              >
-                <path d="M 0 1 L 9 5 L 0 9 z" fill="#38BDF8" />
-              </marker>
-
-              <marker
-                id="arrowActiveAmber"
-                viewBox="0 0 10 10"
-                refX="7"
-                refY="5"
-                markerWidth="5.5"
-                markerHeight="5.5"
-                orient="auto-start-reverse"
-              >
-                <path d="M 0 1 L 9 5 L 0 9 z" fill="#F59E0B" />
-              </marker>
-
-              <marker
-                id="arrowActiveFeedback"
-                viewBox="0 0 10 10"
-                refX="7"
+                refX="8"
                 refY="5"
                 markerWidth="6"
                 markerHeight="6"
                 orient="auto-start-reverse"
               >
-                <path d="M 0 1 L 9 5 L 0 9 z" fill="#F43F5E" />
+                <path d="M 0 1.5 L 8.5 5 L 0 8.5 z" fill="#10B981" />
+              </marker>
+
+              <marker
+                id="arrowActiveBlue"
+                viewBox="0 0 10 10"
+                refX="8"
+                refY="5"
+                markerWidth="6"
+                markerHeight="6"
+                orient="auto-start-reverse"
+              >
+                <path d="M 0 1.5 L 8.5 5 L 0 8.5 z" fill="#38BDF8" />
+              </marker>
+
+              <marker
+                id="arrowActiveAmber"
+                viewBox="0 0 10 10"
+                refX="8"
+                refY="5"
+                markerWidth="6"
+                markerHeight="6"
+                orient="auto-start-reverse"
+              >
+                <path d="M 0 1.5 L 8.5 5 L 0 8.5 z" fill="#F59E0B" />
+              </marker>
+
+              <marker
+                id="arrowActiveFeedback"
+                viewBox="0 0 10 10"
+                refX="8"
+                refY="5"
+                markerWidth="6.5"
+                markerHeight="6.5"
+                orient="auto-start-reverse"
+              >
+                <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#F43F5E" />
               </marker>
             </defs>
 
@@ -3176,6 +3176,10 @@ export default function QualityEcosystemPortal() {
     </div>
   );
 }
+
+
+
+
 
 
 
