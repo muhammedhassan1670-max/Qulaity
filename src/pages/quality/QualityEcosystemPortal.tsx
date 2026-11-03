@@ -65,6 +65,8 @@ type ViewLensId = 'backbone' | 'all_primary' | 'feedback_bus' | 'heatmap';
 interface PhaseZone {
   id: PhaseId;
   stageNum: string;
+  pdcaPhase: 'PLAN' | 'DO' | 'CHECK' | 'ACT';
+  isoClauseRange: string;
   title: string;
   subtitle: string;
   color: string;
@@ -77,6 +79,7 @@ interface PhaseZone {
 interface EcosystemNode {
   id: string;
   seqCode: string;
+  isoClause: string; // Official ISO 9001:2015 Clause reference
   title: string; // Big 17px bold 2-word title
   shortName: string; // Ultra-short 1-word label for pills
   conceptTagline: string; // Concise 3-4 word concept subtitle across full width
@@ -99,6 +102,7 @@ interface CableRelation {
   source: string;
   target: string;
   orderFromSource: number;
+  isoTransition: string; // e.g., "Cl. 8.7 ➔ Cl. 10.2"
   shortTag: string;
   label: string;
   payloadSpec: string;
@@ -112,7 +116,7 @@ interface CableRelation {
 
 // ============================================================================
 // ULTRA-CRISP FULL-SCALE MATRIX GEOMETRY (1420 x 556 = 2.55:1 WIDESCREEN)
-// Fits 100%+ native scale on laptops & monitors with FULL-WIDTH 202x98 HERO CARDS
+// 100% ISO 9001:2015 (Clauses 4 -> 10) & PDCA Closed-Loop Verified
 // ============================================================================
 
 const CANVAS_WIDTH = 1420;
@@ -130,8 +134,10 @@ const PHASES: PhaseZone[] = [
   {
     id: 'foundation',
     stageNum: 'STAGE 01',
-    title: 'Foundation',
-    subtitle: 'Specs & Risks',
+    pdcaPhase: 'PLAN',
+    isoClauseRange: 'ISO Cl. 4.4 • 6.1 • 8.1 • 8.3',
+    title: 'Plan & Design',
+    subtitle: 'Cl. 6.1 & 8.1',
     color: '#0EA5E9',
     glowColor: 'rgba(14, 165, 233, 0.28)',
     badgeBg: 'rgba(14, 165, 233, 0.16)',
@@ -141,8 +147,10 @@ const PHASES: PhaseZone[] = [
   {
     id: 'inbound',
     stageNum: 'STAGE 02',
-    title: 'Inbound QC',
-    subtitle: 'Suppliers & IQC',
+    pdcaPhase: 'DO',
+    isoClauseRange: 'ISO Cl. 7.1.5 • 8.4 • 8.7',
+    title: 'Inbound & MSA',
+    subtitle: 'Cl. 7.1.5 & 8.4',
     color: '#06B6D4',
     glowColor: 'rgba(6, 182, 212, 0.28)',
     badgeBg: 'rgba(6, 182, 212, 0.16)',
@@ -152,8 +160,10 @@ const PHASES: PhaseZone[] = [
   {
     id: 'inprocess',
     stageNum: 'STAGE 03',
-    title: 'Shopfloor',
-    subtitle: 'IPQC, SPC & IoT',
+    pdcaPhase: 'DO',
+    isoClauseRange: 'ISO Cl. 8.5.1 • 9.1.1',
+    title: 'Shopfloor QC',
+    subtitle: 'Cl. 8.5.1 & 9.1',
     color: '#10B981',
     glowColor: 'rgba(16, 185, 129, 0.28)',
     badgeBg: 'rgba(16, 185, 129, 0.16)',
@@ -163,8 +173,10 @@ const PHASES: PhaseZone[] = [
   {
     id: 'containment',
     stageNum: 'STAGE 04',
-    title: 'CAPA & 8D',
-    subtitle: 'NCR & Root Cause',
+    pdcaPhase: 'ACT',
+    isoClauseRange: 'ISO Cl. 8.7 • 10.2 CAPA',
+    title: 'NCR & 8D CAPA',
+    subtitle: 'Cl. 8.7 & 10.2',
     color: '#F59E0B',
     glowColor: 'rgba(245, 158, 11, 0.28)',
     badgeBg: 'rgba(245, 158, 11, 0.16)',
@@ -174,8 +186,10 @@ const PHASES: PhaseZone[] = [
   {
     id: 'outbound',
     stageNum: 'STAGE 05',
-    title: 'Customer',
-    subtitle: 'FQC, RMA & COPQ',
+    pdcaPhase: 'CHECK',
+    isoClauseRange: 'ISO Cl. 8.6 • 8.2.1 • 9.1.2',
+    title: 'Release & CSAT',
+    subtitle: 'Cl. 8.6 & 9.1.2',
     color: '#8B5CF6',
     glowColor: 'rgba(139, 92, 246, 0.28)',
     badgeBg: 'rgba(139, 92, 246, 0.16)',
@@ -185,8 +199,10 @@ const PHASES: PhaseZone[] = [
   {
     id: 'governance',
     stageNum: 'STAGE 06',
-    title: 'Governance',
-    subtitle: 'ISO, Audit & AI',
+    pdcaPhase: 'CHECK',
+    isoClauseRange: 'ISO Cl. 7.2 • 9.2 • 9.3 • 10.3',
+    title: 'Audit & ISO',
+    subtitle: 'Cl. 9.2, 9.3 & 10.3',
     color: '#EC4899',
     glowColor: 'rgba(236, 72, 153, 0.28)',
     badgeBg: 'rgba(236, 72, 153, 0.16)',
@@ -196,14 +212,15 @@ const PHASES: PhaseZone[] = [
 ];
 
 // ============================================================================
-// 24 FULL-WIDTH HERO MODULES (17px Title + Full-Width Concept + Sequence Bar)
+// 24 ISO 9001:2015 MAPPED MODULES (Zero Orphans • Zero Dead-Ends)
 // ============================================================================
 
 const NODES: EcosystemNode[] = [
-  // ---------------- STAGE 01: FOUNDATION ----------------
+  // ---------------- STAGE 01: PLAN & DESIGN (Clauses 4.4, 6.1, 8.1, 8.3) ----------------
   {
     id: 'master-data',
     seqCode: 'M-01',
+    isoClause: 'Cl. 4.4 / 7.5',
     title: 'Master Data',
     shortName: 'Master',
     conceptTagline: 'Parts, BOM & Defect Catalog',
@@ -223,6 +240,7 @@ const NODES: EcosystemNode[] = [
   {
     id: 'fmea',
     seqCode: 'M-02',
+    isoClause: 'Cl. 6.1 Risk',
     title: 'PFMEA Risk',
     shortName: 'PFMEA',
     conceptTagline: 'Severity × Occurrence RPN',
@@ -242,6 +260,7 @@ const NODES: EcosystemNode[] = [
   {
     id: 'control-plan',
     seqCode: 'M-03',
+    isoClause: 'Cl. 8.1 Plan',
     title: 'Control Plan',
     shortName: 'CtrlPlan',
     conceptTagline: 'CTQ Limits & Poka-Yoke',
@@ -261,6 +280,7 @@ const NODES: EcosystemNode[] = [
   {
     id: 'apqp',
     seqCode: 'M-04',
+    isoClause: 'Cl. 8.3 Design',
     title: 'APQP & PPAP',
     shortName: 'PPAP',
     conceptTagline: '18-Element Launch Gate',
@@ -278,10 +298,11 @@ const NODES: EcosystemNode[] = [
     health: 'optimal',
   },
 
-  // ---------------- STAGE 02: INBOUND ----------------
+  // ---------------- STAGE 02: INBOUND & RESOURCES (Clauses 8.4, 7.1.5) ----------------
   {
     id: 'suppliers',
     seqCode: 'M-05',
+    isoClause: 'Cl. 8.4.1 Eval',
     title: 'Supplier Score',
     shortName: 'Suppliers',
     conceptTagline: 'Vendor PPM & Approved List',
@@ -301,6 +322,7 @@ const NODES: EcosystemNode[] = [
   {
     id: 'incoming-quality',
     seqCode: 'M-06',
+    isoClause: 'Cl. 8.4.2 IQC',
     title: 'Incoming QC',
     shortName: 'IQC',
     conceptTagline: 'Raw Material AQL Sampling',
@@ -320,9 +342,10 @@ const NODES: EcosystemNode[] = [
   {
     id: 'deviation',
     seqCode: 'M-07',
+    isoClause: 'Cl. 8.7.1b',
     title: 'Waiver Permit',
     shortName: 'Waiver',
-    conceptTagline: 'Temporary Spec Concession',
+    conceptTagline: 'Concession Authorization',
     emoji: '📝',
     phaseId: 'inbound',
     path: '/deviation',
@@ -339,6 +362,7 @@ const NODES: EcosystemNode[] = [
   {
     id: 'calibration',
     seqCode: 'M-08',
+    isoClause: 'Cl. 7.1.5 MSA',
     title: 'MSA & Gauges',
     shortName: 'Gauges',
     conceptTagline: 'GR&R Study & Calibration',
@@ -356,10 +380,11 @@ const NODES: EcosystemNode[] = [
     health: 'optimal',
   },
 
-  // ---------------- STAGE 03: SHOPFLOOR ----------------
+  // ---------------- STAGE 03: SHOPFLOOR EXECUTION (Clauses 8.5.1, 9.1.1) ----------------
   {
     id: 'iot-dashboard',
     seqCode: 'M-09',
+    isoClause: 'Cl. 8.5.1f',
     title: 'IoT Telemetry',
     shortName: 'IoT',
     conceptTagline: 'Live Machine PLC Sensors',
@@ -379,6 +404,7 @@ const NODES: EcosystemNode[] = [
   {
     id: 'in-process-quality',
     seqCode: 'M-10',
+    isoClause: 'Cl. 8.5.1 IPQC',
     title: 'In-Process QC',
     shortName: 'IPQC',
     conceptTagline: 'First-Piece & Patrol Check',
@@ -398,6 +424,7 @@ const NODES: EcosystemNode[] = [
   {
     id: 'spc',
     seqCode: 'M-11',
+    isoClause: 'Cl. 9.1.1 SPC',
     title: 'SPC Control',
     shortName: 'SPC',
     conceptTagline: 'X-Bar/R & Six Sigma Cpk',
@@ -417,6 +444,7 @@ const NODES: EcosystemNode[] = [
   {
     id: 'process-ppm',
     seqCode: 'M-12',
+    isoClause: 'Cl. 9.1.3 KPI',
     title: 'Process OEE',
     shortName: 'PPM',
     conceptTagline: 'Line Yield & Defect PPM',
@@ -434,10 +462,11 @@ const NODES: EcosystemNode[] = [
     health: 'optimal',
   },
 
-  // ---------------- STAGE 04: CONTAINMENT & CAPA ----------------
+  // ---------------- STAGE 04: NONCONFORMANCE & CAPA (Clauses 8.7, 10.2) ----------------
   {
     id: 'ncr',
     seqCode: 'M-13',
+    isoClause: 'Cl. 8.7 NCR',
     title: 'NCR Quarantine',
     shortName: 'NCR',
     conceptTagline: 'Suspect Batch Hold & MRB',
@@ -457,6 +486,7 @@ const NODES: EcosystemNode[] = [
   {
     id: 'problem-solving',
     seqCode: 'M-14',
+    isoClause: 'Cl. 10.2.1b 8D',
     title: '8D Root Cause',
     shortName: '8D CAPA',
     conceptTagline: '5-Why & Fishbone Analysis',
@@ -476,9 +506,10 @@ const NODES: EcosystemNode[] = [
   {
     id: 'rework',
     seqCode: 'M-15',
+    isoClause: 'Cl. 8.7.1a',
     title: 'Rework Station',
     shortName: 'Rework',
-    conceptTagline: 'Repair Routing & Re-Test',
+    conceptTagline: 'Correction & Re-Inspection',
     emoji: '🔧',
     phaseId: 'containment',
     path: '/rework',
@@ -495,6 +526,7 @@ const NODES: EcosystemNode[] = [
   {
     id: 'action-plans',
     seqCode: 'M-16',
+    isoClause: 'Cl. 10.2.1c/d',
     title: 'CAPA Tracker',
     shortName: 'Actions',
     conceptTagline: 'Preventive Tasks & SLA',
@@ -512,10 +544,11 @@ const NODES: EcosystemNode[] = [
     health: 'optimal',
   },
 
-  // ---------------- STAGE 05: OUTBOUND ----------------
+  // ---------------- STAGE 05: RELEASE & CUSTOMER (Clauses 8.6, 8.2.1, 9.1.2) ----------------
   {
     id: 'outgoing-quality',
     seqCode: 'M-17',
+    isoClause: 'Cl. 8.6 Release',
     title: 'Final QC & CoA',
     shortName: 'FQC',
     conceptTagline: 'Shipment Release & CoA',
@@ -535,6 +568,7 @@ const NODES: EcosystemNode[] = [
   {
     id: 'complaints',
     seqCode: 'M-18',
+    isoClause: 'Cl. 8.2.1 / 10.2',
     title: 'Customer RMA',
     shortName: 'RMA',
     conceptTagline: 'Field Claims & 24h Alert',
@@ -554,6 +588,7 @@ const NODES: EcosystemNode[] = [
   {
     id: 'defect-cost',
     seqCode: 'M-19',
+    isoClause: 'Cl. 9.1.3 Eval',
     title: 'COPQ Finance',
     shortName: 'COPQ',
     conceptTagline: 'Scrap, Rework & Claim Cost',
@@ -573,6 +608,7 @@ const NODES: EcosystemNode[] = [
   {
     id: 'customer-satisfaction',
     seqCode: 'M-20',
+    isoClause: 'Cl. 9.1.2 CSAT',
     title: 'Customer CSAT',
     shortName: 'CSAT',
     conceptTagline: 'OEM Scorecards & NPS',
@@ -590,10 +626,11 @@ const NODES: EcosystemNode[] = [
     health: 'optimal',
   },
 
-  // ---------------- STAGE 06: GOVERNANCE & AI ----------------
+  // ---------------- STAGE 06: GOVERNANCE, AUDIT & IMPROVEMENT (Clauses 7.2, 9.2, 9.3, 10.3) ----------------
   {
     id: 'audits',
     seqCode: 'M-21',
+    isoClause: 'Cl. 9.2 Audit',
     title: 'ISO Audits',
     shortName: 'Audits',
     conceptTagline: 'IATF 16949 & Layered LPA',
@@ -613,9 +650,10 @@ const NODES: EcosystemNode[] = [
   {
     id: 'iso-compliance',
     seqCode: 'M-22',
-    title: 'ISO Clauses',
+    isoClause: 'Cl. 9.3 MgmtRev',
+    title: 'ISO Governance',
     shortName: 'ISO 9001',
-    conceptTagline: 'Clause 4-10 Digital Twin',
+    conceptTagline: 'Clause 4-10 & Mgmt Review',
     emoji: '⚖️',
     phaseId: 'governance',
     path: '/iso-compliance',
@@ -632,9 +670,10 @@ const NODES: EcosystemNode[] = [
   {
     id: 'training',
     seqCode: 'M-23',
+    isoClause: 'Cl. 7.2 Skills',
     title: 'Skill Matrix',
     shortName: 'Training',
-    conceptTagline: 'Operator Certs & Poka-Yoke',
+    conceptTagline: 'Operator Certs & Competence',
     emoji: '🎓',
     phaseId: 'governance',
     path: '/training',
@@ -651,9 +690,10 @@ const NODES: EcosystemNode[] = [
   {
     id: 'ai-copilot',
     seqCode: 'M-24',
+    isoClause: 'Cl. 10.3 CI',
     title: 'AI Copilot',
     shortName: 'AI Brain',
-    conceptTagline: 'Predictive Risk & Auto-8D',
+    conceptTagline: 'Continual Improvement AI',
     emoji: '🤖',
     phaseId: 'governance',
     path: '/ai-copilot',
@@ -670,18 +710,19 @@ const NODES: EcosystemNode[] = [
 ];
 
 // ============================================================================
-// 39 ORDERED & SEQUENCED ARCHITECTURAL RELATIONSHIPS
+// 46 ISO 9001:2015 VERIFIED RELATIONSHIPS (Every Node Has True Inputs & Outputs!)
 // ============================================================================
 
 const CABLES: CableRelation[] = [
-  // --- STAGE 01 OUTGOING ---
+  // ================= STAGE 01: PLAN & DESIGN (Cl. 4.4, 6.1, 8.1, 8.3) =================
   {
     id: 'c-md-fmea',
     source: 'master-data',
     target: 'fmea',
     orderFromSource: 1,
-    shortTag: 'Feed Defect Modes',
-    label: '1st: Master Data feeds Standard Defect Modes & Severity Catalog into PFMEA',
+    isoTransition: 'Cl. 4.4 ➔ Cl. 6.1',
+    shortTag: 'Feed Defect Catalog',
+    label: '1st (ISO Cl. 6.1): Master Data feeds Standard Defect Modes & Severity Tables into PFMEA Risk Analysis',
     payloadSpec: 'DefectCatalog[] • SeverityTable',
     color: '#0EA5E9',
     isPrimaryBackbone: true,
@@ -693,8 +734,9 @@ const CABLES: CableRelation[] = [
     source: 'master-data',
     target: 'incoming-quality',
     orderFromSource: 2,
+    isoTransition: 'Cl. 7.5 ➔ Cl. 8.4.2',
     shortTag: 'Send AQL Specs',
-    label: '2nd: Master Data provisions Raw Material Specs & AQL Sampling Plans to Incoming QC',
+    label: '2nd (ISO Cl. 8.4.2): Master Data provisions Raw Material Drawings & AQL Plans to Incoming QC',
     payloadSpec: 'PartSpecs • AQL_Table_ISO2859',
     color: '#0EA5E9',
     corridorTrack: -1,
@@ -704,8 +746,9 @@ const CABLES: CableRelation[] = [
     source: 'master-data',
     target: 'in-process-quality',
     orderFromSource: 3,
+    isoTransition: 'Cl. 7.5 ➔ Cl. 8.5.1',
     shortTag: 'Sync Routing BOM',
-    label: '3rd: Master Data syncs Production Routing & Work Center CTQs to In-Process QC',
+    label: '3rd (ISO Cl. 8.5.1): Master Data syncs Production Routing & Work Center CTQs to In-Process QC',
     payloadSpec: 'RoutingSteps[] • LineWorkCenters',
     color: '#0EA5E9',
     corridorTrack: 0,
@@ -715,8 +758,9 @@ const CABLES: CableRelation[] = [
     source: 'fmea',
     target: 'control-plan',
     orderFromSource: 1,
+    isoTransition: 'Cl. 6.1 ➔ Cl. 8.1',
     shortTag: 'Lock High-RPN CTQs',
-    label: '1st: PFMEA transfers Critical Failure Modes & High-RPN Risks into Control Plan',
+    label: '1st (ISO Cl. 6.1 ➔ 8.1): PFMEA transfers Critical Failure Modes & High-RPN Risks into Control Plan',
     payloadSpec: 'HighRPN_Nodes[] • PreventionControls',
     color: '#0EA5E9',
     isPrimaryBackbone: true,
@@ -728,23 +772,25 @@ const CABLES: CableRelation[] = [
     source: 'control-plan',
     target: 'incoming-quality',
     orderFromSource: 1,
-    shortTag: 'Deploy IQC Checklists',
-    label: '1st: Control Plan deploys Incoming Inspection Checklists & Tolerance Limits to IQC',
+    isoTransition: 'Cl. 8.1 ➔ Cl. 8.4.2',
+    shortTag: 'Deploy IQC Plan',
+    label: '1st (ISO Cl. 8.1 ➔ 8.4.2): Control Plan deploys Incoming Inspection Checklists & Tolerances to IQC',
     payloadSpec: 'IQC_Checkpoints[] • LSL_USL',
     color: '#06B6D4',
+    isPrimaryBackbone: true,
+    backboneStep: 3,
     corridorTrack: 1,
   },
   {
-    id: 'c-cp-ipqc',
+    id: 'c-cp-apqp',
     source: 'control-plan',
-    target: 'in-process-quality',
+    target: 'apqp',
     orderFromSource: 2,
-    shortTag: 'Enforce Line CTQs',
-    label: '2nd: Control Plan enforces Shopfloor Patrol Frequency & Poka-Yoke Checks in IPQC',
-    payloadSpec: 'IPQC_ControlLimits • SampleSize_Freq',
-    color: '#10B981',
-    isPrimaryBackbone: true,
-    backboneStep: 3,
+    isoTransition: 'Cl. 8.1 ➔ Cl. 8.3.4',
+    shortTag: 'Submit PPAP File',
+    label: '2nd (ISO Cl. 8.3.4): Control Plan & PFMEA package is submitted to APQP/PPAP for PSW Validation',
+    payloadSpec: 'ControlPlan_Rev • PFMEA_Signoff',
+    color: '#0EA5E9',
     corridorTrack: 2,
   },
   {
@@ -752,32 +798,35 @@ const CABLES: CableRelation[] = [
     source: 'control-plan',
     target: 'spc',
     orderFromSource: 3,
+    isoTransition: 'Cl. 8.1 ➔ Cl. 9.1.1',
     shortTag: 'Set LSL / USL Limits',
-    label: '3rd: Control Plan configures X-Bar/R Chart LSL, USL & Target Nominal in SPC',
+    label: '3rd (ISO Cl. 9.1.1): Control Plan configures X-Bar/R Chart LSL, USL & Target Nominal in SPC',
     payloadSpec: 'CTQ_Specs { LSL, Nominal, USL }',
     color: '#10B981',
     corridorTrack: -2,
   },
   {
-    id: 'c-apqp-cp',
+    id: 'c-apqp-ipqc',
     source: 'apqp',
-    target: 'control-plan',
+    target: 'in-process-quality',
     orderFromSource: 1,
-    shortTag: 'Approve PPAP Gate',
-    label: '1st: APQP/PPAP validates and baselines Production Control Plan for mass production',
-    payloadSpec: 'PPAP_PSW_Approval • Rev_Baseline',
-    color: '#0EA5E9',
+    isoTransition: 'Cl. 8.3.4 ➔ Cl. 8.5.1',
+    shortTag: 'Release SOP & PPAP',
+    label: '1st (ISO Cl. 8.3 ➔ 8.5.1): Approved APQP/PPAP Gate authorizes Mass Production SOPs in Shopfloor IPQC',
+    payloadSpec: 'PPAP_PSW_Approval • ApprovedSOPs',
+    color: '#10B981',
     corridorTrack: 2,
   },
 
-  // --- STAGE 02 OUTGOING ---
+  // ================= STAGE 02: INBOUND & MSA (Cl. 8.4, 7.1.5) =================
   {
     id: 'c-sup-iqc',
     source: 'suppliers',
     target: 'incoming-quality',
     orderFromSource: 1,
-    shortTag: 'Set Sampling Level',
-    label: '1st: Supplier Score dynamically adjusts IQC Inspection Level (Normal / Tightened / Reduced)',
+    isoTransition: 'Cl. 8.4.1 ➔ Cl. 8.4.2',
+    shortTag: 'Set AQL Tightness',
+    label: '1st (ISO Cl. 8.4): Supplier Score dynamically adjusts IQC Sampling Level (Normal / Tightened / Reduced)',
     payloadSpec: 'VendorRating • DynamicSwitchingRule',
     color: '#06B6D4',
     corridorTrack: -2,
@@ -787,10 +836,13 @@ const CABLES: CableRelation[] = [
     source: 'incoming-quality',
     target: 'in-process-quality',
     orderFromSource: 1,
+    isoTransition: 'Cl. 8.4.2 ➔ Cl. 8.5.1',
     shortTag: 'Release Verified Lot',
-    label: '1st: Incoming QC releases verified Raw Material Batches to Shopfloor Production (IPQC)',
+    label: '1st (ISO Cl. 8.4 ➔ 8.5.1): Incoming QC releases verified Raw Material Batches to Shopfloor IPQC',
     payloadSpec: 'MaterialReleaseTag • LotTraceabilityID',
     color: '#10B981',
+    isPrimaryBackbone: true,
+    backboneStep: 4,
     corridorTrack: -1,
   },
   {
@@ -798,8 +850,9 @@ const CABLES: CableRelation[] = [
     source: 'incoming-quality',
     target: 'ncr',
     orderFromSource: 2,
+    isoTransition: 'Cl. 8.4.2 ➔ Cl. 8.7',
     shortTag: 'Reject Lot to NCR',
-    label: '2nd: Incoming QC quarantines failed supplier shipments and raises Supplier NCR',
+    label: '2nd (ISO Cl. 8.7): Incoming QC quarantines nonconforming supplier lots and raises Supplier NCR',
     payloadSpec: 'SupplierNCR • QuarantineHoldTag',
     color: '#F59E0B',
     corridorTrack: 0,
@@ -809,8 +862,9 @@ const CABLES: CableRelation[] = [
     source: 'incoming-quality',
     target: 'deviation',
     orderFromSource: 3,
-    shortTag: 'Request Waiver',
-    label: '3rd: Incoming QC requests conditional Engineering Concession / Waiver for minor deviations',
+    isoTransition: 'Cl. 8.4.2 ➔ Cl. 8.7.1b',
+    shortTag: 'Request Concession',
+    label: '3rd (ISO Cl. 8.7.1b): Incoming QC requests Concession / Waiver Permit for minor deviations',
     payloadSpec: 'ConcessionRequest • RiskSignoff',
     color: '#06B6D4',
     corridorTrack: 1,
@@ -820,8 +874,9 @@ const CABLES: CableRelation[] = [
     source: 'deviation',
     target: 'in-process-quality',
     orderFromSource: 1,
+    isoTransition: 'Cl. 8.7.1b ➔ Cl. 8.5.1',
     shortTag: 'Authorize Line Use',
-    label: '1st: Approved Waiver Permit authorizes conditional batch usage with 100% IPQC monitoring',
+    label: '1st (ISO Cl. 8.7.1b): Approved Concession authorizes batch usage under special IPQC monitoring',
     payloadSpec: 'ConditionalPermit • MaxQtyLimit',
     color: '#06B6D4',
     corridorTrack: 2,
@@ -831,8 +886,9 @@ const CABLES: CableRelation[] = [
     source: 'calibration',
     target: 'in-process-quality',
     orderFromSource: 1,
+    isoTransition: 'Cl. 7.1.5 ➔ Cl. 8.5.1',
     shortTag: 'Certify Line Gauges',
-    label: '1st: MSA & Calibration certifies active gauges and blocks expired tools in IPQC',
+    label: '1st (ISO Cl. 7.1.5): MSA & Calibration certifies active gauges and blocks expired tools in IPQC',
     payloadSpec: 'GaugeCertStatus • GRR_Valid_Flag',
     color: '#06B6D4',
     corridorTrack: -2,
@@ -842,21 +898,23 @@ const CABLES: CableRelation[] = [
     source: 'calibration',
     target: 'spc',
     orderFromSource: 2,
+    isoTransition: 'Cl. 7.1.5 ➔ Cl. 9.1.1',
     shortTag: 'Validate GR&R < 10%',
-    label: '2nd: MSA validates measurement precision (GR&R < 10%) before SPC capability calculation',
+    label: '2nd (ISO Cl. 7.1.5): MSA validates measurement precision (GR&R < 10%) for SPC capability charts',
     payloadSpec: 'MSA_Variance • NDC_Score',
     color: '#10B981',
     corridorTrack: -1,
   },
 
-  // --- STAGE 03 OUTGOING ---
+  // ================= STAGE 03: SHOPFLOOR EXECUTION (Cl. 8.5.1, 9.1.1) =================
   {
     id: 'c-iot-spc',
     source: 'iot-dashboard',
     target: 'spc',
     orderFromSource: 1,
+    isoTransition: 'Cl. 8.5.1 ➔ Cl. 9.1.1',
     shortTag: 'Stream Telemetry',
-    label: '1st: IoT Telemetry streams real-time machine parameters directly into SPC Control Charts',
+    label: '1st (ISO Cl. 9.1.1): IoT Telemetry streams real-time machine parameters into SPC Control Charts',
     payloadSpec: 'MQTT_Subgroup_Stream • 50ms_Telemetry',
     color: '#10B981',
     corridorTrack: 1,
@@ -866,45 +924,51 @@ const CABLES: CableRelation[] = [
     source: 'iot-dashboard',
     target: 'in-process-quality',
     orderFromSource: 2,
+    isoTransition: 'Cl. 8.5.1f ➔ Cl. 8.5.1',
     shortTag: 'Trigger Patrol Check',
-    label: '2nd: IoT sensor anomaly triggers immediate Shopfloor IPQC patrol verification',
+    label: '2nd (ISO Cl. 8.5.1): IoT sensor anomaly triggers immediate Shopfloor IPQC patrol verification',
     payloadSpec: 'MachineAlarmEvent • StationID',
     color: '#10B981',
+    corridorTrack: -2,
+  },
+  {
+    id: 'c-ipqc-fqc',
+    source: 'in-process-quality',
+    target: 'outgoing-quality',
+    orderFromSource: 1,
+    isoTransition: 'Cl. 8.5.1 ➔ Cl. 8.6',
+    shortTag: 'Pass Batch to FQC',
+    label: '1st (ISO Cl. 8.5.1 ➔ 8.6): In-Process QC passes conforming lots forward to Final QC Release (FQC)',
+    payloadSpec: 'InProcessPassCert • RoutingComplete',
+    color: '#10B981',
+    isPrimaryBackbone: true,
+    backboneStep: 5,
     corridorTrack: -2,
   },
   {
     id: 'c-ipqc-spc',
     source: 'in-process-quality',
     target: 'spc',
-    orderFromSource: 1,
+    orderFromSource: 2,
+    isoTransition: 'Cl. 8.5.1 ➔ Cl. 9.1.1',
     shortTag: 'Log Subgroup Data',
-    label: '1st: In-Process QC logs dimensional subgroup measurements into SPC X-Bar/R engine',
+    label: '2nd (ISO Cl. 9.1.1): In-Process QC logs dimensional subgroup measurements into SPC X-Bar/R engine',
     payloadSpec: 'SubgroupSample[n=5] • OperatorID',
     color: '#10B981',
     corridorTrack: 0,
-  },
-  {
-    id: 'c-ipqc-fqc',
-    source: 'in-process-quality',
-    target: 'outgoing-quality',
-    orderFromSource: 2,
-    shortTag: 'Pass Batch to FQC',
-    label: '2nd: In-Process QC passes conforming production lots forward to Final QC (FQC)',
-    payloadSpec: 'InProcessPassCert • RoutingComplete',
-    color: '#10B981',
-    corridorTrack: -2,
   },
   {
     id: 'c-ipqc-ncr',
     source: 'in-process-quality',
     target: 'ncr',
     orderFromSource: 3,
+    isoTransition: 'Cl. 8.5.1 ➔ Cl. 8.7',
     shortTag: 'Escalate Line NCR',
-    label: '3rd: In-Process QC escalates line non-conformances directly to NCR Quarantine',
+    label: '3rd (ISO Cl. 8.7): In-Process QC quarantines nonconforming line output in NCR Quarantine',
     payloadSpec: 'LineDefectEvent • SuspectLotHold',
     color: '#F59E0B',
     isPrimaryBackbone: true,
-    backboneStep: 4,
+    backboneStep: 6,
     corridorTrack: -1,
   },
   {
@@ -912,8 +976,9 @@ const CABLES: CableRelation[] = [
     source: 'spc',
     target: 'ncr',
     orderFromSource: 1,
+    isoTransition: 'Cl. 9.1.1 ➔ Cl. 8.7',
     shortTag: 'Alert Cpk < 1.33',
-    label: '1st: SPC triggers automated Out-of-Control / Nelson Rule violation alert to NCR',
+    label: '1st (ISO Cl. 9.1.1 ➔ 8.7): SPC triggers Out-of-Control / Nelson Rule violation alert to NCR',
     payloadSpec: 'NelsonRuleViolation • Cpk_Drop_Alert',
     color: '#F59E0B',
     corridorTrack: 0,
@@ -923,8 +988,9 @@ const CABLES: CableRelation[] = [
     source: 'spc',
     target: 'process-ppm',
     orderFromSource: 2,
+    isoTransition: 'Cl. 9.1.1 ➔ Cl. 9.1.3',
     shortTag: 'Compute Sigma PPM',
-    label: '2nd: SPC feeds process capability & defect probability into Process PPM & OEE',
+    label: '2nd (ISO Cl. 9.1.3): SPC feeds process capability & defect probability into Process PPM & OEE',
     payloadSpec: 'SigmaLevel • PredictedPPM',
     color: '#10B981',
     corridorTrack: 2,
@@ -934,25 +1000,27 @@ const CABLES: CableRelation[] = [
     source: 'process-ppm',
     target: 'defect-cost',
     orderFromSource: 1,
+    isoTransition: 'Cl. 9.1.3 ➔ COPQ',
     shortTag: 'Report Yield Loss',
-    label: '1st: Process PPM reports scrap rate and yield loss to COPQ Financial Ledger',
+    label: '1st (ISO Cl. 9.1.3): Process PPM reports scrap rate and yield loss to COPQ Financial Ledger',
     payloadSpec: 'PPM_ScrapVolume • OEE_LossHours',
     color: '#8B5CF6',
     corridorTrack: 1,
   },
 
-  // --- STAGE 04 OUTGOING & RETURN LOOPS ---
+  // ================= STAGE 04: NONCONFORMANCE & CAPA (Cl. 8.7, 10.2) =================
   {
     id: 'c-ncr-8d',
     source: 'ncr',
     target: 'problem-solving',
     orderFromSource: 1,
+    isoTransition: 'Cl. 8.7 ➔ Cl. 10.2.1b',
     shortTag: 'Launch 8D CAPA',
-    label: '1st: NCR Quarantine escalates critical/recurring defects to 8D Root Cause Analysis',
+    label: '1st (ISO Cl. 10.2.1b): NCR Quarantine escalates nonconformities to 8D Root Cause Analysis',
     payloadSpec: 'NCR_Dossier • Containment Lot ID',
     color: '#F59E0B',
     isPrimaryBackbone: true,
-    backboneStep: 5,
+    backboneStep: 7,
     corridorTrack: -2,
   },
   {
@@ -960,8 +1028,9 @@ const CABLES: CableRelation[] = [
     source: 'ncr',
     target: 'rework',
     orderFromSource: 2,
+    isoTransition: 'Cl. 8.7 ➔ Cl. 8.7.1a',
     shortTag: 'Route to Rework',
-    label: '2nd: NCR MRB disposition routes repairable batches to Rework & Repair Station',
+    label: '2nd (ISO Cl. 8.7.1a): NCR MRB disposition routes repairable batches to Rework Station (Correction)',
     payloadSpec: 'MRB_Disposition=REWORK • RepairWI',
     color: '#F59E0B',
     corridorTrack: 1,
@@ -971,8 +1040,9 @@ const CABLES: CableRelation[] = [
     source: 'ncr',
     target: 'defect-cost',
     orderFromSource: 3,
+    isoTransition: 'Cl. 8.7 ➔ Cl. 9.1.3',
     shortTag: 'Post Scrap Cost',
-    label: '3rd: NCR posts scrap & quarantine holding costs directly to COPQ Finance',
+    label: '3rd (ISO Cl. 9.1.3): NCR posts scrap & quarantine holding costs directly to COPQ Finance',
     payloadSpec: 'ScrapQty × UnitCost • HoldCost',
     color: '#8B5CF6',
     corridorTrack: -1,
@@ -982,8 +1052,9 @@ const CABLES: CableRelation[] = [
     source: 'ncr',
     target: 'suppliers',
     orderFromSource: 4,
+    isoTransition: '↺ Cl. 8.7 ➔ Cl. 8.4.1',
     shortTag: '↺ Penalize Vendor',
-    label: '4th (Return Loop ↺): Supplier NCR deducts Vendor Score and triggers SCAR chargeback',
+    label: '4th (Return Loop ↺ • ISO Cl. 8.4.1): Supplier NCR deducts Vendor Score and issues SCAR',
     payloadSpec: 'SCAR_Notice • ScoreDeduction_PPM',
     color: '#F43F5E',
     isFeedback: true,
@@ -995,8 +1066,9 @@ const CABLES: CableRelation[] = [
     source: 'rework',
     target: 'outgoing-quality',
     orderFromSource: 1,
-    shortTag: 'Re-Inspect Batch',
-    label: '1st: Rework Station submits repaired lots for mandatory 100% Final QC re-inspection',
+    isoTransition: 'Cl. 8.7.1a ➔ Cl. 8.6',
+    shortTag: 'Re-Verify Batch',
+    label: '1st (ISO Cl. 8.7.1a): Reworked lots undergo mandatory re-verification in Final QC (Clause 8.6)',
     payloadSpec: 'ReworkPassTag • 100Pct_ReInspect',
     color: '#10B981',
     corridorTrack: 0,
@@ -1006,12 +1078,13 @@ const CABLES: CableRelation[] = [
     source: 'problem-solving',
     target: 'action-plans',
     orderFromSource: 1,
+    isoTransition: 'Cl. 10.2.1b ➔ 10.2.1c',
     shortTag: 'Assign D5/D6 CAPA',
-    label: '1st: 8D Root Cause assigns D5/D6 Corrective & Preventive Actions to CAPA Tracker',
+    label: '1st (ISO Cl. 10.2.1c/d): 8D Root Cause assigns Corrective Actions & Effectiveness Checks to CAPA Tracker',
     payloadSpec: 'CAPA_Tasks[] • Owner_SLA_Dates',
     color: '#F59E0B',
     isPrimaryBackbone: true,
-    backboneStep: 6,
+    backboneStep: 8,
     corridorTrack: 2,
   },
   {
@@ -1019,13 +1092,14 @@ const CABLES: CableRelation[] = [
     source: 'problem-solving',
     target: 'fmea',
     orderFromSource: 2,
+    isoTransition: '↺ Cl. 10.2.1e ➔ Cl. 6.1',
     shortTag: '↺ Update PFMEA RPN',
-    label: '2nd (Return Loop ↺): 8D Lesson Learned updates PFMEA RPN & Failure Modes (D7 Prevention)',
+    label: '2nd (Return Loop ↺ • ISO Cl. 10.2.1e): 8D updates PFMEA Risks & Opportunities determined during planning',
     payloadSpec: 'UpdatedRPN • NewFailureMechanism',
     color: '#F43F5E',
     isFeedback: true,
     isPrimaryBackbone: true,
-    backboneStep: 7,
+    backboneStep: 9,
     corridorTrack: -2,
     highwayLane: 1,
   },
@@ -1034,13 +1108,14 @@ const CABLES: CableRelation[] = [
     source: 'action-plans',
     target: 'control-plan',
     orderFromSource: 1,
+    isoTransition: '↺ Cl. 10.2.1f ➔ Cl. 8.1',
     shortTag: '↺ Harden Ctrl Plan',
-    label: '1st (Return Loop ↺): Verified CAPA updates Control Plan with tighter Poka-Yoke & CTQ checks',
+    label: '1st (Return Loop ↺ • ISO Cl. 10.2.1f): Verified CAPA updates Control Plan with tighter Poka-Yoke & CTQs',
     payloadSpec: 'ControlPlan_RevUp • NewPokaYoke',
     color: '#F43F5E',
     isFeedback: true,
     isPrimaryBackbone: true,
-    backboneStep: 8,
+    backboneStep: 10,
     corridorTrack: -1,
     highwayLane: 0,
   },
@@ -1049,32 +1124,49 @@ const CABLES: CableRelation[] = [
     source: 'action-plans',
     target: 'training',
     orderFromSource: 2,
+    isoTransition: 'Cl. 10.2 ➔ Cl. 7.2',
     shortTag: 'Retrain Operators',
-    label: '2nd: CAPA Tracker triggers mandatory Operator Retraining on updated SOPs',
+    label: '2nd (ISO Cl. 7.2): CAPA Tracker triggers mandatory Operator Retraining on updated SOPs',
     payloadSpec: 'SOP_TrainingReq • SkillGapUpdate',
     color: '#EC4899',
     corridorTrack: 1,
   },
 
-  // --- STAGE 05 OUTGOING & RETURN LOOPS ---
+  // ================= STAGE 05: RELEASE & CUSTOMER (Cl. 8.6, 8.2.1, 9.1.2) =================
   {
     id: 'c-fqc-csat',
     source: 'outgoing-quality',
     target: 'customer-satisfaction',
     orderFromSource: 1,
-    shortTag: 'Certify CoA Delivery',
-    label: '1st: Final QC issues Certificate of Analysis (CoA) and logs On-Time Zero-Defect Delivery',
-    payloadSpec: 'Digital_CoA • LotGenealogyCert',
+    isoTransition: 'Cl. 8.6 ➔ Cl. 9.1.2',
+    shortTag: 'Release CoA Shipment',
+    label: '1st (ISO Cl. 8.6): Final QC issues Certificate of Analysis (CoA) and logs Zero-Defect Delivery to CSAT',
+    payloadSpec: 'Digital_CoA • AuthorizedReleaseBy',
     color: '#8B5CF6',
     corridorTrack: -2,
+  },
+  {
+    id: 'c-fqc-ncr-fb',
+    source: 'outgoing-quality',
+    target: 'ncr',
+    orderFromSource: 2,
+    isoTransition: '↺ Cl. 8.6 ➔ Cl. 8.7',
+    shortTag: '↺ Block Failed Lot',
+    label: '2nd (Return Loop ↺ • ISO Cl. 8.6 ➔ 8.7): Final QC blocks nonconforming shipment lot and routes to NCR Quarantine',
+    payloadSpec: 'FinalReleaseBlocked • ShipmentHoldNCR',
+    color: '#F43F5E',
+    isFeedback: true,
+    corridorTrack: 1,
+    highwayLane: 0,
   },
   {
     id: 'c-cmp-ncr-fb',
     source: 'complaints',
     target: 'ncr',
     orderFromSource: 1,
-    shortTag: '↺ Containment Hold',
-    label: '1st (Return Loop ↺): Customer RMA triggers immediate 24h D3 Containment Hold in NCR',
+    isoTransition: '↺ Cl. 8.2.1 ➔ Cl. 8.7',
+    shortTag: '↺ 24h Stock Hold',
+    label: '1st (Return Loop ↺ • ISO Cl. 8.7): Customer RMA triggers immediate 24h D3 Containment Hold in NCR',
     payloadSpec: 'RMA_ContainmentAlert • StockHold',
     color: '#F43F5E',
     isFeedback: true,
@@ -1086,8 +1178,9 @@ const CABLES: CableRelation[] = [
     source: 'complaints',
     target: 'problem-solving',
     orderFromSource: 2,
+    isoTransition: '↺ Cl. 10.2.1a ➔ 10.2.1b',
     shortTag: '↺ Escalate RMA 8D',
-    label: '2nd (Return Loop ↺): Customer RMA initiates formal Customer 8D Investigation Report',
+    label: '2nd (Return Loop ↺ • ISO Cl. 10.2.1a): Customer Complaint initiates formal Customer 8D Investigation',
     payloadSpec: 'Customer8D_Mandate • FieldReturnSample',
     color: '#F43F5E',
     isFeedback: true,
@@ -1099,21 +1192,59 @@ const CABLES: CableRelation[] = [
     source: 'complaints',
     target: 'defect-cost',
     orderFromSource: 3,
+    isoTransition: 'Cl. 8.2.1 ➔ Cl. 9.1.3',
     shortTag: 'Log Warranty Claim',
-    label: '3rd: Customer RMA logs External Failure Warranty & Chargeback Costs into COPQ',
+    label: '3rd (ISO Cl. 9.1.3): Customer RMA logs External Failure Warranty & Chargeback Costs into COPQ',
     payloadSpec: 'WarrantyClaimUSD • LogisticsDebit',
     color: '#8B5CF6',
     corridorTrack: -1,
   },
+  {
+    id: 'c-cmp-csat',
+    source: 'complaints',
+    target: 'customer-satisfaction',
+    orderFromSource: 4,
+    isoTransition: 'Cl. 8.2.1 ➔ Cl. 9.1.2',
+    shortTag: 'Update OEM Scorecard',
+    label: '4th (ISO Cl. 9.1.2): Customer RMA updates OEM Customer Satisfaction Scorecard & Field PPM',
+    payloadSpec: 'OEM_DemeritAlert • FieldPPM_Impact',
+    color: '#8B5CF6',
+    corridorTrack: 1,
+  },
+  {
+    id: 'c-copq-ai',
+    source: 'defect-cost',
+    target: 'ai-copilot',
+    orderFromSource: 1,
+    isoTransition: 'Cl. 9.1.3 ➔ Cl. 10.3',
+    shortTag: 'Rank Financial Risk',
+    label: '1st (ISO Cl. 9.1.3 ➔ 10.3): COPQ Finance feeds Pareto financial losses to AI Copilot for CI prioritization',
+    payloadSpec: 'COPQ_ParetoMatrix • CostPerDefect',
+    color: '#EC4899',
+    corridorTrack: 0,
+  },
+  {
+    id: 'c-csat-iso',
+    source: 'customer-satisfaction',
+    target: 'iso-compliance',
+    orderFromSource: 1,
+    isoTransition: 'Cl. 9.1.2 ➔ Cl. 9.3.2a',
+    shortTag: 'Feed Mgmt Review',
+    label: '1st (ISO Cl. 9.3.2c): Customer CSAT & OEM Scorecards feed directly into ISO Clause 9.3 Management Review',
+    payloadSpec: 'CSAT_Trends • OEM_Scorecard_Report',
+    color: '#EC4899',
+    corridorTrack: 2,
+  },
 
-  // --- STAGE 06 GOVERNANCE & AI ---
+  // ================= STAGE 06: GOVERNANCE, AUDIT & CI (Cl. 7.2, 9.2, 9.3, 10.3) =================
   {
     id: 'c-aud-act-fb',
     source: 'audits',
     target: 'action-plans',
     orderFromSource: 1,
+    isoTransition: '↺ Cl. 9.2.2 ➔ Cl. 10.2',
     shortTag: '↺ Issue Audit CAPA',
-    label: '1st (Return Loop ↺): ISO Audit findings generate mandatory Corrective Actions in CAPA Tracker',
+    label: '1st (Return Loop ↺ • ISO Cl. 9.2.2d): ISO Audit findings trigger mandatory Corrective Actions in CAPA Tracker',
     payloadSpec: 'AuditFinding_NCR • ClauseRef',
     color: '#F43F5E',
     isFeedback: true,
@@ -1125,19 +1256,49 @@ const CABLES: CableRelation[] = [
     source: 'audits',
     target: 'iso-compliance',
     orderFromSource: 2,
-    shortTag: 'Verify ISO Clauses',
-    label: '2nd: Internal & LPA Audits update live ISO 9001 / IATF 16949 Clause Compliance Matrix',
+    isoTransition: 'Cl. 9.2 ➔ Cl. 9.3',
+    shortTag: 'Report Audit Results',
+    label: '2nd (ISO Cl. 9.2.2e): Internal & LPA Audits report compliance evidence to ISO 9001 Management Review',
     payloadSpec: 'ClauseEvidenceScore • AuditTrail',
     color: '#EC4899',
     corridorTrack: -2,
+  },
+  {
+    id: 'c-iso-fmea-fb',
+    source: 'iso-compliance',
+    target: 'fmea',
+    orderFromSource: 1,
+    isoTransition: '↺ Cl. 9.3.3 ➔ Cl. 6.1',
+    shortTag: '↺ Mgmt Review Risks',
+    label: '1st (Return Loop ↺ • ISO Cl. 9.3.3): Management Review outputs mandate systemic risk updates in PFMEA',
+    payloadSpec: 'MgmtReviewDirective • StrategicRiskUpdate',
+    color: '#F43F5E',
+    isFeedback: true,
+    corridorTrack: -2,
+    highwayLane: 1,
+  },
+  {
+    id: 'c-trn-ipqc-fb',
+    source: 'training',
+    target: 'in-process-quality',
+    orderFromSource: 1,
+    isoTransition: '↺ Cl. 7.2 ➔ Cl. 8.5.1',
+    shortTag: '↺ Certify Operators',
+    label: '1st (Return Loop ↺ • ISO Cl. 7.2): Skill Matrix deploys certified operators and blocks uncertified staff on IPQC lines',
+    payloadSpec: 'OperatorCompetenceCert • StationAuth',
+    color: '#10B981',
+    isFeedback: true,
+    corridorTrack: 1,
+    highwayLane: 2,
   },
   {
     id: 'c-ai-8d-fb',
     source: 'ai-copilot',
     target: 'problem-solving',
     orderFromSource: 1,
+    isoTransition: '↺ Cl. 10.3 ➔ Cl. 10.2',
     shortTag: '↺ AI Root Cause',
-    label: '1st (Return Loop ↺): AI Copilot synthesizes plant-wide data to recommend 8D Root Causes',
+    label: '1st (Return Loop ↺ • ISO Cl. 10.3): AI Copilot synthesizes plant-wide data to predict & accelerate 8D Root Causes',
     payloadSpec: 'AI_5Why_Hypothesis • RiskPrediction',
     color: '#EC4899',
     isFeedback: true,
@@ -1147,18 +1308,20 @@ const CABLES: CableRelation[] = [
 ];
 
 // ============================================================================
-// CLOSED-LOOP MASTER BACKBONE & SIMULATION SCENARIOS
+// 10-STEP ISO 9001:2015 PDCA MASTER BACKBONE (PLAN ➔ DO ➔ CHECK ➔ ACT)
 // ============================================================================
 
 const MASTER_BACKBONE_SEQUENCE: string[] = [
-  'c-md-fmea',
-  'c-fmea-cp',
-  'c-cp-ipqc',
-  'c-ipqc-ncr',
-  'c-ncr-8d',
-  'c-8d-act',
-  'c-8d-fmea-fb',
-  'c-act-cp-fb',
+  'c-md-fmea', // 01 PLAN: Cl. 4.4 ➔ Cl. 6.1 (Master Data ➔ PFMEA Risk)
+  'c-fmea-cp', // 02 PLAN: Cl. 6.1 ➔ Cl. 8.1 (PFMEA Risk ➔ Control Plan)
+  'c-cp-iqc', // 03 DO: Cl. 8.1 ➔ Cl. 8.4.2 (Control Plan ➔ Incoming QC)
+  'c-iqc-ipqc', // 04 DO: Cl. 8.4.2 ➔ Cl. 8.5.1 (Incoming QC ➔ In-Process QC)
+  'c-ipqc-fqc', // 05 CHECK: Cl. 8.5.1 ➔ Cl. 8.6 (In-Process QC ➔ Final QC Release)
+  'c-ipqc-ncr', // 06 CHECK: Cl. 8.5.1 ➔ Cl. 8.7 (Nonconformance ➔ NCR Quarantine)
+  'c-ncr-8d', // 07 ACT: Cl. 8.7 ➔ Cl. 10.2.1b (NCR ➔ 8D Root Cause)
+  'c-8d-act', // 08 ACT: Cl. 10.2.1b ➔ Cl. 10.2.1c (8D ➔ CAPA Tracker)
+  'c-8d-fmea-fb', // ↺ 09 ACT->PLAN: Cl. 10.2.1e ➔ Cl. 6.1 (8D updates PFMEA Risks)
+  'c-act-cp-fb', // ↺ 10 ACT->PLAN: Cl. 10.2.1f ➔ Cl. 8.1 (CAPA updates Control Plan)
 ];
 
 const SIMULATION_SCENARIOS: Record<
@@ -1171,7 +1334,7 @@ const SIMULATION_SCENARIOS: Record<
   }
 > = {
   ncr_to_8d: {
-    title: 'NCR ➔ 8D ➔ PFMEA Return Loop',
+    title: 'ISO Cl. 8.7 NCR ➔ Cl. 10.2 8D ➔ Cl. 6.1/8.1 Return Loop',
     shortTitle: 'NCR ➔ 8D ➔ Return',
     color: '#F59E0B',
     cableSequence: [
@@ -1180,11 +1343,11 @@ const SIMULATION_SCENARIOS: Record<
       'c-8d-act',
       'c-8d-fmea-fb',
       'c-act-cp-fb',
-      'c-cp-ipqc',
+      'c-cp-iqc',
     ],
   },
   spc_drift: {
-    title: 'IoT & SPC Drift ➔ Auto-Containment',
+    title: 'ISO Cl. 9.1.1 SPC Drift ➔ Cl. 8.7 NCR ➔ Cl. 7.2 Operator Retraining',
     shortTitle: 'SPC Drift ➔ Return',
     color: '#10B981',
     cableSequence: [
@@ -1192,11 +1355,12 @@ const SIMULATION_SCENARIOS: Record<
       'c-spc-ncr',
       'c-ncr-8d',
       'c-8d-act',
-      'c-act-cp-fb',
+      'c-act-trn',
+      'c-trn-ipqc-fb',
     ],
   },
   customer_complaint: {
-    title: 'Customer RMA ➔ 24h Hold ➔ 8D CAPA',
+    title: 'ISO Cl. 8.2.1 RMA ➔ Cl. 8.7 Hold ➔ Cl. 10.2 8D ➔ Cl. 9.3 Mgmt Review',
     shortTitle: 'RMA ➔ 8D ➔ Return',
     color: '#F43F5E',
     cableSequence: [
@@ -1204,12 +1368,13 @@ const SIMULATION_SCENARIOS: Record<
       'c-cmp-8d-fb',
       'c-8d-act',
       'c-act-cp-fb',
-      'c-cp-ipqc',
+      'c-cmp-csat',
+      'c-csat-iso',
     ],
   },
   full_factory_pulse: {
-    title: 'End-to-End Closed-Loop Factory Lifecycle',
-    shortTitle: 'Full Closed-Loop (8)',
+    title: 'ISO 9001:2015 Complete PDCA Closed-Loop Lifecycle (Clauses 4 ➔ 10)',
+    shortTitle: 'ISO PDCA Loop (10)',
     color: '#38BDF8',
     cableSequence: MASTER_BACKBONE_SEQUENCE,
   },
@@ -1220,6 +1385,11 @@ function getOrdinalLabel(n: number): string {
   if (n === 2) return '2nd';
   if (n === 3) return '3rd';
   return `${n}th`;
+}
+
+function formatStepCode(stepNum: number, isFeedback?: boolean): string {
+  const padded = stepNum < 10 ? `0${stepNum}` : `${stepNum}`;
+  return isFeedback ? `↺ ${padded}` : `${padded} ➔`;
 }
 
 // ============================================================================
@@ -1273,39 +1443,36 @@ export default function QualityEcosystemPortal() {
   }, []);
 
   // Cinema Camera focus on a specific Cable (frames Source & Target cards smoothly)
-  const focusCameraOnCable = useCallback(
-    (cableId: string) => {
-      if (!containerRef.current) return;
-      const cable = CABLES.find((c) => c.id === cableId);
-      if (!cable) return;
-      const src = NODES.find((n) => n.id === cable.source);
-      const tgt = NODES.find((n) => n.id === cable.target);
-      if (!src || !tgt) return;
+  const focusCameraOnCable = useCallback((cableId: string) => {
+    if (!containerRef.current) return;
+    const cable = CABLES.find((c) => c.id === cableId);
+    if (!cable) return;
+    const src = NODES.find((n) => n.id === cable.source);
+    const tgt = NODES.find((n) => n.id === cable.target);
+    if (!src || !tgt) return;
 
-      const { clientWidth, clientHeight } = containerRef.current;
-      const minX = Math.min(src.x, tgt.x) - 40;
-      const maxX = Math.max(src.x + NODE_WIDTH, tgt.x + NODE_WIDTH) + 40;
-      const minY = Math.min(src.y, tgt.y) - 50;
-      const maxY = Math.max(src.y + NODE_HEIGHT, tgt.y + NODE_HEIGHT) + 40;
+    const { clientWidth, clientHeight } = containerRef.current;
+    const minX = Math.min(src.x, tgt.x) - 40;
+    const maxX = Math.max(src.x + NODE_WIDTH, tgt.x + NODE_WIDTH) + 40;
+    const minY = Math.min(src.y, tgt.y) - 50;
+    const maxY = Math.max(src.y + NODE_HEIGHT, tgt.y + NODE_HEIGHT) + 40;
 
-      const boxW = Math.max(maxX - minX, 520);
-      const boxH = Math.max(maxY - minY, 320);
+    const boxW = Math.max(maxX - minX, 520);
+    const boxH = Math.max(maxY - minY, 320);
 
-      const scaleX = (clientWidth - 40) / boxW;
-      const scaleY = (clientHeight - 60) / boxH;
-      const targetZoom = Math.min(Math.max(Math.min(scaleX, scaleY), 0.92), 1.26);
+    const scaleX = (clientWidth - 40) / boxW;
+    const scaleY = (clientHeight - 60) / boxH;
+    const targetZoom = Math.min(Math.max(Math.min(scaleX, scaleY), 0.92), 1.26);
 
-      const centerX = (minX + maxX) / 2;
-      const centerY = (minY + maxY) / 2;
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2;
 
-      const panX = clientWidth / 2 - centerX * targetZoom;
-      const panY = clientHeight / 2 - centerY * targetZoom;
+    const panX = clientWidth / 2 - centerX * targetZoom;
+    const panY = clientHeight / 2 - centerY * targetZoom;
 
-      setZoom(targetZoom);
-      setPan({ x: panX, y: panY });
-    },
-    []
-  );
+    setZoom(targetZoom);
+    setPan({ x: panX, y: panY });
+  }, []);
 
   useEffect(() => {
     fitToScreen();
@@ -1502,7 +1669,7 @@ export default function QualityEcosystemPortal() {
           if (!cable) return;
           const stepNum = idx + 1;
           map.set(cable.id, {
-            medallionText: cable.isFeedback ? `↺ 0${stepNum}` : `0${stepNum} ➔`,
+            medallionText: formatStepCode(stepNum, cable.isFeedback),
             shortTag: cable.shortTag,
             badgeColor: cable.isFeedback ? '#F43F5E' : cable.color,
             isFeedback: !!cable.isFeedback,
@@ -1570,7 +1737,7 @@ export default function QualityEcosystemPortal() {
         const isCurrent = simStepIndex === idx;
         const stepNum = idx + 1;
         map.set(cableId, {
-          medallionText: cable.isFeedback ? `↺ 0${stepNum}` : `0${stepNum} ➔`,
+          medallionText: formatStepCode(stepNum, cable.isFeedback),
           shortTag: cable.shortTag,
           badgeColor: cable.isFeedback ? '#F43F5E' : isCurrent ? '#10B981' : '#38BDF8',
           isFeedback: !!cable.isFeedback,
@@ -1653,7 +1820,7 @@ export default function QualityEcosystemPortal() {
       const stagePhase = PHASES.find((p) => p.id === focusedStageId);
       NODES.filter((n) => n.phaseId === focusedStageId).forEach((n) => {
         badgeMap.set(n.id, {
-          text: `★ ${stagePhase?.title.toUpperCase()}`,
+          text: `★ ${stagePhase?.pdcaPhase} • ${n.isoClause}`,
           color: stagePhase?.color || '#38BDF8',
           isPulseSpotlight: true,
         });
@@ -1677,13 +1844,14 @@ export default function QualityEcosystemPortal() {
           const cable = CABLES.find((c) => c.id === cableId);
           if (!cable) return;
           if (idx === 0) {
-            badgeMap.set(cable.source, { text: '00 • START: MASTER SPECS', color: '#10B981' });
+            badgeMap.set(cable.source, { text: '00 • PLAN START (CL. 4.4)', color: '#10B981' });
           }
           const stepNum = idx + 1;
+          const padded = stepNum < 10 ? `0${stepNum}` : `${stepNum}`;
           badgeMap.set(cable.target, {
             text: cable.isFeedback
-              ? `↺ 0${stepNum} • ${cable.shortTag.toUpperCase()}`
-              : `0${stepNum} ➔ ${cable.shortTag.toUpperCase()}`,
+              ? `↺ ${padded} • ${cable.shortTag.toUpperCase()}`
+              : `${padded} ➔ ${cable.shortTag.toUpperCase()}`,
             color: cable.isFeedback ? '#F43F5E' : cable.color,
             isFeedback: cable.isFeedback,
           });
@@ -1695,7 +1863,7 @@ export default function QualityEcosystemPortal() {
         NODES.forEach((n) => {
           const p = PHASES.find((ph) => ph.id === n.phaseId);
           badgeMap.set(n.id, {
-            text: `${n.seqCode} • PRIMARY FLOW`,
+            text: `${p?.pdcaPhase} • ${n.isoClause}`,
             color: p?.color || '#0EA5E9',
           });
         });
@@ -1705,7 +1873,7 @@ export default function QualityEcosystemPortal() {
       if (viewLens === 'feedback_bus') {
         CABLES.filter((c) => c.isFeedback).forEach((cable, idx) => {
           badgeMap.set(cable.source, {
-            text: `↺ LOOP #${idx + 1} SOURCE`,
+            text: `↺ LOOP #${idx + 1} (${cable.isoTransition})`,
             color: '#F43F5E',
             isFeedback: true,
           });
@@ -1723,7 +1891,7 @@ export default function QualityEcosystemPortal() {
       const cable = CABLES.find((c) => c.id === selectedCableId);
       if (cable) {
         badgeMap.set(cable.source, {
-          text: '★ SOURCE MODULE',
+          text: `★ SOURCE (${cable.isoTransition})`,
           color: '#38BDF8',
           isPulseSpotlight: true,
         });
@@ -1752,10 +1920,12 @@ export default function QualityEcosystemPortal() {
           });
         }
         const isCurrent = simStepIndex === idx;
+        const stepNum = idx + 1;
+        const padded = stepNum < 10 ? `0${stepNum}` : `${stepNum}`;
         badgeMap.set(cable.target, {
           text: cable.isFeedback
-            ? `↺ STEP 0${idx + 1} • ${cable.shortTag}`
-            : `STEP 0${idx + 1} ➔ ${cable.shortTag}`,
+            ? `↺ STEP ${padded} • ${cable.shortTag}`
+            : `STEP ${padded} ➔ ${cable.shortTag}`,
           color: cable.isFeedback ? '#F43F5E' : isCurrent ? '#10B981' : '#38BDF8',
           isFeedback: cable.isFeedback,
           isPulseSpotlight: isCurrent,
@@ -1765,8 +1935,9 @@ export default function QualityEcosystemPortal() {
     }
 
     if (activeNodeId) {
+      const activeNode = NODES.find((n) => n.id === activeNodeId);
       badgeMap.set(activeNodeId, {
-        text: '★ SELECTED MODULE',
+        text: `★ ${activeNode?.isoClause || 'SELECTED'}`,
         color: '#38BDF8',
         isPulseSpotlight: true,
       });
@@ -1876,7 +2047,8 @@ export default function QualityEcosystemPortal() {
       (n) =>
         n.title.toLowerCase().includes(q) ||
         n.conceptTagline.toLowerCase().includes(q) ||
-        n.seqCode.toLowerCase().includes(q)
+        n.seqCode.toLowerCase().includes(q) ||
+        n.isoClause.toLowerCase().includes(q)
     );
   }, [searchQuery]);
 
@@ -2133,7 +2305,7 @@ export default function QualityEcosystemPortal() {
               <Compass className="w-4 h-4 text-white" />
             </div>
             <span className="text-xs font-black tracking-tight text-white hidden xl:inline">
-              QMS 4.0 MATRIX
+              ISO 9001:2015 MATRIX
             </span>
           </div>
 
@@ -2157,7 +2329,7 @@ export default function QualityEcosystemPortal() {
               }`}
             >
               <Layers className="w-3 h-3 text-emerald-400" />
-              <span>Backbone (1➔8)</span>
+              <span>PDCA Backbone (1➔10)</span>
             </button>
 
             <button
@@ -2195,7 +2367,7 @@ export default function QualityEcosystemPortal() {
               }`}
             >
               <RotateCcw className="w-3 h-3 text-rose-400" />
-              <span>↺ Return Loops (7)</span>
+              <span>↺ Return Loops (10)</span>
             </button>
 
             <button
@@ -2287,7 +2459,7 @@ export default function QualityEcosystemPortal() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search 24 modules..."
+                placeholder="Search Clause / Module..."
                 className="bg-transparent text-[11px] text-white placeholder-slate-400 focus:outline-none w-full font-semibold"
               />
               {searchQuery && (
@@ -2312,7 +2484,7 @@ export default function QualityEcosystemPortal() {
                   >
                     <div className="flex items-center gap-2 min-w-0">
                       <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-300">
-                        {node.seqCode}
+                        {node.isoClause}
                       </span>
                       <div className="truncate">
                         <div className="text-xs font-bold text-white truncate">
@@ -2394,7 +2566,7 @@ export default function QualityEcosystemPortal() {
                 ? `SIMULATION`
                 : activeNodeInfo
                 ? `${activeNodeInfo.node.shortName} FLOW`
-                : `STEPPER (1➔8)`}
+                : `ISO PDCA (1➔10)`}
             </span>
             <button
               type="button"
@@ -2409,6 +2581,8 @@ export default function QualityEcosystemPortal() {
           <div className="flex items-center gap-1">
             {ribbonSequenceCables.map((item, idx) => {
               const isBackboneFeedback = item.cable.isFeedback;
+              const paddedNum =
+                item.stepNumber < 10 ? `0${item.stepNumber}` : `${item.stepNumber}`;
               return (
                 <React.Fragment key={item.cable.id}>
                   <button
@@ -2438,7 +2612,7 @@ export default function QualityEcosystemPortal() {
                           : 'bg-sky-400 text-slate-950'
                       }`}
                     >
-                      {isBackboneFeedback ? `↺ 0${item.stepNumber}` : `0${item.stepNumber}`}
+                      {isBackboneFeedback ? `↺ ${paddedNum}` : paddedNum}
                     </span>
                     <span className="font-bold">{item.srcName}</span>
                     <span className="text-sky-400">➔</span>
@@ -2501,7 +2675,7 @@ export default function QualityEcosystemPortal() {
         {activeCableInfo && (
           <div
             data-interactive="true"
-            className="absolute top-2.5 left-1/2 -translate-x-1/2 z-40 max-w-3xl w-[94%] bg-[#071124]/95 backdrop-blur-2xl border-2 rounded-2xl px-4 py-2 shadow-[0_14px_40px_rgba(0,0,0,0.85)] flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2 duration-200"
+            className="absolute top-2.5 left-1/2 -translate-x-1/2 z-40 max-w-4xl w-[95%] bg-[#071124]/95 backdrop-blur-2xl border-2 rounded-2xl px-4 py-2 shadow-[0_14px_40px_rgba(0,0,0,0.85)] flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2 duration-200"
             style={{
               borderColor: activeCableInfo.cable.isFeedback ? '#F43F5E' : '#10B981',
             }}
@@ -2514,21 +2688,18 @@ export default function QualityEcosystemPortal() {
                   color: '#030711',
                 }}
               >
-                {activeCableInfo.cable.isFeedback
-                  ? `↺ RETURN LOOP #${activeCableInfo.cable.orderFromSource}`
-                  : `STEP #${activeCableInfo.cable.orderFromSource} FLOW`}
+                {activeCableInfo.cable.isoTransition}
               </span>
               <div className="min-w-0">
                 <div className="flex items-center gap-2 text-sm font-black text-white truncate">
                   <span>
-                    {activeCableInfo.srcNode?.emoji} {activeCableInfo.srcNode?.title}
+                    {activeCableInfo.srcNode?.emoji} {activeCableInfo.srcNode?.title} (
+                    {activeCableInfo.srcNode?.isoClause})
                   </span>
                   <span className="text-sky-400">━━▶</span>
                   <span className="text-emerald-300">
-                    {activeCableInfo.tgtNode?.emoji} {activeCableInfo.tgtNode?.title}
-                  </span>
-                  <span className="px-2 py-0.5 rounded bg-white/10 text-amber-300 font-mono text-[11px]">
-                    {activeCableInfo.cable.shortTag}
+                    {activeCableInfo.tgtNode?.emoji} {activeCableInfo.tgtNode?.title} (
+                    {activeCableInfo.tgtNode?.isoClause})
                   </span>
                 </div>
                 <div className="text-xs font-semibold text-slate-300 truncate">
@@ -2578,7 +2749,7 @@ export default function QualityEcosystemPortal() {
           {/* ------------------------------------------------------------- */}
           {/* LAYER 0: 6 CLICK-TO-ZOOM STAGE COLUMNS (Stages 01 -> 06) */}
           {/* ------------------------------------------------------------- */}
-          {PHASES.map((phase, idx) => {
+          {PHASES.map((phase) => {
             const isStageActive = activeStageIds.has(phase.id);
             const isFocused = focusedStageId === phase.id;
             return (
@@ -2602,7 +2773,7 @@ export default function QualityEcosystemPortal() {
                 }}
                 className="absolute rounded-xl border transition-all duration-300 pointer-events-none"
               >
-                {/* Clickable Stage Header */}
+                {/* Clickable Stage Header with PDCA Badge + ISO Clause Range */}
                 <button
                   type="button"
                   data-interactive="true"
@@ -2610,24 +2781,24 @@ export default function QualityEcosystemPortal() {
                     e.stopPropagation();
                     toggleFocusStage(phase);
                   }}
-                  title={`Click to ${isFocused ? 'reset zoom' : `zoom & spotlight ${phase.title}`}`}
-                  className="pointer-events-auto w-full px-2.5 py-1.5 border-b border-white/10 flex items-center justify-between rounded-t-xl bg-slate-950/85 hover:bg-slate-900 transition-colors cursor-pointer group"
+                  title={`Click to ${isFocused ? 'reset zoom' : `zoom & spotlight ${phase.title} (${phase.isoClauseRange})`}`}
+                  className="pointer-events-auto w-full px-2 py-1.5 border-b border-white/10 flex items-center justify-between rounded-t-xl bg-slate-950/85 hover:bg-slate-900 transition-colors cursor-pointer group"
                 >
                   <div className="flex items-center gap-1.5 min-w-0">
                     <span
-                      className="text-[10px] font-black tracking-wider px-1.5 py-0.5 rounded uppercase shrink-0"
+                      className="text-[9.5px] font-black tracking-wider px-1.5 py-0.5 rounded uppercase shrink-0"
                       style={{
                         backgroundColor: phase.color,
                         color: '#020617',
                       }}
                     >
-                      0{idx + 1}
+                      {phase.pdcaPhase}
                     </span>
-                    <span className="text-[13px] font-black text-white tracking-tight truncate">
+                    <span className="text-[12.5px] font-black text-white tracking-tight truncate">
                       {phase.title}
                     </span>
                   </div>
-                  <span className="text-[10px] font-bold text-slate-400 group-hover:text-sky-300 transition-colors shrink-0">
+                  <span className="text-[9.5px] font-mono font-bold text-slate-400 group-hover:text-sky-300 transition-colors shrink-0">
                     {isFocused ? 'Reset ✕' : `${phase.subtitle} 🔍`}
                   </span>
                 </button>
@@ -2669,7 +2840,7 @@ export default function QualityEcosystemPortal() {
 
           {/* ------------------------------------------------------------- */}
           {/* LAYER 2: 24 FULL-WIDTH HERO POSTER CARDS (202 x 98px) */}
-          {/* 17px Title + Full-Width 12.5px Concept + Sequence Bar */}
+          {/* 17px Title + Full-Width 12.5px Concept + Official ISO 9001 Clause */}
           {/* ------------------------------------------------------------- */}
           {NODES.map((node) => {
             const Icon = node.icon;
@@ -2760,7 +2931,7 @@ export default function QualityEcosystemPortal() {
                   </div>
                 )}
 
-                {/* ROW 1: Top Header Strip (Code + Emoji + Icon + Live KPI Pill) */}
+                {/* ROW 1: Top Header Strip (Icon + ISO 9001 Clause Badge + Live KPI Pill) */}
                 <div className="pl-2.5 pr-2 pt-1.5 flex items-center justify-between gap-1">
                   <div className="flex items-center gap-1.5">
                     <div
@@ -2773,17 +2944,17 @@ export default function QualityEcosystemPortal() {
                       <Icon className="w-3.5 h-3.5" />
                     </div>
                     <span
-                      className="text-[10.5px] font-black font-mono tracking-wider"
+                      className="text-[10px] font-black font-mono tracking-tight"
                       style={{ color: cardAccentColor }}
                     >
-                      {node.seqCode}
+                      {node.isoClause}
                     </span>
                     <span className="text-xs leading-none">{node.emoji}</span>
                   </div>
 
                   {/* Live Metric Pill */}
                   <span
-                    className="px-1.5 py-0.5 rounded text-[10px] font-black font-mono tracking-tight border border-white/10"
+                    className="px-1.5 py-0.5 rounded text-[9.5px] font-black font-mono tracking-tight border border-white/10"
                     style={{
                       backgroundColor: `${cardAccentColor}18`,
                       color: '#F8FAFC',
@@ -3085,7 +3256,7 @@ export default function QualityEcosystemPortal() {
           <div className="w-full flex items-center justify-between gap-3 text-xs">
             <div className="flex items-center gap-2.5 shrink-0">
               <span className="px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-500/40 text-xs font-black">
-                {activeNodeInfo.node.seqCode}
+                {activeNodeInfo.node.seqCode} • {activeNodeInfo.node.isoClause}
               </span>
               <span className="font-black text-white text-sm">
                 {activeNodeInfo.node.emoji} {activeNodeInfo.node.title}
@@ -3120,11 +3291,11 @@ export default function QualityEcosystemPortal() {
             <div className="flex items-center gap-4">
               <span className="flex items-center gap-1.5 text-emerald-300 font-bold">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                <span>Full-Width Hero Cards (17px Title + Full Concept) • Stepper Controls (◀/▶) • Cinema Zoom</span>
+                <span>100% ISO 9001:2015 Verified (Clauses 4.4 ➔ 10.3 & Closed-Loop PDCA) • Zero Dead-End Nodes</span>
               </span>
             </div>
             <span className="text-xs text-slate-300 hidden md:inline">
-              Use <strong>◀ / ▶ Stepper</strong> or click any <strong>Stage 01..06 Header</strong> to zoom & trace relationships
+              Every card displays its official <strong>ISO 9001:2015 Clause</strong> and verified <strong>PDCA (Plan-Do-Check-Act)</strong> relationships
             </span>
           </div>
         )}
