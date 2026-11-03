@@ -46,8 +46,8 @@ interface BlueprintNode {
   id: string;
   seqCode: string;
   shortName: string;
-  title: string; // Concise, high-impact title (fits on 1 line in 16.5px font!)
-  conceptTagline: string; // 3-4 word crystal-clear concept summary (13px bold!)
+  title: string; // Big, bold 2-word title (17px font-black, 0% truncation!)
+  conceptTagline: string; // Crystal-clear 3-word concept (13px font-bold!)
   path: string;
   icon: LucideIcon;
   kpiMetric: string;
@@ -61,6 +61,7 @@ interface BlueprintNode {
 
 interface PhaseZone {
   id: string;
+  colIdx: number;
   phaseNumber: string;
   title: string;
   gateLabel: string;
@@ -77,7 +78,7 @@ interface CableRelation {
   source: string;
   target: string;
   orderFromSource: number;
-  shortTag: string; // Clear 2-3 word action shown on card rim & top ribbon
+  shortTag: string;
   payloadSpec: string;
   label: string;
   isFeedback: boolean;
@@ -89,193 +90,202 @@ interface CableRelation {
 }
 
 // =========================================================================
-// 1. HIGH-VISIBILITY COMPACT CANVAS GEOMETRY (1680 x 762 FOR MAX FONT SIZE!)
+// 1. TRUE WIDESCREEN 2.63:1 ASPECT-RATIO CANVAS (1600 x 608 = 100% SCREEN FILL!)
 // =========================================================================
-// Stage X stride = 280px (Card = 224px, Empty Corridor = 56px):
-// Stage 0: zone x=18..262, card x=28..252     | Corridor 1: x=252..308 (center 280)
-// Stage 1: zone x=298..542, card x=308..532   | Corridor 2: x=532..588 (center 560)
-// Stage 2: zone x=578..822, card x=588..812   | Corridor 3: x=812..868 (center 840)
-// Stage 3: zone x=858..1102, card x=868..1092 | Corridor 4: x=1092..1148 (center 1120)
-// Stage 4: zone x=1138..1382, card x=1148..1372 | Corridor 5: x=1372..1428 (center 1400)
-// Stage 5: zone x=1418..1662, card x=1428..1652
+// Matches 16:9 viewport aspect ratio after header/footer so cards render ~35% LARGER
+// with zero wasted left/right black bars!
 //
-// Row Y coordinates (NODE_HEIGHT = 134, ROW_ALLEY_GAP = 32px):
-// Row 0: y=86..220  | Alley 1: y=220..252 (center 236)
-// Row 1: y=252..386 | Alley 2: y=386..418 (center 402)
-// Row 2: y=418..552 | Alley 3: y=552..584 (center 568)
-// Row 3: y=584..718
+// Stage X stride = 268px (Card = 216px, Corridor = 52px):
+// Stage 0: zone x=12..244, card x=20..236     | Corridor 1: x=236..288 (center 262)
+// Stage 1: zone x=280..512, card x=288..504   | Corridor 2: x=504..556 (center 530)
+// Stage 2: zone x=548..780, card x=556..772   | Corridor 3: x=772..824 (center 798)
+// Stage 3: zone x=816..1048, card x=824..1040 | Corridor 4: x=1040..1092 (center 1066)
+// Stage 4: zone x=1084..1316, card x=1092..1308 | Corridor 5: x=1308..1360 (center 1334)
+// Stage 5: zone x=1352..1584, card x=1360..1576
+//
+// Row Y coordinates (NODE_HEIGHT = 104, ROW_ALLEY_GAP = 28px):
+// Row 0: y=74..178  | Alley 1: y=178..206 (center 192)
+// Row 1: y=206..310 | Alley 2: y=310..338 (center 324)
+// Row 2: y=338..442 | Alley 3: y=442..470 (center 456)
+// Row 3: y=470..574
 
-const NODE_WIDTH = 224;
-const NODE_HEIGHT = 134;
-const CANVAS_WIDTH = 1680;
-const CANVAS_HEIGHT = 762;
+const NODE_WIDTH = 216;
+const NODE_HEIGHT = 104;
+const CANVAS_WIDTH = 1600;
+const CANVAS_HEIGHT = 608;
 
 const PHASES: PhaseZone[] = [
   {
     id: 'supply_chain',
+    colIdx: 0,
     phaseNumber: '01',
     title: 'Inbound & Supply',
     gateLabel: 'STAGE 01 • INBOUND',
     color: '#10B981',
     borderColor: 'border-emerald-500/35',
     bgGradient: 'from-emerald-950/40 via-emerald-950/10 to-transparent',
-    x: 18,
-    width: 244,
+    x: 12,
+    width: 232,
     icon: Truck,
   },
   {
     id: 'shopfloor',
+    colIdx: 1,
     phaseNumber: '02',
     title: 'Shopfloor QC',
     gateLabel: 'STAGE 02 • PRODUCTION',
     color: '#0EA5E9',
     borderColor: 'border-sky-500/35',
     bgGradient: 'from-sky-950/40 via-sky-950/10 to-transparent',
-    x: 298,
-    width: 244,
+    x: 280,
+    width: 232,
     icon: Factory,
   },
   {
     id: 'nonconformance',
+    colIdx: 2,
     phaseNumber: '03',
     title: 'NCR & Containment',
     gateLabel: 'STAGE 03 • QUARANTINE',
     color: '#EF4444',
     borderColor: 'border-red-500/35',
     bgGradient: 'from-red-950/40 via-red-950/10 to-transparent',
-    x: 578,
-    width: 244,
+    x: 548,
+    width: 232,
     icon: AlertTriangle,
   },
   {
     id: 'root_cause',
+    colIdx: 3,
     phaseNumber: '04',
     title: '8D & CAPA Actions',
     gateLabel: 'STAGE 04 • ROOT CAUSE',
     color: '#8B5CF6',
     borderColor: 'border-purple-500/35',
     bgGradient: 'from-purple-950/40 via-purple-950/10 to-transparent',
-    x: 858,
-    width: 244,
+    x: 816,
+    width: 232,
     icon: Workflow,
   },
   {
     id: 'engineering',
+    colIdx: 4,
     phaseNumber: '05',
     title: 'FMEA & Prevention',
     gateLabel: 'STAGE 05 • POKA-YOKE',
     color: '#F59E0B',
     borderColor: 'border-amber-500/35',
     bgGradient: 'from-amber-950/40 via-amber-950/10 to-transparent',
-    x: 1138,
-    width: 244,
+    x: 1084,
+    width: 232,
     icon: ShieldCheck,
   },
   {
     id: 'intelligence',
+    colIdx: 5,
     phaseNumber: '06',
     title: 'SPC & AI Tower',
     gateLabel: 'STAGE 06 • INTELLIGENCE',
     color: '#06B6D4',
     borderColor: 'border-cyan-500/35',
     bgGradient: 'from-cyan-950/40 via-cyan-950/10 to-transparent',
-    x: 1418,
-    width: 244,
+    x: 1352,
+    width: 232,
     icon: Cpu,
   },
 ];
 
-// All 24 Modules with LARGE, CONCISE Titles & 3-Word Concept Taglines
+// All 24 Modules with ICONIC 2-Word Titles (16.5px) & 3-Word Concept Subtitles (12.5px)
 const NODES: BlueprintNode[] = [
-  // Stage 01: Inbound & Supply (colIdx: 0, x: 28)
+  // Stage 01: Inbound & Supply (colIdx: 0, x: 20)
   {
     id: 'iqc',
     seqCode: 'M-01',
     shortName: 'IQC',
-    title: 'Incoming QC (IQC)',
-    conceptTagline: 'Raw Material AQL Gate',
+    title: 'Incoming QC',
+    conceptTagline: 'Raw Material AQL',
     path: '/inspection',
     icon: Truck,
-    kpiMetric: '98.4% Pass',
+    kpiMetric: '98.4%',
     healthScore: 98,
     phaseId: 'supply_chain',
     rowIdx: 0,
     colIdx: 0,
-    x: 28,
-    y: 86,
+    x: 20,
+    y: 74,
   },
   {
     id: 'suppliers',
     seqCode: 'M-02',
     shortName: 'Suppliers',
-    title: 'Supplier Scorecard',
-    conceptTagline: 'Vendor Rating & PPM',
+    title: 'Supplier Rating',
+    conceptTagline: 'Vendor Scorecard',
     path: '/supplier-quality',
     icon: Building,
-    kpiMetric: '94.2% A-Tier',
+    kpiMetric: '94.2%',
     healthScore: 94,
     phaseId: 'supply_chain',
     rowIdx: 1,
     colIdx: 0,
-    x: 28,
-    y: 252,
+    x: 20,
+    y: 206,
   },
   {
     id: 'calibration',
     seqCode: 'M-03',
     shortName: 'Calibration',
     title: 'Tool Calibration',
-    conceptTagline: 'Gauge & MSA Certs',
+    conceptTagline: 'Gauge Accuracy MSA',
     path: '/calibration',
     icon: Wrench,
-    kpiMetric: '100% Valid',
+    kpiMetric: '100%',
     healthScore: 100,
     phaseId: 'supply_chain',
     rowIdx: 2,
     colIdx: 0,
-    x: 28,
-    y: 418,
+    x: 20,
+    y: 338,
   },
   {
     id: 'master_data',
     seqCode: 'M-04',
     shortName: 'Master Data',
-    title: 'Master Standards',
-    conceptTagline: 'Specs & Defect Catalog',
+    title: 'Master Specs',
+    conceptTagline: 'Defect Catalogs',
     path: '/quality-master-data',
     icon: Database,
-    kpiMetric: '1,420 Specs',
+    kpiMetric: '1.4k Specs',
     healthScore: 99,
     phaseId: 'supply_chain',
     rowIdx: 3,
     colIdx: 0,
-    x: 28,
-    y: 584,
+    x: 20,
+    y: 470,
   },
 
-  // Stage 02: Shopfloor QC (colIdx: 1, x: 308)
+  // Stage 02: Shopfloor QC (colIdx: 1, x: 288)
   {
     id: 'daily_defects',
     seqCode: 'M-05',
     shortName: 'Defect Log',
-    title: 'Live Defect Log',
-    conceptTagline: 'Shopfloor Pareto Capture',
+    title: 'Defect Logger',
+    conceptTagline: 'Live Pareto Capture',
     path: '/defect-log',
     icon: Activity,
-    kpiMetric: 'Live Pareto',
+    kpiMetric: 'Live Log',
     healthScore: 96,
     phaseId: 'shopfloor',
     rowIdx: 0,
     colIdx: 1,
-    x: 308,
-    y: 86,
+    x: 288,
+    y: 74,
   },
   {
     id: 'inspection_plans',
     seqCode: 'M-06',
     shortName: 'IPQC Gates',
-    title: 'In-Process IPQC',
-    conceptTagline: 'First-Piece & Patrol QC',
+    title: 'In-Process QC',
+    conceptTagline: 'Patrol & FPI Gates',
     path: '/quality-inspection-plans',
     icon: CheckCircle2,
     kpiMetric: '18 Gates',
@@ -283,43 +293,43 @@ const NODES: BlueprintNode[] = [
     phaseId: 'shopfloor',
     rowIdx: 1,
     colIdx: 1,
-    x: 308,
-    y: 252,
+    x: 288,
+    y: 206,
   },
   {
     id: 'lpa',
     seqCode: 'M-07',
     shortName: 'LPA Audits',
-    title: 'Layered Audits (LPA)',
+    title: 'LPA Audits',
     conceptTagline: 'Shift Process Checks',
     path: '/quality-audits',
     icon: Layers,
-    kpiMetric: '96% Adhere',
+    kpiMetric: '96% Pass',
     healthScore: 96,
     phaseId: 'shopfloor',
     rowIdx: 2,
     colIdx: 1,
-    x: 308,
-    y: 418,
+    x: 288,
+    y: 338,
   },
   {
     id: 'setup_readiness',
     seqCode: 'M-08',
     shortName: 'Line Setup',
-    title: 'Line Setup Go/No-Go',
-    conceptTagline: 'Startup Line Clearance',
+    title: 'Line Clearance',
+    conceptTagline: 'Startup Go / No-Go',
     path: '/quality-execution-board',
     icon: Sliders,
-    kpiMetric: '12 Lines Go',
+    kpiMetric: '12 Lines',
     healthScore: 97,
     phaseId: 'shopfloor',
     rowIdx: 3,
     colIdx: 1,
-    x: 308,
-    y: 584,
+    x: 288,
+    y: 470,
   },
 
-  // Stage 03: NCR & Containment (colIdx: 2, x: 588)
+  // Stage 03: NCR & Containment (colIdx: 2, x: 556)
   {
     id: 'ncr',
     seqCode: 'M-09',
@@ -328,20 +338,20 @@ const NODES: BlueprintNode[] = [
     conceptTagline: 'Batch Hold & MRB',
     path: '/quality/records/ncr',
     icon: AlertTriangle,
-    kpiMetric: '7 Hold Lots',
+    kpiMetric: '7 Holds',
     healthScore: 91,
     phaseId: 'nonconformance',
     rowIdx: 0,
     colIdx: 2,
-    x: 588,
-    y: 86,
+    x: 556,
+    y: 74,
   },
   {
     id: 'deviation',
     seqCode: 'M-10',
     shortName: 'Deviation',
-    title: 'Process Deviation',
-    conceptTagline: 'Temp Waiver Signoff',
+    title: 'Deviations',
+    conceptTagline: 'Concession Waiver',
     path: '/deviation',
     icon: FileWarning,
     kpiMetric: '3 Waivers',
@@ -349,31 +359,31 @@ const NODES: BlueprintNode[] = [
     phaseId: 'nonconformance',
     rowIdx: 1,
     colIdx: 2,
-    x: 588,
-    y: 252,
+    x: 556,
+    y: 206,
   },
   {
     id: 'complaints',
     seqCode: 'M-11',
     shortName: 'Complaints',
     title: 'Customer RMA',
-    conceptTagline: 'VOC & Field Returns',
+    conceptTagline: 'VOC & Field Claims',
     path: '/complaints',
     icon: Building,
-    kpiMetric: '99.1% CSAT',
+    kpiMetric: '99% CSAT',
     healthScore: 94,
     phaseId: 'nonconformance',
     rowIdx: 2,
     colIdx: 2,
-    x: 588,
-    y: 418,
+    x: 556,
+    y: 338,
   },
   {
     id: 'defect_cost',
     seqCode: 'M-12',
     shortName: 'COPQ Cost',
-    title: 'COPQ Scrap Cost',
-    conceptTagline: 'Scrap & Rework Finance',
+    title: 'Scrap Cost',
+    conceptTagline: 'COPQ Loss Ledger',
     path: '/defect-cost',
     icon: DollarSign,
     kpiMetric: '-18% Cost',
@@ -381,83 +391,83 @@ const NODES: BlueprintNode[] = [
     phaseId: 'nonconformance',
     rowIdx: 3,
     colIdx: 2,
-    x: 588,
-    y: 584,
+    x: 556,
+    y: 470,
   },
 
-  // Stage 04: 8D & CAPA Actions (colIdx: 3, x: 868)
+  // Stage 04: 8D & CAPA Actions (colIdx: 3, x: 824)
   {
     id: 'capa_records',
     seqCode: 'M-13',
     shortName: 'CAPA Plan',
-    title: 'CAPA Action Plan',
+    title: 'CAPA Actions',
     conceptTagline: 'Corrective & Preventive',
     path: '/quality/records/capa',
     icon: CheckCheck,
-    kpiMetric: '96% Closed',
+    kpiMetric: '96% Fixed',
     healthScore: 96,
     phaseId: 'root_cause',
     rowIdx: 0,
     colIdx: 3,
-    x: 868,
-    y: 86,
+    x: 824,
+    y: 74,
   },
   {
     id: 'eight_d',
     seqCode: 'M-14',
     shortName: '8D RCA',
     title: '8D Root Cause',
-    conceptTagline: 'Fishbone & 5-Why Solver',
+    conceptTagline: '5-Why & Fishbone',
     path: '/quality/records/8d',
     icon: RefreshCw,
-    kpiMetric: 'D1➔D8 Live',
+    kpiMetric: 'D1 ➔ D8',
     healthScore: 97,
     phaseId: 'root_cause',
     rowIdx: 1,
     colIdx: 3,
-    x: 868,
-    y: 252,
+    x: 824,
+    y: 206,
   },
   {
     id: 'change_control',
     seqCode: 'M-15',
     shortName: 'ECN Change',
-    title: 'ECN Change Ctrl',
-    conceptTagline: '4M Engineering Changes',
+    title: 'ECN Changes',
+    conceptTagline: '4M Engineering Rev',
     path: '/change-control',
     icon: Sliders,
-    kpiMetric: 'Rev Synced',
+    kpiMetric: '11 Synced',
     healthScore: 95,
     phaseId: 'root_cause',
     rowIdx: 2,
     colIdx: 3,
-    x: 868,
-    y: 418,
+    x: 824,
+    y: 338,
   },
   {
     id: 'command_center',
     seqCode: 'M-16',
     shortName: 'SLA Center',
-    title: 'Action SLA Center',
-    conceptTagline: 'Overdue Task Escalation',
+    title: 'SLA Command',
+    conceptTagline: 'Overdue Task Tracker',
     path: '/quality-command-center',
     icon: Workflow,
-    kpiMetric: '95% On-Time',
+    kpiMetric: '95% SLA',
     healthScore: 95,
     phaseId: 'root_cause',
     rowIdx: 3,
     colIdx: 3,
-    x: 868,
-    y: 584,
+    x: 824,
+    y: 470,
   },
 
-  // Stage 05: FMEA & Prevention (colIdx: 4, x: 1148)
+  // Stage 05: FMEA & Prevention (colIdx: 4, x: 1092)
   {
     id: 'fmea',
     seqCode: 'M-17',
     shortName: 'PFMEA Risk',
-    title: 'PFMEA Risk Matrix',
-    conceptTagline: 'Severity × Occurrence RPN',
+    title: 'PFMEA Risk',
+    conceptTagline: 'RPN Failure Matrix',
     path: '/fmea',
     icon: ShieldCheck,
     kpiMetric: 'RPN < 80',
@@ -465,15 +475,15 @@ const NODES: BlueprintNode[] = [
     phaseId: 'engineering',
     rowIdx: 0,
     colIdx: 4,
-    x: 1148,
-    y: 86,
+    x: 1092,
+    y: 74,
   },
   {
     id: 'control_plan',
     seqCode: 'M-18',
     shortName: 'Ctrl Plan',
-    title: 'Control Plan Specs',
-    conceptTagline: 'CTQ Limits & Poka-Yoke',
+    title: 'Control Plan',
+    conceptTagline: 'Poka-Yoke & CTQs',
     path: '/control-plan',
     icon: Sliders,
     kpiMetric: '84 CTQs',
@@ -481,15 +491,15 @@ const NODES: BlueprintNode[] = [
     phaseId: 'engineering',
     rowIdx: 1,
     colIdx: 4,
-    x: 1148,
-    y: 252,
+    x: 1092,
+    y: 206,
   },
   {
     id: 'knowledge_base',
     seqCode: 'M-19',
     shortName: 'Lessons Hub',
-    title: 'Lessons Learned',
-    conceptTagline: 'Solved 8D Knowledge Base',
+    title: 'Lessons Hub',
+    conceptTagline: 'Solved 8D Archive',
     path: '/quality-knowledge-base',
     icon: BookOpen,
     kpiMetric: '215 Cases',
@@ -497,15 +507,15 @@ const NODES: BlueprintNode[] = [
     phaseId: 'engineering',
     rowIdx: 2,
     colIdx: 4,
-    x: 1148,
-    y: 418,
+    x: 1092,
+    y: 338,
   },
   {
     id: 'form_designer',
     seqCode: 'M-20',
     shortName: 'Form Studio',
-    title: 'Smart Checklists',
-    conceptTagline: 'No-Code Digital Forms',
+    title: 'Form Builder',
+    conceptTagline: 'Digital Checklists',
     path: '/quality-form-designer',
     icon: Layers,
     kpiMetric: '42 Forms',
@@ -513,16 +523,16 @@ const NODES: BlueprintNode[] = [
     phaseId: 'engineering',
     rowIdx: 3,
     colIdx: 4,
-    x: 1148,
-    y: 584,
+    x: 1092,
+    y: 470,
   },
 
-  // Stage 06: SPC & AI Tower (colIdx: 5, x: 1428)
+  // Stage 06: SPC & AI Tower (colIdx: 5, x: 1360)
   {
     id: 'spc',
     seqCode: 'M-21',
     shortName: 'SPC Charts',
-    title: 'SPC Control Charts',
+    title: 'SPC Charts',
     conceptTagline: 'Six Sigma Cp / Cpk',
     path: '/spc',
     icon: TrendingUp,
@@ -531,61 +541,61 @@ const NODES: BlueprintNode[] = [
     phaseId: 'intelligence',
     rowIdx: 0,
     colIdx: 5,
-    x: 1428,
-    y: 86,
+    x: 1360,
+    y: 74,
   },
   {
     id: 'control_tower',
     seqCode: 'M-22',
     shortName: 'Ctrl Tower',
-    title: '360° Control Tower',
-    conceptTagline: 'Executive Plant KPIs',
+    title: 'Control Tower',
+    conceptTagline: '360° Plant KPIs',
     path: '/quality-control-tower',
     icon: BarChart3,
-    kpiMetric: 'Live KPI',
+    kpiMetric: 'Live 360°',
     healthScore: 100,
     phaseId: 'intelligence',
     rowIdx: 1,
     colIdx: 5,
-    x: 1428,
-    y: 252,
+    x: 1360,
+    y: 206,
   },
   {
     id: 'ai_copilot',
     seqCode: 'M-23',
     shortName: 'AI Copilot',
-    title: 'AI Quality Copilot',
-    conceptTagline: 'Predictive Defect AI',
+    title: 'AI Copilot',
+    conceptTagline: 'Defect Prediction AI',
     path: '/ai/defect-prediction',
     icon: Sparkles,
-    kpiMetric: '97% AI Acc',
+    kpiMetric: '97% AI',
     healthScore: 97,
     phaseId: 'intelligence',
     rowIdx: 2,
     colIdx: 5,
-    x: 1428,
-    y: 418,
+    x: 1360,
+    y: 338,
   },
   {
     id: 'audits',
     seqCode: 'M-24',
     shortName: 'ISO Audits',
-    title: 'ISO / IATF Audits',
-    conceptTagline: 'Compliance & Findings',
+    title: 'ISO Audits',
+    conceptTagline: 'IATF 16949 Checks',
     path: '/audit',
     icon: ShieldCheck,
-    kpiMetric: '100% Pass',
+    kpiMetric: '100% ISO',
     healthScore: 98,
     phaseId: 'intelligence',
     rowIdx: 3,
     colIdx: 5,
-    x: 1428,
-    y: 584,
+    x: 1360,
+    y: 470,
   },
 ];
 
 // =========================================================================
-// 2. 100% ORTHOGONAL PCB CONDUITS WITH LARGE READABLE CORRIDOR PILLS
+// 2. 100% ORTHOGONAL PCB CONDUITS
 // =========================================================================
 
 const CABLES: CableRelation[] = [
@@ -1147,24 +1157,25 @@ const SIMULATION_SCENARIOS: Record<
 };
 
 // =========================================================================
-// 3. MAIN HIGH-VISIBILITY ECOSYSTEM PORTAL COMPONENT
+// 3. MAIN WIDESCREEN HIGH-IMPACT ECOSYSTEM PORTAL COMPONENT
 // =========================================================================
 
 export default function QualityEcosystemPortal() {
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Pan & Zoom State (Compact 1680x762 canvas fits at ~90% native zoom!)
-  const [zoom, setZoom] = useState<number>(0.88);
-  const [pan, setPan] = useState<{ x: number; y: number }>({ x: 16, y: 10 });
+  // Pan & Zoom State (1600x608 widescreen canvas fills 100% of screen width & height!)
+  const [zoom, setZoom] = useState<number>(0.92);
+  const [pan, setPan] = useState<{ x: number; y: number }>({ x: 10, y: 6 });
   const [isPanning, setIsPanning] = useState(false);
   const [startPoint, setStartPoint] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [hasMoved, setHasMoved] = useState(false);
 
-  // Interaction State
+  // Interaction & Stage Spotlight State
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   const [selectedCableId, setSelectedCableId] = useState<string | null>(null);
+  const [focusedStageId, setFocusedStageId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSimulation, setActiveSimulation] = useState<'none' | 'defect' | 'supplier' | 'prevention'>('none');
   const [simStepIndex, setSimStepIndex] = useState<number | null>(null);
@@ -1172,23 +1183,24 @@ export default function QualityEcosystemPortal() {
   const [viewLens, setViewLens] = useState<'backbone' | 'all_primary' | 'feedback_bus' | 'heatmap'>('backbone');
   const [multiHopRipple, setMultiHopRipple] = useState<boolean>(true);
 
-  // Auto-fit entire 24-node matrix at maximum possible scale inside viewport
+  // Auto-fit entire 24-node widescreen matrix edge-to-edge
   const fitToScreen = useCallback(() => {
     if (!containerRef.current) return;
     const { clientWidth, clientHeight } = containerRef.current;
     if (clientWidth === 0 || clientHeight === 0) return;
 
-    const padX = 8;
-    const padY = 6;
+    const padX = 6;
+    const padY = 4;
     const scaleX = (clientWidth - padX * 2) / CANVAS_WIDTH;
     const scaleY = (clientHeight - padY * 2) / CANVAS_HEIGHT;
-    const optimalZoom = Math.min(Math.max(Math.min(scaleX, scaleY), 0.5), 1.15);
+    const optimalZoom = Math.min(Math.max(Math.min(scaleX, scaleY), 0.5), 1.25);
 
     const centerX = (clientWidth - CANVAS_WIDTH * optimalZoom) / 2;
     const centerY = (clientHeight - CANVAS_HEIGHT * optimalZoom) / 2;
 
     setZoom(optimalZoom);
     setPan({ x: centerX, y: centerY });
+    setFocusedStageId(null);
   }, []);
 
   useEffect(() => {
@@ -1196,6 +1208,33 @@ export default function QualityEcosystemPortal() {
     window.addEventListener('resize', fitToScreen);
     return () => window.removeEventListener('resize', fitToScreen);
   }, [fitToScreen]);
+
+  // Click any Stage Header to zoom into that Stage & spotlight all its connections!
+  const toggleFocusStage = useCallback(
+    (phase: PhaseZone) => {
+      if (focusedStageId === phase.id) {
+        fitToScreen();
+        return;
+      }
+      if (!containerRef.current) return;
+      const { clientWidth, clientHeight } = containerRef.current;
+      const targetZoom = Math.min(Math.max((clientHeight - 16) / CANVAS_HEIGHT, 0.95), 1.28);
+      const stageCenterX = phase.x + phase.width / 2;
+
+      const rawPanX = clientWidth / 2 - stageCenterX * targetZoom;
+      const minPanX = clientWidth - CANVAS_WIDTH * targetZoom - 16;
+      const clampedPanX = Math.min(Math.max(rawPanX, minPanX), 16);
+      const targetPanY = (clientHeight - CANVAS_HEIGHT * targetZoom) / 2;
+
+      setFocusedStageId(phase.id);
+      setSelectedNodeId(null);
+      setSelectedCableId(null);
+      setActiveSimulation('none');
+      setZoom(targetZoom);
+      setPan({ x: clampedPanX, y: targetPanY });
+    },
+    [focusedStageId, fitToScreen]
+  );
 
   // Step-by-Step Auto-Play Timer for Simulation Flows
   useEffect(() => {
@@ -1215,14 +1254,13 @@ export default function QualityEcosystemPortal() {
     return () => window.clearInterval(timer);
   }, [isAutoPlaying, activeSimulation]);
 
-  // Center camera on a specific node
   const centerOnNode = useCallback(
     (nodeId: string) => {
       const targetNode = NODES.find((n) => n.id === nodeId);
       if (!targetNode || !containerRef.current) return;
 
       const { clientWidth, clientHeight } = containerRef.current;
-      const targetZoom = Math.max(zoom, 0.95);
+      const targetZoom = Math.max(zoom, 1.05);
       const nodeCenterX = targetNode.x + NODE_WIDTH / 2;
       const nodeCenterY = targetNode.y + NODE_HEIGHT / 2;
 
@@ -1236,7 +1274,6 @@ export default function QualityEcosystemPortal() {
     [zoom]
   );
 
-  // Drag-to-pan handlers
   const handleMouseDown = (e: React.MouseEvent) => {
     if (e.button !== 0) return;
     setIsPanning(true);
@@ -1258,11 +1295,10 @@ export default function QualityEcosystemPortal() {
     setIsPanning(false);
   };
 
-  // Smooth wheel zoom
   const handleWheel = (e: React.WheelEvent) => {
     e.preventDefault();
     const zoomFactor = e.deltaY < 0 ? 1.08 : 0.92;
-    const newZoom = Math.min(Math.max(zoom * zoomFactor, 0.45), 1.65);
+    const newZoom = Math.min(Math.max(zoom * zoomFactor, 0.45), 1.75);
 
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
@@ -1277,11 +1313,10 @@ export default function QualityEcosystemPortal() {
   };
 
   const activeNodeId = hoveredNodeId || selectedNodeId;
-  const isIdleLensActive = !activeNodeId && !selectedCableId && activeSimulation === 'none';
+  const isIdleLensActive =
+    !activeNodeId && !selectedCableId && !focusedStageId && activeSimulation === 'none';
 
   // Compute sequence metadata for highlighted cables
-  // Large, High-Contrast Number Medallions (50x22px with 11.5px font) sit in the 56px corridors,
-  // while the full Concept Action Banner lights up across the 208px top rim of each card!
   const activeCableSequenceMap = useMemo(() => {
     const map = new Map<
       string,
@@ -1295,6 +1330,29 @@ export default function QualityEcosystemPortal() {
         badgeColor: string;
       }
     >();
+
+    // Stage Focus X-Ray Mode: highlight all cables entering/leaving the focused stage!
+    if (focusedStageId && !activeNodeId && !selectedCableId && activeSimulation === 'none') {
+      const stageNodeIds = new Set(
+        NODES.filter((n) => n.phaseId === focusedStageId).map((n) => n.id)
+      );
+      CABLES.forEach((cable) => {
+        if (stageNodeIds.has(cable.source) || stageNodeIds.has(cable.target)) {
+          const ord = cable.orderFromSource;
+          const ordinalText = ord === 1 ? '1st' : ord === 2 ? '2nd' : ord === 3 ? '3rd' : `${ord}th`;
+          map.set(cable.id, {
+            stepNumber: ord,
+            medallionText: cable.isFeedback ? `↺ ${ordinalText}` : `${ordinalText} ➔`,
+            shortTag: cable.shortTag,
+            isFeedback: cable.isFeedback,
+            isCurrentStepSpotlight: true,
+            directionRole: cable.isFeedback ? 'feedback' : 'output',
+            badgeColor: cable.isFeedback ? '#F43F5E' : cable.color,
+          });
+        }
+      });
+      return map;
+    }
 
     if (isIdleLensActive) {
       if (viewLens === 'backbone' || viewLens === 'heatmap') {
@@ -1470,6 +1528,7 @@ export default function QualityEcosystemPortal() {
 
     return map;
   }, [
+    focusedStageId,
     isIdleLensActive,
     viewLens,
     activeNodeId,
@@ -1486,6 +1545,28 @@ export default function QualityEcosystemPortal() {
       string,
       { text: string; color: string; isFeedback?: boolean; isPulseSpotlight?: boolean }
     >();
+
+    if (focusedStageId && !activeNodeId && !selectedCableId && activeSimulation === 'none') {
+      const stagePhase = PHASES.find((p) => p.id === focusedStageId);
+      NODES.filter((n) => n.phaseId === focusedStageId).forEach((n) => {
+        badgeMap.set(n.id, {
+          text: `★ ${stagePhase?.title.toUpperCase()}`,
+          color: stagePhase?.color || '#38BDF8',
+          isPulseSpotlight: true,
+        });
+      });
+      activeCableSequenceMap.forEach((meta, cableId) => {
+        const c = CABLES.find((item) => item.id === cableId);
+        if (!c) return;
+        if (!badgeMap.has(c.source)) {
+          badgeMap.set(c.source, { text: `📥 ${c.shortTag}`, color: meta.badgeColor });
+        }
+        if (!badgeMap.has(c.target)) {
+          badgeMap.set(c.target, { text: `📤 ${c.shortTag}`, color: meta.badgeColor });
+        }
+      });
+      return badgeMap;
+    }
 
     if (isIdleLensActive) {
       if (viewLens === 'backbone' || viewLens === 'heatmap') {
@@ -1633,6 +1714,8 @@ export default function QualityEcosystemPortal() {
 
     return badgeMap;
   }, [
+    focusedStageId,
+    activeCableSequenceMap,
     isIdleLensActive,
     viewLens,
     activeNodeId,
@@ -1652,7 +1735,6 @@ export default function QualityEcosystemPortal() {
     return set;
   }, [nodeSequenceBadges]);
 
-  // Map each node's ordered outgoing chips for direct display on the card bottom row
   const nodeOutgoingChipsMap = useMemo(() => {
     const map: Record<
       string,
@@ -1744,7 +1826,7 @@ export default function QualityEcosystemPortal() {
   }, [selectedCableId, activeSimulation, simStepIndex]);
 
   // =========================================================================
-  // 100% ORTHOGONAL PCB TRACE ROUTING ENGINE FOR COMPACT 1680x762 MATRIX
+  // 100% ORTHOGONAL PCB TRACE ROUTING ENGINE FOR WIDESCREEN 1600x608 MATRIX
   // =========================================================================
   const computeCableGeometry = useCallback((cable: CableRelation, indexOffset: number) => {
     const src = NODES.find((n) => n.id === cable.source);
@@ -1754,10 +1836,10 @@ export default function QualityEcosystemPortal() {
     const isSameColumn = src.colIdx === tgt.colIdx;
     const colSpan = tgt.colIdx - src.colIdx;
 
-    const outPinOffset = (cable.orderFromSource - 2) * 18;
-    const inPinOffset = (src.rowIdx - tgt.rowIdx) * 5;
+    const outPinOffset = (cable.orderFromSource - 2) * 16;
+    const inPinOffset = (src.rowIdx - tgt.rowIdx) * 4;
 
-    // 1A. Adjacent-Row Same-Column Direct Vertical Bridge across the 32px Inter-Row Alley
+    // 1A. Adjacent-Row Same-Column Direct Vertical Bridge across the 28px Inter-Row Alley
     if (isSameColumn && Math.abs(src.rowIdx - tgt.rowIdx) === 1) {
       const goingDown = tgt.rowIdx > src.rowIdx;
       const xBridge = src.x + 56;
@@ -1775,8 +1857,8 @@ export default function QualityEcosystemPortal() {
       const y1 = src.y + NODE_HEIGHT / 2 + outPinOffset * 0.4;
       const x2 = tgt.x + NODE_WIDTH;
       const y2 = tgt.y + NODE_HEIGHT / 2;
-      const corridorCenter = src.colIdx < 5 ? x1 + 28 : x1 + 20;
-      const laneX = corridorCenter + cable.corridorTrack * 7;
+      const corridorCenter = src.colIdx < 5 ? x1 + 26 : x1 + 18;
+      const laneX = corridorCenter + cable.corridorTrack * 6;
       const r = 8;
       const dirY = y2 > y1 ? 1 : -1;
 
@@ -1802,9 +1884,9 @@ export default function QualityEcosystemPortal() {
       const y2 = tgt.y + NODE_HEIGHT / 2 + inPinOffset;
 
       const corridorCenter = (x1 + x2) / 2;
-      const laneX = corridorCenter + cable.corridorTrack * 8;
+      const laneX = corridorCenter + cable.corridorTrack * 7;
 
-      if (Math.abs(y2 - y1) < 14) {
+      if (Math.abs(y2 - y1) < 12) {
         const pathD = `M ${x1} ${y1} L ${x2} ${y1}`;
         return {
           pathD,
@@ -1830,13 +1912,13 @@ export default function QualityEcosystemPortal() {
       ].join(' ');
 
       const midX = corridorCenter;
-      const midY = (y1 + y2) / 2 + cable.corridorTrack * 12;
+      const midY = (y1 + y2) / 2 + cable.corridorTrack * 10;
 
       return { pathD, midX, midY, x1, y1, x2, y2, isCompactMedallion: true };
     }
 
     // 3. Multi-Column Forward Express PCB Trace (colSpan >= 2)
-    // Routes through the 32px Horizontal Inter-Row Alley (y=236, 402, 568)
+    // Routes through the 28px Horizontal Inter-Row Alley (y=192, 324, 456)
     if (colSpan >= 2) {
       const x1 = src.x + NODE_WIDTH;
       const y1 = src.y + NODE_HEIGHT / 2 + outPinOffset;
@@ -1844,11 +1926,11 @@ export default function QualityEcosystemPortal() {
       const y2 = tgt.y + NODE_HEIGHT / 2 + inPinOffset;
 
       const alleyIndex = cable.alleyRow || (src.rowIdx === 0 ? 1 : src.rowIdx === 3 ? 3 : 2);
-      const baseAlleyY = alleyIndex === 1 ? 236 : alleyIndex === 2 ? 402 : 568;
-      const alleyY = baseAlleyY + cable.corridorTrack * 4;
+      const baseAlleyY = alleyIndex === 1 ? 192 : alleyIndex === 2 ? 324 : 456;
+      const alleyY = baseAlleyY + cable.corridorTrack * 3.5;
 
-      const exitX = x1 + 22 + cable.corridorTrack * 6;
-      const entryX = x2 - 22 + cable.corridorTrack * 6;
+      const exitX = x1 + 20 + cable.corridorTrack * 5;
+      const entryX = x2 - 20 + cable.corridorTrack * 5;
       const r = 8;
       const dir1 = alleyY >= y1 ? 1 : -1;
       const dir2 = y2 >= alleyY ? 1 : -1;
@@ -1867,7 +1949,7 @@ export default function QualityEcosystemPortal() {
       ].join(' ');
 
       const corridorHop = cable.orderFromSource % 2 === 1 ? 0 : 1;
-      const midCorridorX = src.x + NODE_WIDTH + 28 + corridorHop * 280;
+      const midCorridorX = src.x + NODE_WIDTH + 26 + corridorHop * 268;
       const midX = midCorridorX;
       const midY = alleyY;
       return { pathD, midX, midY, x1, y1, x2, y2, isCompactMedallion: true };
@@ -1879,13 +1961,13 @@ export default function QualityEcosystemPortal() {
     const x2 = tgt.x + NODE_WIDTH;
     const y2 = tgt.y + NODE_HEIGHT / 2;
 
-    const useTopHighway = cable.feedbackLane === 'top' || (!cable.feedbackLane && y1 < 380);
-    const laneTrackOffset = (indexOffset % 3) * 5;
-    const highwayY = useTopHighway ? 15 + laneTrackOffset : 746 - laneTrackOffset;
+    const useTopHighway = cable.feedbackLane === 'top' || (!cable.feedbackLane && y1 < 310);
+    const laneTrackOffset = (indexOffset % 3) * 4;
+    const highwayY = useTopHighway ? 13 + laneTrackOffset : 595 - laneTrackOffset;
 
-    const exitCorridorX = x1 - 28;
-    const entryCorridorX = x2 + 28;
-    const r = 10;
+    const exitCorridorX = x1 - 26;
+    const entryCorridorX = x2 + 26;
+    const r = 9;
     const dirToHighway = highwayY < y1 ? -1 : 1;
     const dirFromHighway = y2 > highwayY ? 1 : -1;
 
@@ -1902,7 +1984,7 @@ export default function QualityEcosystemPortal() {
       `L ${x2} ${y2}`,
     ].join(' ');
 
-    const midX = (exitCorridorX + entryCorridorX) / 2 + cable.corridorTrack * 100;
+    const midX = (exitCorridorX + entryCorridorX) / 2 + cable.corridorTrack * 90;
     const midY = highwayY;
 
     return { pathD, midX, midY, x1, y1, x2, y2, isCompactMedallion: false };
@@ -1924,10 +2006,10 @@ export default function QualityEcosystemPortal() {
       let adjustedY = geom.midY;
       for (let attempt = 0; attempt < 6; attempt++) {
         const collision = placedPoints.find(
-          (pt) => Math.abs(pt.x - geom.midX) < 52 && Math.abs(pt.y - adjustedY) < 26
+          (pt) => Math.abs(pt.x - geom.midX) < 48 && Math.abs(pt.y - adjustedY) < 22
         );
         if (!collision) break;
-        adjustedY += attempt % 2 === 0 ? 26 : -26;
+        adjustedY += attempt % 2 === 0 ? 22 : -22;
       }
 
       placedPoints.push({ x: geom.midX, y: adjustedY });
@@ -1940,6 +2022,7 @@ export default function QualityEcosystemPortal() {
   const triggerSimulation = (simType: 'defect' | 'supplier' | 'prevention') => {
     setSelectedNodeId(null);
     setSelectedCableId(null);
+    setFocusedStageId(null);
     if (activeSimulation === simType) {
       setActiveSimulation('none');
       setSimStepIndex(null);
@@ -1981,9 +2064,9 @@ export default function QualityEcosystemPortal() {
       {/* ========================================================================= */}
       {/* 1. TOP COMMAND BAR */}
       {/* ========================================================================= */}
-      <header className="h-12 px-3 sm:px-5 border-b border-white/10 bg-[#070d19]/95 backdrop-blur-2xl flex items-center justify-between shrink-0 z-30 gap-2">
+      <header className="h-11 px-3 sm:px-5 border-b border-white/10 bg-[#070d19]/95 backdrop-blur-2xl flex items-center justify-between shrink-0 z-30 gap-2">
         <div className="flex items-center gap-2.5 shrink-0">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#0066CC] to-[#00A3E0] flex items-center justify-center shadow-[0_0_20px_rgba(0,163,224,0.45)] border border-sky-400/40">
+          <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-[#0066CC] to-[#00A3E0] flex items-center justify-center shadow-[0_0_20px_rgba(0,163,224,0.45)] border border-sky-400/40">
             <Network className="w-4 h-4 text-white" />
           </div>
           <div className="flex items-center gap-2">
@@ -1992,29 +2075,30 @@ export default function QualityEcosystemPortal() {
             </h1>
             <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 hidden xl:flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-              High-Clarity Cards
+              Widescreen Full-Scale
             </span>
           </div>
         </div>
 
         {/* 4 Architectural View Lenses + Scenario Simulators */}
-        <div className="hidden lg:flex items-center gap-1.5 p-1 bg-white/[0.04] border border-white/10 rounded-2xl">
-          <div className="flex items-center gap-1 bg-[#0b1324] p-0.5 rounded-xl border border-white/10">
+        <div className="hidden lg:flex items-center gap-1.5 p-0.5 bg-white/[0.04] border border-white/10 rounded-xl">
+          <div className="flex items-center gap-1 bg-[#0b1324] p-0.5 rounded-lg border border-white/10">
             <button
               type="button"
               onClick={() => {
                 setActiveSimulation('none');
                 setSelectedNodeId(null);
                 setSelectedCableId(null);
+                setFocusedStageId(null);
                 setViewLens('backbone');
               }}
-              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
+              className={`px-2 py-0.5 rounded-md text-xs font-bold transition-all flex items-center gap-1 ${
                 isIdleLensActive && viewLens === 'backbone'
                   ? 'bg-sky-500 text-slate-950 font-black shadow'
                   : 'text-slate-300 hover:text-white'
               }`}
             >
-              <Zap className="w-3.5 h-3.5" />
+              <Zap className="w-3 h-3" />
               <span>Backbone (1➔8)</span>
             </button>
 
@@ -2024,15 +2108,16 @@ export default function QualityEcosystemPortal() {
                 setActiveSimulation('none');
                 setSelectedNodeId(null);
                 setSelectedCableId(null);
+                setFocusedStageId(null);
                 setViewLens('all_primary');
               }}
-              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
+              className={`px-2 py-0.5 rounded-md text-xs font-bold transition-all flex items-center gap-1 ${
                 isIdleLensActive && viewLens === 'all_primary'
                   ? 'bg-emerald-500 text-slate-950 font-black shadow'
                   : 'text-slate-300 hover:text-white'
               }`}
             >
-              <Eye className="w-3.5 h-3.5" />
+              <Eye className="w-3 h-3" />
               <span>All 1st Links</span>
             </button>
 
@@ -2042,15 +2127,16 @@ export default function QualityEcosystemPortal() {
                 setActiveSimulation('none');
                 setSelectedNodeId(null);
                 setSelectedCableId(null);
+                setFocusedStageId(null);
                 setViewLens('feedback_bus');
               }}
-              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
+              className={`px-2 py-0.5 rounded-md text-xs font-bold transition-all flex items-center gap-1 ${
                 isIdleLensActive && viewLens === 'feedback_bus'
                   ? 'bg-rose-500 text-white font-black shadow-[0_0_15px_rgba(244,63,94,0.5)]'
                   : 'text-rose-300 hover:text-white'
               }`}
             >
-              <CornerUpLeft className="w-3.5 h-3.5" />
+              <CornerUpLeft className="w-3 h-3" />
               <span>↺ Feedback (7)</span>
             </button>
 
@@ -2060,15 +2146,16 @@ export default function QualityEcosystemPortal() {
                 setActiveSimulation('none');
                 setSelectedNodeId(null);
                 setSelectedCableId(null);
+                setFocusedStageId(null);
                 setViewLens('heatmap');
               }}
-              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
+              className={`px-2 py-0.5 rounded-md text-xs font-bold transition-all flex items-center gap-1 ${
                 viewLens === 'heatmap'
                   ? 'bg-amber-500 text-slate-950 font-black shadow-[0_0_15px_rgba(245,158,11,0.5)]'
                   : 'text-amber-300 hover:text-white'
               }`}
             >
-              <Flame className="w-3.5 h-3.5" />
+              <Flame className="w-3 h-3" />
               <span>Health Heatmap</span>
             </button>
           </div>
@@ -2078,7 +2165,7 @@ export default function QualityEcosystemPortal() {
           <button
             type="button"
             onClick={() => triggerSimulation('defect')}
-            className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1 ${
+            className={`px-2 py-0.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
               activeSimulation === 'defect'
                 ? 'bg-red-500 text-white shadow-[0_0_20px_rgba(239,68,68,0.5)]'
                 : 'bg-red-500/10 text-red-300 hover:bg-red-500/20 border border-red-500/25'
@@ -2091,7 +2178,7 @@ export default function QualityEcosystemPortal() {
           <button
             type="button"
             onClick={() => triggerSimulation('supplier')}
-            className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1 ${
+            className={`px-2 py-0.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
               activeSimulation === 'supplier'
                 ? 'bg-amber-500 text-black shadow-[0_0_20px_rgba(245,158,11,0.5)]'
                 : 'bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 border border-amber-500/25'
@@ -2104,7 +2191,7 @@ export default function QualityEcosystemPortal() {
           <button
             type="button"
             onClick={() => triggerSimulation('prevention')}
-            className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1 ${
+            className={`px-2 py-0.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
               activeSimulation === 'prevention'
                 ? 'bg-emerald-500 text-black shadow-[0_0_20px_rgba(16,185,129,0.5)]'
                 : 'bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 border border-emerald-500/25'
@@ -2117,18 +2204,22 @@ export default function QualityEcosystemPortal() {
           <button
             type="button"
             onClick={() => setMultiHopRipple((p) => !p)}
-            className={`px-2 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1 ${
+            className={`px-2 py-0.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
               multiHopRipple
                 ? 'bg-purple-500/25 text-purple-200 border border-purple-400/40'
                 : 'bg-white/5 text-slate-400 hover:text-white'
             }`}
             title="When clicking a card, also trace its 2nd-hop downstream cascade"
           >
-            <GitBranch className="w-3.5 h-3.5" />
+            <GitBranch className="w-3 h-3" />
             <span className="hidden 2xl:inline">2-Hop</span>
           </button>
 
-          {(activeSimulation !== 'none' || selectedNodeId || selectedCableId || viewLens !== 'backbone') && (
+          {(activeSimulation !== 'none' ||
+            selectedNodeId ||
+            selectedCableId ||
+            focusedStageId ||
+            viewLens !== 'backbone') && (
             <button
               type="button"
               onClick={() => {
@@ -2138,8 +2229,9 @@ export default function QualityEcosystemPortal() {
                 setViewLens('backbone');
                 setSelectedNodeId(null);
                 setSelectedCableId(null);
+                fitToScreen();
               }}
-              className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/10"
+              className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/10"
               title="Reset View"
             >
               <RotateCcw className="w-3.5 h-3.5" />
@@ -2150,7 +2242,7 @@ export default function QualityEcosystemPortal() {
         {/* Search & Zoom Controls */}
         <div className="flex items-center gap-2 shrink-0">
           <div className="relative">
-            <div className="flex items-center gap-1.5 bg-white/[0.05] border border-white/10 rounded-xl px-3 py-1 focus-within:border-sky-400/60 transition-colors w-36 sm:w-44">
+            <div className="flex items-center gap-1.5 bg-white/[0.05] border border-white/10 rounded-lg px-2.5 py-1 focus-within:border-sky-400/60 transition-colors w-36 sm:w-44">
               <Search className="w-3.5 h-3.5 text-slate-400" />
               <input
                 type="text"
@@ -2183,11 +2275,11 @@ export default function QualityEcosystemPortal() {
             )}
           </div>
 
-          <div className="flex items-center gap-1 bg-white/[0.05] border border-white/10 rounded-xl p-1">
+          <div className="flex items-center gap-1 bg-white/[0.05] border border-white/10 rounded-lg p-0.5">
             <button
               type="button"
               onClick={() => setZoom((z) => Math.min(z + 0.12, 1.6))}
-              className="p-1 rounded-lg hover:bg-white/10 text-slate-300 hover:text-white"
+              className="p-1 rounded hover:bg-white/10 text-slate-300 hover:text-white"
               title="Zoom In"
             >
               <ZoomIn className="w-3.5 h-3.5" />
@@ -2198,7 +2290,7 @@ export default function QualityEcosystemPortal() {
             <button
               type="button"
               onClick={() => setZoom((z) => Math.max(z - 0.12, 0.45))}
-              className="p-1 rounded-lg hover:bg-white/10 text-slate-300 hover:text-white"
+              className="p-1 rounded hover:bg-white/10 text-slate-300 hover:text-white"
               title="Zoom Out"
             >
               <ZoomOut className="w-3.5 h-3.5" />
@@ -2207,7 +2299,7 @@ export default function QualityEcosystemPortal() {
             <button
               type="button"
               onClick={fitToScreen}
-              className="p-1 rounded-lg hover:bg-white/10 text-sky-400 hover:text-sky-300"
+              className="p-1 rounded hover:bg-white/10 text-sky-400 hover:text-sky-300"
               title="Fit to Screen"
             >
               <Maximize2 className="w-3.5 h-3.5" />
@@ -2219,12 +2311,11 @@ export default function QualityEcosystemPortal() {
       {/* ========================================================================= */}
       {/* 1B. DOCKED INTERACTIVE SEQUENCE PIPELINE RIBBON (READABLE AT EYE LEVEL!) */}
       {/* ========================================================================= */}
-      <div className="h-10 px-4 border-b border-white/10 bg-[#060b16] flex items-center justify-between gap-2 shrink-0 z-30 overflow-x-auto no-scrollbar">
+      <div className="h-9 px-4 border-b border-white/10 bg-[#060b16] flex items-center justify-between gap-2 shrink-0 z-30 overflow-x-auto no-scrollbar">
         {activeNodeInfo ? (
-          /* Live Node Input ➔ Module ➔ Ordered Output Equation at Eye Level! */
           <div className="flex items-center gap-2 text-xs w-full justify-between">
             <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-              <span className="text-[11px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-sky-500/20 text-sky-300 border border-sky-500/30 shrink-0">
+              <span className="text-[11px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-500/30 shrink-0">
                 📥 Inputs ({activeNodeInfo.incoming.length})
               </span>
               {activeNodeInfo.incoming.map((inc) => (
@@ -2232,7 +2323,7 @@ export default function QualityEcosystemPortal() {
                   key={inc.cable.id}
                   type="button"
                   onClick={() => setSelectedNodeId(inc.sourceId)}
-                  className={`px-2.5 py-0.5 rounded-md text-xs font-bold flex items-center gap-1 shrink-0 border ${
+                  className={`px-2 py-0.5 rounded text-xs font-bold flex items-center gap-1 shrink-0 border ${
                     inc.cable.isFeedback
                       ? 'bg-rose-500/20 text-rose-200 border-rose-500/40'
                       : 'bg-white/[0.06] text-slate-100 border-white/15 hover:bg-white/15'
@@ -2248,7 +2339,6 @@ export default function QualityEcosystemPortal() {
 
               <ArrowRight className="w-4 h-4 text-sky-400 shrink-0 mx-1" />
 
-              {/* Center Selected Module Pill */}
               <div className="px-3 py-0.5 rounded-lg bg-sky-400 text-slate-950 font-black text-xs flex items-center gap-1.5 shrink-0 shadow-[0_0_15px_rgba(56,189,248,0.5)]">
                 <span>★ {activeNodeInfo.node.seqCode}</span>
                 <span>{activeNodeInfo.node.title}</span>
@@ -2256,8 +2346,7 @@ export default function QualityEcosystemPortal() {
 
               <ArrowRight className="w-4 h-4 text-emerald-400 shrink-0 mx-1" />
 
-              {/* Ordered Outgoing Sequence Pills (1st, 2nd, 3rd) */}
-              <span className="text-[11px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shrink-0">
+              <span className="text-[11px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shrink-0">
                 📤 Order ({activeNodeInfo.outgoing.length})
               </span>
               {activeNodeInfo.outgoing.map((out) => {
@@ -2274,7 +2363,7 @@ export default function QualityEcosystemPortal() {
                     key={out.cable.id}
                     type="button"
                     onClick={() => setSelectedNodeId(out.targetId)}
-                    className={`px-2.5 py-0.5 rounded-md text-xs font-bold flex items-center gap-1 shrink-0 border ${
+                    className={`px-2 py-0.5 rounded text-xs font-bold flex items-center gap-1 shrink-0 border ${
                       out.cable.isFeedback
                         ? 'bg-rose-500/20 text-rose-200 border-rose-500/40'
                         : 'bg-emerald-500/15 text-emerald-200 border-emerald-500/30 hover:bg-emerald-500/25'
@@ -2299,10 +2388,9 @@ export default function QualityEcosystemPortal() {
             </div>
           </div>
         ) : (
-          /* Default / Simulation Ordered Step-by-Step Pipeline Ribbon */
           <div className="flex items-center justify-between w-full gap-2">
             <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-              <span className="text-[11px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-sky-500/15 text-sky-300 border border-sky-500/30 shrink-0 mr-1">
+              <span className="text-[11px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-sky-500/15 text-sky-300 border border-sky-500/30 shrink-0 mr-1">
                 {activeSimulation !== 'none'
                   ? SIMULATION_SCENARIOS[activeSimulation].title
                   : '⚡ Master Sequence (01 ➔ 08)'}
@@ -2328,7 +2416,7 @@ export default function QualityEcosystemPortal() {
                           );
                         }
                       }}
-                      className={`px-2.5 py-0.5 rounded-md text-xs font-bold flex items-center gap-1.5 transition-all border ${
+                      className={`px-2 py-0.5 rounded text-xs font-bold flex items-center gap-1.5 transition-all border ${
                         isSelectedStep
                           ? item.cable.isFeedback
                             ? 'bg-rose-500 text-white border-white shadow scale-105'
@@ -2403,7 +2491,7 @@ export default function QualityEcosystemPortal() {
       </div>
 
       {/* ========================================================================= */}
-      {/* 2. INTERACTIVE NODE CANVAS (COMPACT 1680x762 FOR LARGE CARD READABILITY!) */}
+      {/* 2. WIDESCREEN 1600x608 NODE CANVAS (100% SCREEN FILL & LARGE FONTS!) */}
       {/* ========================================================================= */}
       <div
         ref={containerRef}
@@ -2428,7 +2516,7 @@ export default function QualityEcosystemPortal() {
 
         {/* Transform Layer */}
         <div
-          className="absolute top-0 left-0 transition-transform duration-75 origin-top-left pointer-events-auto"
+          className="absolute top-0 left-0 transition-transform duration-150 origin-top-left pointer-events-auto"
           style={{
             transform: `translate3d(${pan.x}px, ${pan.y}px, 0) scale(${zoom})`,
             width: `${CANVAS_WIDTH}px`,
@@ -2436,69 +2524,87 @@ export default function QualityEcosystemPortal() {
           }}
         >
           {/* Dedicated Top & Bottom PCB Feedback Bus Tracks */}
-          <div className="absolute left-[298px] right-[18px] top-[3px] h-[22px] rounded-full border border-rose-500/25 bg-rose-950/20 flex items-center justify-between px-5 pointer-events-none">
+          <div className="absolute left-[280px] right-[16px] top-[2px] h-[20px] rounded-full border border-rose-500/25 bg-rose-950/20 flex items-center justify-between px-5 pointer-events-none">
             <span className="text-[10px] font-black uppercase tracking-wider text-rose-400 flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-ping" />
               <span>↺ CLOSED-LOOP FEEDBACK BUS A (RETURN TO STAGE 04 / STAGE 02)</span>
             </span>
             <span className="text-[10px] font-bold text-rose-300/80">
-              AI Copilot ➔ 8D Root Cause • Control Plan ➔ In-Process IPQC
+              AI Copilot ➔ 8D Root Cause • Control Plan ➔ In-Process QC
             </span>
           </div>
 
-          <div className="absolute left-[298px] right-[18px] bottom-[3px] h-[22px] rounded-full border border-rose-500/25 bg-rose-950/20 flex items-center justify-between px-5 pointer-events-none">
+          <div className="absolute left-[280px] right-[16px] bottom-[2px] h-[20px] rounded-full border border-rose-500/25 bg-rose-950/20 flex items-center justify-between px-5 pointer-events-none">
             <span className="text-[10px] font-black uppercase tracking-wider text-rose-400 flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-ping" />
               <span>↺ CLOSED-LOOP FEEDBACK BUS B (RETURN TO STAGE 04 / STAGE 02)</span>
             </span>
             <span className="text-[10px] font-bold text-rose-300/80">
-              ISO Audits ➔ CAPA Plan • Smart Checklists ➔ IPQC & LPA Audits
+              ISO Audits ➔ CAPA Actions • Form Builder ➔ In-Process QC & LPA Audits
             </span>
           </div>
 
           {/* ------------------------------------------------------------- */}
-          {/* 6 STAGE ZONES WITH BOLD READABLE HEADERS */}
+          {/* 6 CLICKABLE STAGE ZONES (CLICK HEADER TO ZOOM & SPOTLIGHT STAGE!) */}
           {/* ------------------------------------------------------------- */}
           {PHASES.map((phase) => {
             const isStageIlluminated = activeStageIds.has(phase.id);
+            const isStageFocused = focusedStageId === phase.id;
             return (
               <div
                 key={phase.id}
                 style={{
                   left: `${phase.x}px`,
-                  top: '30px',
+                  top: '25px',
                   width: `${phase.width}px`,
-                  height: '702px',
-                  boxShadow: isStageIlluminated
-                    ? `0 0 35px -5px ${phase.color}30, inset 0 0 20px ${phase.color}15`
-                    : 'none',
+                  height: '558px',
+                  boxShadow:
+                    isStageFocused
+                      ? `0 0 45px ${phase.color}50, inset 0 0 25px ${phase.color}25`
+                      : isStageIlluminated
+                      ? `0 0 30px -5px ${phase.color}30, inset 0 0 16px ${phase.color}15`
+                      : 'none',
                 }}
                 className={`absolute rounded-2xl border ${
-                  isStageIlluminated ? 'border-white/35' : phase.borderColor
-                } bg-gradient-to-b ${phase.bgGradient} px-3 py-2.5 pointer-events-none transition-all duration-300`}
+                  isStageFocused
+                    ? 'border-white/70'
+                    : isStageIlluminated
+                    ? 'border-white/35'
+                    : phase.borderColor
+                } bg-gradient-to-b ${phase.bgGradient} px-2.5 py-2 pointer-events-none transition-all duration-300`}
               >
-                <div className="flex items-center gap-2.5 border-b border-white/10 pb-2">
-                  <div
-                    className="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg border border-white/20 shrink-0"
-                    style={{
-                      backgroundColor: phase.color + '28',
-                      color: phase.color,
-                    }}
-                  >
-                    <phase.icon className="w-5 h-5" />
-                  </div>
-                  <div className="min-w-0">
-                    <span
-                      className="inline-block text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded"
-                      style={{ backgroundColor: phase.color + '28', color: phase.color }}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleFocusStage(phase);
+                  }}
+                  title="Click to Zoom & Spotlight all connections for this Stage"
+                  className="w-full flex items-center justify-between gap-2 border-b border-white/10 pb-1.5 pointer-events-auto cursor-pointer group/stage text-left"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div
+                      className="w-8 h-8 rounded-xl flex items-center justify-center shadow-lg border border-white/20 shrink-0 group-hover/stage:scale-110 transition-transform"
+                      style={{
+                        backgroundColor: phase.color + '30',
+                        color: phase.color,
+                      }}
                     >
-                      {phase.gateLabel}
-                    </span>
-                    <h3 className="text-[15.5px] font-black text-white leading-tight mt-0.5 truncate">
-                      {phase.title}
-                    </h3>
+                      <phase.icon className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <span
+                        className="inline-block text-[9.5px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded"
+                        style={{ backgroundColor: phase.color + '30', color: phase.color }}
+                      >
+                        {phase.gateLabel}
+                      </span>
+                      <h3 className="text-[15px] font-black text-white leading-tight truncate group-hover/stage:text-sky-300 transition-colors">
+                        {phase.title}
+                      </h3>
+                    </div>
                   </div>
-                </div>
+                </button>
               </div>
             );
           })}
@@ -2520,7 +2626,7 @@ export default function QualityEcosystemPortal() {
                 markerHeight="5"
                 orient="auto-start-reverse"
               >
-                <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="rgba(148, 163, 184, 0.35)" />
+                <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="rgba(148, 163, 184, 0.3)" />
               </marker>
               <marker
                 id="arrowFeedbackMuted"
@@ -2531,7 +2637,7 @@ export default function QualityEcosystemPortal() {
                 markerHeight="5"
                 orient="auto-start-reverse"
               >
-                <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="rgba(244, 63, 94, 0.42)" />
+                <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="rgba(244, 63, 94, 0.38)" />
               </marker>
             </defs>
 
@@ -2547,10 +2653,10 @@ export default function QualityEcosystemPortal() {
                     fill="none"
                     stroke={
                       cable.isFeedback
-                        ? 'rgba(244, 63, 94, 0.18)'
-                        : 'rgba(148, 163, 184, 0.13)'
+                        ? 'rgba(244, 63, 94, 0.16)'
+                        : 'rgba(148, 163, 184, 0.12)'
                     }
-                    strokeWidth={cable.isFeedback ? '1.5' : '1.2'}
+                    strokeWidth={cable.isFeedback ? '1.4' : '1.15'}
                     strokeDasharray={cable.isFeedback ? '8, 5' : '4, 5'}
                     markerEnd={
                       cable.isFeedback ? 'url(#arrowFeedbackMuted)' : 'url(#arrowMuted)'
@@ -2575,7 +2681,7 @@ export default function QualityEcosystemPortal() {
           </svg>
 
           {/* ------------------------------------------------------------- */}
-          {/* LAYER 2: 24 HIGH-VISIBILITY BILLBOARD CARDS (LARGE FONTS!) */}
+          {/* LAYER 2: 24 ICONIC POSTER CARDS (LEFT PILLAR + HUGE TEXT!) */}
           {/* ------------------------------------------------------------- */}
           {NODES.map((node) => {
             const isSelected = selectedNodeId === node.id;
@@ -2584,7 +2690,10 @@ export default function QualityEcosystemPortal() {
             const isConnected = Boolean(seqBadge);
             const isDimmed =
               !isIdleLensActive &&
-              (activeNodeId || selectedCableId || activeSimulation !== 'none') &&
+              (activeNodeId ||
+                selectedCableId ||
+                focusedStageId ||
+                activeSimulation !== 'none') &&
               !isConnected;
             const phase = PHASES.find((p) => p.id === node.phaseId);
 
@@ -2608,16 +2717,16 @@ export default function QualityEcosystemPortal() {
                   height: `${NODE_HEIGHT}px`,
                   boxShadow:
                     isSelected || isHovered || seqBadge?.isPulseSpotlight
-                      ? `0 18px 40px -5px ${seqBadge?.color || themeColor}70, 0 0 0 2.5px ${
+                      ? `0 16px 36px -5px ${seqBadge?.color || themeColor}70, 0 0 0 2.5px ${
                           seqBadge?.color || themeColor
                         }`
                       : viewLens === 'heatmap' && node.healthScore <= 92
-                      ? `0 0 30px rgba(239, 68, 68, 0.55), 0 0 0 2px #EF4444`
+                      ? `0 0 28px rgba(239, 68, 68, 0.6), 0 0 0 2px #EF4444`
                       : isConnected
-                      ? `0 10px 28px -5px ${seqBadge?.color || themeColor}45, 0 0 0 2px ${
+                      ? `0 8px 24px -5px ${seqBadge?.color || themeColor}45, 0 0 0 2px ${
                           seqBadge?.color || themeColor
                         }`
-                      : '0 10px 28px -10px rgba(0, 0, 0, 0.85)',
+                      : '0 8px 24px -8px rgba(0, 0, 0, 0.85)',
                 }}
                 onMouseEnter={() => setHoveredNodeId(node.id)}
                 onMouseLeave={() => setHoveredNodeId(null)}
@@ -2629,7 +2738,7 @@ export default function QualityEcosystemPortal() {
                 onDoubleClick={() => {
                   navigate(node.path);
                 }}
-                className={`absolute rounded-2xl overflow-visible flex flex-col justify-between cursor-pointer transition-all duration-200 z-20 group backdrop-blur-xl ${
+                className={`absolute rounded-2xl overflow-visible flex flex-row cursor-pointer transition-all duration-200 z-20 group backdrop-blur-xl ${
                   isSelected || seqBadge?.isPulseSpotlight
                     ? 'bg-[#12203a] scale-[1.03]'
                     : isHovered
@@ -2639,26 +2748,18 @@ export default function QualityEcosystemPortal() {
                     : 'bg-[#09111f]/95 border border-white/15 hover:border-white/30'
                 } ${isDimmed ? 'opacity-20' : 'opacity-100'}`}
               >
-                {/* LARGE, FULL-RIM ACTION BANNER ON TOP OF CARD (11px Font, Never Truncates!) */}
+                {/* LARGE TOP-RIM ACTION BANNER (10.5px Font, High Contrast!) */}
                 {seqBadge && (
                   <div
                     style={{
                       backgroundColor: seqBadge.color,
-                      boxShadow: `0 4px 14px ${seqBadge.color}80`,
+                      boxShadow: `0 4px 12px ${seqBadge.color}80`,
                     }}
-                    className="absolute -top-3 right-2 px-2.5 py-0.5 rounded-full text-[10.5px] font-black text-slate-950 tracking-wide uppercase z-30 flex items-center gap-1 border border-white/70 whitespace-nowrap shadow-md"
+                    className="absolute -top-3 right-2 px-2 py-0.5 rounded-full text-[10px] font-black text-slate-950 tracking-wide uppercase z-30 flex items-center gap-1 border border-white/70 whitespace-nowrap shadow-md"
                   >
                     <span>{seqBadge.text}</span>
                   </div>
                 )}
-
-                {/* Top Neon Accent Bar */}
-                <div
-                  className="h-1.5 w-full shrink-0 rounded-t-2xl"
-                  style={{
-                    background: `linear-gradient(90deg, ${themeColor}, ${themeColor}40)`,
-                  }}
-                />
 
                 {/* Left Input Terminal Pin */}
                 <div
@@ -2666,13 +2767,13 @@ export default function QualityEcosystemPortal() {
                     top: '50%',
                     backgroundColor: isConnected ? seqBadge?.color || themeColor : '#334155',
                   }}
-                  className="absolute -left-2 -translate-y-1/2 w-3.5 h-3.5 rounded-full border-2 border-[#040812] flex items-center justify-center text-[7px] font-black text-slate-950"
+                  className="absolute -left-2 -translate-y-1/2 w-3.5 h-3.5 rounded-full border-2 border-[#040812] flex items-center justify-center text-[7px] font-black text-slate-950 z-20"
                 >
                   ►
                 </div>
 
                 {/* Right Numbered Output Terminal Pins (1, 2, 3) */}
-                {[-18, 0, 18].map((offsetY, pinIdx) => {
+                {[-16, 0, 16].map((offsetY, pinIdx) => {
                   const hasPort = outgoingChips.some((ch) => ch.orderNum === pinIdx + 1);
                   if (!hasPort) return null;
                   const chip = outgoingChips.find((ch) => ch.orderNum === pinIdx + 1);
@@ -2688,7 +2789,7 @@ export default function QualityEcosystemPortal() {
                           : '#1E293B',
                         borderColor: chip?.isFeedback ? '#FDA4AF' : themeColor,
                       }}
-                      className="absolute -right-2 -translate-y-1/2 w-4 h-4 rounded-full border text-[8.5px] font-black text-white flex items-center justify-center shadow"
+                      className="absolute -right-2 -translate-y-1/2 w-4 h-4 rounded-full border text-[8.5px] font-black text-white flex items-center justify-center shadow z-20"
                       title={`Output #${pinIdx + 1} ➔ ${chip?.targetShortName} (${chip?.shortTag})`}
                     >
                       {pinIdx + 1}
@@ -2696,51 +2797,56 @@ export default function QualityEcosystemPortal() {
                   );
                 })}
 
-                {/* Card Content — 3 BIG, BOLD, CRYSTAL-CLEAR ROWS */}
-                <div className="p-2.5 flex-1 flex flex-col justify-between overflow-hidden rounded-b-2xl">
-                  {/* ROW 1: Large Icon + M-Code + BIG 16px BOLD TITLE */}
-                  <div className="flex items-center gap-2.5">
-                    <div
-                      className="w-10 h-10 rounded-xl flex flex-col items-center justify-center shrink-0 border border-white/20 shadow-inner"
-                      style={{
-                        background: `linear-gradient(135deg, ${themeColor}40, ${themeColor}15)`,
-                        color: themeColor,
-                      }}
-                    >
-                      <node.icon className="w-4 h-4" />
-                      <span className="text-[9px] font-black text-white leading-none mt-0.5">
-                        {node.seqCode}
-                      </span>
-                    </div>
+                {/* LEFT VERTICAL ICON & CODE PILLAR (46px wide) */}
+                <div
+                  style={{
+                    background: `linear-gradient(180deg, ${themeColor}38 0%, ${themeColor}12 100%)`,
+                    borderRight: `1px solid ${themeColor}40`,
+                  }}
+                  className="w-[46px] h-full rounded-l-2xl flex flex-col items-center justify-between py-2 shrink-0"
+                >
+                  <span
+                    className="text-[9.5px] font-black px-1 py-0.5 rounded bg-black/40 text-white tracking-tight"
+                  >
+                    {node.seqCode}
+                  </span>
 
-                    <div className="min-w-0 flex-1">
-                      <h4 className="text-[15.5px] font-black text-white group-hover:text-sky-300 transition-colors leading-tight tracking-tight">
-                        {node.title}
-                      </h4>
-                    </div>
+                  <div
+                    className="w-8 h-8 rounded-xl flex items-center justify-center border border-white/20 shadow-inner group-hover:scale-110 transition-transform"
+                    style={{
+                      backgroundColor: `${themeColor}30`,
+                      color: themeColor,
+                    }}
+                  >
+                    <node.icon className="w-4 h-4" />
                   </div>
 
-                  {/* ROW 2: CONCISE 3-WORD CONCEPT TAGLINE (13px Bold!) + KPI PILL */}
-                  <div className="flex items-center justify-between gap-1.5 bg-white/[0.05] px-2.5 py-1.5 rounded-xl border border-white/10">
-                    <span
-                      className="text-[12.5px] font-extrabold tracking-tight truncate"
-                      style={{ color: '#E2E8F0' }}
-                    >
+                  <span
+                    className="text-[9.5px] font-black tracking-tight"
+                    style={{ color: themeColor }}
+                  >
+                    {node.kpiMetric}
+                  </span>
+                </div>
+
+                {/* RIGHT HIGH-IMPACT TEXT AREA (170px wide — 100% DEDICATED TO BIG READABLE TEXT!) */}
+                <div className="flex-1 p-2 flex flex-col justify-between min-w-0 overflow-hidden rounded-r-2xl">
+                  {/* LINE 1: HUGE 16.5px EXTRA-BOLD MODULE TITLE */}
+                  <div className="flex items-start justify-between gap-1">
+                    <h4 className="text-[16px] font-black text-white group-hover:text-sky-300 transition-colors leading-none tracking-tight truncate">
+                      {node.title}
+                    </h4>
+                  </div>
+
+                  {/* LINE 2: CLEAR 13px BOLD 3-WORD CONCEPT SUBTITLE */}
+                  <div className="bg-white/[0.06] px-2 py-1 rounded-lg border border-white/10">
+                    <p className="text-[12.5px] font-extrabold text-sky-100 leading-none truncate">
                       {node.conceptTagline}
-                    </span>
-                    <span
-                      className="text-[10.5px] font-black px-1.5 py-0.5 rounded-md shrink-0"
-                      style={{
-                        backgroundColor: `${themeColor}25`,
-                        color: themeColor,
-                      }}
-                    >
-                      {node.kpiMetric}
-                    </span>
+                    </p>
                   </div>
 
-                  {/* ROW 3: LARGE ORDERED SEQUENCE CHIPS (1➔, 2➔, ↺3➔) + OPEN BUTTON */}
-                  <div className="flex items-center justify-between gap-1 pt-0.5">
+                  {/* LINE 3: BOLD NUMBERED SEQUENCE CHIPS (1➔, 2➔, ↺3➔) + LAUNCH BUTTON */}
+                  <div className="flex items-center justify-between gap-1">
                     <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
                       {outgoingChips.length > 0 ? (
                         outgoingChips.map((chip) => (
@@ -2756,7 +2862,7 @@ export default function QualityEcosystemPortal() {
                               );
                             }}
                             title={`Step #${chip.orderNum}: ${chip.shortTag} ➔ ${chip.targetShortName}`}
-                            className={`px-2 py-0.5 rounded-md text-[10.5px] font-black whitespace-nowrap border transition-all ${
+                            className={`px-1.5 py-0.5 rounded text-[10px] font-black whitespace-nowrap border transition-all ${
                               chip.isFeedback
                                 ? 'bg-rose-500/25 text-rose-200 border-rose-500/50 hover:bg-rose-500 hover:text-white'
                                 : 'bg-white/[0.08] text-white border-white/20 hover:bg-emerald-400 hover:text-slate-950'
@@ -2768,7 +2874,7 @@ export default function QualityEcosystemPortal() {
                           </button>
                         ))
                       ) : (
-                        <span className="text-[10.5px] text-cyan-300 font-black px-2 py-0.5 rounded-md bg-cyan-500/15 border border-cyan-500/30">
+                        <span className="text-[10px] text-cyan-300 font-black px-1.5 py-0.5 rounded bg-cyan-500/15 border border-cyan-500/30">
                           ★ 360° KPI Hub
                         </span>
                       )}
@@ -2781,13 +2887,14 @@ export default function QualityEcosystemPortal() {
                         navigate(node.path);
                       }}
                       style={{
-                        backgroundColor: isHovered ? themeColor : 'rgba(255,255,255,0.12)',
+                        backgroundColor: isHovered ? themeColor : 'rgba(255,255,255,0.14)',
                         color: '#ffffff',
                       }}
-                      className="px-2 py-0.5 rounded-lg text-[11px] font-black flex items-center gap-0.5 shrink-0 transition-all shadow-sm hover:scale-105"
+                      title={`Open ${node.title}`}
+                      className="px-1.5 py-0.5 rounded-md text-[10px] font-black flex items-center gap-0.5 shrink-0 transition-all shadow-sm hover:scale-105"
                     >
-                      <span>Open</span>
-                      <ArrowRight className="w-3 h-3" />
+                      <span>Go</span>
+                      <ArrowRight className="w-2.5 h-2.5" />
                     </button>
                   </div>
                 </div>
@@ -2927,7 +3034,7 @@ export default function QualityEcosystemPortal() {
                     />
                   </circle>
 
-                  {/* HIGH-CONTRAST LARGE-FONT CORRIDOR NUMBER PILL (50x22px with 11.5px Bold Font!) */}
+                  {/* HIGH-CONTRAST LARGE-FONT CORRIDOR NUMBER PILL (46x20px with 11px Bold Font!) */}
                   <g
                     transform={`translate(${geom.midX}, ${geom.midY})`}
                     className="pointer-events-auto cursor-pointer"
@@ -2941,21 +3048,21 @@ export default function QualityEcosystemPortal() {
                     {geom.isCompactMedallion ? (
                       <>
                         <rect
-                          x="-25"
-                          y="-11"
-                          width="50"
-                          height="22"
-                          rx="11"
+                          x="-23"
+                          y="-10"
+                          width="46"
+                          height="20"
+                          rx="10"
                           fill={strokeColor}
                           stroke="#ffffff"
                           strokeWidth="1.5"
                         />
                         <text
                           x="0"
-                          y="4"
+                          y="3.8"
                           textAnchor="middle"
                           fill="#040812"
-                          fontSize="11.5"
+                          fontSize="11"
                           fontWeight="900"
                           letterSpacing="0.02em"
                         >
@@ -2966,29 +3073,29 @@ export default function QualityEcosystemPortal() {
                       /* Highway Return Bus Capsule (sits in the Top/Bottom Highway above/below all cards) */
                       <>
                         <rect
-                          x="-95"
-                          y="-11"
-                          width="190"
-                          height="22"
-                          rx="11"
+                          x="-90"
+                          y="-10"
+                          width="180"
+                          height="20"
+                          rx="10"
                           fill="#050b16"
                           stroke={strokeColor}
                           strokeWidth="2"
                         />
                         <rect
-                          x="-93"
-                          y="-9"
-                          width="54"
-                          height="18"
-                          rx="9"
+                          x="-88"
+                          y="-8"
+                          width="52"
+                          height="16"
+                          rx="8"
                           fill={strokeColor}
                         />
                         <text
-                          x="-66"
+                          x="-62"
                           y="3.5"
                           textAnchor="middle"
                           fill="#040812"
-                          fontSize="10.5"
+                          fontSize="10"
                           fontWeight="900"
                         >
                           {seqMeta.medallionText}
@@ -2998,7 +3105,7 @@ export default function QualityEcosystemPortal() {
                           y="3.5"
                           textAnchor="middle"
                           fill="#FFFFFF"
-                          fontSize="10.5"
+                          fontSize="10"
                           fontWeight="800"
                         >
                           {seqMeta.shortTag}
@@ -3016,7 +3123,7 @@ export default function QualityEcosystemPortal() {
       {/* ========================================================================= */}
       {/* 3. DOCKED SINGLE-LINE BOTTOM STATUS BAR */}
       {/* ========================================================================= */}
-      <div className="h-11 px-4 border-t border-white/10 bg-[#070d19]/95 backdrop-blur-2xl flex items-center justify-between shrink-0 z-30 gap-3 overflow-x-auto no-scrollbar">
+      <div className="h-10 px-4 border-t border-white/10 bg-[#070d19]/95 backdrop-blur-2xl flex items-center justify-between shrink-0 z-30 gap-3 overflow-x-auto no-scrollbar">
         {activeCableInfo ? (
           <div className="w-full flex items-center justify-between gap-3 text-xs">
             <div className="flex items-center gap-2 shrink-0">
@@ -3037,7 +3144,7 @@ export default function QualityEcosystemPortal() {
               </span>
             </div>
 
-            <div className="flex items-center gap-2 text-xs font-mono bg-white/[0.06] px-3 py-1 rounded-lg border border-white/10 text-sky-300">
+            <div className="flex items-center gap-2 text-xs font-mono bg-white/[0.06] px-3 py-0.5 rounded-lg border border-white/10 text-sky-300">
               <Zap className="w-3.5 h-3.5 text-amber-400" />
               <span>{activeCableInfo.cable.payloadSpec}</span>
             </div>
@@ -3050,7 +3157,7 @@ export default function QualityEcosystemPortal() {
                 <button
                   type="button"
                   onClick={() => setSelectedCableId(null)}
-                  className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-bold"
+                  className="px-2 py-0.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-bold"
                 >
                   Close
                 </button>
@@ -3076,7 +3183,7 @@ export default function QualityEcosystemPortal() {
                 <button
                   type="button"
                   onClick={() => setSelectedNodeId(null)}
-                  className="px-2.5 py-1 rounded-lg text-xs font-bold text-slate-400 hover:text-white hover:bg-white/10"
+                  className="px-2 py-0.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white hover:bg-white/10"
                 >
                   Unpin
                 </button>
@@ -3084,7 +3191,7 @@ export default function QualityEcosystemPortal() {
               <button
                 type="button"
                 onClick={() => navigate(activeNodeInfo.node.path)}
-                className="px-3.5 py-1 rounded-lg bg-gradient-to-r from-[#0066CC] to-[#00A3E0] text-white text-xs font-black flex items-center gap-1.5 shadow-md hover:scale-105 transition-all whitespace-nowrap"
+                className="px-3 py-0.5 rounded-lg bg-gradient-to-r from-[#0066CC] to-[#00A3E0] text-white text-xs font-black flex items-center gap-1.5 shadow-md hover:scale-105 transition-all whitespace-nowrap"
               >
                 <span>Launch Module</span>
                 <ExternalLink className="w-3.5 h-3.5" />
@@ -3096,11 +3203,11 @@ export default function QualityEcosystemPortal() {
             <div className="flex items-center gap-4">
               <span className="flex items-center gap-1.5 text-emerald-300 font-bold">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                <span>Large Billboard Cards • Concise 3-Word Concept Taglines • High-Contrast Step Pills</span>
+                <span>Full-Screen 2.63:1 Widescreen Fit • Iconic Poster Cards • Click Any Stage Header to Zoom</span>
               </span>
             </div>
             <span className="text-xs text-slate-300 hidden md:inline">
-              Hover any card to see its full <strong>📥 Inputs ➔ ★ Module ➔ 📤 Ordered Sequence (1st, 2nd, 3rd)</strong> in the top bar
+              Click any <strong>Stage 01..06 Header</strong> to zoom & spotlight that stage, or hover any card to trace its ordered sequence
             </span>
           </div>
         )}
