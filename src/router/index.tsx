@@ -15,7 +15,6 @@ import { AdminLoginPage } from '../pages/AdminLogin';
 const Dashboard = lazy(() => import('../sections/Dashboard'));
 const QualityModules = lazy(() => import('../sections/QualityModules'));
 const NoCodeBuilder = lazy(() => import('../sections/NoCodeBuilder'));
-const AIIntelligence = lazy(() => import('../sections/AIIntelligence'));
 const AIChatPage = lazy(() => import('../pages/AIChat'));
 
 const SPCSystem = lazy(() => import('../sections/SPCSystem'));
@@ -49,7 +48,7 @@ const SupplierDetailsPage = lazy(() => import('../pages/quality/SupplierDetails'
 const DefectCostPage = lazy(() => import('../pages/quality/DefectCost'));
 const ProcessPPMPage = lazy(() => import('../pages/quality/ProcessPPM'));
 const OutgoingQualityPage = lazy(() => import('../pages/quality/OutgoingQuality'));
-const QualityIntelligencePage = lazy(() => import('../pages/quality/Intelligence'));
+const QualityIntelligenceBridgePage = lazy(() => import('../pages/quality/QualityIntelligenceBridge'));
 const DailyDefectsPage = lazy(() => import('../pages/quality/DailyDefects'));
 const QualityHomePage = lazy(() => import('../pages/quality/QualityHome'));
 const QualityEcosystemPortalPage = lazy(() => import('../pages/quality/QualityEcosystemPortal'));
@@ -140,7 +139,7 @@ const routes: RouteObject[] = [
       { path: 'quality/records', element: <Navigate to="/quality/records/ncr" replace /> },
       { path: 'builder', element: <LazyWrapper><NoCodeBuilder /></LazyWrapper> },
       { path: 'ai', element: <Navigate to="/ai/defect-prediction" replace /> },
-      { path: 'ai/defect-prediction', element: <LazyWrapper><AIIntelligence /></LazyWrapper> },
+      { path: 'ai/defect-prediction', element: <LazyWrapper><QualityIntelligenceBridgePage /></LazyWrapper> },
       { path: 'defect-prediction', element: <Navigate to="/ai/defect-prediction" replace /> },
       { path: 'ai-chat', element: <LazyWrapper><AIChatPage /></LazyWrapper> },
       { path: 'digital-twin', element: <Navigate to="/quality-control-tower" replace /> },
@@ -200,7 +199,7 @@ const routes: RouteObject[] = [
       { path: 'quality-form-designer', element: <ProtectedRoute requiredPermissions={['forms.designer', 'master_data.edit', 'admin.access']}><LazyWrapper><QualityFormDesignerPage /></LazyWrapper></ProtectedRoute> },
       { path: 'process-ppm', element: <ProtectedRoute requiredPermissions={['ppm.track', 'spc.view', 'admin.access']}><LazyWrapper><ProcessPPMPage /></LazyWrapper></ProtectedRoute> },
       { path: 'outgoing-quality', element: <ProtectedRoute requiredPermissions={['fqc.release', 'fqc.aql_sample', 'admin.access']}><LazyWrapper><OutgoingQualityPage /></LazyWrapper></ProtectedRoute> },
-      { path: 'quality-intelligence', element: <LazyWrapper><QualityIntelligencePage /></LazyWrapper> },
+      { path: 'quality-intelligence', element: <LazyWrapper><QualityIntelligenceBridgePage /></LazyWrapper> },
       { path: 'quality-library', element: <LazyWrapper><QualityLibraryPage /></LazyWrapper> },
       { path: 'quality-slides', element: <LazyWrapper><QualitySlidesPage /></LazyWrapper> },
       { path: 'quality-dashboard', element: <ProtectedRoute requiredPermissions={['analytics.dashboard', 'spc.view', 'ncr.create', 'admin.access']}><LazyWrapper><QualityDashboardPage /></LazyWrapper></ProtectedRoute> },

@@ -1,0 +1,688 @@
+/**
+ * ============================================================================
+ * UDIP VISUAL INTELLIGENCE SYSTEM
+ * Module: js/ui/visual-intelligence/visual-intelligence.css
+ * ============================================================================
+ * Futuristic glassmorphic styling, neon glows, responsive visual cards,
+ * and density controls for the Visual Intelligence System.
+ * ============================================================================
+ */
+
+:root {
+    --vi-bg-card: rgba(10, 18, 36, 0.78);
+    --vi-bg-hover: rgba(14, 25, 48, 0.92);
+    --vi-border-subtle: rgba(56, 189, 248, 0.16);
+    --vi-border-glow: rgba(56, 189, 248, 0.42);
+    --vi-cyan: #38bdf8;
+    --vi-cyan-glow: rgba(56, 189, 248, 0.35);
+    --vi-emerald: #10b981;
+    --vi-amber: #f59e0b;
+    --vi-crimson: #ef4444;
+    --vi-violet: #818cf8;
+    --vi-purple: #a855f7;
+    --vi-radius: 10px;
+    --vi-font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --vi-font-mono: 'JetBrains Mono', monospace;
+}
+
+/* ============================================================================
+   1. UNIVERSAL VISUAL CARD SHELL
+   ============================================================================ */
+.vi-card {
+    position: relative;
+    background: var(--vi-bg-card);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--vi-border-subtle);
+    border-radius: var(--vi-radius);
+    padding: 12px 14px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.vi-card:hover {
+    background: var(--vi-bg-hover);
+    border-color: var(--vi-border-glow);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55), 0 0 18px var(--vi-cyan-glow);
+    transform: translateY(-2px);
+}
+
+/* Card Header */
+.vi-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    gap: 8px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.vi-var-pair {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--vi-font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    flex: 1;
+    min-width: 0;
+}
+
+.vi-var-name {
+    color: #ffffff;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    flex: 1;
+}
+
+.vi-badge-humility {
+    font-family: var(--vi-font-mono);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: rgba(56, 189, 248, 0.1);
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    color: var(--vi-cyan);
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.vi-delta-pill {
+    font-family: var(--vi-font-mono);
+    font-size: 9.5px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 12px;
+    border: 1px solid transparent;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+}
+
+/* ============================================================================
+   2. SVG CANVAS VIEWPORT
+   ============================================================================ */
+.vi-canvas-container {
+    width: 100%;
+    margin: 6px 0;
+    overflow: hidden;
+    border-radius: 8px;
+    background: rgba(4, 7, 18, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    display: block;
+    box-sizing: border-box;
+    /* Do NOT force aspect-ratio or height:auto — let each chart control its own height */
+}
+
+.vi-svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    max-height: 100%;
+    overflow: visible;
+}
+
+/* ============================================================================
+   3. METRIC STRIP (LEVEL 2)
+   ============================================================================ */
+.vi-metric-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    gap: 6px;
+    padding: 8px 10px;
+    background: rgba(4, 8, 20, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    margin-top: 8px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.vi-metric-pill {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.vi-metric-lbl {
+    font-family: var(--vi-font-mono);
+    font-size: 8px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: #64748b;
+    text-transform: uppercase;
+}
+
+.vi-metric-val {
+    font-family: var(--vi-font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    color: #f8fafc;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ============================================================================
+   4. SUMMARY LINE (LEVEL 3)
+   ============================================================================ */
+.vi-summary-line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    padding-top: 6px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    font-size: 11px;
+    color: #cbd5e1;
+    line-height: 1.4;
+}
+
+.vi-status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.vi-summary-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+/* ============================================================================
+   5. DECK & DENSITY LAYOUT MODES
+   ============================================================================ */
+.vi-deck-container {
+    display: grid;
+    gap: 14px;
+    width: 100%;
+}
+
+.vi-density-compact {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+}
+
+.vi-density-standard {
+    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+}
+
+.vi-density-deep {
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+}
+
+/* ============================================================================
+   6. VISUAL DECISION CENTER VIEW
+   ============================================================================ */
+.vi-decision-center-view {
+    position: relative;
+    width: 100%;
+    padding: 20px 24px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.vi-vdc-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 14px;
+    border-bottom: 1px solid rgba(56, 189, 248, 0.15);
+}
+
+.vi-vdc-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.vi-decision-center-view {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    box-sizing: border-box;
+    padding-bottom: 40px;
+    animation: viFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes viFadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Hero Visual Cockpit */
+.vi-hero-cockpit {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(10, 18, 36, 0.96) 100%);
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    border-radius: 16px;
+    padding: 22px 26px;
+    margin-bottom: 24px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), 0 0 24px rgba(56, 189, 248, 0.12);
+    position: relative;
+    overflow: hidden;
+}
+
+.vi-hero-cockpit::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #38bdf8 30%, #10b981 70%, transparent);
+}
+
+.vi-hero-cockpit-grid {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 24px;
+    flex-wrap: wrap;
+}
+
+.vi-hero-info {
+    flex: 1;
+    min-width: 320px;
+}
+
+.vi-hero-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.vi-hero-tag {
+    font-family: var(--vi-font-mono);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: var(--vi-cyan);
+}
+
+.vi-hero-mode {
+    font-family: var(--vi-font-mono);
+    font-size: 9.5px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 12px;
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.35);
+    color: #10b981;
+}
+
+.vi-vdc-title {
+    margin: 0 0 6px 0;
+    font-size: 21px;
+    font-weight: 900;
+    letter-spacing: -0.01em;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.vi-vdc-subtitle {
+    margin: 0 0 14px 0;
+    font-size: 12.5px;
+    color: #94a3b8;
+    line-height: 1.5;
+}
+
+.vi-hero-telemetry-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.vi-tele-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    font-family: var(--vi-font-mono);
+    font-size: 11px;
+    color: #cbd5e1;
+}
+
+/* Twin Grand SVG Hero Visual Instruments */
+.vi-hero-gauges {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.vi-gauge-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 16px;
+    background: rgba(15, 23, 42, 0.65);
+    border: 1px solid rgba(56, 189, 248, 0.2);
+    border-radius: 12px;
+    min-width: 140px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.vi-gauge-label {
+    font-family: var(--vi-font-mono);
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    color: #94a3b8;
+    margin-bottom: 4px;
+    text-align: center;
+}
+
+.vi-svg-gauge-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.vi-radial-svg, .vi-donut-svg {
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
+}
+
+.vi-gauge-status {
+    font-family: var(--vi-font-mono);
+    font-size: 9.5px;
+    font-weight: 800;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+}
+
+/* 5-Point Visual Telemetry Strip */
+.vi-telemetry-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin: 18px 0;
+    padding: 12px 18px;
+    background: rgba(10, 18, 36, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 10px;
+}
+
+.vi-tele-block {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.vi-tele-title {
+    font-family: var(--vi-font-mono);
+    font-size: 9.5px;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    letter-spacing: 0.04em;
+}
+
+.vi-tele-val {
+    font-size: 14.5px;
+    font-weight: 800;
+    color: #ffffff;
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+}
+
+.vi-tele-sub {
+    font-size: 9.5px;
+    font-weight: 600;
+    color: #64748b;
+}
+
+/* Interactive Lens Filter Pills & Density Toolbar */
+.vi-controls-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 14px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.vi-lens-filters {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.vi-filter-label {
+    font-family: var(--vi-font-mono);
+    font-size: 10.5px;
+    font-weight: 700;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.vi-lens-filter-btn {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-family: var(--vi-font-mono);
+    font-size: 10.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.vi-lens-filter-btn:hover,
+.vi-lens-filter-btn.active {
+    background: rgba(56, 189, 248, 0.18);
+    border-color: var(--vi-cyan);
+    color: var(--vi-cyan);
+    box-shadow: 0 0 12px var(--vi-cyan-glow);
+}
+
+.vi-density-picker {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--vi-font-mono);
+    font-size: 10px;
+}
+
+.vi-density-lbl {
+    color: #64748b;
+    margin-right: 4px;
+}
+
+.vi-density-btn {
+    background: rgba(15, 25, 48, 0.8);
+    border: 1px solid rgba(56, 189, 248, 0.2);
+    border-radius: 4px;
+    color: #94a3b8;
+    font-family: var(--vi-font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.vi-density-btn:hover,
+.vi-density-btn.active {
+    background: rgba(56, 189, 248, 0.2);
+    border-color: var(--vi-cyan);
+    color: #ffffff;
+    box-shadow: 0 0 10px var(--vi-cyan-glow);
+}
+
+/* 12-Section Cybernetic Grid */
+.vi-sections-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+    gap: 18px;
+    transition: all 0.3s ease;
+}
+
+.vi-sections-grid.vi-density-compact {
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 12px;
+}
+
+.vi-sections-grid.vi-density-deep {
+    grid-template-columns: repeat(auto-fill, minmax(440px, 1fr));
+    gap: 22px;
+}
+
+.vi-section-block {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: all 0.25s ease;
+}
+
+.vi-section-title {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    color: #e2e8f0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* RTL Support */
+.vi-rtl {
+    direction: rtl;
+    text-align: right;
+    font-family: 'Cairo', 'Inter', -apple-system, sans-serif;
+}
+
+.vi-rtl .vi-vdc-title,
+.vi-rtl .vi-section-title {
+    font-family: 'Cairo', 'Inter', -apple-system, sans-serif;
+}
+
+.vi-rtl .vi-density-lbl,
+.vi-rtl .vi-filter-label {
+    margin-right: 0;
+    margin-left: 4px;
+}
+
+/* ============================================================================
+   7. 5-STAGE VISUAL STORY COMPOSITION
+   ============================================================================ */
+.vi-story-container {
+    background: rgba(8, 14, 30, 0.8);
+    border: 1px solid var(--vi-border-subtle);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin: 16px 0;
+}
+
+.vi-story-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+
+.vi-story-title {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 800;
+    color: #fff;
+}
+
+.vi-story-badge {
+    font-family: var(--vi-font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: rgba(56, 189, 248, 0.15);
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    color: var(--vi-cyan);
+}
+
+.vi-story-flow-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 14px;
+}
+
+.vi-story-stage {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.vi-stage-badge {
+    font-family: var(--vi-font-mono);
+    font-size: 9.5px;
+    font-weight: 700;
+    color: var(--vi-cyan);
+    letter-spacing: 0.05em;
+}
+
+.vi-pulse-beacon {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--vi-cyan);
+    box-shadow: 0 0 10px var(--vi-cyan);
+    animation: viPulse 2s infinite ease-in-out;
+}
+
+@keyframes viPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.35; transform: scale(0.8); }
+}
+
+@media (max-width: 768px) {
+    .vi-sections-grid,
+    .vi-sections-grid.vi-density-compact,
+    .vi-sections-grid.vi-density-deep,
+    .vi-story-flow-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+    .vi-card {
+        padding: 10px 12px !important;
+    }
+}
+

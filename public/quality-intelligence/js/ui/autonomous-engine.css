@@ -1,0 +1,791 @@
+/* ============================================================================
+   UDIP CONTINUOUS AUTONOMOUS INTELLIGENCE OBSERVATORY STYLESHEET (STEP 5)
+   Futuristic Cybernetic Visual Observatory for Continuous Learning & Drift Cockpit
+   ============================================================================ */
+
+.udip-autonomous-dashboard {
+    width: 100%;
+    max-width: 1540px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding-bottom: 48px;
+    font-family: 'Inter', -apple-system, sans-serif;
+    color: #f8fafc;
+}
+
+/* RTL Typography & Layout */
+.udip-auto-rtl {
+    direction: rtl;
+    text-align: right;
+    font-family: 'Cairo', 'Inter', -apple-system, sans-serif;
+}
+
+.udip-auto-rtl .udip-auto-hero-left,
+.udip-auto-rtl .udip-auto-card,
+.udip-auto-rtl .udip-auto-subcard {
+    text-align: right;
+}
+
+.udip-auto-rtl .udip-auto-tele-block {
+    text-align: right;
+}
+
+/* ----------------------------------------------------------------------------
+   1. GRAND HOLOGRAPHIC HERO COCKPIT
+   ---------------------------------------------------------------------------- */
+.udip-auto-hero-cockpit {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.92) 0%, rgba(3, 7, 18, 0.96) 100%);
+    border: 1px solid rgba(139, 92, 246, 0.28);
+    border-radius: 20px;
+    padding: 24px 28px;
+    backdrop-filter: blur(16px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    position: relative;
+    overflow: hidden;
+}
+
+.udip-auto-hero-cockpit::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #8b5cf6 0%, #38bdf8 35%, #10b981 70%, #ec4899 100%);
+    box-shadow: 0 0 18px rgba(139, 92, 246, 0.6);
+}
+
+.udip-auto-hero-grid {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 28px;
+    align-items: center;
+}
+
+@media (max-width: 1200px) {
+    .udip-auto-hero-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.udip-auto-hero-left {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.udip-auto-badge-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 12px;
+    background: rgba(139, 92, 246, 0.14);
+    border: 1px solid rgba(139, 92, 246, 0.35);
+    border-radius: 9999px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #c084fc;
+    width: fit-content;
+}
+
+.udip-auto-badge-pill i {
+    font-size: 12px;
+    filter: drop-shadow(0 0 6px #a855f7);
+}
+
+.udip-auto-title {
+    font-size: 26px;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    color: #ffffff;
+    line-height: 1.25;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.udip-auto-subtitle {
+    font-size: 13px;
+    color: #94a3b8;
+    line-height: 1.5;
+    margin: 0;
+    max-width: 680px;
+}
+
+.udip-auto-hero-meta-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 4px;
+}
+
+.udip-auto-meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(148, 163, 184, 0.15);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 11px;
+    color: #cbd5e1;
+}
+
+.udip-auto-meta-item strong {
+    color: #f8fafc;
+    font-weight: 700;
+}
+
+.udip-auto-meta-item code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+/* Twin Grand SVG Instruments */
+.udip-auto-gauges-cluster {
+    display: flex;
+    gap: 16px;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+@media (max-width: 900px) {
+    .udip-auto-gauges-cluster {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+}
+
+.udip-auto-gauge-card {
+    background: rgba(8, 14, 26, 0.85);
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    border-radius: 16px;
+    padding: 14px 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+    min-width: 220px;
+}
+
+.udip-auto-gauge-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(56, 189, 248, 0.4);
+    box-shadow: 0 12px 30px rgba(6, 182, 212, 0.18);
+}
+
+.udip-auto-gauge-card.health-gauge:hover {
+    border-color: rgba(16, 185, 129, 0.4);
+    box-shadow: 0 12px 30px rgba(16, 185, 129, 0.18);
+}
+
+.udip-auto-gauge-card.drift-gauge:hover {
+    border-color: rgba(139, 92, 246, 0.4);
+    box-shadow: 0 12px 30px rgba(139, 92, 246, 0.18);
+}
+
+.udip-auto-gauge-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #94a3b8;
+    margin-bottom: 8px;
+}
+
+.udip-auto-gauge-header i {
+    font-size: 11px;
+}
+
+.udip-auto-gauge-svg-wrap {
+    position: relative;
+    width: 170px;
+    height: 110px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.udip-auto-gauge-card.circular .udip-auto-gauge-svg-wrap {
+    height: 130px;
+}
+
+.udip-auto-gauge-overlay-val {
+    position: absolute;
+    bottom: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    pointer-events: none;
+}
+
+.udip-auto-gauge-card.circular .udip-auto-gauge-overlay-val {
+    top: 50%;
+    bottom: auto;
+    transform: translateY(-50%);
+}
+
+.udip-auto-gauge-num {
+    font-size: 26px;
+    font-weight: 900;
+    font-family: 'JetBrains Mono', monospace;
+    line-height: 1;
+    letter-spacing: -0.02em;
+}
+
+.udip-auto-gauge-label {
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #94a3b8;
+    margin-top: 2px;
+}
+
+.udip-auto-gauge-submeta {
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 10px;
+    color: #cbd5e1;
+}
+
+.udip-auto-gauge-submeta .status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 8px #10b981;
+}
+
+/* ----------------------------------------------------------------------------
+   2. 5-POINT AUTONOMOUS TELEMETRY STRIP
+   ---------------------------------------------------------------------------- */
+.udip-auto-telemetry-strip {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
+}
+
+@media (max-width: 1100px) {
+    .udip-auto-telemetry-strip {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .udip-auto-telemetry-strip {
+        grid-template-columns: 1fr;
+    }
+}
+
+.udip-auto-tele-card {
+    background: rgba(15, 23, 42, 0.75);
+    border: 1px solid rgba(148, 163, 184, 0.15);
+    border-radius: 14px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    position: relative;
+    backdrop-filter: blur(8px);
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.udip-auto-tele-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(56, 189, 248, 0.35);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+}
+
+.udip-auto-tele-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.udip-auto-tele-lbl {
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.udip-auto-tele-badge {
+    font-size: 9px;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 9999px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.udip-auto-tele-val {
+    font-size: 20px;
+    font-weight: 900;
+    font-family: 'JetBrains Mono', monospace;
+    color: #ffffff;
+    line-height: 1.1;
+}
+
+.udip-auto-tele-desc {
+    font-size: 11px;
+    color: #cbd5e1;
+    line-height: 1.35;
+}
+
+/* ----------------------------------------------------------------------------
+   3. INTERACTIVE FILTER TOOLBAR
+   ---------------------------------------------------------------------------- */
+.udip-auto-filter-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    border-radius: 12px;
+    padding: 8px 16px;
+}
+
+.udip-auto-filter-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.udip-auto-filter-btn {
+    background: rgba(30, 41, 59, 0.7);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #cbd5e1;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.udip-auto-filter-btn:hover {
+    background: rgba(51, 65, 85, 0.9);
+    border-color: rgba(56, 189, 248, 0.4);
+    color: #ffffff;
+}
+
+.udip-auto-filter-btn.active {
+    background: rgba(139, 92, 246, 0.22);
+    border-color: #8b5cf6;
+    color: #e9d5ff;
+    box-shadow: 0 0 12px rgba(139, 92, 246, 0.3);
+}
+
+.udip-auto-status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: #94a3b8;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.udip-auto-live-pulse {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 10px #10b981;
+    animation: autoPulse 2s infinite;
+}
+
+@keyframes autoPulse {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+/* ----------------------------------------------------------------------------
+   4. CYBERNETIC SECTIONS & CARDS
+   ---------------------------------------------------------------------------- */
+.udip-auto-card {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.82) 0%, rgba(8, 14, 26, 0.9) 100%);
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    border-radius: 16px;
+    padding: 22px 24px;
+    position: relative;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.36);
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.udip-auto-card:hover {
+    border-color: rgba(56, 189, 248, 0.28);
+}
+
+.udip-auto-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.udip-auto-card-title {
+    font-size: 16px;
+    font-weight: 800;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    letter-spacing: -0.01em;
+}
+
+.udip-auto-card-title i {
+    color: #38bdf8;
+}
+
+.udip-auto-card-subtitle {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-top: 4px;
+    line-height: 1.45;
+}
+
+.udip-auto-subcard {
+    background: rgba(15, 23, 42, 0.65);
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    border-radius: 10px;
+    padding: 14px 16px;
+    position: relative;
+    transition: transform 0.18s ease, border-color 0.18s ease;
+}
+
+.udip-auto-subcard:hover {
+    border-color: rgba(56, 189, 248, 0.3);
+    background: rgba(20, 30, 52, 0.75);
+}
+
+/* Tripartite Drift Visual Grid */
+.udip-drift-tripartite-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 14px;
+}
+
+@media (max-width: 960px) {
+    .udip-drift-tripartite-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.udip-drift-pillar-card {
+    background: rgba(11, 19, 36, 0.85);
+    border: 1px solid rgba(148, 163, 184, 0.15);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: relative;
+}
+
+.udip-drift-pillar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.udip-drift-pillar-title {
+    font-size: 13px;
+    font-weight: 800;
+    color: #f8fafc;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.udip-drift-pillar-meter {
+    height: 6px;
+    background: rgba(30, 41, 59, 0.8);
+    border-radius: 3px;
+    overflow: hidden;
+    position: relative;
+}
+
+.udip-drift-pillar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.4s ease;
+}
+
+/* Targeted Reanalysis Plan Modules Grid */
+.udip-reanalysis-module-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.udip-reanalysis-module-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.udip-reanalysis-module-pill.active-mod {
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.35);
+    color: #34d399;
+}
+
+.udip-reanalysis-module-pill.bypassed-mod {
+    background: rgba(30, 41, 59, 0.5);
+    border: 1px solid rgba(148, 163, 184, 0.15);
+    color: #64748b;
+}
+
+/* Insight Evolution Flow */
+.udip-evolution-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 480px;
+    overflow-y: auto;
+    padding-right: 6px;
+}
+
+.udip-evolution-item {
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    border-radius: 10px;
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+
+.udip-evolution-item:hover {
+    background: rgba(24, 37, 66, 0.8);
+    border-color: rgba(56, 189, 248, 0.3);
+}
+
+.udip-evolution-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.udip-evolution-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.udip-evolution-desc {
+    font-size: 12px;
+    color: #cbd5e1;
+    line-height: 1.4;
+}
+
+.udip-evolution-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 10px;
+    color: #94a3b8;
+    margin-top: 2px;
+}
+
+.udip-evolution-footer code {
+    font-family: 'JetBrains Mono', monospace;
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+/* Model Governance Card Elements */
+.udip-model-gov-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+@media (max-width: 800px) {
+    .udip-model-gov-metrics {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.udip-model-gov-cell {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(148, 163, 184, 0.12);
+    border-radius: 8px;
+    padding: 10px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.udip-model-gov-cell .gov-lbl {
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    color: #94a3b8;
+    text-transform: uppercase;
+}
+
+.udip-model-gov-cell .gov-val {
+    font-size: 16px;
+    font-weight: 800;
+    color: #ffffff;
+}
+
+/* Timeline & Audit Grid */
+.udip-timeline-audit-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+@media (max-width: 960px) {
+    .udip-timeline-audit-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.udip-timeline-feed {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 6px;
+}
+
+.udip-timeline-event {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 10px 14px;
+    background: rgba(15, 23, 42, 0.6);
+    border-radius: 8px;
+    border: 1px solid rgba(148, 163, 184, 0.1);
+    transition: background 0.15s ease;
+}
+
+.udip-timeline-event:hover {
+    background: rgba(24, 37, 66, 0.7);
+}
+
+.udip-timeline-time {
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+
+.udip-timeline-body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.udip-timeline-name {
+    font-size: 12px;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.udip-timeline-detail {
+    font-size: 11px;
+    color: #94a3b8;
+}
+
+/* Audit Cards */
+.udip-audit-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 6px;
+}
+
+.udip-audit-card {
+    background: rgba(15, 23, 42, 0.65);
+    border: 1px solid rgba(148, 163, 184, 0.12);
+    border-radius: 8px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    transition: border-color 0.2s ease;
+}
+
+.udip-audit-card:hover {
+    border-color: rgba(139, 92, 246, 0.3);
+}
+
+.udip-audit-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.udip-audit-action {
+    font-size: 12px;
+    font-weight: 700;
+    color: #f8fafc;
+}
+
+.udip-audit-trigger {
+    font-size: 11px;
+    color: #cbd5e1;
+}
+
+.udip-audit-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 10px;
+    color: #94a3b8;
+}

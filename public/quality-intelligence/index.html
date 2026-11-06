@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Universal Data Intelligence Platform</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%2338bdf8'/%3E%3Cstop offset='100%25' stop-color='%23818cf8'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='%230f172a'/%3E%3Cpath d='M8 22 L14 14 L18 18 L24 10' stroke='url(%23g)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3Ccircle cx='24' cy='10' r='2' fill='%2338bdf8'/%3E%3C/svg%3E">
+    <link rel="alternate icon" href="favicon.ico">
+    
+    <!-- Icons & Fonts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Essential Libraries (Local Vendor with CDN fallback) -->
+    <script src="vendor/chart.umd.min.js"></script>
+    <script>if (!window.Chart) document.write('<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"><\\/script>');</script>
+    <script src="vendor/vanilla-tilt.min.js"></script>
+    <script>if (!window.VanillaTilt) document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.0/vanilla-tilt.min.js"><\\/script>');</script>
+    <script src="vendor/xlsx.full.min.js"></script>
+    <script>if (!window.XLSX) document.write('<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"><\\/script>');</script>
+    
+    <!-- Universal Theme Styles -->
+    <link rel="stylesheet" href="js/ui/theme.css?v=2.8.2">
+    <link rel="stylesheet" href="js/ui/command-center/command-center.css?v=2.8.2">
+    <link rel="stylesheet" href="js/ui/visual-intelligence/visual-intelligence.css?v=2.8.2">
+    <link rel="stylesheet" href="js/ui/validation-hardening.css?v=2.8.2">
+    <link rel="stylesheet" href="js/ui/autonomous-engine.css?v=2.8.2">
+    <link rel="stylesheet" href="js/ui/enterprise-hub.css?v=2.8.2">
+    <link rel="stylesheet" href="js/ui/react-robot-component.css?v=2.8.2">
+    <link rel="stylesheet" href="js/ui/synaptic-dashboard.css?v=2.8.2">
+</head>
+<body>
+    <script>
+        try {
+            if (!sessionStorage.getItem('udip_user_explicit_ar')) {
+                localStorage.setItem('udip_lang', 'en');
+                localStorage.setItem('udip_exec_lang', 'en');
+            }
+        } catch (e) {}
+    </script>
+
+    <!-- Application Root Mount Point -->
+    <div id="app-root"></div>
+
+    <!-- Modular Platform Architecture Scripts -->
+    <!-- 1. Utilities -->
+    <script src="js/utils/storage.js?v=2.8.2"></script>
+    <script src="js/utils/helpers.js?v=2.8.2"></script>
+
+    <!-- 2. Profiling & Data Understanding Subsystem -->
+    <script src="js/profiling/profiler-utils.js?v=2.8.2"></script>
+    <script src="js/profiling/type-detector.js?v=2.8.2"></script>
+    <script src="js/profiling/statistics.js?v=2.8.2"></script>
+    <script src="js/profiling/semantic-detector.js?v=2.8.2"></script>
+    <script src="js/profiling/quality-profile.js?v=2.8.2"></script>
+    <script src="js/profiling/profiler.js?v=2.8.2"></script>
+
+    <!-- 2.1 Deep Data Understanding & Cognitive Intelligence Subsystem -->
+    <script src="js/understanding/dataset-knowledge-model.js?v=2.8.2"></script>
+    <script src="js/understanding/topology/topology-classifier.js?v=2.8.2"></script>
+    <script src="js/understanding/topology/entity-discoverer.js?v=2.8.2"></script>
+    <script src="js/understanding/roles/role-deducer.js?v=2.8.2"></script>
+    <script src="js/understanding/relationships/nonlinear-analyzer.js?v=2.8.2"></script>
+    <script src="js/understanding/relationships/derived-variable-detector.js?v=2.8.2"></script>
+    <script src="js/understanding/temporal/temporal-intelligence.js?v=2.8.2"></script>
+    <script src="js/understanding/segmentation/group-discovery.js?v=2.8.2"></script>
+    <script src="js/understanding/distributions/distribution-intelligence.js?v=2.8.2"></script>
+    <script src="js/understanding/missingness/missingness-intelligence.js?v=2.8.2"></script>
+    <script src="js/understanding/reliability/analytical-reliability.js?v=2.8.2"></script>
+    <script src="js/understanding/hypotheses/hypothesis-generator.js?v=2.8.2"></script>
+    <script src="js/understanding/causal/causal-reasoner.js?v=2.8.2"></script>
+    <script src="js/understanding/critic/analytical-critic.js?v=2.8.2"></script>
+    <script src="js/understanding/graph/insight-graph.js?v=2.8.2"></script>
+    <script src="js/understanding/graph/analytical-trace.js?v=2.8.2"></script>
+    <script src="js/understanding/questions/question-generator.js?v=2.8.2"></script>
+    <script src="js/understanding/execution/execution-engine.js?v=2.8.2"></script>
+    <script src="js/understanding/planner/adaptive-planner.js?v=2.8.2"></script>
+    <script src="js/understanding/understanding-engine.js?v=2.8.2"></script>
+
+    <!-- 2.2 Deep Intelligence Evolution vNext Subsystem -->
+    <script src="js/deep-intelligence/knowledge/dataset-knowledge-model.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/knowledge/knowledge-confidence.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/knowledge/knowledge-versioning.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/structure/topology-discoverer.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/structure/entity-discoverer.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/structure/hierarchy-discoverer.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/structure/key-discoverer.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/structure/dependency-discoverer.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/structure/role-deducer.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/relationships/linear-analysis.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/relationships/rank-analysis.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/relationships/nonlinear-analysis.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/relationships/mutual-information.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/relationships/interaction-discovery.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/relationships/conditional-analysis.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/relationships/relationship-consensus.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/relationships/derived-variable-detector.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/temporal/temporal-structure.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/temporal/autocorrelation.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/temporal/lag-analysis.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/temporal/change-point-analysis.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/temporal/regime-analysis.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/temporal/recurring-patterns.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/distributions/distribution-profiler.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/distributions/multimodality.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/distributions/tail-analysis.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/distributions/zero-inflation.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/distributions/distribution-shift.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/missingness/missingness-map.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/missingness/co-missingness.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/missingness/missingness-predictability.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/missingness/missingness-mechanism.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/segmentation/group-discovery.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/hypotheses/hypothesis-generator.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/hypotheses/counter-evidence.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/hypotheses/hypothesis-lifecycle.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/causal/causal-reasoner.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/adaptive/analysis-cost.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/adaptive/analysis-priority.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/adaptive/stopping-rules.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/adaptive/method-selector.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/adaptive/adaptive-planner.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/execution/execution-engine.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/robustness/model-disagreement.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/robustness/model-robustness.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/robustness/model-interpretation.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/critic/statistical-critic.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/critic/claim-calibrator.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/critic/analytical-critic.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/graph/insight-graph.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/graph/graph-builder.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/graph/graph-query.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/graph/analytical-trace.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/question/question-generator.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/question/analytical-question-ranker.js?v=2.8.2"></script>
+    <script src="js/deep-intelligence/deep-intelligence-engine.js?v=2.8.2"></script>
+
+    <!-- 2.5 Intelligence Planning Subsystem -->
+    <script src="js/intelligence/planning/task-detector.js?v=2.8.2"></script>
+    <script src="js/intelligence/planning/target-selector.js?v=2.8.2"></script>
+    <script src="js/intelligence/planning/feature-selector.js?v=2.8.2"></script>
+    <script src="js/intelligence/planning/relationship-engine.js?v=2.8.2"></script>
+    <script src="js/intelligence/planning/leakage-detector.js?v=2.8.2"></script>
+    <script src="js/intelligence/planning/missingness-analyzer.js?v=2.8.2"></script>
+    <script src="js/intelligence/planning/recommendation-engine.js?v=2.8.2"></script>
+    <script src="js/intelligence/planning/planner.js?v=2.8.2"></script>
+    <script src="js/intelligence/intelligence-engine.js?v=2.8.2"></script>
+
+    <!-- 2.6 Context-Aware Intelligent Data Analyst Architecture -->
+    <script src="js/intelligence/knowledge-state.js?v=2.8.2"></script>
+    <script src="js/understanding/dataset-identity-card.js?v=2.8.2"></script>
+    <script src="js/understanding/context-discovery-engine.js?v=2.8.2"></script>
+    <script src="js/understanding/questions/intelligent-question-engine.js?v=2.8.2"></script>
+    <script src="js/intelligence/analysis-planner.js?v=2.8.2"></script>
+    <script src="js/understanding/hypotheses/scientific-hypothesis-engine.js?v=2.8.2"></script>
+    <script src="js/analytics/forecasting/time-aware-prediction-engine.js?v=2.8.2"></script>
+    <script src="js/analytics/predictive-forecast-studio.js?v=2.8.2"></script>
+    <script src="js/decision/decision-intelligence-engine.js?v=2.8.2"></script>
+    <script src="js/autonomous/learning/outcome-feedback-engine.js?v=2.8.2"></script>
+    <script src="js/intelligence/intelligence-orchestrator.js?v=2.8.2"></script>
+
+    <!-- 3. Advanced Analytics & Machine Learning Subsystem (Step 3) -->
+    <!-- 3.1 Evaluation -->
+    <script src="js/analytics/evaluation/validation.js?v=2.8.2"></script>
+    <script src="js/analytics/evaluation/regression-metrics.js?v=2.8.2"></script>
+    <script src="js/analytics/evaluation/classification-metrics.js?v=2.8.2"></script>
+    <script src="js/analytics/evaluation/evaluator.js?v=2.8.2"></script>
+
+    <!-- 3.2 Exploratory -->
+    <script src="js/analytics/exploratory/distribution-analysis.js?v=2.8.2"></script>
+    <script src="js/analytics/exploratory/group-analysis.js?v=2.8.2"></script>
+    <script src="js/analytics/exploratory/trend-analysis.js?v=2.8.2"></script>
+    <script src="js/analytics/exploratory/seasonality-analysis.js?v=2.8.2"></script>
+    <script src="js/analytics/exploratory/outlier-analysis.js?v=2.8.2"></script>
+    <script src="js/analytics/exploratory/exploratory-engine.js?v=2.8.2"></script>
+
+    <!-- 3.3 Statistics -->
+    <script src="js/analytics/statistics/effect-size.js?v=2.8.2"></script>
+    <script src="js/analytics/statistics/hypothesis-tests.js?v=2.8.2"></script>
+    <script src="js/analytics/statistics/test-selector.js?v=2.8.2"></script>
+    <script src="js/analytics/statistics/statistical-engine.js?v=2.8.2"></script>
+
+    <!-- 3.4 Anomaly Detection -->
+    <script src="js/analytics/anomaly/anomaly-detectors.js?v=2.8.2"></script>
+    <script src="js/analytics/anomaly/anomaly-engine.js?v=2.8.2"></script>
+
+    <!-- 3.5 Forecasting -->
+    <script src="js/analytics/forecasting/forecast-methods.js?v=2.8.2"></script>
+    <script src="js/analytics/forecasting/forecasting-engine.js?v=2.8.2"></script>
+
+    <!-- 3.6 Machine Learning -->
+    <script src="js/analytics/machine-learning/preprocessing.js?v=2.8.2"></script>
+    <script src="js/analytics/machine-learning/regression-models.js?v=2.8.2"></script>
+    <script src="js/analytics/machine-learning/classification-models.js?v=2.8.2"></script>
+    <script src="js/analytics/machine-learning/clustering-models.js?v=2.8.2"></script>
+    <script src="js/analytics/machine-learning/model-selector.js?v=2.8.2"></script>
+    <script src="js/analytics/machine-learning/model-comparison.js?v=2.8.2"></script>
+    <script src="js/analytics/machine-learning/ml-engine.js?v=2.8.2"></script>
+
+    <!-- 3.7 Insights -->
+    <script src="js/analytics/insights/insight-ranker.js?v=2.8.2"></script>
+    <script src="js/analytics/insights/recommendation-generator.js?v=2.8.2"></script>
+    <script src="js/analytics/insights/insight-engine.js?v=2.8.2"></script>
+
+    <!-- 3.8 Master Coordinator -->
+    <script src="js/analytics/analytics-engine.js?v=2.8.2"></script>
+
+    <!-- 4. STEP 4 — DECISION INTELLIGENCE & MODEL GOVERNANCE -->
+    <!-- 4.1 Evidence & Traceability -->
+    <script src="js/decision/evidence/evidence-fusion.js?v=2.8.2"></script>
+    <script src="js/decision/evidence/evidence-trace.js?v=2.8.2"></script>
+
+    <!-- 4.2 Reasoning & Root Cause -->
+    <script src="js/decision/reasoning/insight-reasoner.js?v=2.8.2"></script>
+    <script src="js/decision/root-cause/root-cause-engine.js?v=2.8.2"></script>
+
+    <!-- 4.3 Risk & Opportunity -->
+    <script src="js/decision/risk/risk-engine.js?v=2.8.2"></script>
+    <script src="js/decision/opportunity/opportunity-engine.js?v=2.8.2"></script>
+
+    <!-- 4.4 Scenarios & What-If -->
+    <script src="js/decision/scenarios/scenario-engine.js?v=2.8.2"></script>
+    <script src="js/decision/what-if/what-if-engine.js?v=2.8.2"></script>
+
+    <!-- 4.5 Governance & Drift -->
+    <script src="js/decision/governance/stability-analyzer.js?v=2.8.2"></script>
+    <script src="js/decision/governance/drift-detector.js?v=2.8.2"></script>
+    <script src="js/decision/governance/model-governance.js?v=2.8.2"></script>
+
+    <!-- 4.6 Ranking, Expert Reasoning & Executive Briefing -->
+    <script src="js/decision/ranking/decision-ranker.js?v=2.8.2"></script>
+    <script src="js/decision/reasoning/expert-reasoning-engine.js?v=2.8.2"></script>
+    <script src="js/decision/executive/executive-summary.js?v=2.8.2"></script>
+
+    <!-- 4.7 Master Decision Engine -->
+    <script src="js/decision/decision-engine.js?v=2.8.2"></script>
+
+    <!-- 5. STEP 5 — AUTONOMOUS INTELLIGENCE & CONTINUOUS LEARNING -->
+    <!-- 5.1 Monitoring -->
+    <script src="js/autonomous/monitoring/dataset-monitor.js?v=2.8.2"></script>
+    <script src="js/autonomous/monitoring/schema-monitor.js?v=2.8.2"></script>
+    <script src="js/autonomous/monitoring/quality-monitor.js?v=2.8.2"></script>
+    <script src="js/autonomous/monitoring/distribution-monitor.js?v=2.8.2"></script>
+
+    <!-- 5.2 Change & Drift Detection -->
+    <script src="js/autonomous/change/change-detector.js?v=2.8.2"></script>
+    <script src="js/autonomous/change/change-point-detector.js?v=2.8.2"></script>
+    <script src="js/autonomous/change/concept-drift-detector.js?v=2.8.2"></script>
+
+    <!-- 5.3 Intelligence & Reanalysis Planning -->
+    <script src="js/autonomous/intelligence/intelligence-trigger.js?v=2.8.2"></script>
+    <script src="js/autonomous/intelligence/reanalysis-planner.js?v=2.8.2"></script>
+    <script src="js/autonomous/intelligence/priority-engine.js?v=2.8.2"></script>
+
+    <!-- 5.4 Learning & Memory -->
+    <script src="js/autonomous/learning/insight-memory.js?v=2.8.2"></script>
+    <script src="js/autonomous/learning/insight-evolution.js?v=2.8.2"></script>
+    <script src="js/autonomous/learning/model-memory.js?v=2.8.2"></script>
+    <script src="js/autonomous/learning/feedback-engine.js?v=2.8.2"></script>
+    <script src="js/autonomous/learning/outcome-tracker.js?v=2.8.2"></script>
+
+    <!-- 5.5 Alerts & Prioritization -->
+    <script src="js/autonomous/alerts/alert-engine.js?v=2.8.2"></script>
+    <script src="js/autonomous/alerts/alert-prioritizer.js?v=2.8.2"></script>
+
+    <!-- 5.6 Lifecycle Management -->
+    <script src="js/autonomous/lifecycle/model-lifecycle.js?v=2.8.2"></script>
+    <script src="js/autonomous/lifecycle/insight-lifecycle.js?v=2.8.2"></script>
+
+    <!-- 5.7 Audit & Master Coordinator -->
+    <script src="js/autonomous/audit/autonomy-audit.js?v=2.8.2"></script>
+    <script src="js/autonomous/autonomous-engine.js?v=2.8.2"></script>
+
+    <!-- 6. STEP 6 — INTELLIGENCE WORKSPACE & ANALYTICAL STORYTELLING -->
+    <!-- 6.1 State & Narrative -->
+    <script src="js/workspace/workspace-state.js?v=2.8.2"></script>
+    <script src="js/workspace/narrative/finding-synthesizer.js?v=2.8.2"></script>
+    <script src="js/workspace/narrative/narrative-validator.js?v=2.8.2"></script>
+    <script src="js/workspace/narrative/narrative-engine.js?v=2.8.2"></script>
+
+    <!-- 6.2 Consumption Modes -->
+    <script src="js/workspace/modes/executive-mode.js?v=2.8.2"></script>
+    <script src="js/workspace/modes/analyst-mode.js?v=2.8.2"></script>
+    <script src="js/workspace/modes/evidence-mode.js?v=2.8.2"></script>
+
+    <!-- 6.3 Guided Investigation -->
+    <script src="js/workspace/investigation/investigation-state.js?v=2.8.2"></script>
+    <script src="js/workspace/investigation/evidence-explorer.js?v=2.8.2"></script>
+    <script src="js/workspace/investigation/hypothesis-engine.js?v=2.8.2"></script>
+    <script src="js/workspace/investigation/investigation-engine.js?v=2.8.2"></script>
+
+    <!-- 6.4 Storytelling & Visuals -->
+    <script src="js/workspace/storytelling/chart-selector.js?v=2.8.2"></script>
+    <script src="js/workspace/storytelling/finding-orderer.js?v=2.8.2"></script>
+    <script src="js/workspace/storytelling/story-engine.js?v=2.8.2"></script>
+
+    <!-- 6.5 Timeline & Version Comparison -->
+    <script src="js/workspace/timeline/analytical-timeline.js?v=2.8.2"></script>
+    <script src="js/workspace/comparison/version-comparator.js?v=2.8.2"></script>
+
+    <!-- 6.6 Communication & Reports -->
+    <script src="js/workspace/communication/insight-exporter.js?v=2.8.2"></script>
+    <script src="js/workspace/communication/report-generator.js?v=2.8.2"></script>
+
+    <!-- 6.7 Master Workspace Coordinator -->
+    <script src="js/workspace/workspace-engine.js?v=2.8.2"></script>
+
+    <!-- 7. STEP 7 — UNIVERSAL DATA INTELLIGENCE COPILOT -->
+    <!-- 7.1 Explainability & Audit -->
+    <script src="js/copilot/explainability/response-trace.js?v=2.8.2"></script>
+    <script src="js/copilot/audit/copilot-audit.js?v=2.8.2"></script>
+
+    <!-- 7.2 Conversation Management -->
+    <script src="js/copilot/conversation/conversation-state.js?v=2.8.2"></script>
+    <script src="js/copilot/conversation/context-manager.js?v=2.8.2"></script>
+    <script src="js/copilot/conversation/conversation-memory.js?v=2.8.2"></script>
+
+    <!-- 7.3 Intent & Entity Extraction -->
+    <script src="js/copilot/intent/entity-extractor.js?v=2.8.2"></script>
+    <script src="js/copilot/intent/intent-detector.js?v=2.8.2"></script>
+    <script src="js/copilot/intent/intent-classifier.js?v=2.8.2"></script>
+
+    <!-- 7.4 Planning & Routing -->
+    <script src="js/copilot/planning/capability-router.js?v=2.8.2"></script>
+    <script src="js/copilot/planning/query-planner.js?v=2.8.2"></script>
+    <script src="js/copilot/planning/action-planner.js?v=2.8.2"></script>
+
+    <!-- 7.5 Retrieval -->
+    <script src="js/copilot/retrieval/evidence-retriever.js?v=2.8.2"></script>
+    <script src="js/copilot/retrieval/context-retriever.js?v=2.8.2"></script>
+    <script src="js/copilot/retrieval/history-retriever.js?v=2.8.2"></script>
+
+    <!-- 7.6 Safe Actions -->
+    <script src="js/copilot/actions/analytical-actions.js?v=2.8.2"></script>
+    <script src="js/copilot/actions/workspace-actions.js?v=2.8.2"></script>
+    <script src="js/copilot/actions/investigation-actions.js?v=2.8.2"></script>
+    <script src="js/copilot/actions/comparison-actions.js?v=2.8.2"></script>
+
+    <!-- 7.7 Reasoning & Calibrated Uncertainty -->
+    <script src="js/copilot/reasoning/uncertainty-engine.js?v=2.8.2"></script>
+    <script src="js/copilot/reasoning/answer-reasoner.js?v=2.8.2"></script>
+
+    <!-- 7.8 Validation & Safety -->
+    <script src="js/copilot/validation/answer-validator.js?v=2.8.2"></script>
+    <script src="js/copilot/validation/evidence-validator.js?v=2.8.2"></script>
+    <script src="js/copilot/validation/safety-validator.js?v=2.8.2"></script>
+
+    <!-- 7.9 Question Matrix & Proactive Discovery -->
+    <script src="js/copilot/questions/intelligent-question-matrix.js?v=2.8.2"></script>
+
+    <!-- 7.10 Master Copilot Coordinator -->
+    <script src="js/copilot/copilot-engine.js?v=2.8.2"></script>
+
+    <!-- 8. STEP 8 — UNIVERSAL INTELLIGENCE VALIDATION & PRODUCTION HARDENING -->
+    <!-- 8.1 Golden Datasets -->
+    <script src="js/validation/datasets/dataset-generator.js?v=2.8.2"></script>
+    <script src="js/validation/datasets/golden-datasets.js?v=2.8.2"></script>
+    <script src="js/validation/datasets/dataset-registry.js?v=2.8.2"></script>
+
+    <!-- 8.2 Correctness Validators -->
+    <script src="js/validation/correctness/analytical-validator.js?v=2.8.2"></script>
+    <script src="js/validation/correctness/statistical-validator.js?v=2.8.2"></script>
+    <script src="js/validation/correctness/ml-validator.js?v=2.8.2"></script>
+    <script src="js/validation/correctness/evidence-validator.js?v=2.8.2"></script>
+
+    <!-- 8.3 Stress & Adversarial Testing -->
+    <script src="js/validation/stress/edge-case-engine.js?v=2.8.2"></script>
+    <script src="js/validation/stress/malformed-data-engine.js?v=2.8.2"></script>
+    <script src="js/validation/stress/adversarial-engine.js?v=2.8.2"></script>
+
+    <!-- 8.4 Integrity & Mutation Detection -->
+    <script src="js/validation/integrity/mutation-detector.js?v=2.8.2"></script>
+    <script src="js/validation/integrity/determinism-checker.js?v=2.8.2"></script>
+    <script src="js/validation/integrity/trace-integrity.js?v=2.8.2"></script>
+
+    <!-- 8.5 Benchmarking & Scalability -->
+    <script src="js/validation/benchmark/performance-profiler.js?v=2.8.2"></script>
+    <script src="js/validation/benchmark/memory-profiler.js?v=2.8.2"></script>
+    <script src="js/validation/benchmark/scalability-analyzer.js?v=2.8.2"></script>
+    <script src="js/validation/benchmark/benchmark-engine.js?v=2.8.2"></script>
+
+    <!-- 8.6 Regression Engine -->
+    <script src="js/validation/regression/golden-output-validator.js?v=2.8.2"></script>
+    <script src="js/validation/regression/regression-engine.js?v=2.8.2"></script>
+
+    <!-- 8.7 Production Readiness & Report -->
+    <script src="js/validation/readiness/readiness-score.js?v=2.8.2"></script>
+    <script src="js/validation/readiness/readiness-engine.js?v=2.8.2"></script>
+
+    <!-- 8.8 Master Validation Coordinator -->
+    <script src="js/validation/validation-engine.js?v=2.8.2"></script>
+
+    <!-- 9. STEP 9 — UNIVERSAL DATA INTELLIGENCE BENCHMARKING & REAL-WORLD VALIDATION -->
+    <!-- 9.1 Datasets Layer -->
+    <script src="js/benchmark/datasets/real-world-registry.js?v=2.8.2"></script>
+    <script src="js/benchmark/datasets/workload-generator.js?v=2.8.2"></script>
+    <script src="js/benchmark/datasets/dataset-loader.js?v=2.8.2"></script>
+
+    <!-- 9.2 Execution & Stage Telemetry Layer -->
+    <script src="js/benchmark/execution/stage-timer.js?v=2.8.2"></script>
+    <script src="js/benchmark/execution/pipeline-runner.js?v=2.8.2"></script>
+    <script src="js/benchmark/execution/repeat-runner.js?v=2.8.2"></script>
+
+    <!-- 9.3 Performance & Bottlenecks Layer -->
+    <script src="js/benchmark/performance/latency-profiler.js?v=2.8.2"></script>
+    <script src="js/benchmark/performance/throughput-analyzer.js?v=2.8.2"></script>
+    <script src="js/benchmark/performance/bottleneck-detector.js?v=2.8.2"></script>
+
+    <!-- 9.4 Memory & Heap Monitoring Layer -->
+    <script src="js/benchmark/memory/memory-monitor.js?v=2.8.2"></script>
+    <script src="js/benchmark/memory/memory-analyzer.js?v=2.8.2"></script>
+
+    <!-- 9.5 Scalability & Capacity Layer -->
+    <script src="js/benchmark/scalability/scale-runner.js?v=2.8.2"></script>
+    <script src="js/benchmark/scalability/complexity-analyzer.js?v=2.8.2"></script>
+    <script src="js/benchmark/scalability/capacity-analyzer.js?v=2.8.2"></script>
+
+    <!-- 9.6 Workloads Layer -->
+    <script src="js/benchmark/workload/interactive-workload.js?v=2.8.2"></script>
+    <script src="js/benchmark/workload/batch-workload.js?v=2.8.2"></script>
+    <script src="js/benchmark/workload/copilot-workload.js?v=2.8.2"></script>
+
+    <!-- 9.7 Reliability & Recovery Layer -->
+    <script src="js/benchmark/reliability/endurance-runner.js?v=2.8.2"></script>
+    <script src="js/benchmark/reliability/recovery-analyzer.js?v=2.8.2"></script>
+
+    <!-- 9.8 Reporting & Real-World Validation Score -->
+    <script src="js/benchmark/reporting/benchmark-summary.js?v=2.8.2"></script>
+    <script src="js/benchmark/reporting/benchmark-report.js?v=2.8.2"></script>
+
+    <!-- 9.9 Master Benchmark Coordinator -->
+    <script src="js/benchmark/benchmark-engine.js?v=2.8.2"></script>
+
+    <!-- 10. STEP 10 — ENTERPRISE INTELLIGENCE PLATFORMIZATION -->
+    <!-- 10.1 Configuration & Flags -->
+    <script src="js/enterprise/configuration/enterprise-config.js?v=2.8.2"></script>
+    <script src="js/enterprise/configuration/feature-flags.js?v=2.8.2"></script>
+
+    <!-- 10.2 Persistence Layer -->
+    <script src="js/enterprise/persistence/storage-adapter.js?v=2.8.2"></script>
+    <script src="js/enterprise/persistence/repository.js?v=2.8.2"></script>
+    <script src="js/enterprise/persistence/transaction-manager.js?v=2.8.2"></script>
+
+    <!-- 10.3 Identity & RBAC -->
+    <script src="js/enterprise/identity/role-manager.js?v=2.8.2"></script>
+    <script src="js/enterprise/identity/user-manager.js?v=2.8.2"></script>
+    <script src="js/enterprise/identity/permission-engine.js?v=2.8.2"></script>
+
+    <!-- 10.4 Projects & Workspaces -->
+    <script src="js/enterprise/projects/project-membership.js?v=2.8.2"></script>
+    <script src="js/enterprise/projects/workspace-manager.js?v=2.8.2"></script>
+    <script src="js/enterprise/projects/project-manager.js?v=2.8.2"></script>
+
+    <!-- 10.5 Datasets & Immutable Versioning -->
+    <script src="js/enterprise/datasets/dataset-versioning.js?v=2.8.2"></script>
+    <script src="js/enterprise/datasets/dataset-metadata.js?v=2.8.2"></script>
+    <script src="js/enterprise/datasets/dataset-lifecycle.js?v=2.8.2"></script>
+    <script src="js/enterprise/datasets/dataset-manager.js?v=2.8.2"></script>
+
+    <!-- 10.6 Intelligence Registries -->
+    <script src="js/enterprise/intelligence/analysis-manager.js?v=2.8.2"></script>
+    <script src="js/enterprise/intelligence/model-manager.js?v=2.8.2"></script>
+    <script src="js/enterprise/intelligence/insight-manager.js?v=2.8.2"></script>
+    <script src="js/enterprise/intelligence/investigation-manager.js?v=2.8.2"></script>
+
+    <!-- 10.7 Governance, Policies & Audit -->
+    <script src="js/enterprise/governance/audit-manager.js?v=2.8.2"></script>
+    <script src="js/enterprise/governance/data-governance.js?v=2.8.2"></script>
+    <script src="js/enterprise/governance/retention-manager.js?v=2.8.2"></script>
+    <script src="js/enterprise/governance/policy-engine.js?v=2.8.2"></script>
+
+    <!-- 10.8 Sharing & Export -->
+    <script src="js/enterprise/sharing/sharing-manager.js?v=2.8.2"></script>
+    <script src="js/enterprise/sharing/export-manager.js?v=2.8.2"></script>
+
+    <!-- 10.9 Master Enterprise Coordinator -->
+    <script src="js/enterprise/enterprise-engine.js?v=2.8.2"></script>
+
+    <!-- 11. STEP 11 — ENTERPRISE CONNECTIVITY & INTEGRATION LAYER -->
+    <!-- 11.1 Reliability & Resilience -->
+    <script src="js/integrations/reliability/failure-handler.js?v=2.8.2"></script>
+    <script src="js/integrations/reliability/retry-manager.js?v=2.8.2"></script>
+    <script src="js/integrations/reliability/rate-limiter.js?v=2.8.2"></script>
+    <script src="js/integrations/reliability/timeout-manager.js?v=2.8.2"></script>
+
+    <!-- 11.2 Ephemeral Authentication & Credentials -->
+    <script src="js/integrations/auth/auth-strategy.js?v=2.8.2"></script>
+    <script src="js/integrations/auth/token-manager.js?v=2.8.2"></script>
+    <script src="js/integrations/auth/credential-provider.js?v=2.8.2"></script>
+
+    <!-- 11.3 Connectors -->
+    <script src="js/integrations/connectors/base-connector.js?v=2.8.2"></script>
+    <script src="js/integrations/connectors/file-connector.js?v=2.8.2"></script>
+    <script src="js/integrations/connectors/rest-connector.js?v=2.8.2"></script>
+    <script src="js/integrations/connectors/database-connector.js?v=2.8.2"></script>
+    <script src="js/integrations/connectors/postgres-connector.js?v=2.8.2"></script>
+    <script src="js/integrations/connectors/supabase-connector.js?v=2.8.2"></script>
+    <script src="js/integrations/connectors/webhook-connector.js?v=2.8.2"></script>
+
+    <!-- 11.4 Registries -->
+    <script src="js/integrations/registry/connector-registry.js?v=2.8.2"></script>
+    <script src="js/integrations/registry/connection-registry.js?v=2.8.2"></script>
+    <script src="js/integrations/registry/source-registry.js?v=2.8.2"></script>
+
+    <!-- 11.5 Ingestion & Normalization -->
+    <script src="js/integrations/ingestion/schema-mapper.js?v=2.8.2"></script>
+    <script src="js/integrations/ingestion/normalizer.js?v=2.8.2"></script>
+    <script src="js/integrations/ingestion/ingestion-validator.js?v=2.8.2"></script>
+    <script src="js/integrations/ingestion/incremental-loader.js?v=2.8.2"></script>
+    <script src="js/integrations/ingestion/ingestion-engine.js?v=2.8.2"></script>
+
+    <!-- 11.6 Synchronization & Drift -->
+    <script src="js/integrations/sync/change-detector.js?v=2.8.2"></script>
+    <script src="js/integrations/sync/sync-strategy.js?v=2.8.2"></script>
+    <script src="js/integrations/sync/sync-state.js?v=2.8.2"></script>
+    <script src="js/integrations/sync/sync-engine.js?v=2.8.2"></script>
+
+    <!-- 11.7 Scheduling & Observability -->
+    <script src="js/integrations/scheduling/schedule-manager.js?v=2.8.2"></script>
+    <script src="js/integrations/scheduling/job-runner.js?v=2.8.2"></script>
+    <script src="js/integrations/monitoring/health-monitor.js?v=2.8.2"></script>
+    <script src="js/integrations/monitoring/integration-metrics.js?v=2.8.2"></script>
+
+    <!-- 11.8 Governance & Lineage -->
+    <script src="js/integrations/governance/lineage-manager.js?v=2.8.2"></script>
+    <script src="js/integrations/governance/integration-policy.js?v=2.8.2"></script>
+
+    <!-- 11.9 Reporting & Master Orchestrator -->
+    <script src="js/integrations/reporting/integration-report.js?v=2.8.2"></script>
+    <script src="js/integrations/integration-engine.js?v=2.8.2"></script>
+
+    <!-- 12. STEP 12 — Enterprise Deployment & API Gateway Client -->
+    <script src="js/api/api-client.js?v=2.8.2"></script>
+
+    <!-- 12. Data Layer -->
+    <script src="js/data/session.js?v=2.8.2"></script>
+    <script src="js/data/parser.js?v=2.8.2"></script>
+    <script src="js/data/sample-datasets.js?v=2.8.2"></script>
+
+    <!-- 7. Core Engine -->
+    <script src="js/engine/core.js?v=2.8.2"></script>
+
+    <!-- 8. Futuristic 3D UI & Synthetic Intelligence Systems -->
+    <script src="js/ui/intelligence-core.js?v=2.8.2"></script>
+    <script src="js/ui/motion-system.js?v=2.8.2"></script>
+    <script src="js/ui/ai-entity.js?v=2.8.2"></script>
+
+    <!-- 8.1.0 Three.js 3D WebGL Engine & Spatial Laboratory Subsystems -->
+    <script src="js/vendor/three.min.js?v=2.8.2"></script>
+    <script src="js/ui/command-center/spatial/sound-engine.js?v=2.8.2"></script>
+    <script src="js/ui/command-center/spatial/hologram-shaders.js?v=2.8.2"></script>
+    <script src="js/ui/command-center/spatial/lighting-system.js?v=2.8.2"></script>
+    <script src="js/ui/command-center/spatial/scene-camera.js?v=2.8.2"></script>
+    <script src="js/ui/command-center/spatial/particle-engine.js?v=2.8.2"></script>
+    <script src="js/ui/command-center/spatial/ai-brain.js?v=2.8.2"></script>
+    <script src="js/ui/command-center/spatial/ai-agent.js?v=2.8.2"></script>
+    <script src="js/ui/command-center/spatial/neural-network-3d.js?v=2.8.2"></script>
+    <script src="js/ui/command-center/spatial/data-universe.js?v=2.8.2"></script>
+    <script src="js/ui/command-center/spatial/analytical-charts-3d.js?v=2.8.2"></script>
+    <script src="js/ui/command-center/spatial/holographic-ui.js?v=2.8.2"></script>
+    <script src="js/ui/command-center/spatial/spatial-scene.js?v=2.8.2"></script>
+    <script src="js/ui/profile-3d-stage.js?v=2.8.2"></script>
+
+    <!-- 8.1 UDIP 3D AI Analytical Command Center Subsystem -->
+    <script src="js/ui/command-center/top-command-bar.js?v=2.8.2"></script>
+    <script src="js/ui/command-center/intelligence-core.js?v=2.8.2"></script>
+    <script src="js/ui/command-center/cognitive-pipeline.js?v=2.8.2"></script>
+    <script src="js/ui/command-center/data-dna.js?v=2.8.2"></script>
+    <script src="js/ui/command-center/live-intelligence-feed.js?v=2.8.2"></script>
+    <script src="js/ui/command-center/executive-intelligence-strip.js?v=2.8.2"></script>
+    <script src="js/ui/command-center/insight-graph-view.js?v=2.8.2"></script>
+    <script src="js/ui/command-center/reasoning-overlay.js?v=2.8.2"></script>
+    <script src="js/ui/command-center/udip-copilot-widget.js?v=2.8.2"></script>
+    <script src="js/ui/command-center/what-if-lab.js?v=2.8.2"></script>
+    <script src="js/ui/command-center/analytical-trust.js?v=2.8.2"></script>
+    <script src="js/ui/command-center/finding-detail-drawer.js?v=2.8.2"></script>
+    <script src="js/ui/command-center/empty-state-view.js?v=2.8.2"></script>
+    <script src="js/ui/command-center/motion-orchestrator.js?v=2.8.2"></script>
+    <script src="js/ui/command-center/command-center-controller.js?v=2.8.2"></script>
+
+    <!-- 8.2 UDIP Visual Intelligence Subsystem -->
+    <script src="js/ui/visual-intelligence/visual-format-registry.js?v=2.8.2"></script>
+    <script src="js/ui/visual-intelligence/visual-type-selector.js?v=2.8.2"></script>
+    <script src="js/ui/visual-intelligence/relationship-visualizer.js?v=2.8.2"></script>
+    <script src="js/ui/visual-intelligence/trend-visualizer.js?v=2.8.2"></script>
+    <script src="js/ui/visual-intelligence/comparison-visualizer.js?v=2.8.2"></script>
+    <script src="js/ui/visual-intelligence/distribution-visualizer.js?v=2.8.2"></script>
+    <script src="js/ui/visual-intelligence/anomaly-visualizer.js?v=2.8.2"></script>
+    <script src="js/ui/visual-intelligence/correlation-visualizer.js?v=2.8.2"></script>
+    <script src="js/ui/visual-intelligence/feature-importance-visualizer.js?v=2.8.2"></script>
+    <script src="js/ui/visual-intelligence/risk-visualizer.js?v=2.8.2"></script>
+    <script src="js/ui/visual-intelligence/root-cause-visualizer.js?v=2.8.2"></script>
+    <script src="js/ui/visual-intelligence/pareto-visualizer.js?v=2.8.2"></script>
+    <script src="js/ui/visual-intelligence/decision-visualizer.js?v=2.8.2"></script>
+    <script src="js/ui/visual-intelligence/action-visualizer.js?v=2.8.2"></script>
+    <script src="js/ui/visual-intelligence/hypothesis-visualizer.js?v=2.8.2"></script>
+    <script src="js/ui/visual-intelligence/evidence-visualizer.js?v=2.8.2"></script>
+    <script src="js/ui/visual-intelligence/quality-visualizer.js?v=2.8.2"></script>
+    <script src="js/ui/visual-intelligence/spc-visualizer.js?v=2.8.2"></script>
+    <script src="js/ui/visual-intelligence/ml-performance-visualizer.js?v=2.8.2"></script>
+    <script src="js/ui/visual-intelligence/visual-intelligence-engine.js?v=2.8.2"></script>
+
+    <script src="js/ui/landing-3d-scene.js?v=2.8.2"></script>
+    
+    <!-- React 18 & ReactDOM + Figma Robot Component -->
+    <script src="js/vendor/react.min.js?v=2.8.2"></script>
+    <script src="js/vendor/react-dom.min.js?v=2.8.2"></script>
+    <script src="js/ui/react-robot-component.js?v=2.8.2"></script>
+
+    <!-- UDIP Executive Summary & Result Compression Layer -->
+    <script src="js/ui/executive-summary/summary-state.js?v=2.8.2"></script>
+    <script src="js/ui/executive-summary/summary-formatters.js?v=2.8.2"></script>
+    <script src="js/ui/executive-summary/executive-summary-engine.js?v=2.8.2"></script>
+    <script src="js/ui/result-compression-adapter.js?v=2.8.2"></script>
+    <script src="js/ui/cyber-audio-fx.js?v=2.8.2"></script>
+    <script src="js/ui/jarvis-assistant.js?v=2.8.2"></script>
+    <script src="js/ui/cyber-3d-studio.js?v=2.8.2"></script>
+    <script src="js/ui/dynamic-3d-dashboard.js?v=2.8.2"></script>
+    <script src="js/ui/components.js?v=2.8.2"></script>
+    <script src="js/ui/app.js?v=2.8.2"></script>
+
+
+    <!-- QMS 4.0 Seamless Integration Bridge Listener -->
+    <script>
+        (function() {
+            window.addEventListener('message', function(event) {
+                if (!event.data || typeof event.data !== 'object') return;
+                try {
+                    if (event.data.type === 'UDIP_LOAD_DATASET' && event.data.payload) {
+                        if (window.UDIP && window.UDIP.DatasetSession) {
+                            window.UDIP.DatasetSession.loadNewDataset(event.data.payload);
+                            if (event.data.tab && window.UDIP.App) {
+                                setTimeout(function() {
+                                    window.UDIP.App.switchTab(event.data.tab);
+                                }, 300);
+                            }
+                        }
+                    } else if (event.data.type === 'UDIP_SWITCH_TAB' && event.data.tab) {
+                        if (window.UDIP && window.UDIP.App) {
+                            window.UDIP.App.switchTab(event.data.tab);
+                        }
+                    } else if (event.data.type === 'UDIP_SET_LANG' && event.data.lang) {
+                        if (event.data.lang === 'ar') sessionStorage.setItem('udip_user_explicit_ar', '1');
+                        else sessionStorage.removeItem('udip_user_explicit_ar');
+                        localStorage.setItem('udip_lang', event.data.lang);
+                        localStorage.setItem('udip_exec_lang', event.data.lang);
+                        window.location.reload();
+                    }
+                } catch(e) {
+                    console.error('[UDIP:BridgeListener] Error handling parent message:', e);
+                }
+            });
+            window.addEventListener('load', function() {
+                try {
+                    if (window.parent && window.parent !== window) {
+                        window.parent.postMessage({ type: 'UDIP_READY' }, '*');
+                    }
+                } catch(e) {}
+            });
+        })();
+    </script>
+</body>
+</html>

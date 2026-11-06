@@ -1,0 +1,247 @@
+/**
+ * ============================================================================
+ * UDIP 3D AI COMMAND CENTER - FIGMA DESIGN SYSTEM
+ * Module: js/ui/react-robot-component.css
+ * ============================================================================
+ * Figma-crafted Glassmorphism, 3D Spatial Viewport, and HUD Telemetry
+ */
+
+.udip-react-robot-mount,
+.udip-seamless-3d-stage {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    margin: 0 auto;
+    z-index: 12;
+    pointer-events: auto;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.udip-figma-robot-card {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    overflow: visible !important;
+    transition: none !important;
+    transform: none !important;
+}
+
+.udip-figma-robot-card:hover {
+    border-color: transparent !important;
+    box-shadow: none !important;
+}
+
+/* Hide card header and footer completely */
+.udip-figma-header,
+.udip-figma-footer,
+.udip-figma-bracket,
+.udip-figma-hud-corner {
+    display: none !important;
+}
+
+.udip-figma-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.udip-figma-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-family: var(--font-mono, 'JetBrains Mono', monospace);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.udip-figma-badge-react {
+    background: rgba(56, 189, 248, 0.14);
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.35);
+}
+
+.udip-figma-badge-alien {
+    background: rgba(16, 185, 129, 0.14);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.35);
+}
+
+.udip-figma-pulse-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 8px #10b981;
+    animation: udipPulseGlow 1.8s infinite ease-in-out;
+}
+
+@keyframes udipPulseGlow {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.35); opacity: 0.6; }
+}
+
+.udip-figma-title {
+    font-family: var(--font-sans, 'Inter', sans-serif);
+    font-size: 13px;
+    font-weight: 700;
+    color: #f1f5f9;
+    letter-spacing: 0.02em;
+}
+
+.udip-figma-header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-family: var(--font-mono, 'JetBrains Mono', monospace);
+    font-size: 11px;
+    color: #94a3b8;
+}
+
+.udip-figma-stat-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.udip-figma-stat-item strong {
+    color: #38bdf8;
+    font-weight: 700;
+}
+
+/* 3D Viewport Area */
+.udip-figma-viewport {
+    position: relative;
+    width: 100%;
+    height: 380px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.udip-figma-canvas-wrap {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.udip-figma-canvas-wrap canvas {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+}
+
+/* Tech Reticles & HUD Brackets */
+.udip-figma-bracket {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border-color: rgba(16, 185, 129, 0.45);
+    pointer-events: none;
+    z-index: 5;
+}
+
+.udip-figma-bracket-tl { top: 12px; left: 14px; border-top: 2px solid; border-left: 2px solid; }
+.udip-figma-bracket-tr { top: 12px; right: 14px; border-top: 2px solid; border-right: 2px solid; }
+.udip-figma-bracket-bl { bottom: 12px; left: 14px; border-bottom: 2px solid; border-left: 2px solid; }
+.udip-figma-bracket-br { bottom: 12px; right: 14px; border-bottom: 2px solid; border-right: 2px solid; }
+
+/* Corner HUD Overlays */
+.udip-figma-hud-corner {
+    position: absolute;
+    z-index: 6;
+    pointer-events: none;
+    font-family: var(--font-mono, 'JetBrains Mono', monospace);
+    font-size: 10px;
+    color: #64748b;
+    line-height: 1.5;
+}
+
+.udip-figma-hud-tl {
+    top: 28px;
+    left: 22px;
+}
+
+.udip-figma-hud-tr {
+    top: 28px;
+    right: 22px;
+    text-align: right;
+}
+
+/* Bottom Control Strip (Pills) */
+.udip-figma-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 18px;
+    background: rgba(10, 16, 26, 0.85);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.udip-figma-pills {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.udip-figma-pill-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.04);
+    color: #94a3b8;
+    font-family: var(--font-mono, 'JetBrains Mono', monospace);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.2, 0, 0.2, 1);
+}
+
+.udip-figma-pill-btn:hover {
+    background: rgba(16, 185, 129, 0.12);
+    border-color: rgba(16, 185, 129, 0.4);
+    color: #f1f5f9;
+    transform: translateY(-1px);
+}
+
+.udip-figma-pill-btn.active {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(6, 182, 212, 0.20) 100%);
+    border-color: #10b981;
+    color: #34d399;
+    box-shadow: 0 0 14px rgba(16, 185, 129, 0.35);
+}
+
+.udip-figma-footer-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-mono, 'JetBrains Mono', monospace);
+    font-size: 11px;
+    color: #64748b;
+}
+
+.udip-figma-footer-status span.highlight {
+    color: #10b981;
+    font-weight: 700;
+}

@@ -1,0 +1,297 @@
+/* ============================================================================
+   UDIP UNIFIED ENTERPRISE OPERATIONS & INTELLIGENCE CITADEL STYLESHEET
+   Consolidated 6-in-1 Super-Hub for Workspace, 3D, Benchmarks, Enterprise, Cloud, and Integrations
+   ============================================================================ */
+
+.udip-unified-hub-container {
+    width: 100%;
+    max-width: 1540px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding-bottom: 48px;
+    font-family: 'Inter', -apple-system, sans-serif;
+    color: #f8fafc;
+}
+
+/* RTL Typography & Direction */
+.udip-hub-rtl {
+    direction: rtl;
+    text-align: right;
+    font-family: 'Cairo', 'Inter', -apple-system, sans-serif;
+}
+
+.udip-hub-rtl .udip-hub-hero-left,
+.udip-hub-rtl .udip-hub-tele-block {
+    text-align: right;
+}
+
+/* ----------------------------------------------------------------------------
+   1. GRAND ENTERPRISE CITADEL COCKPIT
+   ---------------------------------------------------------------------------- */
+.udip-hub-hero-cockpit {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.94) 0%, rgba(3, 7, 18, 0.98) 100%);
+    border: 1px solid rgba(59, 130, 246, 0.28);
+    border-radius: 18px;
+    padding: 22px 26px;
+    backdrop-filter: blur(16px);
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    position: relative;
+    overflow: hidden;
+}
+
+.udip-hub-hero-cockpit::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 35%, #06b6d4 70%, #10b981 100%);
+    box-shadow: 0 0 16px rgba(59, 130, 246, 0.6);
+}
+
+.udip-hub-hero-grid {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 24px;
+    align-items: center;
+}
+
+@media (max-width: 1100px) {
+    .udip-hub-hero-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.udip-hub-hero-left {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.udip-hub-badge-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    background: rgba(59, 130, 246, 0.14);
+    border: 1px solid rgba(59, 130, 246, 0.35);
+    border-radius: 9999px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #60a5fa;
+    width: fit-content;
+}
+
+.udip-hub-title {
+    font-size: 24px;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    color: #ffffff;
+    line-height: 1.25;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.udip-hub-subtitle {
+    font-size: 12px;
+    color: #94a3b8;
+    line-height: 1.5;
+    margin: 0;
+    max-width: 720px;
+}
+
+/* 5-Point Enterprise Aggregated Telemetry Strip */
+.udip-hub-telemetry-strip {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin-top: 4px;
+}
+
+@media (max-width: 1000px) {
+    .udip-hub-telemetry-strip {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .udip-hub-telemetry-strip {
+        grid-template-columns: 1fr;
+    }
+}
+
+.udip-hub-tele-item {
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(148, 163, 184, 0.15);
+    border-radius: 12px;
+    padding: 10px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    backdrop-filter: blur(8px);
+    transition: all 0.2s ease;
+}
+
+.udip-hub-tele-item:hover {
+    border-color: rgba(59, 130, 246, 0.35);
+    transform: translateY(-2px);
+}
+
+.udip-hub-tele-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 800;
+    color: #94a3b8;
+    text-transform: uppercase;
+}
+
+.udip-hub-tele-val {
+    font-size: 18px;
+    font-weight: 900;
+    font-family: 'JetBrains Mono', monospace;
+    color: #ffffff;
+    line-height: 1.1;
+}
+
+.udip-hub-tele-desc {
+    font-size: 10px;
+    color: #cbd5e1;
+}
+
+/* ----------------------------------------------------------------------------
+   2. 6-SEGMENT CYBERNETIC SUB-NAVIGATION RIBBON
+   ---------------------------------------------------------------------------- */
+.udip-hub-subnav-bar {
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    border-radius: 14px;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(12px);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.udip-hub-pills-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.udip-hub-subtab-btn {
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    border-radius: 9px;
+    padding: 8px 14px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #cbd5e1;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.udip-hub-subtab-btn i {
+    font-size: 12px;
+    color: #94a3b8;
+    transition: color 0.2s ease;
+}
+
+.udip-hub-subtab-btn:hover {
+    background: rgba(51, 65, 85, 0.85);
+    border-color: rgba(59, 130, 246, 0.4);
+    color: #ffffff;
+}
+
+.udip-hub-subtab-btn:hover i {
+    color: #38bdf8;
+}
+
+.udip-hub-subtab-btn.active {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.25) 0%, rgba(139, 92, 246, 0.25) 100%);
+    border-color: #3b82f6;
+    color: #ffffff;
+    box-shadow: 0 0 16px rgba(59, 130, 246, 0.35);
+}
+
+.udip-hub-subtab-btn.active i {
+    color: #38bdf8;
+}
+
+.udip-hub-subtab-badge {
+    font-size: 9px;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
+}
+
+.udip-hub-subtab-btn.active .udip-hub-subtab-badge {
+    background: rgba(59, 130, 246, 0.35);
+    color: #93c5fd;
+}
+
+.udip-hub-live-tag {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: #94a3b8;
+    font-family: 'JetBrains Mono', monospace;
+    padding-right: 8px;
+}
+
+.udip-hub-rtl .udip-hub-live-tag {
+    padding-right: 0;
+    padding-left: 8px;
+}
+
+.udip-hub-live-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 10px #10b981;
+    animation: hubPulse 2s infinite;
+}
+
+@keyframes hubPulse {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+/* ----------------------------------------------------------------------------
+   3. VIEWPORT CONTAINER & TRANSITION
+   ---------------------------------------------------------------------------- */
+.udip-hub-content-viewport {
+    width: 100%;
+    min-height: 500px;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.udip-hub-content-viewport.fading {
+    opacity: 0.3;
+    transform: translateY(4px);
+}
