@@ -1,4 +1,4 @@
-import { Shield, Sparkles, Code2, Award, Cpu } from 'lucide-react';
+import { Shield, Sparkles, Code2, Award, Cpu, ExternalLink } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
 
 export function Footer() {
@@ -29,28 +29,35 @@ export function Footer() {
           </span>
         </div>
 
-        {/* Center: Developer Signature (as in Chemistry platform) */}
-        <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900/90 border border-slate-800 shadow-inner group hover:border-cyan-500/40 transition-all">
-          <Code2 className="w-3.5 h-3.5 text-cyan-400 group-hover:rotate-12 transition-transform" />
-          <span className="text-slate-300 font-medium text-xs sm:text-sm">
+        {/* Center: Developer Signature with Link to PixoraCo Facebook Page */}
+        <a 
+          href="https://www.facebook.com/share/1BZWXmCZRm/" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          title="Visit PixoraCo on Facebook"
+          className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900/90 border border-slate-800 shadow-inner group hover:border-cyan-500/50 hover:bg-slate-850 hover:shadow-cyan-500/10 hover:shadow-lg transition-all duration-300 cursor-pointer"
+        >
+          <Code2 className="w-3.5 h-3.5 text-cyan-400 group-hover:rotate-12 transition-transform duration-300" />
+          <span className="text-slate-300 font-medium text-xs sm:text-sm flex items-center gap-1.5">
             {isArabic ? (
               <>
-                <span className="text-slate-400">تصميم وتطوير: </span>
-                <span className="font-bold bg-gradient-to-r from-cyan-400 via-sky-300 to-indigo-400 bg-clip-text text-transparent">
-                  م/ محمد حسن (Eng. Mohamed Hassan)
+                <span className="text-slate-400">تصميم وتطوير:</span>
+                <span className="font-bold bg-gradient-to-r from-cyan-400 via-sky-300 to-indigo-400 bg-clip-text text-transparent group-hover:underline decoration-cyan-400/50">
+                  PixoraCo
                 </span>
               </>
             ) : (
               <>
-                <span className="text-slate-400">Designed & Developed by </span>
-                <span className="font-bold bg-gradient-to-r from-cyan-400 via-sky-300 to-indigo-400 bg-clip-text text-transparent">
-                  Eng. Mohamed Hassan
+                <span className="text-slate-400">Designed & Developed by</span>
+                <span className="font-bold bg-gradient-to-r from-cyan-400 via-sky-300 to-indigo-400 bg-clip-text text-transparent group-hover:underline decoration-cyan-400/50">
+                  PixoraCo
                 </span>
               </>
             )}
+            <ExternalLink className="w-3 h-3 text-slate-500 group-hover:text-cyan-400 transition-colors ml-0.5" />
           </span>
           <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
-        </div>
+        </a>
 
         {/* Right: Architecture & Compliance Tags */}
         <div className="flex items-center gap-3 text-slate-500 text-[11px] sm:text-xs">
