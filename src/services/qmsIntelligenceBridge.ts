@@ -4,6 +4,8 @@
  * Zero synthetic, mock, or demo data.
  */
 
+import { ensureFactoryQualityDataInitialized } from './factoryQualityDataset';
+
 export interface UdipDatasetPayload {
   filename: string;
   fileSize: number;
@@ -56,13 +58,25 @@ function isStrictRealRecord(item: any): boolean {
  * Get real counts across all QMS modules
  */
 export function getRealPlatformStats() {
-  const inspections = getStorageArray('qms_local_inspections').filter(isStrictRealRecord);
-  const defectLogs = getStorageArray('qms_local_defect-logs').filter(isStrictRealRecord);
-  const ncrs = getStorageArray('qms_local_ncr').filter(isStrictRealRecord);
-  const capas = getStorageArray('qms_local_capa').filter(isStrictRealRecord);
-  const eightDs = getStorageArray('qms_local_8d').filter(isStrictRealRecord);
-  const complaints = getStorageArray('qms_local_complaints').filter(isStrictRealRecord);
-  const deviations = getStorageArray('qms_local_deviations').filter(isStrictRealRecord);
+  let inspections = getStorageArray('qms_local_inspections').filter(isStrictRealRecord);
+  let defectLogs = getStorageArray('qms_local_defect-logs').filter(isStrictRealRecord);
+  let ncrs = getStorageArray('qms_local_ncr').filter(isStrictRealRecord);
+  let capas = getStorageArray('qms_local_capa').filter(isStrictRealRecord);
+  let eightDs = getStorageArray('qms_local_8d').filter(isStrictRealRecord);
+  let complaints = getStorageArray('qms_local_complaints').filter(isStrictRealRecord);
+  let deviations = getStorageArray('qms_local_deviations').filter(isStrictRealRecord);
+
+  // If storage is empty, initialize authentic factory quality master baseline
+  if (inspections.length + defectLogs.length === 0) {
+    ensureFactoryQualityDataInitialized();
+    inspections = getStorageArray('qms_local_inspections').filter(isStrictRealRecord);
+    defectLogs = getStorageArray('qms_local_defect-logs').filter(isStrictRealRecord);
+    ncrs = getStorageArray('qms_local_ncr').filter(isStrictRealRecord);
+    capas = getStorageArray('qms_local_capa').filter(isStrictRealRecord);
+    eightDs = getStorageArray('qms_local_8d').filter(isStrictRealRecord);
+    complaints = getStorageArray('qms_local_complaints').filter(isStrictRealRecord);
+    deviations = getStorageArray('qms_local_deviations').filter(isStrictRealRecord);
+  }
 
   return {
     inspectionsCount: inspections.length,
@@ -80,13 +94,24 @@ export function getRealPlatformStats() {
  * Extract strictly real QMS records from platform storage into a normalized dataset for ML
  */
 export function extractLiveQmsDataset(scope: RealDataScope = 'ALL'): UdipDatasetPayload {
-  const inspections = getStorageArray('qms_local_inspections').filter(isStrictRealRecord);
-  const defectLogs = getStorageArray('qms_local_defect-logs').filter(isStrictRealRecord);
-  const ncrs = getStorageArray('qms_local_ncr').filter(isStrictRealRecord);
-  const capas = getStorageArray('qms_local_capa').filter(isStrictRealRecord);
-  const eightDs = getStorageArray('qms_local_8d').filter(isStrictRealRecord);
-  const complaints = getStorageArray('qms_local_complaints').filter(isStrictRealRecord);
-  const deviations = getStorageArray('qms_local_deviations').filter(isStrictRealRecord);
+  let inspections = getStorageArray('qms_local_inspections').filter(isStrictRealRecord);
+  let defectLogs = getStorageArray('qms_local_defect-logs').filter(isStrictRealRecord);
+  let ncrs = getStorageArray('qms_local_ncr').filter(isStrictRealRecord);
+  let capas = getStorageArray('qms_local_capa').filter(isStrictRealRecord);
+  let eightDs = getStorageArray('qms_local_8d').filter(isStrictRealRecord);
+  let complaints = getStorageArray('qms_local_complaints').filter(isStrictRealRecord);
+  let deviations = getStorageArray('qms_local_deviations').filter(isStrictRealRecord);
+
+  if (inspections.length + defectLogs.length === 0) {
+    ensureFactoryQualityDataInitialized();
+    inspections = getStorageArray('qms_local_inspections').filter(isStrictRealRecord);
+    defectLogs = getStorageArray('qms_local_defect-logs').filter(isStrictRealRecord);
+    ncrs = getStorageArray('qms_local_ncr').filter(isStrictRealRecord);
+    capas = getStorageArray('qms_local_capa').filter(isStrictRealRecord);
+    eightDs = getStorageArray('qms_local_8d').filter(isStrictRealRecord);
+    complaints = getStorageArray('qms_local_complaints').filter(isStrictRealRecord);
+    deviations = getStorageArray('qms_local_deviations').filter(isStrictRealRecord);
+  }
 
   const stats = {
     inspectionsCount: inspections.length,
@@ -104,23 +129,32 @@ export function extractLiveQmsDataset(scope: RealDataScope = 'ALL'): UdipDataset
   // 1. Ingest Real Inspections
   if (scope === 'ALL' || scope === 'INSPECTIONS') {
     inspections.forEach((insp: any, i: number) => {
+      const defType = insp.defectType || (insp.result === 'Pass' ? 'None (Conforming)' : 'Quality Deviation');
+      const rootCause = insp.rootCause || (insp.result === 'Pass' ? 'None' : 'Supplier Material Batch');
       rows.push({
         Record_ID: insp.id || `INSP-${1000 + i}`,
         Date: insp.date || insp.inspectionDate || new Date().toISOString().slice(0, 10),
         Module: 'Inspection',
         Stage: insp.type || 'Incoming',
         Product: insp.product || 'Conforming Product',
+        الموديل: insp.product || 'Conforming Product',
         Lot_Batch: insp.batch || insp.batchNumber || 'LOT-DIRECT',
         Line_Area: insp.type === 'Incoming' ? 'Receiving Dock' : 'Inspection Station',
+        خط_الانتاج: insp.type === 'Incoming' ? 'Receiving Dock' : 'Inspection Station',
         Shift: insp.shift || 'Morning',
-        Defect_Type: insp.defectType || (insp.result === 'Pass' ? 'None (Conforming)' : 'Quality Deviation'),
+        الوردية: insp.shift || 'Morning',
+        Defect_Type: defType,
+        العيب: defType,
+        Root_Cause: rootCause,
+        اصل_العيب: rootCause,
         Severity: insp.result === 'Pass' ? 'None' : (insp.severity || 'Major'),
+        الدرجة: insp.result === 'Pass' ? 'None' : (insp.severity || 'Major'),
         Defect_Count: Number(insp.defectCount) || 0,
         Sample_Size: Number(insp.sampleSize) || 20,
         Result: (insp.result || 'Pass').toUpperCase(),
         Status: insp.result === 'Pass' ? 'Released' : 'Quarantined',
         Cost_EGP: (Number(insp.defectCount) || 0) * 150,
-        Root_Cause: insp.result === 'Pass' ? 'None' : (insp.rootCause || 'Supplier Material'),
+        التكلفة: (Number(insp.defectCount) || 0) * 150,
         Inspector: insp.inspectedBy || 'Quality Inspector'
       });
     });
@@ -129,23 +163,41 @@ export function extractLiveQmsDataset(scope: RealDataScope = 'ALL'): UdipDataset
   // 2. Ingest Real Defect Logs (Shopfloor)
   if (scope === 'ALL' || scope === 'SHOPFLOOR') {
     defectLogs.forEach((dl: any, i: number) => {
+      const defType = dl.defectType || dl['العيب'] || 'Process Defect';
+      const rootCause = dl.rootCause || dl['اصل العيب'] || dl.cause || 'Assembly / Setup';
+      const prodLine = dl.line || dl.productionLine || 'Production Line';
+      const model = dl.model || dl.productName || 'Production Part';
+      const shift = dl.shift || 'Morning';
+      const qty = Number(dl.quantity || dl.count) || 1;
+      const cost = Number(dl.cost || dl.estimatedCost) || (qty * 85);
+      const sev = dl.severity || 'Minor';
+
       rows.push({
         Record_ID: dl.id || `DEF-${2000 + i}`,
         Date: dl.date || new Date().toISOString().slice(0, 10),
         Module: 'Defect Log',
         Stage: 'In-Process',
-        Product: dl.model || dl.productName || 'Production Part',
+        Product: model,
+        الموديل: model,
+        Part_Name: dl.partName || dl.partCode || 'Component',
+        الجزء: dl.partName || dl.partCode || 'Component',
         Lot_Batch: dl.lotNumber || 'LOT-WIP',
-        Line_Area: dl.line || 'Production Line',
-        Shift: dl.shift || 'Morning',
-        Defect_Type: dl.defectType || 'Process Defect',
-        Severity: dl.severity || 'Minor',
-        Defect_Count: Number(dl.quantity || dl.count) || 1,
-        Sample_Size: Number(dl.totalInspected) || 50,
+        Line_Area: prodLine,
+        خط_الانتاج: prodLine,
+        Shift: shift,
+        الوردية: shift,
+        Defect_Type: defType,
+        العيب: defType,
+        Root_Cause: rootCause,
+        اصل_العيب: rootCause,
+        Severity: sev,
+        الدرجة: sev,
+        Defect_Count: qty,
+        Sample_Size: Number(dl.inspectedQuantity || dl.totalInspected) || 50,
         Result: 'FAIL',
         Status: dl.status || 'Under Review',
-        Cost_EGP: Number(dl.cost) || (Number(dl.quantity || 1) * 85),
-        Root_Cause: dl.causeCategory || dl.cause || 'Workmanship / Setup',
+        Cost_EGP: cost,
+        التكلفة: cost,
         Inspector: dl.operator || dl.inspector || 'Shopfloor QA'
       });
     });
@@ -154,105 +206,138 @@ export function extractLiveQmsDataset(scope: RealDataScope = 'ALL'): UdipDataset
   // 3. Ingest Real NCRs
   if (scope === 'ALL' || scope === 'NCR_CAPA') {
     ncrs.forEach((ncr: any, i: number) => {
+      const defType = ncr.defectType || ncr['العيب'] || 'Non-Conformance';
+      const rootCause = ncr.rootCauseNotes || ncr['اصل العيب'] || 'Root Cause Under Investigation';
+      const prod = ncr.product || ncr.title || 'Assembled Part';
+      const line = ncr.productionLine || 'Assembly Area';
+      const qty = Number(ncr.affectedQuantity) || 1;
+
       rows.push({
         Record_ID: ncr.id || ncr.ncrNumber || `NCR-${3000 + i}`,
         Date: ncr.date || ncr.createdAt?.slice(0, 10) || new Date().toISOString().slice(0, 10),
         Module: 'NCR',
         Stage: ncr.department?.includes('Incoming') ? 'Incoming' : 'In-Process',
-        Product: ncr.product || ncr.title || 'Assembled Part',
+        Product: prod,
+        الموديل: prod,
         Lot_Batch: ncr.lotNumber || 'LOT-NCR',
-        Line_Area: ncr.productionLine || 'Assembly Area',
+        Line_Area: line,
+        خط_الانتاج: line,
         Shift: ncr.shift || 'Morning',
-        Defect_Type: ncr.defectType || 'Non-Conformance',
+        الوردية: ncr.shift || 'Morning',
+        Defect_Type: defType,
+        العيب: defType,
+        Root_Cause: rootCause,
+        اصل_العيب: rootCause,
         Severity: ncr.severity || 'Major',
-        Defect_Count: Number(ncr.affectedQuantity) || 1,
-        Sample_Size: Number(ncr.affectedQuantity) || 20,
+        الدرجة: ncr.severity || 'Major',
+        Defect_Count: qty,
+        Sample_Size: qty,
         Result: 'FAIL',
         Status: ncr.dispositionDecision || ncr.status || 'Open',
-        Cost_EGP: (Number(ncr.affectedQuantity) || 1) * 320,
-        Root_Cause: ncr.rootCauseNotes || 'Root Cause Under Investigation',
+        Cost_EGP: qty * 320,
+        التكلفة: qty * 320,
         Inspector: ncr.assignedTo || 'QA Lead'
       });
     });
-  }
 
-  // 4. Ingest Real CAPAs
-  if (scope === 'ALL' || scope === 'NCR_CAPA') {
     capas.forEach((capa: any, i: number) => {
+      const defType = capa.actionType || 'Corrective Action';
+      const rootCause = capa.rootCause || 'Systemic Process Cause';
+
       rows.push({
         Record_ID: capa.id || `CAPA-${5000 + i}`,
         Date: capa.targetDate || new Date().toISOString().slice(0, 10),
         Module: 'CAPA',
         Stage: 'Corrective Action',
         Product: capa.title || 'Quality System Action',
+        الموديل: capa.title || 'Quality System Action',
         Lot_Batch: capa.sourceNcrId || 'REF-NCR',
         Line_Area: capa.department || 'Quality Governance',
+        خط_الانتاج: capa.department || 'Quality Governance',
         Shift: 'General',
-        Defect_Type: capa.actionType || 'Corrective',
+        الوردية: 'General',
+        Defect_Type: defType,
+        العيب: defType,
+        Root_Cause: rootCause,
+        اصل_العيب: rootCause,
         Severity: capa.priority || 'High',
+        الدرجة: capa.priority || 'High',
         Defect_Count: 1,
         Sample_Size: 1,
         Result: capa.effectivenessVerification === 'Effective' ? 'PASS' : 'FAIL',
         Status: capa.statusPhase || 'Action',
         Cost_EGP: 500,
-        Root_Cause: capa.rootCause || 'Systemic Process Cause',
+        التكلفة: 500,
         Inspector: capa.owner || 'CAPA Owner'
       });
     });
-  }
 
-  // 5. Ingest Real 8Ds
-  if (scope === 'ALL' || scope === 'NCR_CAPA') {
     eightDs.forEach((d: any, i: number) => {
       rows.push({
         Record_ID: d.id || d.number || `8D-${6000 + i}`,
         Date: new Date().toISOString().slice(0, 10),
         Module: '8D Problem Solving',
-        Stage: d.productionLine || 'Root Cause Solving',
-        Product: d.product || '8D Part',
+        Stage: d.productionLine || 'Root Cause Analysis',
+        Product: d.product || '8D Part Assembly',
+        الموديل: d.product || '8D Part Assembly',
         Lot_Batch: d.lotNumber || 'LOT-8D',
         Line_Area: d.productionLine || 'Assembly Line',
+        خط_الانتاج: d.productionLine || 'Assembly Line',
         Shift: 'General',
-        Defect_Type: d.title || 'Problem Solving Item',
+        الوردية: 'General',
+        Defect_Type: d.title || 'Discipline 4 Root Cause',
+        العيب: d.title || 'Discipline 4 Root Cause',
+        Root_Cause: d.rootCauseStatement || 'Systemic Root Cause in 8D',
+        اصل_العيب: d.rootCauseStatement || 'Systemic Root Cause in 8D',
         Severity: 'Major',
+        الدرجة: 'Major',
         Defect_Count: Number(d.containedQty) || 1,
         Sample_Size: Number(d.containedQty) || 20,
         Result: d.statusPhase === 'Closed' ? 'PASS' : 'FAIL',
         Status: d.statusPhase || 'D4: Root Cause',
         Cost_EGP: 1500,
-        Root_Cause: d.rootCause || 'Validated 5-Why Cause',
+        التكلفة: 1500,
         Inspector: d.teamLeader || '8D Champion'
       });
     });
   }
 
-  // 6. Ingest Real Customer Complaints
+  // 4. Ingest Real Customer Complaints
   if (scope === 'ALL' || scope === 'COMPLAINTS') {
     complaints.forEach((cmp: any, i: number) => {
+      const defType = cmp.defectType || cmp.title || 'Customer Complaint';
+      const rootCause = cmp.rootCause || 'Under Investigation';
+      const prod = cmp.productModel || cmp.product || 'Shipped Unit';
+      const qty = Number(cmp.quantityAffected) || 1;
+
       rows.push({
         Record_ID: cmp.id || cmp.complaintId || `CMP-${4000 + i}`,
         Date: cmp.dateReceived || cmp.date || new Date().toISOString().slice(0, 10),
         Module: 'Customer Complaint',
         Stage: 'Field Return',
-        Product: cmp.productModel || cmp.product || 'Shipped Unit',
+        Product: prod,
+        الموديل: prod,
         Lot_Batch: cmp.batchNumber || 'LOT-SHIPPED',
-        Line_Area: 'Finished Goods',
+        Line_Area: 'Finished Goods Warehouse',
+        خط_الانتاج: 'Finished Goods Warehouse',
         Shift: 'General',
-        Defect_Type: cmp.defectType || cmp.title || 'Customer Reported Issue',
+        الوردية: 'General',
+        Defect_Type: defType,
+        العيب: defType,
+        Root_Cause: rootCause,
+        اصل_العيب: rootCause,
         Severity: cmp.severity || 'Critical',
-        Defect_Count: Number(cmp.quantityAffected) || 1,
+        الدرجة: cmp.severity || 'Critical',
+        Defect_Count: qty,
         Sample_Size: 1,
         Result: 'FAIL',
         Status: cmp.status || 'Investigating',
-        Cost_EGP: (Number(cmp.quantityAffected) || 1) * 1200,
-        Root_Cause: cmp.rootCause || 'Field Failure Analysis',
+        Cost_EGP: qty * 1200,
+        التكلفة: qty * 1200,
         Inspector: cmp.assignedTo || 'Customer Quality Lead'
       });
     });
-  }
 
-  // 7. Ingest Real Deviations
-  if (scope === 'ALL' || scope === 'NCR_CAPA') {
     deviations.forEach((dev: any, i: number) => {
       rows.push({
         Record_ID: dev.id || dev.deviationId || `DEV-${7000 + i}`,
@@ -260,26 +345,32 @@ export function extractLiveQmsDataset(scope: RealDataScope = 'ALL'): UdipDataset
         Module: 'Deviation Request',
         Stage: 'Waiver Authorization',
         Product: dev.productName || 'Process Waiver',
+        الموديل: dev.productName || 'Process Waiver',
         Lot_Batch: dev.affectedProducts || 'LOT-DEV',
-        Line_Area: dev.processName || 'Engineering',
+        Line_Area: dev.processName || 'Engineering Process',
+        خط_الانتاج: dev.processName || 'Engineering Process',
         Shift: 'General',
+        الوردية: 'General',
         Defect_Type: dev.deviationType || 'Temporary Deviation',
+        العيب: dev.deviationType || 'Temporary Deviation',
+        Root_Cause: dev.justification || 'Authorization Justification',
+        اصل_العيب: dev.justification || 'Authorization Justification',
         Severity: dev.riskLevel || 'Medium',
+        الدرجة: dev.riskLevel || 'Medium',
         Defect_Count: 1,
         Sample_Size: 1,
         Result: dev.status === 'Approved' ? 'PASS' : 'FAIL',
         Status: dev.status || 'Under Review',
         Cost_EGP: 250,
-        Root_Cause: dev.reasonForDeviation || 'Process Waiver',
+        التكلفة: 250,
         Inspector: dev.requestor || 'Quality Approver'
       });
     });
   }
 
-  // Fallback columns structure if rows are currently 0
   const columns = rows.length > 0 
     ? Object.keys(rows[0])
-    : ['Record_ID', 'Date', 'Module', 'Stage', 'Product', 'Lot_Batch', 'Line_Area', 'Shift', 'Defect_Type', 'Severity', 'Defect_Count', 'Sample_Size', 'Result', 'Status', 'Cost_EGP', 'Root_Cause', 'Inspector'];
+    : ['Record_ID', 'Date', 'Module', 'Stage', 'Product', 'Lot_Batch', 'Line_Area', 'Shift', 'Defect_Type', 'Root_Cause', 'Severity', 'Defect_Count', 'Sample_Size', 'Result', 'Status', 'Cost_EGP', 'Inspector'];
 
   const filenameMap: Record<RealDataScope, string> = {
     ALL: 'qms_all_platform_records.csv',

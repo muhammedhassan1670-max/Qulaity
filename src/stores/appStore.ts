@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { ensureFactoryQualityDataInitialized } from '@/services/factoryQualityDataset';
 import { useConfigStore } from './configStore';
 
 export interface User {
@@ -126,6 +127,9 @@ export const useAppStore = create<AppState>()(
       initializeApp: async () => {
         // Reinitialize config defaults (in case of new updates to persisted store)
         useConfigStore.getState().reinitializeDefaults();
+
+        // Ensure authentic factory operational records exist for AI / ML defect prediction
+        ensureFactoryQualityDataInitialized();
 
         // If already authenticated (rehydrated), don't overwrite user on refresh, but ensure avatar.
         if (get().user) {

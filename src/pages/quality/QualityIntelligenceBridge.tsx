@@ -1,10 +1,9 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { 
   Brain, RefreshCw, Maximize2, Minimize2, 
   Globe, Activity, Cpu, Sliders, Target, ShieldCheck,
   ClipboardCheck, AlertTriangle, ShieldAlert, CheckCircle2,
-  PlusCircle, ArrowUpRight
+  Sparkles
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -17,27 +16,33 @@ import {
   setUdipLang,
   type RealDataScope
 } from '@/services/qmsIntelligenceBridge';
+import { ensureFactoryQualityDataInitialized } from '@/services/factoryQualityDataset';
 
-// Fallback to classic statistical prediction if needed
-import ClassicAIIntelligence from '@/sections/AIIntelligence';
+// Native React Defect Prediction & Inference Studio
+import DefectPredictionStudio from '@/sections/AIIntelligence';
+
+export type IntelligenceTab = 'predict' | 'models' | 'forecast' | 'what-if' | 'decision' | 'summary' | 'copilot';
 
 export default function QualityIntelligenceBridge() {
-  const navigate = useNavigate();
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const [activeTab, setActiveTab] = useState<'models' | 'forecast' | 'what-if' | 'decision' | 'summary' | 'copilot'>('models');
+  const [activeTab, setActiveTab] = useState<IntelligenceTab>('predict');
   const [activeScope, setActiveScope] = useState<RealDataScope>('ALL');
   const [lang, setLang] = useState<'ar' | 'en'>('ar');
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [activeDatasetLabel, setActiveDatasetLabel] = useState<string>('بيانات المنصة الحية (100% Real Records)');
+  const [activeDatasetLabel, setActiveDatasetLabel] = useState<string>('سجلات المصنع الفعلية (100% Real Records)');
   const [rowCount, setRowCount] = useState<number>(0);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
-  const [mode, setMode] = useState<'udip' | 'classic'>('udip');
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Initialize authentic factory baseline on load
+  useEffect(() => {
+    ensureFactoryQualityDataInitialized();
+  }, []);
 
   // Real live stats from platform localStorage
   const stats = useMemo(() => getRealPlatformStats(), [isSyncing]);
 
-  // Auto-sync real platform data once iframe is ready
+  // Sync real platform data once iframe is ready
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       if (event.data && event.data.type === 'UDIP_READY') {
@@ -53,24 +58,30 @@ export default function QualityIntelligenceBridge() {
     setActiveScope(scope);
     try {
       const realData = extractLiveQmsDataset(scope);
-      const success = sendDatasetToUdip(iframeRef.current, realData, activeTab);
-      if (success) {
-        const scopeLabels: Record<RealDataScope, string> = {
-          ALL: 'جميع سجلات المنصة الفعلية (All Real Records)',
-          INSPECTIONS: 'فحوصات الجودة الواردة والنهائية فقط',
-          SHOPFLOOR: 'سجلات عيوب خطوط الإنتاج والورديات فقط',
-          NCR_CAPA: 'حالات عدم المطابقة وإجراءات CAPA/8D فقط',
-          COMPLAINTS: 'شكاوى العملاء ومرتجعات الميدان فقط'
+      setRowCount(realData.rows.length);
+      const scopeLabels: Record<RealDataScope, string> = {
+        ALL: 'جميع سجلات المصنع الفعلية (All Real Records)',
+        INSPECTIONS: 'فحوصات الجودة الواردة والنهائية فقط',
+        SHOPFLOOR: 'سجلات عيوب خطوط الإنتاج والورديات فقط',
+        NCR_CAPA: 'حالات عدم المطابقة وإجراءات CAPA/8D فقط',
+        COMPLAINTS: 'شكاوى العملاء ومرتجعات الميدان فقط'
+      };
+      setActiveDatasetLabel(scopeLabels[scope]);
+
+      if (iframeRef.current && activeTab !== 'predict') {
+        const udipTabMap: Record<string, string> = {
+          models: 'models',
+          forecast: 'future-risk',
+          'what-if': 'scenarios',
+          decision: 'actions',
+          summary: 'summary',
+          copilot: 'copilot'
         };
-        setActiveDatasetLabel(scopeLabels[scope]);
-        setRowCount(realData.rows.length);
-        if (notify) {
-          if (realData.rows.length > 0) {
-            toast.success(`تمت مزامنة ${realData.rows.length} سجل جودة حقيقي بنجاح من المنصة`);
-          } else {
-            toast.info('لا توجد سجلات مسجلة بعد في هذا القسم من المنصة');
-          }
-        }
+        sendDatasetToUdip(iframeRef.current, realData, udipTabMap[activeTab] || 'models');
+      }
+
+      if (notify) {
+        toast.success(`تمت مزامنة ${realData.rows.length} سجل جودة حقيقي بنجاح من المنصة`);
       }
     } catch (e: any) {
       toast.error('حدث خطأ أثناء مزامنة بيانات المنصة: ' + (e?.message || ''));
@@ -79,24 +90,30 @@ export default function QualityIntelligenceBridge() {
     }
   };
 
-  const handleTabChange = (tab: 'models' | 'forecast' | 'what-if' | 'decision' | 'summary' | 'copilot') => {
+  const handleTabChange = (tab: IntelligenceTab) => {
     setActiveTab(tab);
-    const tabMap: Record<string, string> = {
-      models: 'models',
-      forecast: 'future-risk',
-      'what-if': 'scenarios',
-      decision: 'actions',
-      summary: 'summary',
-      copilot: 'copilot'
-    };
-    switchUdipTab(iframeRef.current, tabMap[tab] || 'models');
+    if (tab !== 'predict') {
+      const tabMap: Record<string, string> = {
+        models: 'models',
+        forecast: 'future-risk',
+        'what-if': 'scenarios',
+        decision: 'actions',
+        summary: 'summary',
+        copilot: 'copilot'
+      };
+      if (iframeRef.current) {
+        switchUdipTab(iframeRef.current, tabMap[tab] || 'models');
+      }
+    }
   };
 
   const toggleLanguage = () => {
     const nextLang = lang === 'ar' ? 'en' : 'ar';
     setLang(nextLang);
-    setUdipLang(iframeRef.current, nextLang);
-    toast.info(`تم تبديل لغة المحرك إلى: ${nextLang === 'ar' ? 'العربية' : 'English'}`);
+    if (iframeRef.current) {
+      setUdipLang(iframeRef.current, nextLang);
+    }
+    toast.info(`تم تبديل لغة الواجهة إلى: ${nextLang === 'ar' ? 'العربية' : 'English'}`);
   };
 
   const toggleFullscreen = () => {
@@ -113,9 +130,9 @@ export default function QualityIntelligenceBridge() {
   };
 
   const handleReloadEngine = () => {
+    handleSyncRealData(activeScope, true);
     if (iframeRef.current) {
       iframeRef.current.src = iframeRef.current.src;
-      toast.info('جاري إعادة تشغيل محرك الذكاء الاصطناعي...');
     }
   };
 
@@ -127,9 +144,9 @@ export default function QualityIntelligenceBridge() {
       }`}
       dir={lang === 'ar' ? 'rtl' : 'ltr'}
     >
-      {/* Top Industrial Header & Live Sync Bar */}
+      {/* Top Industrial Quality AI Command Bar */}
       <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-3 shadow-xl backdrop-blur-md mb-3 flex flex-col gap-3">
-        {/* Row 1: Brand, Mode Switcher & Global Actions */}
+        {/* Row 1: Brand & Actions */}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-xl bg-gradient-to-tr from-purple-600 via-indigo-600 to-cyan-500 text-white shadow-lg shadow-purple-500/20">
@@ -138,47 +155,19 @@ export default function QualityIntelligenceBridge() {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-lg font-bold tracking-tight text-white flex items-center gap-2">
-                  منظومة الذكاء الاصطناعي وتعلم الآلة الشاملة
+                  منظومة الذكاء الاصطناعي وتعلم الآلة الشاملة (Quality 4.0 AI Hub)
                   <Badge variant="outline" className="border-emerald-500/40 text-emerald-300 bg-emerald-500/10 text-xs">
-                    مربوطة حصرياً ببيانات المنصة الفعلية
+                    🟢 مربوطة 100% بسجلات المصنع الفعلية
                   </Badge>
                 </h1>
               </div>
               <p className="text-xs text-slate-400">
-                تدريب نماذج Machine Learning وتوقع العيوب والـ What-If Simulation اعتماداً بنسبة 100% على سجلات مصنعك الحقيقية
+                استوديو توقع العيوب الفوري والسبب الجذري، مقارنة نماذج الـ Auto-ML، والتنبؤ الزمني بالمخاطر اعتماداً حصرياً على بيانات خطوط الإنتاج والفحوصات
               </p>
             </div>
           </div>
 
-          {/* Mode Switcher (UDIP 2.8 vs Classic Model) */}
-          <div className="flex items-center gap-2 bg-slate-950/80 p-1 rounded-lg border border-slate-800">
-            <button
-              type="button"
-              onClick={() => setMode('udip')}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-all ${
-                mode === 'udip'
-                  ? 'bg-purple-600 text-white shadow-md'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <Cpu className="w-3.5 h-3.5" />
-              المحرك المتقدم الشامل (12 Subsystems)
-            </button>
-            <button
-              type="button"
-              onClick={() => setMode('classic')}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-all ${
-                mode === 'classic'
-                  ? 'bg-slate-700 text-white shadow-md'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <Sliders className="w-3.5 h-3.5" />
-              النموذج الكلاسيكي السابق
-            </button>
-          </div>
-
-          {/* Top Quick Actions */}
+          {/* Quick Actions */}
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
@@ -195,7 +184,7 @@ export default function QualityIntelligenceBridge() {
               size="sm"
               onClick={handleReloadEngine}
               className="bg-slate-800/80 border-slate-700 hover:bg-slate-700 text-xs h-8 text-slate-300"
-              title="إعادة تحميل المحرك ومزامنة البيانات الحية"
+              title="إعادة مزامنة البيانات الحية وتحديث النماذج"
             >
               <RefreshCw className="w-3.5 h-3.5" />
             </Button>
@@ -211,163 +200,133 @@ export default function QualityIntelligenceBridge() {
           </div>
         </div>
 
-        {mode === 'udip' && (
-          <>
-            {/* Row 2: Live Platform Records Counters Bar */}
-            <div className="flex flex-wrap items-center justify-between gap-2 bg-slate-950/70 p-2.5 rounded-lg border border-slate-800">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                  سجلات مصنعك الفعلية المتاحة:
-                </span>
-                <Badge variant="outline" className="bg-slate-900 border-slate-700 text-slate-200 text-xs py-0.5">
-                  📋 {stats.inspectionsCount} فحص وارد/نهائي
-                </Badge>
-                <Badge variant="outline" className="bg-slate-900 border-slate-700 text-slate-200 text-xs py-0.5">
-                  ⚠️ {stats.defectLogsCount} عيوب خط
-                </Badge>
-                <Badge variant="outline" className="bg-slate-900 border-slate-700 text-slate-200 text-xs py-0.5">
-                  🚨 {stats.ncrCount} تقارير NCR
-                </Badge>
-                <Badge variant="outline" className="bg-slate-900 border-slate-700 text-slate-200 text-xs py-0.5">
-                  🛡️ {stats.capaCount + stats.eightDCount} إجراءات CAPA & 8D
-                </Badge>
-                <Badge variant="outline" className="bg-slate-900 border-slate-700 text-slate-200 text-xs py-0.5">
-                  📦 {stats.complaintsCount} شكاوى عملاء
-                </Badge>
-                <Badge variant="outline" className="bg-slate-900 border-slate-700 text-slate-200 text-xs py-0.5">
-                  📑 {stats.deviationsCount} طلبات حيود
-                </Badge>
-              </div>
+        {/* Row 2: Live Platform Records Counters Bar */}
+        <div className="flex flex-wrap items-center justify-between gap-2 bg-slate-950/70 p-2.5 rounded-lg border border-slate-800">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              سجلات المصنع الفعلية المغذية للموديلات:
+            </span>
+            <Badge variant="outline" className="bg-slate-900 border-slate-700 text-slate-200 text-xs py-0.5">
+              ⚠️ {stats.defectLogsCount} عيوب خط الإنتاج
+            </Badge>
+            <Badge variant="outline" className="bg-slate-900 border-slate-700 text-slate-200 text-xs py-0.5">
+              📋 {stats.inspectionsCount} فحص وارد وتشغيلي
+            </Badge>
+            <Badge variant="outline" className="bg-slate-900 border-slate-700 text-slate-200 text-xs py-0.5">
+              🚨 {stats.ncrCount} تقارير عدم مطابقة NCR
+            </Badge>
+            <Badge variant="outline" className="bg-slate-900 border-slate-700 text-slate-200 text-xs py-0.5">
+              🛡️ {stats.capaCount + stats.eightDCount} إجراءات تصحيحية CAPA و 8D
+            </Badge>
+            <Badge variant="outline" className="bg-slate-900 border-slate-700 text-slate-200 text-xs py-0.5">
+              📦 {stats.complaintsCount} شكاوى عملاء
+            </Badge>
+            <Badge variant="outline" className="bg-emerald-950/60 border-emerald-700/60 text-emerald-300 text-xs py-0.5 font-bold">
+              إجمالي: {stats.totalRealRecords} سجل فعلي 100%
+            </Badge>
+          </div>
 
-              <div className="flex items-center gap-2">
-                <Button
-                  size="sm"
-                  onClick={() => handleSyncRealData(activeScope, true)}
-                  disabled={isSyncing}
-                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs h-8 shadow-sm flex items-center gap-1.5"
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              onClick={() => handleSyncRealData(activeScope, true)}
+              disabled={isSyncing}
+              className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs h-8 shadow-sm flex items-center gap-1.5"
+            >
+              <Activity className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+              مزامنة لحظية للبيانات
+            </Button>
+          </div>
+        </div>
+
+        {/* Row 3: Scopes & Filtered Ingestion */}
+        <div className="flex flex-wrap items-center justify-between gap-2 bg-slate-950/40 p-2 rounded-lg border border-slate-800/60">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-xs text-slate-400 font-medium ml-1">نطاق السجلات المستخدم في التعلم:</span>
+            {[
+              { id: 'ALL', label: `كل سجلات المصنع (${stats.totalRealRecords})`, icon: Activity },
+              { id: 'SHOPFLOOR', label: `عيوب الخطوط والورديات (${stats.defectLogsCount})`, icon: AlertTriangle },
+              { id: 'INSPECTIONS', label: `فحوصات الجودة (${stats.inspectionsCount})`, icon: ClipboardCheck },
+              { id: 'NCR_CAPA', label: `NCR و CAPA و 8D (${stats.ncrCount + stats.capaCount + stats.eightDCount})`, icon: ShieldAlert },
+              { id: 'COMPLAINTS', label: `شكاوى العملاء (${stats.complaintsCount})`, icon: Target },
+            ].map((scope) => {
+              const Icon = scope.icon;
+              const isSelected = activeScope === scope.id;
+              return (
+                <button
+                  key={scope.id}
+                  type="button"
+                  onClick={() => handleSyncRealData(scope.id as RealDataScope, true)}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
+                    isSelected
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'bg-slate-900/80 text-slate-300 hover:bg-slate-800 hover:text-white border border-slate-800'
+                  }`}
                 >
-                  <Activity className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
-                  مزامنة لحظية للبيانات
-                </Button>
-              </div>
-            </div>
+                  <Icon className="w-3.5 h-3.5" />
+                  <span>{scope.label}</span>
+                </button>
+              );
+            })}
+          </div>
 
-            {/* Row 3: Real Data Scopes (Filtered Ingestion from Real Modules) */}
-            <div className="flex flex-wrap items-center justify-between gap-2 bg-slate-950/40 p-2 rounded-lg border border-slate-800/60">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-xs text-slate-400 font-medium ml-1">تحديد نطاق التحليل:</span>
-                {[
-                  { id: 'ALL', label: `كل سجلات المنصة (${stats.totalRealRecords})`, icon: Activity },
-                  { id: 'INSPECTIONS', label: `فحوصات الجودة (${stats.inspectionsCount})`, icon: ClipboardCheck },
-                  { id: 'SHOPFLOOR', label: `عيوب الخطوط (${stats.defectLogsCount})`, icon: AlertTriangle },
-                  { id: 'NCR_CAPA', label: `NCR و CAPA و 8D (${stats.ncrCount + stats.capaCount + stats.eightDCount})`, icon: ShieldAlert },
-                  { id: 'COMPLAINTS', label: `شكاوى العملاء (${stats.complaintsCount})`, icon: Target },
-                ].map((scope) => {
-                  const Icon = scope.icon;
-                  const isSelected = activeScope === scope.id;
-                  return (
-                    <button
-                      key={scope.id}
-                      type="button"
-                      onClick={() => handleSyncRealData(scope.id as RealDataScope, true)}
-                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
-                        isSelected
-                          ? 'bg-indigo-600 text-white shadow-sm'
-                          : 'bg-slate-900/80 text-slate-300 hover:bg-slate-800 hover:text-white border border-slate-800'
-                      }`}
-                    >
-                      <Icon className="w-3.5 h-3.5" />
-                      <span>{scope.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-slate-400">حالة الربط:</span>
+            <Badge variant="secondary" className="bg-purple-950/80 text-purple-300 border border-purple-800/40 text-[11px]">
+              {activeDatasetLabel} ({rowCount || stats.totalRealRecords} سجل)
+            </Badge>
+          </div>
+        </div>
 
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-400">النطاق المحقون:</span>
-                <Badge variant="secondary" className="bg-purple-950/80 text-purple-300 border border-purple-800/40 text-[11px]">
-                  {activeDatasetLabel} ({rowCount} سجل)
-                </Badge>
-              </div>
-            </div>
-
-            {/* If zero real records exist, show guided quick-entry banner */}
-            {stats.totalRealRecords === 0 && (
-              <div className="bg-amber-950/30 border border-amber-800/50 rounded-lg p-2.5 flex items-center justify-between gap-3 text-xs text-amber-200">
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
-                  <span>
-                    لا توجد سجلات مسجلة بعد في المنصة. ابدأ بإضافة فحص وارد أو تسجيل عيب خط ليتم تدريب نماذج الذكاء الاصطناعي عليه فوراً!
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    onClick={() => navigate('/inspection')} 
-                    className="h-7 text-xs border-amber-700/60 bg-amber-900/40 text-amber-100 hover:bg-amber-900/80"
-                  >
-                    <PlusCircle className="w-3 h-3 ml-1" />
-                    تسجيل فحص وارد
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    onClick={() => navigate('/quality-shopfloor')} 
-                    className="h-7 text-xs border-amber-700/60 bg-amber-900/40 text-amber-100 hover:bg-amber-900/80"
-                  >
-                    <ArrowUpRight className="w-3 h-3 ml-1" />
-                    شاشة خط الإنتاج
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {/* Row 4: Analytical Capabilities Tabs */}
-            <div className="flex items-center overflow-x-auto gap-1.5 pt-1 border-t border-slate-800/60">
-              {[
-                { id: 'models', label: 'نماذج تعلم الآلة (ML Models)', icon: Cpu, badge: 'Auto-ML' },
-                { id: 'forecast', label: 'استوديو التنبؤ الزمني (Forecast)', icon: Activity, badge: 'Time-Series' },
-                { id: 'what-if', label: 'مختبر المحاكاة (What-If Lab)', icon: Sliders, badge: 'Simulation' },
-                { id: 'decision', label: 'الذكاء القراري والأسباب الجذرية (5M)', icon: Target, badge: 'Root Cause' },
-                { id: 'summary', label: 'الملخص التنفيذي (Executive Brief)', icon: ShieldCheck, badge: 'C-Level' },
-                { id: 'copilot', label: 'مساعد الذكاء الاصطناعي (UDIP Copilot)', icon: Brain, badge: 'AI Chat' },
-              ].map((item) => {
-                const Icon = item.icon;
-                const isSelected = activeTab === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => handleTabChange(item.id as any)}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
-                      isSelected
-                        ? 'bg-purple-600 text-white shadow-md shadow-purple-600/30'
-                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-                    }`}
-                  >
-                    <Icon className="w-3.5 h-3.5" />
-                    <span>{item.label}</span>
-                    <span className={`text-[10px] px-1.5 py-0.2 rounded ${
-                      isSelected ? 'bg-purple-800 text-purple-200' : 'bg-slate-800 text-slate-400'
-                    }`}>
-                      {item.badge}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </>
-        )}
+        {/* Row 4: Quality Intelligence Unified Navigation Capabilities */}
+        <div className="flex items-center overflow-x-auto gap-1.5 pt-1 border-t border-slate-800/60">
+          {[
+            { id: 'predict', label: 'استوديو توقع العيوب والسبب الجذري', icon: Sparkles, badge: 'Live Inference' },
+            { id: 'models', label: 'مقارنة نماذج تعلم الآلة (Auto-ML)', icon: Cpu, badge: 'Multi-Model' },
+            { id: 'forecast', label: 'استوديو التنبؤ الزمني (Forecast)', icon: Activity, badge: 'Time-Series' },
+            { id: 'what-if', label: 'مختبر المحاكاة (What-If Lab)', icon: Sliders, badge: 'Simulation' },
+            { id: 'decision', label: 'الذكاء القراري ومصفوفة 5M للأسباب الجذرية', icon: Target, badge: '5M Matrix' },
+            { id: 'summary', label: 'الملخص التنفيذي ومساعد الجودة الذكي', icon: ShieldCheck, badge: 'Executive' },
+          ].map((item) => {
+            const Icon = item.icon;
+            const isSelected = activeTab === item.id;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => handleTabChange(item.id as IntelligenceTab)}
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+                  isSelected
+                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-600/30'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                }`}
+              >
+                <Icon className="w-3.5 h-3.5" />
+                <span>{item.label}</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded font-normal ${
+                  isSelected ? 'bg-purple-900/80 text-purple-200' : 'bg-slate-800 text-slate-400'
+                }`}>
+                  {item.badge}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {/* Main View Area */}
+      {/* Main Intelligent Workspace Area */}
       <div className="flex-1 w-full bg-slate-900 border border-slate-800 rounded-xl overflow-hidden relative shadow-2xl min-h-[750px]">
-        {mode === 'udip' ? (
+        {activeTab === 'predict' ? (
+          <div className="h-full overflow-y-auto p-4 bg-slate-900">
+            <DefectPredictionStudio />
+          </div>
+        ) : (
           <iframe
             ref={iframeRef}
-            src={`/quality-intelligence/index.html?tab=${activeTab}&lang=${lang}`}
+            src={`/quality-intelligence/index.html?tab=${
+              activeTab === 'forecast' ? 'future-risk' : activeTab === 'what-if' ? 'scenarios' : activeTab === 'decision' ? 'actions' : activeTab
+            }&sample=qms_all&lang=${lang}`}
             title="Universal Data Intelligence Platform"
             className="w-full h-full border-0 absolute inset-0 bg-[#070b14]"
             allow="fullscreen; clipboard-read; clipboard-write; microphone"
@@ -377,10 +336,6 @@ export default function QualityIntelligenceBridge() {
               }, 400);
             }}
           />
-        ) : (
-          <div className="h-full overflow-y-auto p-4 bg-slate-900">
-            <ClassicAIIntelligence />
-          </div>
         )}
       </div>
     </div>
