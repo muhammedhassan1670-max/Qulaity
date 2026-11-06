@@ -8,6 +8,7 @@ import { QualityPageAssistant } from './components/QualityPageAssistant';
 import { AICopilotWidget } from './components/AICopilotWidget';
 import { CommandPalette } from './components/CommandPalette';
 import { MobileTabBar } from './components/MobileTabBar';
+import { Footer } from './components/Footer';
 import { useAppStore } from './stores/appStore';
 import { FullPageLoader } from './components/Loading';
 import { toast } from 'sonner';
@@ -149,13 +150,13 @@ function App() {
         className={`transition-all duration-300 mobile-pb-tabbar ${
           isFullScreenPage
             ? 'pt-[56px] sm:pt-[64px] h-[100dvh] overflow-hidden'
-            : 'pt-[62px] sm:pt-[70px] min-h-screen'
+            : 'pt-[62px] sm:pt-[70px] min-h-screen flex flex-col justify-between'
         }`}
         style={{ 
           marginLeft: '0px'
         }}
       >
-        <div className={isFullScreenPage ? 'p-0 h-full overflow-hidden' : 'p-3 sm:p-4 md:p-6'}>
+        <div className={isFullScreenPage ? 'p-0 h-full overflow-hidden' : 'p-3 sm:p-4 md:p-6 flex-1'}>
           {!isFullScreenPage && <QualityPageAssistant />}
           <AnimatePresence mode="wait">
             <motion.div
@@ -170,6 +171,9 @@ function App() {
             </motion.div>
           </AnimatePresence>
         </div>
+
+        {/* Global Footer with Developer Signature */}
+        {!isFullScreenPage && <Footer />}
       </main>
 
       {/* Mobile Bottom Navigation Bar */}
