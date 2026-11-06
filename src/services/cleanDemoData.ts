@@ -30,6 +30,8 @@ export function isDemoRecord(item: any): boolean {
     id.startsWith('demo-simulation-') ||
     id.startsWith('INS-2026-RM-') ||
     id.startsWith('INS-2026-OQC-') ||
+    id.startsWith('INSP-2026-') ||
+    id.startsWith('FL-2026-') ||
     id.startsWith('NCR-SUP-') ||
     id.startsWith('DEF-2026-901') ||
     id === 'NCR-2026-901' ||
@@ -46,6 +48,7 @@ export function isDemoRecord(item: any): boolean {
   if (
     num.startsWith('INS-2026-RM-') ||
     num.startsWith('INS-2026-OQC-') ||
+    num.startsWith('INSP-2026-') ||
     num.startsWith('NCR-SUP-') ||
     num.startsWith('DEF-2026-901') ||
     num === 'NCR-2026-901' ||
@@ -64,7 +67,8 @@ export function isDemoRecord(item: any): boolean {
     lot === 'LOT-2026-OR-02' ||
     lot === 'LOT-2026-VL-03' ||
     lot === 'LOT-2026-OL-05' ||
-    lot === 'BATCH-2026-901'
+    lot === 'BATCH-2026-901' ||
+    lot.startsWith('LOT-2026-1')
   ) {
     return true;
   }
@@ -137,6 +141,7 @@ export function purgeAllDemoSimulationData(): { totalRemoved: number; details: R
     'qms_local_eight_d',
     'qms_local_complaints',
     'qms_local_inspections',
+    'qms_local_inspection',
     'qms_local_control-plans',
     'qms_local_audits',
     'qms_local_calibrations',

@@ -3248,7 +3248,7 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
                                             <Barcode className="w-3 h-3 text-cyan-400" />
                                           </span>
                                           <div>
-                                            <span className="font-mono font-black text-xs text-white group-hover/lot:text-cyan-300 transition-colors tracking-wide block">
+                                            <span className="font-mono font-black text-xs text-white group-hover/lot:text-cyan-300 transition-colors tracking-wide block whitespace-nowrap">
                                               {lotNo}
                                             </span>
                                             <span className="text-[9px] font-bold text-cyan-400/80 uppercase tracking-wider block">

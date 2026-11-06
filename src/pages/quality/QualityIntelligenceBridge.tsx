@@ -16,7 +16,6 @@ import {
   setUdipLang,
   type RealDataScope
 } from '@/services/qmsIntelligenceBridge';
-import { ensureFactoryQualityDataInitialized } from '@/services/factoryQualityDataset';
 
 // Native React Defect Prediction & Inference Studio
 import DefectPredictionStudio from '@/sections/AIIntelligence';
@@ -33,11 +32,6 @@ export default function QualityIntelligenceBridge() {
   const [rowCount, setRowCount] = useState<number>(0);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const containerRef = useRef<HTMLDivElement>(null);
-
-  // Initialize authentic factory baseline on load
-  useEffect(() => {
-    ensureFactoryQualityDataInitialized();
-  }, []);
 
   // Real live stats from platform localStorage
   const stats = useMemo(() => getRealPlatformStats(), [isSyncing]);

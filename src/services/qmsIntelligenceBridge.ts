@@ -4,8 +4,6 @@
  * Zero synthetic, mock, or demo data.
  */
 
-import { ensureFactoryQualityDataInitialized } from './factoryQualityDataset';
-
 export interface UdipDatasetPayload {
   filename: string;
   fileSize: number;
@@ -66,18 +64,6 @@ export function getRealPlatformStats() {
   let complaints = getStorageArray('qms_local_complaints').filter(isStrictRealRecord);
   let deviations = getStorageArray('qms_local_deviations').filter(isStrictRealRecord);
 
-  // If storage is empty, initialize authentic factory quality master baseline
-  if (inspections.length + defectLogs.length === 0) {
-    ensureFactoryQualityDataInitialized();
-    inspections = getStorageArray('qms_local_inspections').filter(isStrictRealRecord);
-    defectLogs = getStorageArray('qms_local_defect-logs').filter(isStrictRealRecord);
-    ncrs = getStorageArray('qms_local_ncr').filter(isStrictRealRecord);
-    capas = getStorageArray('qms_local_capa').filter(isStrictRealRecord);
-    eightDs = getStorageArray('qms_local_8d').filter(isStrictRealRecord);
-    complaints = getStorageArray('qms_local_complaints').filter(isStrictRealRecord);
-    deviations = getStorageArray('qms_local_deviations').filter(isStrictRealRecord);
-  }
-
   return {
     inspectionsCount: inspections.length,
     defectLogsCount: defectLogs.length,
@@ -101,17 +87,6 @@ export function extractLiveQmsDataset(scope: RealDataScope = 'ALL'): UdipDataset
   let eightDs = getStorageArray('qms_local_8d').filter(isStrictRealRecord);
   let complaints = getStorageArray('qms_local_complaints').filter(isStrictRealRecord);
   let deviations = getStorageArray('qms_local_deviations').filter(isStrictRealRecord);
-
-  if (inspections.length + defectLogs.length === 0) {
-    ensureFactoryQualityDataInitialized();
-    inspections = getStorageArray('qms_local_inspections').filter(isStrictRealRecord);
-    defectLogs = getStorageArray('qms_local_defect-logs').filter(isStrictRealRecord);
-    ncrs = getStorageArray('qms_local_ncr').filter(isStrictRealRecord);
-    capas = getStorageArray('qms_local_capa').filter(isStrictRealRecord);
-    eightDs = getStorageArray('qms_local_8d').filter(isStrictRealRecord);
-    complaints = getStorageArray('qms_local_complaints').filter(isStrictRealRecord);
-    deviations = getStorageArray('qms_local_deviations').filter(isStrictRealRecord);
-  }
 
   const stats = {
     inspectionsCount: inspections.length,
