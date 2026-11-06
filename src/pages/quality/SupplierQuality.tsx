@@ -28,49 +28,9 @@ interface Supplier {
   [key: string]: unknown;
 }
 
-export const DEFAULT_SUPPLIERS: Supplier[] = [
-  {
-    id: 'SUP-001',
-    name: 'Apex Industrial Steel Ltd.',
-    location: 'Alexandria, Egypt',
-    category: 'Raw Materials (Coils & Plates)',
-    rating: 4.8,
-    status: 'approved',
-    lastAudit: '2026-03-15',
-    nextAudit: '2027-03-15',
-    ncCount: 1,
-    deliveryPerformance: 98,
-    qualityPerformance: 96,
-  },
-  {
-    id: 'SUP-002',
-    name: 'Delta Precision Polymers & Seals',
-    location: '10th of Ramadan, Egypt',
-    category: 'Injection Molded Parts',
-    rating: 4.2,
-    status: 'approved',
-    lastAudit: '2026-01-20',
-    nextAudit: '2027-01-20',
-    ncCount: 3,
-    deliveryPerformance: 92,
-    qualityPerformance: 88,
-  },
-  {
-    id: 'SUP-003',
-    name: 'Global Fasteners & Hardware Co.',
-    location: 'Cairo, Egypt',
-    category: 'Fasteners & Standard Hardware',
-    rating: 3.4,
-    status: 'conditional',
-    lastAudit: '2025-11-10',
-    nextAudit: '2026-11-10',
-    ncCount: 6,
-    deliveryPerformance: 85,
-    qualityPerformance: 78,
-  },
-];
+export const DEFAULT_SUPPLIERS: Supplier[] = [];
 
-export const mockSuppliers: Supplier[] = DEFAULT_SUPPLIERS;
+export const mockSuppliers: Supplier[] = [];
 
 const statusConfig = {
   'approved': 'bg-green-500/20 text-green-400',
@@ -116,7 +76,7 @@ export function SupplierQualityPage() {
     } catch (err) {
       console.warn('API unavailable; keeping empty state:', err);
       // Keep an empty state when backend is not running
-      setSuppliers(mockSuppliers);
+      setSuppliers([]);
       toast.info('Backend unavailable - no records loaded');
     } finally {
       setIsLoading(false);

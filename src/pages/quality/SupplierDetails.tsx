@@ -9,7 +9,19 @@ export function SupplierDetailsPage() {
   const navigate = useNavigate();
   const { id } = useParams();
 
-  const supplier = useMemo(() => mockSuppliers.find((x) => x.id === id), [id]);
+  const supplier = useMemo(() => {
+    try {
+      const raw = localStorage.getItem('qms_local_suppliers') || localStorage.getItem('qms_local_supplier');
+      if (raw) {
+        const list = JSON.parse(raw);
+        if (Array.isArray(list)) {
+          const found = list.find((x: any) => x.id === id);
+          if (found) return found;
+        }
+      }
+    } catch {}
+    return mockSuppliers.find((x) => x.id === id);
+  }, [id]);
 
   const stats = useMemo(() => {
     if (!supplier) return [];

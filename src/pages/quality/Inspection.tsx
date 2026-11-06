@@ -34,44 +34,7 @@ interface Inspection {
   [key: string]: unknown;
 }
 
-const DEFAULT_INSPECTIONS: Inspection[] = [
-  {
-    id: 'INS-IQC-001',
-    type: 'incoming',
-    product: 'Cold Rolled Steel Coil 1.5mm',
-    batch: 'LOT-STL-9042',
-    inspectedBy: 'Eng. Ahmed QC',
-    date: new Date().toISOString().split('T')[0],
-    result: 'fail',
-    sampleSize: 50,
-    defectCount: 4,
-    inspectionPoints: 6,
-  },
-  {
-    id: 'INS-IPQC-002',
-    type: 'in-process',
-    product: 'Bracket Assembly BR-200',
-    batch: 'LOT-PRD-7711',
-    inspectedBy: 'Mahmoud Inspector',
-    date: new Date().toISOString().split('T')[0],
-    result: 'pass',
-    sampleSize: 32,
-    defectCount: 0,
-    inspectionPoints: 8,
-  },
-  {
-    id: 'INS-OQC-003',
-    type: 'final',
-    product: 'Gearbox Housing Assy',
-    batch: 'LOT-FIN-1029',
-    inspectedBy: 'Sara Quality',
-    date: new Date().toISOString().split('T')[0],
-    result: 'pass',
-    sampleSize: 20,
-    defectCount: 0,
-    inspectionPoints: 10,
-  },
-];
+const DEFAULT_INSPECTIONS: Inspection[] = [];
 
 function recordSupplierDefectLink(productName: string, defectCount: number) {
   try {

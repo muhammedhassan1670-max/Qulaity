@@ -83,6 +83,8 @@ function isServerMockRecord($item) {
 
     if (strpos($id, 'INS-2026-RM-') === 0 || strpos($num, 'INS-2026-RM-') === 0) return true;
     if (strpos($id, 'INS-2026-OQC-') === 0 || strpos($num, 'INS-2026-OQC-') === 0) return true;
+    if (strpos($id, 'INSP-2026-') === 0 || strpos($num, 'INSP-2026-') === 0) return true;
+    if (strpos($id, 'FL-2026-') === 0) return true;
     if (strpos($id, 'NCR-SUP-') === 0 || strpos($num, 'NCR-SUP-') === 0) return true;
     if (strpos($id, 'DEF-2026-901') === 0 || strpos($num, 'DEF-2026-901') === 0) return true;
     if ($id === 'NCR-2026-901' || $num === 'NCR-2026-901') return true;
@@ -93,6 +95,7 @@ function isServerMockRecord($item) {
     if (in_array($id, ['SUP-001', 'SUP-002', 'SUP-003', 'SUP-004', 'SUP-005'])) return true;
 
     if (in_array($lot, ['LOT-2026-AL-01', 'LOT-2026-OR-02', 'LOT-2026-VL-03', 'LOT-2026-OL-05', 'BATCH-2026-901'])) return true;
+    if (strpos($lot, 'LOT-2026-1') === 0) return true;
 
     if (strpos($prod, 'سبائك ألمونيوم') !== false) return true;
     if (strpos($prod, 'حلقات إحكام مطاطية') !== false) return true;
