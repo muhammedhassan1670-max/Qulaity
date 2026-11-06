@@ -1,74 +1,79 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
-  Brain, RefreshCw, Database, Maximize2, Minimize2, 
-  Globe, Activity, Cpu, Sliders, Target, ShieldCheck
+  Brain, RefreshCw, Maximize2, Minimize2, 
+  Globe, Activity, Cpu, Sliders, Target, ShieldCheck,
+  ClipboardCheck, AlertTriangle, ShieldAlert, CheckCircle2,
+  PlusCircle, ArrowUpRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { 
   extractLiveQmsDataset, 
-  fetchFactoryMasterDataset, 
+  getRealPlatformStats,
   sendDatasetToUdip, 
   switchUdipTab, 
-  setUdipLang
+  setUdipLang,
+  type RealDataScope
 } from '@/services/qmsIntelligenceBridge';
 
 // Fallback to classic statistical prediction if needed
 import ClassicAIIntelligence from '@/sections/AIIntelligence';
 
 export default function QualityIntelligenceBridge() {
+  const navigate = useNavigate();
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [activeTab, setActiveTab] = useState<'models' | 'forecast' | 'what-if' | 'decision' | 'summary' | 'copilot'>('models');
+  const [activeScope, setActiveScope] = useState<RealDataScope>('ALL');
   const [lang, setLang] = useState<'ar' | 'en'>('ar');
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [activeDatasetLabel, setActiveDatasetLabel] = useState<string>('لم يتم تحميل بيانات بعد');
+  const [activeDatasetLabel, setActiveDatasetLabel] = useState<string>('بيانات المنصة الحية (100% Real Records)');
   const [rowCount, setRowCount] = useState<number>(0);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [mode, setMode] = useState<'udip' | 'classic'>('udip');
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Auto-sync live platform data once iframe is ready
+  // Real live stats from platform localStorage
+  const stats = useMemo(() => getRealPlatformStats(), [isSyncing]);
+
+  // Auto-sync real platform data once iframe is ready
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       if (event.data && event.data.type === 'UDIP_READY') {
-        handleSyncLiveQms(false);
+        handleSyncRealData('ALL', false);
       }
     };
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
   }, []);
 
-  const handleSyncLiveQms = (notify: boolean = true) => {
+  const handleSyncRealData = (scope: RealDataScope = activeScope, notify: boolean = true) => {
     setIsSyncing(true);
+    setActiveScope(scope);
     try {
-      const liveData = extractLiveQmsDataset();
-      const success = sendDatasetToUdip(iframeRef.current, liveData, activeTab);
+      const realData = extractLiveQmsDataset(scope);
+      const success = sendDatasetToUdip(iframeRef.current, realData, activeTab);
       if (success) {
-        setActiveDatasetLabel('بيانات المنصة الحية (Live QMS Records)');
-        setRowCount(liveData.rows.length);
+        const scopeLabels: Record<RealDataScope, string> = {
+          ALL: 'جميع سجلات المنصة الفعلية (All Real Records)',
+          INSPECTIONS: 'فحوصات الجودة الواردة والنهائية فقط',
+          SHOPFLOOR: 'سجلات عيوب خطوط الإنتاج والورديات فقط',
+          NCR_CAPA: 'حالات عدم المطابقة وإجراءات CAPA/8D فقط',
+          COMPLAINTS: 'شكاوى العملاء ومرتجعات الميدان فقط'
+        };
+        setActiveDatasetLabel(scopeLabels[scope]);
+        setRowCount(realData.rows.length);
         if (notify) {
-          toast.success(`تمت مزامنة ${liveData.rows.length} سجل جودة حي بنجاح مع محرك الذكاء الاصطناعي`);
+          if (realData.rows.length > 0) {
+            toast.success(`تمت مزامنة ${realData.rows.length} سجل جودة حقيقي بنجاح من المنصة`);
+          } else {
+            toast.info('لا توجد سجلات مسجلة بعد في هذا القسم من المنصة');
+          }
         }
       }
     } catch (e: any) {
       toast.error('حدث خطأ أثناء مزامنة بيانات المنصة: ' + (e?.message || ''));
-    } finally {
-      setIsSyncing(false);
-    }
-  };
-
-  const handleLoadFactoryMaster = async () => {
-    setIsSyncing(true);
-    try {
-      toast.loading('جاري تحميل بيانات المصنع القياسية (500 سجل)...', { id: 'load-master' });
-      const masterData = await fetchFactoryMasterDataset();
-      sendDatasetToUdip(iframeRef.current, masterData, activeTab);
-      setActiveDatasetLabel('بيانات المصنع المعتمدة (500 سجل - Automotive/Industrial)');
-      setRowCount(masterData.rows.length);
-      toast.success('تم تحميل 500 سجل تدريب صناعي شامل بنجاح!', { id: 'load-master' });
-    } catch (e: any) {
-      toast.error('تعذر تحميل بيانات المصنع: ' + (e?.message || ''), { id: 'load-master' });
     } finally {
       setIsSyncing(false);
     }
@@ -134,13 +139,13 @@ export default function QualityIntelligenceBridge() {
               <div className="flex items-center gap-2">
                 <h1 className="text-lg font-bold tracking-tight text-white flex items-center gap-2">
                   منظومة الذكاء الاصطناعي وتعلم الآلة الشاملة
-                  <Badge variant="outline" className="border-purple-500/40 text-purple-300 bg-purple-500/10 text-xs">
-                    UDIP v2.8.2 Enterprise
+                  <Badge variant="outline" className="border-emerald-500/40 text-emerald-300 bg-emerald-500/10 text-xs">
+                    مربوطة حصرياً ببيانات المنصة الفعلية
                   </Badge>
                 </h1>
               </div>
               <p className="text-xs text-slate-400">
-                Machine Learning Classifiers, Predictive Forecasting, What-If Simulation & 5M Root Cause Analytics
+                تدريب نماذج Machine Learning وتوقع العيوب والـ What-If Simulation اعتماداً بنسبة 100% على سجلات مصنعك الحقيقية
               </p>
             </div>
           </div>
@@ -190,7 +195,7 @@ export default function QualityIntelligenceBridge() {
               size="sm"
               onClick={handleReloadEngine}
               className="bg-slate-800/80 border-slate-700 hover:bg-slate-700 text-xs h-8 text-slate-300"
-              title="إعادة تحميل المحرك"
+              title="إعادة تحميل المحرك ومزامنة البيانات الحية"
             >
               <RefreshCw className="w-3.5 h-3.5" />
             </Button>
@@ -208,47 +213,118 @@ export default function QualityIntelligenceBridge() {
 
         {mode === 'udip' && (
           <>
-            {/* Row 2: Live QMS Data Ingestion Bar */}
-            <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-950/60 p-2.5 rounded-lg border border-slate-800/80">
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className="bg-emerald-500/10 text-emerald-400 border-emerald-500/30 text-xs flex items-center gap-1.5 py-1">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                  مصدر البيانات النشط:
+            {/* Row 2: Live Platform Records Counters Bar */}
+            <div className="flex flex-wrap items-center justify-between gap-2 bg-slate-950/70 p-2.5 rounded-lg border border-slate-800">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  سجلات مصنعك الفعلية المتاحة:
+                </span>
+                <Badge variant="outline" className="bg-slate-900 border-slate-700 text-slate-200 text-xs py-0.5">
+                  📋 {stats.inspectionsCount} فحص وارد/نهائي
                 </Badge>
-                <span className="text-xs font-medium text-slate-200">{activeDatasetLabel}</span>
-                {rowCount > 0 && (
-                  <Badge variant="secondary" className="bg-slate-800 text-slate-300 text-[11px]">
-                    {rowCount} سجل جاهز للتدريب
-                  </Badge>
-                )}
+                <Badge variant="outline" className="bg-slate-900 border-slate-700 text-slate-200 text-xs py-0.5">
+                  ⚠️ {stats.defectLogsCount} عيوب خط
+                </Badge>
+                <Badge variant="outline" className="bg-slate-900 border-slate-700 text-slate-200 text-xs py-0.5">
+                  🚨 {stats.ncrCount} تقارير NCR
+                </Badge>
+                <Badge variant="outline" className="bg-slate-900 border-slate-700 text-slate-200 text-xs py-0.5">
+                  🛡️ {stats.capaCount + stats.eightDCount} إجراءات CAPA & 8D
+                </Badge>
+                <Badge variant="outline" className="bg-slate-900 border-slate-700 text-slate-200 text-xs py-0.5">
+                  📦 {stats.complaintsCount} شكاوى عملاء
+                </Badge>
+                <Badge variant="outline" className="bg-slate-900 border-slate-700 text-slate-200 text-xs py-0.5">
+                  📑 {stats.deviationsCount} طلبات حيود
+                </Badge>
               </div>
 
-              {/* Ingestion & Training Triggers */}
-              <div className="flex items-center flex-wrap gap-2">
+              <div className="flex items-center gap-2">
                 <Button
                   size="sm"
-                  onClick={() => handleSyncLiveQms(true)}
+                  onClick={() => handleSyncRealData(activeScope, true)}
                   disabled={isSyncing}
-                  className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold text-xs h-8 shadow-sm"
+                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs h-8 shadow-sm flex items-center gap-1.5"
                 >
-                  <Activity className={`w-3.5 h-3.5 ml-1.5 ${isSyncing ? 'animate-spin' : ''}`} />
-                  مزامنة بيانات المنصة الحية (Live Sync)
-                </Button>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleLoadFactoryMaster}
-                  disabled={isSyncing}
-                  className="bg-indigo-950/60 border-indigo-700/50 hover:bg-indigo-900/80 text-indigo-200 text-xs h-8"
-                >
-                  <Database className="w-3.5 h-3.5 ml-1.5 text-indigo-400" />
-                  تحميل بيانات المصنع المعتمدة (500 سجل)
+                  <Activity className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+                  مزامنة لحظية للبيانات
                 </Button>
               </div>
             </div>
 
-            {/* Row 3: Analytical Capabilities Tabs */}
+            {/* Row 3: Real Data Scopes (Filtered Ingestion from Real Modules) */}
+            <div className="flex flex-wrap items-center justify-between gap-2 bg-slate-950/40 p-2 rounded-lg border border-slate-800/60">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-xs text-slate-400 font-medium ml-1">تحديد نطاق التحليل:</span>
+                {[
+                  { id: 'ALL', label: `كل سجلات المنصة (${stats.totalRealRecords})`, icon: Activity },
+                  { id: 'INSPECTIONS', label: `فحوصات الجودة (${stats.inspectionsCount})`, icon: ClipboardCheck },
+                  { id: 'SHOPFLOOR', label: `عيوب الخطوط (${stats.defectLogsCount})`, icon: AlertTriangle },
+                  { id: 'NCR_CAPA', label: `NCR و CAPA و 8D (${stats.ncrCount + stats.capaCount + stats.eightDCount})`, icon: ShieldAlert },
+                  { id: 'COMPLAINTS', label: `شكاوى العملاء (${stats.complaintsCount})`, icon: Target },
+                ].map((scope) => {
+                  const Icon = scope.icon;
+                  const isSelected = activeScope === scope.id;
+                  return (
+                    <button
+                      key={scope.id}
+                      type="button"
+                      onClick={() => handleSyncRealData(scope.id as RealDataScope, true)}
+                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
+                        isSelected
+                          ? 'bg-indigo-600 text-white shadow-sm'
+                          : 'bg-slate-900/80 text-slate-300 hover:bg-slate-800 hover:text-white border border-slate-800'
+                      }`}
+                    >
+                      <Icon className="w-3.5 h-3.5" />
+                      <span>{scope.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-400">النطاق المحقون:</span>
+                <Badge variant="secondary" className="bg-purple-950/80 text-purple-300 border border-purple-800/40 text-[11px]">
+                  {activeDatasetLabel} ({rowCount} سجل)
+                </Badge>
+              </div>
+            </div>
+
+            {/* If zero real records exist, show guided quick-entry banner */}
+            {stats.totalRealRecords === 0 && (
+              <div className="bg-amber-950/30 border border-amber-800/50 rounded-lg p-2.5 flex items-center justify-between gap-3 text-xs text-amber-200">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span>
+                    لا توجد سجلات مسجلة بعد في المنصة. ابدأ بإضافة فحص وارد أو تسجيل عيب خط ليتم تدريب نماذج الذكاء الاصطناعي عليه فوراً!
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    onClick={() => navigate('/inspection')} 
+                    className="h-7 text-xs border-amber-700/60 bg-amber-900/40 text-amber-100 hover:bg-amber-900/80"
+                  >
+                    <PlusCircle className="w-3 h-3 ml-1" />
+                    تسجيل فحص وارد
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    onClick={() => navigate('/quality-shopfloor')} 
+                    className="h-7 text-xs border-amber-700/60 bg-amber-900/40 text-amber-100 hover:bg-amber-900/80"
+                  >
+                    <ArrowUpRight className="w-3 h-3 ml-1" />
+                    شاشة خط الإنتاج
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Row 4: Analytical Capabilities Tabs */}
             <div className="flex items-center overflow-x-auto gap-1.5 pt-1 border-t border-slate-800/60">
               {[
                 { id: 'models', label: 'نماذج تعلم الآلة (ML Models)', icon: Cpu, badge: 'Auto-ML' },
@@ -297,7 +373,7 @@ export default function QualityIntelligenceBridge() {
             allow="fullscreen; clipboard-read; clipboard-write; microphone"
             onLoad={() => {
               setTimeout(() => {
-                handleSyncLiveQms(false);
+                handleSyncRealData(activeScope, false);
               }, 400);
             }}
           />
