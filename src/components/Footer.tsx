@@ -1,4 +1,4 @@
-import { Shield, Sparkles, Code2, Award, Cpu, ExternalLink } from 'lucide-react';
+import { Shield, Sparkles, Code2, Award, Cpu, ExternalLink, BookOpen } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
 
 export function Footer() {
@@ -59,13 +59,24 @@ export function Footer() {
           <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
         </a>
 
-        {/* Right: Architecture & Compliance Tags */}
-        <div className="flex items-center gap-3 text-slate-500 text-[11px] sm:text-xs">
+        {/* Right: Architecture & SOP Manual */}
+        <div className="flex flex-wrap items-center gap-2.5 text-slate-500 text-[11px] sm:text-xs">
+          <a 
+            href="/docs/sop.html" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 hover:text-cyan-300 border border-cyan-500/30 font-bold transition-all text-xs shadow-sm hover:shadow-cyan-500/10"
+            title={isArabic ? 'فتح الدليل التشغيلي القياسي الشامل (SOP)' : 'Open Standard Operating Procedure (SOP)'}
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            <span>{isArabic ? '📖 دليل التشغيل (SOP)' : '📖 SOP Manual'}</span>
+          </a>
+          <span className="text-slate-700 hidden sm:inline">•</span>
           <span className="flex items-center gap-1 hover:text-slate-300 transition-colors">
             <Cpu className="w-3.5 h-3.5 text-purple-400" />
             AI & Predictive ML
           </span>
-          <span className="text-slate-700">•</span>
+          <span className="text-slate-700 hidden sm:inline">•</span>
           <span className="flex items-center gap-1 hover:text-slate-300 transition-colors">
             <Award className="w-3.5 h-3.5 text-emerald-400" />
             ISO 9001 / IATF 16949
