@@ -38,6 +38,9 @@ import {
   ChevronLeft,
   Compass,
   Video,
+  ChevronDown,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 
 // ============================================================================
@@ -1418,6 +1421,9 @@ export default function QualityEcosystemPortal() {
   // Simulation Engine State
   const [activeSimulation, setActiveSimulation] = useState<SimulationScenarioId>('none');
   const [simStepIndex, setSimStepIndex] = useState<number | null>(null);
+  const [isScenariosOpen, setIsScenariosOpen] = useState<boolean>(false);
+  const [isRibbonExpanded, setIsRibbonExpanded] = useState<boolean>(false);
+  const [showRibbon, setShowRibbon] = useState<boolean>(true);
 
   const activeNodeId = hoveredNodeId || selectedNodeId;
 
@@ -2380,42 +2386,95 @@ export default function QualityEcosystemPortal() {
           </div>
         </div>
 
-        {/* Center: Live Scenario Simulators + Cinema Camera Toggle */}
-        <div className="hidden lg:flex items-center gap-1 bg-[#091122]/90 p-0.5 rounded-lg border border-white/10 shadow-inner">
-          {(
-            Object.keys(SIMULATION_SCENARIOS) as Array<Exclude<SimulationScenarioId, 'none'>>
-          ).map((simKey) => {
-            const sim = SIMULATION_SCENARIOS[simKey];
-            const isActive = activeSimulation === simKey;
-            return (
-              <button
-                key={simKey}
-                type="button"
-                onClick={() => {
-                  setSelectedNodeId(null);
-                  setSelectedCableId(null);
-                  setFocusedStageId(null);
-                  setActiveSimulation(isActive ? 'none' : simKey);
-                }}
-                className={`px-2 py-1 rounded-md text-[11px] font-extrabold transition-all flex items-center gap-1.5 whitespace-nowrap ${
-                  isActive
-                    ? 'bg-gradient-to-r from-[#0066CC] to-[#00A3E0] text-white shadow-[0_0_14px_rgba(0,163,224,0.55)] border border-sky-300/40'
-                    : 'text-slate-300 hover:text-white hover:bg-white/5'
-                }`}
+        {/* Center: Live Scenario Simulators (Clean Compact Dropdown) + Cinema Toggle */}
+        <div className="flex items-center gap-1.5">
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setIsScenariosOpen((v) => !v)}
+              className={`px-2.5 py-1 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 border shadow-sm ${
+                activeSimulation !== 'none'
+                  ? 'bg-gradient-to-r from-amber-600/30 to-amber-500/20 text-amber-200 border-amber-400/60 shadow-[0_0_12px_rgba(245,158,11,0.35)]'
+                  : 'bg-[#091122]/90 border-white/15 text-slate-200 hover:text-white hover:border-sky-400/50 hover:bg-white/5'
+              }`}
+            >
+              {activeSimulation !== 'none' ? (
+                <>
+                  <Square className="w-3 h-3 fill-current text-amber-400 animate-pulse" />
+                  <span className="font-mono text-amber-300">
+                    {SIMULATION_SCENARIOS[activeSimulation]?.shortTitle || 'Simulation Active'}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <Play className="w-3 h-3 fill-current text-sky-400" />
+                  <span>محاكاة السيناريوهات</span>
+                </>
+              )}
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isScenariosOpen ? 'rotate-180 text-sky-400' : 'text-slate-400'}`} />
+            </button>
+
+            {isScenariosOpen && (
+              <div
+                className="absolute left-0 mt-1.5 w-72 bg-[#0b1324] border border-white/15 rounded-xl shadow-2xl py-1.5 z-50 backdrop-blur-xl"
+                onMouseLeave={() => setIsScenariosOpen(false)}
               >
-                {isActive ? (
-                  <Square className="w-2.5 h-2.5 fill-current animate-pulse text-amber-300" />
-                ) : (
-                  <Play className="w-2.5 h-2.5 fill-current text-sky-400" />
-                )}
-                <span>{sim.shortTitle}</span>
-              </button>
-            );
-          })}
+                <div className="px-3 py-1 text-[10px] font-black uppercase tracking-wider text-slate-400 border-b border-white/10 flex items-center justify-between">
+                  <span>سيناريوهات الجودة التفاعلية</span>
+                  {activeSimulation !== 'none' && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveSimulation('none');
+                        setIsScenariosOpen(false);
+                      }}
+                      className="text-amber-400 hover:text-amber-300 font-bold"
+                    >
+                      إيقاف ✕
+                    </button>
+                  )}
+                </div>
+                {(
+                  Object.keys(SIMULATION_SCENARIOS) as Array<Exclude<SimulationScenarioId, 'none'>>
+                ).map((simKey) => {
+                  const sim = SIMULATION_SCENARIOS[simKey];
+                  const isActive = activeSimulation === simKey;
+                  return (
+                    <button
+                      key={simKey}
+                      type="button"
+                      onClick={() => {
+                        setSelectedNodeId(null);
+                        setSelectedCableId(null);
+                        setFocusedStageId(null);
+                        setActiveSimulation(isActive ? 'none' : simKey);
+                        setIsScenariosOpen(false);
+                      }}
+                      className={`w-full px-3 py-2 text-left flex items-start gap-2.5 transition-colors ${
+                        isActive
+                          ? 'bg-sky-500/20 text-white border-l-2 border-sky-400'
+                          : 'text-slate-300 hover:bg-white/10 hover:text-white'
+                      }`}
+                    >
+                      <div className="mt-0.5 shrink-0">
+                        {isActive ? (
+                          <Square className="w-3.5 h-3.5 fill-current text-amber-300 animate-pulse" />
+                        ) : (
+                          <Play className="w-3.5 h-3.5 fill-current text-sky-400" />
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-xs font-bold leading-tight">{sim.shortTitle}</div>
+                        <div className="text-[10px] text-slate-400 mt-0.5 truncate">{sim.title}</div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
 
-          <div className="h-3.5 w-px bg-white/10 mx-0.5" />
-
-          {/* Cinema Auto-Follow Camera Toggle */}
+          {/* Cinema Camera Toggle */}
           <button
             type="button"
             onClick={() => {
@@ -2427,15 +2486,15 @@ export default function QualityEcosystemPortal() {
                 focusCameraOnCable(activeCableInfo.cable.id);
               }
             }}
-            className={`px-2 py-1 rounded-md text-[11px] font-extrabold transition-all flex items-center gap-1.5 ${
+            className={`px-2 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 border ${
               cinemaCamera
-                ? 'bg-purple-500/25 text-purple-200 border border-purple-400/50 shadow-[0_0_12px_rgba(168,85,247,0.4)]'
-                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                ? 'bg-purple-500/25 text-purple-200 border-purple-400/50 shadow-[0_0_12px_rgba(168,85,247,0.4)]'
+                : 'bg-[#091122]/90 border-white/10 text-slate-400 hover:text-white hover:bg-white/5'
             }`}
             title="Smoothly zoom & track the active step on the canvas"
           >
             <Video className="w-3 h-3 text-purple-400" />
-            <span>Cinema Zoom</span>
+            <span className="hidden sm:inline">Cinema Zoom</span>
           </button>
         </div>
 
@@ -2537,102 +2596,152 @@ export default function QualityEcosystemPortal() {
 
       {/* ========================================================================= */}
       {/* 1B. DOCKED SEQUENCE PIPELINE RIBBON WITH PREV/NEXT STEPPER */}
-      {/* ========================================================================= */}
-      <div className="h-8 px-3 border-b border-white/10 bg-[#030713]/95 flex items-center justify-between gap-2 shrink-0 z-20 overflow-x-auto no-scrollbar shadow-inner">
-        <div className="flex items-center gap-1.5 shrink-0">
-          {/* Prev / Next Stepper Buttons */}
-          <div className="flex items-center bg-[#0a1224] border border-white/15 rounded-md p-0.5 shadow-sm">
-            <button
-              type="button"
-              onClick={() => handleStepDelta(-1)}
-              className="p-0.5 text-slate-300 hover:text-white hover:bg-white/10 rounded transition-colors"
-              title="Previous Relationship Step"
-            >
-              <ChevronLeft className="w-3.5 h-3.5" />
-            </button>
-            <span className="text-[10px] font-black uppercase tracking-wider text-sky-300 px-2 font-mono">
-              {activeSimulation !== 'none'
-                ? `SIMULATION`
-                : activeNodeInfo
-                ? `${activeNodeInfo.node.shortName} FLOW`
-                : `ISO PDCA (1➔${MASTER_BACKBONE_SEQUENCE.length})`}
-            </span>
-            <button
-              type="button"
-              onClick={() => handleStepDelta(1)}
-              className="p-0.5 text-slate-300 hover:text-white hover:bg-white/10 rounded transition-colors"
-              title="Next Relationship Step"
-            >
-              <ChevronRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
+      {showRibbon ? (
+        <div className="h-8 px-3 border-b border-white/10 bg-[#030713]/95 flex items-center justify-between gap-2 shrink-0 z-20 overflow-x-auto no-scrollbar shadow-inner">
+          <div className="flex items-center gap-1.5 shrink-0 min-w-0">
+            {/* Prev / Next Stepper Buttons */}
+            <div className="flex items-center bg-[#0a1224] border border-white/15 rounded-md p-0.5 shadow-sm">
+              <button
+                type="button"
+                onClick={() => handleStepDelta(-1)}
+                className="p-0.5 text-slate-300 hover:text-white hover:bg-white/10 rounded transition-colors"
+                title="الخطوة السابقة (Previous Step)"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+              </button>
+              <span className="text-[10px] font-black uppercase tracking-wider text-sky-300 px-2 font-mono whitespace-nowrap">
+                {activeSimulation !== 'none'
+                  ? `SIMULATION`
+                  : activeNodeInfo
+                  ? `${activeNodeInfo.node.shortName} FLOW`
+                  : `ISO PDCA (1➔${MASTER_BACKBONE_SEQUENCE.length})`}
+              </span>
+              <button
+                type="button"
+                onClick={() => handleStepDelta(1)}
+                className="p-0.5 text-slate-300 hover:text-white hover:bg-white/10 rounded transition-colors"
+                title="الخطوة التالية (Next Step)"
+              >
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
 
-          <div className="flex items-center gap-1">
-            {ribbonSequenceCables.map((item, idx) => {
-              const isBackboneFeedback = item.cable.isFeedback;
-              const paddedNum =
-                item.stepNumber < 10 ? `0${item.stepNumber}` : `${item.stepNumber}`;
-              return (
-                <React.Fragment key={item.cable.id}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedCableId(
-                        selectedCableId === item.cable.id ? null : item.cable.id
-                      );
-                      if (cinemaCamera) {
-                        focusCameraOnCable(item.cable.id);
-                      }
-                    }}
-                    className={`px-2 py-0.5 rounded-md text-[10px] font-extrabold transition-all flex items-center gap-1 shrink-0 border ${
-                      item.isActiveStep
-                        ? 'bg-emerald-500/30 border-emerald-400 text-white shadow-[0_0_12px_rgba(16,185,129,0.5)] scale-105'
-                        : isBackboneFeedback
-                        ? 'bg-rose-950/60 border-rose-500/40 text-rose-200 hover:bg-rose-500/20'
-                        : item.isPassedStep
-                        ? 'bg-[#091122]/90 border-white/15 text-slate-200 hover:border-sky-400/50 hover:text-white'
-                        : 'bg-slate-950/50 border-white/5 text-slate-500'
-                    }`}
-                  >
-                    <span
-                      className={`px-1 rounded text-[9px] font-black ${
-                        isBackboneFeedback
-                          ? 'bg-rose-500 text-white'
-                          : 'bg-sky-400 text-slate-950'
+            {/* Steps Container: Compact mode (clean numbered badges, active step expanded) vs Full Expanded mode */}
+            <div className="flex items-center gap-1">
+              {ribbonSequenceCables.map((item, idx) => {
+                const isBackboneFeedback = item.cable.isFeedback;
+                const paddedNum =
+                  item.stepNumber < 10 ? `0${item.stepNumber}` : `${item.stepNumber}`;
+                const isCurrentActive = item.isActiveStep;
+                const showFullText = isRibbonExpanded || isCurrentActive;
+
+                return (
+                  <React.Fragment key={item.cable.id}>
+                    <button
+                      type="button"
+                      title={`${paddedNum}: ${item.srcName} ➔ ${item.tgtName}`}
+                      onClick={() => {
+                        setSelectedCableId(
+                          selectedCableId === item.cable.id ? null : item.cable.id
+                        );
+                        if (cinemaCamera) {
+                          focusCameraOnCable(item.cable.id);
+                        }
+                      }}
+                      className={`h-6 rounded-md text-[10px] font-extrabold transition-all flex items-center justify-center gap-1 shrink-0 border ${
+                        showFullText ? 'px-2' : 'w-6 px-0'
+                      } ${
+                        isCurrentActive
+                          ? 'bg-emerald-500/30 border-emerald-400 text-white shadow-[0_0_12px_rgba(16,185,129,0.5)] scale-105 z-10'
+                          : isBackboneFeedback
+                          ? 'bg-rose-950/60 border-rose-500/40 text-rose-200 hover:bg-rose-500/20'
+                          : item.isPassedStep
+                          ? 'bg-[#091122]/90 border-white/15 text-slate-200 hover:border-sky-400/50 hover:text-white'
+                          : 'bg-slate-950/50 border-white/5 text-slate-500 hover:text-slate-300 hover:bg-white/5'
                       }`}
                     >
-                      {isBackboneFeedback ? `↺${paddedNum}` : paddedNum}
-                    </span>
-                    <span className="font-bold">{item.srcName}</span>
-                    <span className="text-sky-400">➔</span>
-                    <span className="font-bold text-emerald-300">{item.tgtName}</span>
-                  </button>
-                  {idx < ribbonSequenceCables.length - 1 && (
-                    <ChevronRight className="w-3 h-3 text-slate-600 shrink-0" />
-                  )}
-                </React.Fragment>
-              );
-            })}
+                      <span
+                        className={`text-[9px] font-black ${
+                          showFullText
+                            ? `px-1 rounded ${
+                                isBackboneFeedback
+                                  ? 'bg-rose-500 text-white'
+                                  : 'bg-sky-400 text-slate-950'
+                              }`
+                            : isCurrentActive
+                            ? 'text-white'
+                            : isBackboneFeedback
+                            ? 'text-rose-400'
+                            : 'text-sky-300'
+                        }`}
+                      >
+                        {isBackboneFeedback ? `↺${paddedNum}` : paddedNum}
+                      </span>
+                      {showFullText && (
+                        <>
+                          <span className="font-bold">{item.srcName}</span>
+                          <span className="text-sky-400">➔</span>
+                          <span className="font-bold text-emerald-300">{item.tgtName}</span>
+                        </>
+                      )}
+                    </button>
+                    {isRibbonExpanded && idx < ribbonSequenceCables.length - 1 && (
+                      <ChevronRight className="w-2.5 h-2.5 text-slate-600 shrink-0" />
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Right Controls: Compact/Full Toggle, Reset, Hide Ribbon */}
+          <div className="flex items-center gap-1 shrink-0">
+            <button
+              type="button"
+              onClick={() => setIsRibbonExpanded((v) => !v)}
+              className="px-1.5 py-0.5 rounded text-[10px] font-bold text-slate-400 hover:text-white hover:bg-white/10 border border-white/10 transition-colors"
+              title={isRibbonExpanded ? 'عرض مدمج (Compact)' : 'عرض تفاصيل كل الخطوات (Expand All)'}
+            >
+              {isRibbonExpanded ? 'عرض مدمج' : 'توسيع المسار'}
+            </button>
+
+            {(selectedNodeId || selectedCableId || activeSimulation !== 'none' || focusedStageId) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedNodeId(null);
+                  setSelectedCableId(null);
+                  setActiveSimulation('none');
+                  fitToScreen();
+                }}
+                className="px-2 py-0.5 rounded bg-rose-500/20 border border-rose-500/40 text-rose-300 hover:bg-rose-500/30 text-[10px] font-black shrink-0 shadow-sm transition-all"
+              >
+                Reset ✕
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={() => setShowRibbon(false)}
+              className="p-1 rounded text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+              title="إخفاء شريط المسار (Hide Pipeline)"
+            >
+              <EyeOff className="w-3 h-3" />
+            </button>
           </div>
         </div>
+      ) : (
+        /* Floating Pill to Restore Ribbon */
+        <button
+          type="button"
+          onClick={() => setShowRibbon(true)}
+          className="absolute top-14 left-4 z-40 px-2 py-1 rounded-lg bg-[#0a1224]/90 border border-sky-400/30 text-sky-300 hover:bg-sky-500/20 text-[10px] font-bold shadow-lg flex items-center gap-1.5 backdrop-blur-md transition-all"
+        >
+          <Eye className="w-3 h-3 text-sky-400" />
+          <span>إظهار مسار PDCA</span>
+        </button>
+      )}
 
-        {(selectedNodeId || selectedCableId || activeSimulation !== 'none' || focusedStageId) && (
-          <button
-            type="button"
-            onClick={() => {
-              setSelectedNodeId(null);
-              setSelectedCableId(null);
-              setActiveSimulation('none');
-              fitToScreen();
-            }}
-            className="px-2 py-0.5 rounded bg-rose-500/20 border border-rose-500/40 text-rose-300 hover:bg-rose-500/30 text-[10px] font-black shrink-0 shadow-sm transition-all"
-          >
-            Reset View ✕
-          </button>
-        )}
-      </div>
-
-      {/* ========================================================================= */}
       {/* 2. SPACIOUS ZERO-CLUTTER MATRIX CANVAS (1540 x 580) */}
       {/* ========================================================================= */}
       <div
