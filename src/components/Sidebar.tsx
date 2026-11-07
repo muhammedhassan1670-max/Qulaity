@@ -30,7 +30,9 @@ import {
   Smartphone,
   Info,
   X,
-  GitCompare
+  GitCompare,
+  BookOpen,
+  ExternalLink
 } from 'lucide-react';
 import { useConfigStore } from '../stores/configStore';
 import { useAppStore } from '../stores/appStore';
@@ -549,6 +551,22 @@ export function Sidebar({ isOpen, onClose, onSectionChange }: SidebarProps) {
         <nav className="flex-1 p-3 space-y-1 overflow-y-auto pb-16">
           {menuItems.map(item => renderMenuItem(item))}
         </nav>
+
+        {/* SOP Documentation Link */}
+        <div className="px-3.5 pb-2 shrink-0">
+          <a
+            href="/docs/sop.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2.5 px-3 py-2 rounded-2xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-black text-xs transition-all shadow-sm"
+          >
+            <BookOpen className="w-4 h-4 text-emerald-500 shrink-0" />
+            <div className="flex-1 min-w-0">
+              <span className="block truncate">{language === 'ar' ? '📖 دليل التشغيل (SOP)' : '📖 SOP Manual'}</span>
+            </div>
+            <ExternalLink className="w-3.5 h-3.5 opacity-60 shrink-0" />
+          </a>
+        </div>
 
         {/* Bottom Status & Active Profile */}
         <div className="mt-auto p-3.5 border-t border-slate-200 dark:border-white/10 bg-slate-50/60 dark:bg-black/20">

@@ -18,6 +18,7 @@ import {
   Layout,
   LayoutGrid,
   Box,
+  BookOpen,
   Mic,
   MicOff,
   Globe
@@ -165,6 +166,18 @@ export function Header({ onMenuToggle, user }: HeaderProps) {
           >
             <QrCode className="w-5 h-5" />
           </button>
+
+          {/* Interactive SOP Operating Manual Button */}
+          <a
+            href="/docs/sop.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 px-3 h-9 sm:h-10 rounded-xl border border-emerald-500/50 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 hover:from-emerald-500/30 hover:to-teal-500/30 text-emerald-600 dark:text-emerald-400 transition-all font-black text-xs shadow-md shadow-emerald-500/10 hover:scale-105 active:scale-95 shrink-0 whitespace-nowrap"
+            title={language === 'ar' ? 'فتح دليل وتعليمات التشغيل القياسية الشاملة (SOP)' : 'Open Interactive SOP Manual'}
+          >
+            <BookOpen className="w-4 h-4 text-emerald-500 shrink-0" />
+            <span className="hidden md:inline">{language === 'ar' ? 'دليل التشغيل (SOP)' : 'SOP Manual'}</span>
+          </a>
 
           {/* 3D Digital Twin Plant Button (Desktop & Tablet) */}
           <button
@@ -374,6 +387,13 @@ export function Header({ onMenuToggle, user }: HeaderProps) {
               >
                 <Settings className="w-4 h-4 mr-2" />
                 {t('settings')}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="hover:bg-white/10 cursor-pointer font-bold text-emerald-600 dark:text-emerald-400"
+                onSelect={() => window.open('/docs/sop.html', '_blank')}
+              >
+                <BookOpen className="w-4 h-4 mr-2 text-emerald-500" />
+                {language === 'ar' ? '📖 دليل وتعليمات التشغيل (SOP)' : '📖 Operating Manual (SOP)'}
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="hover:bg-white/10 cursor-pointer"
