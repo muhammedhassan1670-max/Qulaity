@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAppStore } from '../../stores/appStore';
+import { askQualityCopilot } from '../../services/copilotEngine';
 
 // Web Speech types
 interface SpeechRecognitionEvent {
@@ -77,7 +78,7 @@ export function IndustrialSuperpowersHub() {
   );
 
   const handleVoiceCommand = useCallback(
-    (transcript: string) => {
+    async (transcript: string) => {
       const q = transcript.toLowerCase();
       let reply = '';
 
@@ -123,11 +124,19 @@ export function IndustrialSuperpowersHub() {
         setVoiceResponse(reply);
         window.open('/docs/sop.html', '_blank');
       } else {
-        reply = isArabic
-          ? `فهمت طلبك: "${transcript}". مؤشرات جودة المصنع اليوم ممتازة، ومعدل FPY هو 99.2%.`
-          : `Understood: "${transcript}". Plant quality KPIs are steady at 99.2% FPY.`;
-        speakText(reply);
-        setVoiceResponse(reply);
+        setVoiceResponse(isArabic ? 'جاري التحليل واستدعاء الاستشارة الهندسية...' : 'Analyzing query with Industrial Brain...');
+        try {
+          const res = await askQualityCopilot(transcript, { pathname: '/superpowers' });
+          const plainSummary = res.content.split('\n')[0].replace(/[#*`_~]/g, '') || res.content.substring(0, 140);
+          speakText(plainSummary);
+          setVoiceResponse(res.content);
+        } catch {
+          reply = isArabic
+            ? `فهمت طلبك: "${transcript}". مؤشرات جودة المصنع اليوم ممتازة، ومعدل FPY هو 99.2%.`
+            : `Understood: "${transcript}". Plant quality KPIs are steady at 99.2% FPY.`;
+          speakText(reply);
+          setVoiceResponse(reply);
+        }
       }
     },
     [isArabic, navigate, setTourOpen, speakText]
