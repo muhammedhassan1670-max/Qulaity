@@ -19,6 +19,7 @@ import {
   LayoutGrid,
   Box,
   BookOpen,
+  Compass,
   Mic,
   MicOff,
   Globe
@@ -50,7 +51,7 @@ export function Header({ onMenuToggle, user }: HeaderProps) {
 
   const navigate = useNavigate();
   
-  const { theme, setTheme, notifications, removeNotification, setUser, isLiteMode, setLiteMode, setLanguage } = useAppStore();
+  const { theme, setTheme, notifications, removeNotification, setUser, isLiteMode, setLiteMode, setLanguage, setTourOpen } = useAppStore();
   
   const unreadCount = notifications.filter(n => !n.read).length;
   
@@ -165,6 +166,16 @@ export function Header({ onMenuToggle, user }: HeaderProps) {
             aria-label="Scan QR or Barcode"
           >
             <QrCode className="w-5 h-5" />
+          </button>
+
+          {/* Interactive Guided Tour Button */}
+          <button
+            onClick={() => setTourOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3 h-9 sm:h-10 rounded-xl border border-amber-500/50 bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-yellow-500/20 hover:from-amber-500/30 hover:to-yellow-500/30 text-amber-500 dark:text-amber-400 transition-all font-black text-xs shadow-md shadow-amber-500/10 hover:scale-105 active:scale-95 shrink-0 whitespace-nowrap"
+            title={language === 'ar' ? 'بدء جولة تفاعلية حية لشرح الصفحة الحالية وأزرارها خطوة بخطوة' : 'Start Interactive Live Tour'}
+          >
+            <Compass className="w-4 h-4 text-amber-500 shrink-0" />
+            <span className="hidden md:inline">{language === 'ar' ? '🎯 جولة تفاعلية' : '🎯 Live Tour'}</span>
           </button>
 
           {/* Interactive SOP Operating Manual Button */}
@@ -387,6 +398,13 @@ export function Header({ onMenuToggle, user }: HeaderProps) {
               >
                 <Settings className="w-4 h-4 mr-2" />
                 {t('settings')}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="hover:bg-white/10 cursor-pointer font-bold text-amber-500 dark:text-amber-400"
+                onSelect={() => setTourOpen(true)}
+              >
+                <Compass className="w-4 h-4 mr-2 text-amber-500" />
+                {language === 'ar' ? '🎯 جولة تفاعلية حية (Interactive Tour)' : '🎯 Interactive Live Tour'}
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="hover:bg-white/10 cursor-pointer font-bold text-emerald-600 dark:text-emerald-400"

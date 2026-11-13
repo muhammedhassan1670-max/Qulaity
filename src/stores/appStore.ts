@@ -24,6 +24,7 @@ export interface AppState {
   notifications: Notification[];
   isOnline: boolean;
   isLiteMode: boolean;
+  isTourOpen: boolean;
   
   // Actions
   setUser: (user: User | null) => void;
@@ -35,6 +36,7 @@ export interface AppState {
   removeNotification: (id: string) => void;
   setOnline: (status: boolean) => void;
   setLiteMode: (isLite: boolean) => void;
+  setTourOpen: (open: boolean) => void;
   initializeApp: () => Promise<void>;
 }
 
@@ -81,6 +83,7 @@ export const useAppStore = create<AppState>()(
       notifications: [],
       isOnline: true,
       isLiteMode: false,
+      isTourOpen: false,
 
       setUser: (user) => set({ user }),
 
@@ -122,6 +125,8 @@ export const useAppStore = create<AppState>()(
       setOnline: (status) => set({ isOnline: status }),
       
       setLiteMode: (isLite) => set({ isLiteMode: isLite }),
+
+      setTourOpen: (open) => set({ isTourOpen: open }),
       
       initializeApp: async () => {
         // Reinitialize config defaults (in case of new updates to persisted store)

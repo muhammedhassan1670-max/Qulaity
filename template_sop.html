@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" class="dark scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>دليل التشغيل القياسي (SOP) - منظومة إدارة الجودة QMS 4.0</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2306b6d4' stroke-width='2'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Cairo', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#f0f9ff',
+              500: '#00A3E0',
+              600: '#0284c7',
+              700: '#0369a1',
+            }
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body {
+      font-family: 'Cairo', sans-serif;
+      background-color: #030712;
+      color: #e2e8f0;
+      line-height: 1.8;
+    }
+    code, pre {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    ::selection {
+      background: #06b6d4;
+      color: #082f49;
+    }
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0b0f19;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #0ea5e9;
+    }
+    @media print {
+      #top-bar, #sidebar, #audio-sop-bar, .no-print {
+        display: none !important;
+      }
+      main {
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+        border: none !important;
+      }
+      body {
+        background: #ffffff !important;
+        color: #000000 !important;
+      }
+      #printable-certificate {
+        background: #ffffff !important;
+        color: #000000 !important;
+        border-color: #d97706 !important;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-[#030712] text-slate-200 antialiased selection:bg-cyan-500 selection:text-slate-950">
+
+  <!-- TOP BAR -->
+  <header id="top-bar" class="sticky top-0 z-40 w-full bg-slate-900/90 backdrop-blur-md border-b border-slate-800 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <button id="menu-btn" class="lg:hidden p-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white" onclick="toggleSidebar()">
+          ☰
+        </button>
+        <div class="p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+        </div>
+        <div>
+          <h1 class="font-black text-sm sm:text-base text-white tracking-wide">QMS Enterprise 4.0 — دليل التشغيل القياسي</h1>
+          <p class="text-[11px] text-cyan-400 font-mono">Standard Operating Procedure (SOP) & Work Instruction</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button onclick="window.print()" class="px-3.5 py-1.5 rounded-xl bg-cyan-500/15 hover:bg-cyan-500 text-cyan-300 hover:text-slate-950 border border-cyan-500/30 font-bold text-xs flex items-center gap-1.5 transition-all shadow-sm">
+          <span>🖨️ طباعة / حفظ PDF</span>
+        </button>
+        <a href="https://qmssystem.gt.tc/" target="_blank" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 font-bold text-xs flex items-center gap-1.5 transition-all">
+          <span>🌐 فتح المنظومة الحية ↗</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN LAYOUT -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8 flex gap-8">
+    
+    <!-- SIDEBAR / TOC -->
+    <aside id="sidebar" class="hidden lg:block w-72 shrink-0 sticky top-24 h-[calc(100vh-7rem)] overflow-y-auto pr-2 pb-10 scrollbar-thin border-l border-slate-800">
+      <div class="mb-4">
+        <h3 class="text-xs font-black text-slate-400 uppercase tracking-wider mb-2">📑 فهرس المحتويات والسيناريوهات</h3>
+        <input 
+          type="text" 
+          id="toc-search" 
+          placeholder="بحث سريع في المحتويات..." 
+          onkeyup="filterToc()"
+          class="w-full px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 font-sans"
+        />
+      </div>
+      <div id="toc-list">
+        __TOC_HTML__
+      </div>
+    </aside>
+
+    <!-- CONTENT BODY -->
+    <main id="main-content" class="flex-1 min-w-0 max-w-4xl bg-slate-900/40 border border-slate-800/80 rounded-3xl p-6 sm:p-10 shadow-2xl backdrop-blur-sm">
+      __RENDERED_BODY__
+
+      <!-- ========================================== -->
+      <!-- INTERACTIVE QUALITY DECISION SANDBOX       -->
+      <!-- ISO 9001:2015 Clause 8.7 & IATF 16949      -->
+      <!-- ========================================== -->
+      <section id="decision-sandbox-section" class="mt-16 p-6 sm:p-8 rounded-3xl bg-gradient-to-b from-slate-900/90 to-slate-950 border-2 border-amber-500/40 shadow-2xl relative overflow-hidden">
+        <div class="absolute -top-12 -end-12 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="flex items-center gap-3 mb-4">
+          <div class="p-3 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-400 text-xl font-bold">
+            🎮
+          </div>
+          <div>
+            <span class="inline-block px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-black uppercase tracking-wider mb-1">Interactive Decision Engine</span>
+            <h2 class="text-xl sm:text-2xl font-black text-white">محاكي اتخاذ قرارات الجودة الذكي (Decision Sandbox)</h2>
+            <p class="text-xs text-slate-400">تطبيق عملي حي وفق بند ISO 9001:2015 Clause 8.7 (ضبط المخرجات غير المطابقة) ومعيار IATF 16949</p>
+          </div>
+        </div>
+
+        <p class="text-sm text-slate-300 mb-6 leading-relaxed">
+          اختر سيناريو واقعي من خطوط الإنتاج، ثم اضغط على القرار الإجرائي المناسب لمعرفة التقييم الرقابي اللحظي، متطلبات التوثيق، ونسبة المخاطرة:
+        </p>
+
+        <!-- Scenario Selector Tabs -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 mb-6" id="sandbox-scenarios">
+          <button onclick="selectScenario(1)" id="sc-btn-1" class="sc-btn active p-3 rounded-2xl border text-start transition-all bg-amber-500/15 border-amber-500 text-white shadow-md">
+            <span class="block text-[10px] font-mono text-amber-400 font-bold mb-1">السيناريو #1 • تشغيل وتجميع</span>
+            <span class="text-xs font-black block">انحراف بُعدي حرج (+0.8mm)</span>
+            <span class="text-[10px] text-slate-400 block mt-1">تجاوز للحد الأقصى USL في مكوّن أمان هيكلي</span>
+          </button>
+          <button onclick="selectScenario(2)" id="sc-btn-2" class="sc-btn p-3 rounded-2xl border text-start transition-all bg-slate-800/40 border-slate-700 text-slate-300 hover:border-slate-500">
+            <span class="block text-[10px] font-mono text-cyan-400 font-bold mb-1">السيناريو #2 • فحص نهائي</span>
+            <span class="text-xs font-black block">عيب بصري سطحي (خدش خفيف)</span>
+            <span class="text-[10px] text-slate-400 block mt-1">خدش سطحي أقل من 0.2mm على جزء داخلي غير مرئي</span>
+          </button>
+          <button onclick="selectScenario(3)" id="sc-btn-3" class="sc-btn p-3 rounded-2xl border text-start transition-all bg-slate-800/40 border-slate-700 text-slate-300 hover:border-slate-500">
+            <span class="block text-[10px] font-mono text-rose-400 font-bold mb-1">السيناريو #3 • فحص وارد IQC</span>
+            <span class="text-xs font-black block">خامة ملوثة بشوائب زيتية</span>
+            <span class="text-[10px] text-slate-400 block mt-1">شحنة حبيبات بوليمر واردة من مورد خارجي معتمد</span>
+          </button>
+          <button onclick="selectScenario(4)" id="sc-btn-4" class="sc-btn p-3 rounded-2xl border text-start transition-all bg-slate-800/40 border-slate-700 text-slate-300 hover:border-slate-500">
+            <span class="block text-[10px] font-mono text-purple-400 font-bold mb-1">السيناريو #4 • أجهزة القياس MSA</span>
+            <span class="text-xs font-black block">انتهاء صلاحية معايرة جهاز العزم</span>
+            <span class="text-[10px] text-slate-400 block mt-1">مفتاح عزم رقمي مستخدم في ربط محاور الأمان</span>
+          </button>
+        </div>
+
+        <!-- Action Decision Buttons -->
+        <div class="mb-6">
+          <label class="block text-xs font-black text-slate-400 mb-2.5">ما هو قرارك الإجرائي الفوري؟ (اضغط لاختبار القرار):</label>
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2" id="sandbox-actions">
+            <button onclick="evaluateDecision('quarantine')" class="act-btn p-3 rounded-xl bg-rose-500/10 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 hover:text-white text-xs font-black transition-all flex flex-col items-center gap-1.5 text-center">
+              <span class="text-base">🔴</span>
+              <span>حجز فوري وحجر صحي (Quarantine)</span>
+            </button>
+            <button onclick="evaluateDecision('concession')" class="act-btn p-3 rounded-xl bg-amber-500/10 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 hover:text-white text-xs font-black transition-all flex flex-col items-center gap-1.5 text-center">
+              <span class="text-base">🟠</span>
+              <span>طلب تنازل هندسي (Concession)</span>
+            </button>
+            <button onclick="evaluateDecision('mrb')" class="act-btn p-3 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/25 border border-cyan-500/30 text-cyan-300 hover:text-white text-xs font-black transition-all flex flex-col items-center gap-1.5 text-center">
+              <span class="text-base">🟡</span>
+              <span>إحالة للجنة MRB المشتركة</span>
+            </button>
+            <button onclick="evaluateDecision('scrap')" class="act-btn p-3 rounded-xl bg-purple-500/10 hover:bg-purple-500/25 border border-purple-500/30 text-purple-300 hover:text-white text-xs font-black transition-all flex flex-col items-center gap-1.5 text-center">
+              <span class="text-base">⛔</span>
+              <span>تكهين وإعدام الدفعة (Scrap)</span>
+            </button>
+            <button onclick="evaluateDecision('rtv')" class="act-btn p-3 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 hover:text-white text-xs font-black transition-all flex flex-col items-center gap-1.5 text-center">
+              <span class="text-base">🔄</span>
+              <span>إرجاع للمورد مع SCAR (RTV)</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Evaluation Live Result Card -->
+        <div id="sandbox-result" class="p-5 rounded-2xl bg-slate-950/80 border border-slate-800 transition-all">
+          <div class="flex items-center gap-2 text-slate-400 text-xs">
+            <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+            <span>اضغط على أحد أزرار الإجراء بالأعلى لاختبار مدى مطابقته مع معايير ISO 9001:2015</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- INTERACTIVE ISO 9001 COMPETENCY EXAM       -->
+      <!-- & DIGITAL CERTIFICATE GENERATOR            -->
+      <!-- ========================================== -->
+      <section id="competency-quiz-section" class="mt-12 p-6 sm:p-8 rounded-3xl bg-gradient-to-b from-slate-900/90 to-slate-950 border-2 border-emerald-500/40 shadow-2xl relative overflow-hidden">
+        <div class="absolute -top-12 -start-12 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="flex items-center justify-between gap-4 mb-6">
+          <div class="flex items-center gap-3">
+            <div class="p-3 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xl font-bold">
+              🎓
+            </div>
+            <div>
+              <span class="inline-block px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-black uppercase tracking-wider mb-1">Quality Operating Competency</span>
+              <h2 class="text-xl sm:text-2xl font-black text-white">اختبار كفاءة التشغيل المعتمد (ISO 9001:2015 Competency Exam)</h2>
+              <p class="text-xs text-slate-400">أجب عن الأسئلة الخمسة التالية بنسبة نجاح 80% أو أكثر لإصدار شهادة كفاءة تشغيل رقمية رسمية فورية باسمك</p>
+            </div>
+          </div>
+          <div class="hidden sm:block text-end">
+            <span id="quiz-score-badge" class="px-3.5 py-1.5 rounded-xl bg-slate-800 border border-slate-700 text-xs font-mono font-bold text-slate-300">النتيجة: 0 / 5 (0%)</span>
+          </div>
+        </div>
+
+        <!-- Quiz Questions Container -->
+        <div id="quiz-container" class="space-y-4 mb-6">
+          <!-- Question 1 -->
+          <div class="quiz-card p-4 sm:p-5 rounded-2xl bg-slate-900/60 border border-slate-800" data-qid="1" data-correct="B">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-black text-cyan-400 font-mono">سؤال 1 من 5 • فحص الواردات IQC</span>
+              <span class="res-icon text-sm"></span>
+            </div>
+            <p class="text-sm font-bold text-white mb-3">عند اكتشاف مادة خام غير مطابقة للمواصفات أثناء فحص الشحنة في مخزن الواردات، ما هو الإجراء الإلزامي الأول وفق بند 8.7؟</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+              <label class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-800/40 hover:bg-slate-800 border border-slate-700/60 cursor-pointer">
+                <input type="radio" name="q1" value="A" onchange="checkAnswer(1, 'A')" class="accent-cyan-400" />
+                <span>أ) تشغيل الخامة فوراً لتجنب توقف خط الإنتاج مع إبلاغ المدير لاحقاً</span>
+              </label>
+              <label class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-800/40 hover:bg-slate-800 border border-slate-700/60 cursor-pointer">
+                <input type="radio" name="q1" value="B" onchange="checkAnswer(1, 'B')" class="accent-cyan-400" />
+                <span>ب) عزل الشحنة ووضع بطاقة حمراء Red Tag وتحديث حالة الدفعة إلى Quarantined</span>
+              </label>
+              <label class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-800/40 hover:bg-slate-800 border border-slate-700/60 cursor-pointer">
+                <input type="radio" name="q1" value="C" onchange="checkAnswer(1, 'C')" class="accent-cyan-400" />
+                <span>ج) إعدام الخامة فوراً وخصم قيمتها من المورد دون فتح تقرير عدم مطابقة</span>
+              </label>
+              <label class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-800/40 hover:bg-slate-800 border border-slate-700/60 cursor-pointer">
+                <input type="radio" name="q1" value="D" onchange="checkAnswer(1, 'D')" class="accent-cyan-400" />
+                <span>د) إعادة فحص عينة أخرى حتى تظهر نتيجة مطابقة ثم الإفراج عنها</span>
+              </label>
+            </div>
+            <div class="feedback-box hidden mt-2.5 text-xs p-2.5 rounded-xl"></div>
+          </div>
+
+          <!-- Question 2 -->
+          <div class="quiz-card p-4 sm:p-5 rounded-2xl bg-slate-900/60 border border-slate-800" data-qid="2" data-correct="C">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-black text-cyan-400 font-mono">سؤال 2 من 5 • الضبط الإحصائي SPC</span>
+              <span class="res-icon text-sm"></span>
+            </div>
+            <p class="text-sm font-bold text-white mb-3">في خريطة المراقبة الإحصائية X-bar، متى يُعتبر المسار غير مستقر إحصائياً حتى لو كانت جميع النقاط داخل حدود التحكم (UCL / LCL)؟</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+              <label class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-800/40 hover:bg-slate-800 border border-slate-700/60 cursor-pointer">
+                <input type="radio" name="q2" value="A" onchange="checkAnswer(2, 'A')" class="accent-cyan-400" />
+                <span>أ) إذا كانت العينات مأخوذة في وردية صباحية فقط</span>
+              </label>
+              <label class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-800/40 hover:bg-slate-800 border border-slate-700/60 cursor-pointer">
+                <input type="radio" name="q2" value="B" onchange="checkAnswer(2, 'B')" class="accent-cyan-400" />
+                <span>ب) عندما يكون عدد المشغلين أقل من 3 مشغلين في المحطة</span>
+              </label>
+              <label class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-800/40 hover:bg-slate-800 border border-slate-700/60 cursor-pointer">
+                <input type="radio" name="q2" value="C" onchange="checkAnswer(2, 'C')" class="accent-cyan-400" />
+                <span>ج) عند تحقق قاعدة نيلسون: 7 نقاط متتالية في اتجاه تصاعدي أو على جانب واحد من خط الوسط</span>
+              </label>
+              <label class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-800/40 hover:bg-slate-800 border border-slate-700/60 cursor-pointer">
+                <input type="radio" name="q2" value="D" onchange="checkAnswer(2, 'D')" class="accent-cyan-400" />
+                <span>د) طالما لم تخرج أي نقطة خارج UCL فالعملية تعتبر ممتازة ولا تتطلب أي تدخل</span>
+              </label>
+            </div>
+            <div class="feedback-box hidden mt-2.5 text-xs p-2.5 rounded-xl"></div>
+          </div>
+
+          <!-- Question 3 -->
+          <div class="quiz-card p-4 sm:p-5 rounded-2xl bg-slate-900/60 border border-slate-800" data-qid="3" data-correct="A">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-black text-cyan-400 font-mono">سؤال 3 من 5 • إدارة التنازلات الهندسية Concessions</span>
+              <span class="res-icon text-sm"></span>
+            </div>
+            <p class="text-sm font-bold text-white mb-3">متى يُسمح قانونياً بالإفراج عن منتج به حيود عن الرسم الهندسي تحت بند "تنازل واستثناء (Concession)"؟</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+              <label class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-800/40 hover:bg-slate-800 border border-slate-700/60 cursor-pointer">
+                <input type="radio" name="q3" value="A" onchange="checkAnswer(3, 'A')" class="accent-cyan-400" />
+                <span>أ) فقط بعد موافقة كتابية صريحة وموثقة من الإدارة الهندسية والعميل مع تحديد الكمية والفترة</span>
+              </label>
+              <label class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-800/40 hover:bg-slate-800 border border-slate-700/60 cursor-pointer">
+                <input type="radio" name="q3" value="B" onchange="checkAnswer(3, 'B')" class="accent-cyan-400" />
+                <span>ب) بمجرد موافقة شفوية من رئيس الوردية عبر الهاتف</span>
+              </label>
+              <label class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-800/40 hover:bg-slate-800 border border-slate-700/60 cursor-pointer">
+                <input type="radio" name="q3" value="C" onchange="checkAnswer(3, 'C')" class="accent-cyan-400" />
+                <span>ج) إذا كانت تكلفة إعادة التشغيل مرتفعة جداً مقارنة بسعر المنتج</span>
+              </label>
+              <label class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-800/40 hover:bg-slate-800 border border-slate-700/60 cursor-pointer">
+                <input type="radio" name="q3" value="D" onchange="checkAnswer(3, 'D')" class="accent-cyan-400" />
+                <span>د) التنازلات غير مسموح بها نهائياً تحت أي ظرف في أي نظام جودة</span>
+              </label>
+            </div>
+            <div class="feedback-box hidden mt-2.5 text-xs p-2.5 rounded-xl"></div>
+          </div>
+
+          <!-- Question 4 -->
+          <div class="quiz-card p-4 sm:p-5 rounded-2xl bg-slate-900/60 border border-slate-800" data-qid="4" data-correct="D">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-black text-cyan-400 font-mono">سؤال 4 من 5 • الإجراءات التصحيحية والوقائية CAPA</span>
+              <span class="res-icon text-sm"></span>
+            </div>
+            <p class="text-sm font-bold text-white mb-3">ما هو المعيار الجوهري لإغلاق تقرير الإجراء التصحيحي (CAPA) نهائياً واعتباره ناجحاً في منظومة QMS 4.0؟</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+              <label class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-800/40 hover:bg-slate-800 border border-slate-700/60 cursor-pointer">
+                <input type="radio" name="q4" value="A" onchange="checkAnswer(4, 'A')" class="accent-cyan-400" />
+                <span>أ) بمجرد كتابة خطة العمل وإرسالها بالإيميل للمدير</span>
+              </label>
+              <label class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-800/40 hover:bg-slate-800 border border-slate-700/60 cursor-pointer">
+                <input type="radio" name="q4" value="B" onchange="checkAnswer(4, 'B')" class="accent-cyan-400" />
+                <span>ب) عندما يتم تغيير المشغل المسؤول عن محطة الخطأ</span>
+              </label>
+              <label class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-800/40 hover:bg-slate-800 border border-slate-700/60 cursor-pointer">
+                <input type="radio" name="q4" value="C" onchange="checkAnswer(4, 'C')" class="accent-cyan-400" />
+                <span>ج) مرور 30 يوماً تلقائياً على فتح التقرير بدون شكوى جديدة</span>
+              </label>
+              <label class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-800/40 hover:bg-slate-800 border border-slate-700/60 cursor-pointer">
+                <input type="radio" name="q4" value="D" onchange="checkAnswer(4, 'D')" class="accent-cyan-400" />
+                <span>د) التحقق من الفاعلية (Verification of Effectiveness) بأدلة موضوعية تضمن عدم تكرار الخلل</span>
+              </label>
+            </div>
+            <div class="feedback-box hidden mt-2.5 text-xs p-2.5 rounded-xl"></div>
+          </div>
+
+          <!-- Question 5 -->
+          <div class="quiz-card p-4 sm:p-5 rounded-2xl bg-slate-900/60 border border-slate-800" data-qid="5" data-correct="B">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-black text-cyan-400 font-mono">سؤال 5 من 5 • شهادات الجودة الرقمية e-COA</span>
+              <span class="res-icon text-sm"></span>
+            </div>
+            <p class="text-sm font-bold text-white mb-3">ما هي الوظيفة الحيوية لشهادة الفحص والمطابقة الرقمية (Certificate of Analysis - e-COA) عند شحن المنتجات؟</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+              <label class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-800/40 hover:bg-slate-800 border border-slate-700/60 cursor-pointer">
+                <input type="radio" name="q5" value="A" onchange="checkAnswer(5, 'A')" class="accent-cyan-400" />
+                <span>أ) ورقة شكلية توضع في الكرتونة ليس لها أي أثر قانوني أو تعاقدي</span>
+              </label>
+              <label class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-800/40 hover:bg-slate-800 border border-slate-700/60 cursor-pointer">
+                <input type="radio" name="q5" value="B" onchange="checkAnswer(5, 'B')" class="accent-cyan-400" />
+                <span>ب) وثيقة معتمدة وموقعة رقمياً تضمن مطابقة معايير الدفعة الفعلية وتمنح العميل تتبعاً كاملاً وتسرع استلام الشحنة</span>
+              </label>
+              <label class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-800/40 hover:bg-slate-800 border border-slate-700/60 cursor-pointer">
+                <input type="radio" name="q5" value="C" onchange="checkAnswer(5, 'C')" class="accent-cyan-400" />
+                <span>ج) استخدامها فقط إذا كان العميل أجنبياً خارج الدولة</span>
+              </label>
+              <label class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-800/40 hover:bg-slate-800 border border-slate-700/60 cursor-pointer">
+                <input type="radio" name="q5" value="D" onchange="checkAnswer(5, 'D')" class="accent-cyan-400" />
+                <span>د) بديل يلغي الحاجة إلى إجراء فحص الفحص النهائي OQC في المصنع</span>
+              </label>
+            </div>
+            <div class="feedback-box hidden mt-2.5 text-xs p-2.5 rounded-xl"></div>
+          </div>
+        </div>
+
+        <!-- Certificate Generator Box (Revealed on passing score >= 4/5) -->
+        <div id="cert-reveal-box" class="hidden p-6 rounded-2xl bg-gradient-to-r from-emerald-950/70 via-slate-900 to-teal-950/70 border-2 border-emerald-500 shadow-2xl transition-all">
+          <div class="text-center mb-6">
+            <span class="inline-block text-3xl mb-2 animate-bounce">🏆</span>
+            <h3 class="text-xl font-black text-emerald-300">تهانينا! لقد اجتزت اختبار كفاءة تشغيل QMS 4.0 بنجاح</h3>
+            <p class="text-xs text-slate-300 mt-1">أدخل اسمك الكريم بالكامل لإصدار شهادة الإتقان الرقمية المعتمدة فوراً:</p>
+            <div class="mt-4 flex flex-col sm:flex-row items-center justify-center gap-2 max-w-md mx-auto">
+              <input 
+                type="text" 
+                id="cert-name-input" 
+                placeholder="الاسم الثلاثي أو الرباعي..." 
+                class="w-full px-4 py-2 rounded-xl bg-slate-950 border border-emerald-500/60 text-white text-sm focus:outline-none focus:border-emerald-400 font-bold text-center"
+              />
+              <button 
+                onclick="generateCertificate()" 
+                class="w-full sm:w-auto px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black text-xs shadow-lg shadow-emerald-500/25 whitespace-nowrap transition-all"
+              >
+                🎓 إصدار الشهادة
+              </button>
+            </div>
+          </div>
+
+          <!-- Printable Certificate Frame -->
+          <div id="printable-certificate" class="hidden mt-6 p-8 sm:p-10 rounded-2xl bg-slate-950 border-4 border-amber-500/80 text-center relative overflow-hidden shadow-2xl text-white">
+            <div class="absolute inset-0 bg-[radial-gradient(#f59e0b_1px,transparent_1px)] [background-size:16px_16px] opacity-10 pointer-events-none"></div>
+            <div class="flex items-center justify-between border-b border-amber-500/40 pb-4 mb-6">
+              <div class="text-start">
+                <span class="text-[10px] font-mono text-amber-400 font-bold block">ISO 9001:2015 / IATF 16949 COMPLIANT</span>
+                <span class="text-xs font-black text-white">QMS ENTERPRISE 4.0 INDUSTRIAL SYSTEM</span>
+              </div>
+              <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-slate-950 font-black text-lg shadow-lg">
+                ★
+              </div>
+            </div>
+
+            <div class="my-6">
+              <span class="text-xs uppercase tracking-[0.3em] text-amber-400 font-mono font-bold block mb-2">CERTIFICATE OF OPERATIONAL MASTERY</span>
+              <h2 class="text-2xl sm:text-3xl font-black text-amber-300 mb-2">شهادة إتقان وكفاءة تشغيل منظومة الجودة</h2>
+              <p class="text-xs text-slate-400 mb-6">تشهد إدارة التطوير الصناعي لمنظومة QMS 4.0 بأن الزميل / المهندس:</p>
+              
+              <div class="py-3 px-6 rounded-xl bg-amber-500/10 border border-amber-500/30 max-w-lg mx-auto mb-6">
+                <h3 id="cert-recipient-name" class="text-xl sm:text-2xl font-black text-amber-200 tracking-wide font-sans"></h3>
+              </div>
+
+              <p class="text-xs text-slate-300 max-w-xl mx-auto leading-relaxed">
+                قد استكمل بنجاح جميع متطلبات الفهم التطبيقي والإجرائي لدليل التشغيل القياسي (SOP)، ومحاكاة القرارات الحرجة لضبط المنتجات غير المطابقة (Clause 8.7)، وتطبيقات الضبط الإحصائي للجودة (SPC)، وإدارة خطط التحكم (Control Plans)، وتحليل المخاطر (FMEA).
+              </p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6 border-t border-amber-500/40 text-start text-[11px]">
+              <div>
+                <span class="text-slate-500 block text-[9px]">تاريخ المنح والاعتماد:</span>
+                <span id="cert-issue-date" class="font-mono text-amber-300 font-bold"></span>
+              </div>
+              <div class="sm:text-center">
+                <span class="text-slate-500 block text-[9px]">الرقم التسلسلي للتحقق (Verification ID):</span>
+                <span id="cert-serial-id" class="font-mono text-cyan-400 font-bold"></span>
+              </div>
+              <div class="sm:text-end">
+                <span class="text-slate-500 block text-[9px]">جهة الاعتماد الفني:</span>
+                <span class="font-black text-white">PixoraCo Industrial OS & QMS 4.0</span>
+              </div>
+            </div>
+
+            <div class="mt-6 flex justify-center gap-3">
+              <button onclick="window.print()" class="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center gap-2 transition-all shadow-lg shadow-amber-500/20">
+                <span>🖨️ طباعة الشهادة / حفظ PDF</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      <!-- FOOTER -->
+      <footer class="mt-16 pt-8 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+        <div>
+          <span>منظومة إدارة الجودة الصناعية QMS 4.0 — الإصدار الشامل المعتمد</span>
+        </div>
+        <div>
+          <span>تصميم وتطوير: <a href="https://www.facebook.com/share/1BZWXmCZRm/" target="_blank" class="text-cyan-400 font-bold hover:underline">PixoraCo</a></span>
+        </div>
+      </footer>
+    </main>
+
+  </div>
+
+  <!-- LIGHTBOX MODAL (FOR ZOOMING ON SCREENSHOTS) -->
+  <div id="lightbox" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md hidden flex items-center justify-center p-4 cursor-pointer" onclick="closeLightbox()">
+    <div class="relative max-w-5xl w-full max-h-[90vh] flex flex-col items-center" onclick="event.stopPropagation()">
+      <button class="absolute -top-10 end-0 text-white hover:text-cyan-400 text-xl font-bold p-2" onclick="closeLightbox()">✕ إغلاق</button>
+      <img id="lightbox-img" src="" alt="" class="max-w-full max-h-[82vh] object-contain rounded-xl shadow-2xl border border-white/10" />
+      <p id="lightbox-caption" class="mt-3 text-center text-sm font-bold text-cyan-300"></p>
+    </div>
+  </div>
+
+  <!-- FLOATING AUDIO NARRATOR (WEB SPEECH API) -->
+  <div id="audio-sop-bar" class="fixed bottom-4 end-4 z-40 bg-slate-900/95 border border-cyan-500/40 rounded-2xl p-3 shadow-2xl backdrop-blur-xl flex flex-col gap-2 max-w-sm transition-all text-xs">
+    <div class="flex items-center justify-between gap-3">
+      <div class="flex items-center gap-2">
+        <span class="w-2.5 h-2.5 rounded-full bg-cyan-400" id="audio-dot"></span>
+        <span class="font-black text-white text-xs">🎙️ القارئ الصوتي للدليل</span>
+        <span class="px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 text-[9px] font-mono">Web Speech</span>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <button onclick="toggleAudioSpeed()" id="audio-speed-btn" class="px-2 py-0.5 rounded-lg bg-slate-800 text-[10px] text-cyan-300 font-mono font-bold hover:bg-slate-700" title="سرعة القراءة">1.0x</button>
+        <button onclick="toggleAudioCollapse()" id="audio-collapse-btn" class="p-1 rounded-lg text-slate-400 hover:text-white" title="تصغير/توسيع">▼</button>
+      </div>
+    </div>
+    <div id="audio-controls-body" class="flex flex-col gap-2">
+      <div class="flex items-center gap-2">
+        <button id="audio-play-btn" onclick="toggleAudioSpeech()" class="flex-1 py-1.5 px-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-black text-xs flex items-center justify-center gap-1.5 transition-all shadow-md">
+          <span id="audio-play-icon">▶</span>
+          <span id="audio-play-label">استمع للقسم الحالي</span>
+        </button>
+        <button onclick="stopAudioSpeech()" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-rose-400 text-xs transition-colors" title="إيقاف نهائي">⏹</button>
+      </div>
+      <p id="audio-status-text" class="text-[10px] text-slate-400 truncate">انقر للاستماع لقراءة صوتية ذكية للقسم المفتوح</p>
+    </div>
+  </div>
+
+  <script>
+    function openLightbox(src, caption) {
+      document.getElementById('lightbox-img').src = src;
+      document.getElementById('lightbox-caption').innerText = caption;
+      document.getElementById('lightbox').classList.remove('hidden');
+    }
+    function closeLightbox() {
+      document.getElementById('lightbox').classList.add('hidden');
+    }
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeLightbox();
+    });
+
+    function toggleSidebar() {
+      const sb = document.getElementById('sidebar');
+      sb.classList.toggle('hidden');
+      if (!sb.classList.contains('hidden')) {
+        sb.classList.add('fixed', 'inset-y-0', 'start-0', 'z-50', 'bg-slate-950', 'p-6', 'w-80', 'shadow-2xl');
+      } else {
+        sb.classList.remove('fixed', 'inset-y-0', 'start-0', 'z-50', 'bg-slate-950', 'p-6', 'w-80', 'shadow-2xl');
+      }
+    }
+
+    function filterToc() {
+      const q = document.getElementById('toc-search').value.toLowerCase();
+      const links = document.querySelectorAll('#toc-list a');
+      links.forEach(a => {
+        const text = a.innerText.toLowerCase();
+        if (text.includes(q)) {
+          a.style.display = 'block';
+        } else {
+          a.style.display = 'none';
+        }
+      });
+    }
+
+    // ------------------------------------------------------------------
+    // DECISION SANDBOX DATA & LOGIC (ISO 9001:2015 Clause 8.7)
+    // ------------------------------------------------------------------
+    const scenarios = {
+      1: {
+        title: 'انحراف بُعدي حرج (+0.8mm فوق USL)',
+        dept: 'تشغيل وتجميع المحاور',
+        eval: {
+          quarantine: {
+            title: 'إجراء صحيح ومثالي 100% (Best Practice)',
+            badge: 'ISO 8.7 & IATF 16949 COMPLIANT',
+            color: 'emerald',
+            risk: 'منخفضة جداً (تم احتواء الخطر فورياً)',
+            form: 'نموذج حجز فوري Red Tag + فتح تقرير NCR عاجل برقم تسلسلي',
+            desc: 'الحجز الفوري والعزل الفيزيائي يمنع اختلاط القطع المعيبة بخطوط الإنتاج أو شحنها للعميل. هذا هو المتطلب الإلزامي الأول قبل اتخاذ أي قرار هندسي.'
+          },
+          concession: {
+            title: 'مرفوض كإجراء أولي — يتطلب موافقة العميل والهندسة',
+            badge: 'HIGH REGULATORY RISK',
+            color: 'amber',
+            risk: 'عالية (مخاطرة بسلامة المنتج)',
+            form: 'طلب تنازل هندسي Concession Request Q-8702',
+            desc: 'الانحراف في بُعد أمان حرج لا يجوز تمريره بتنازل داخلي إلا بعد دراسة إجهاد هندسية (FEA) وموافقة كتابية موقعة من العميل نفسه.'
+          },
+          mrb: {
+            title: 'إجراء مقبول ولكن بعد العزل الأولي',
+            badge: 'ACCEPTABLE ESCALATION',
+            color: 'cyan',
+            risk: 'متوسطة',
+            form: 'محضر اجتماع لجنة مراجعة المواد MRB Docket',
+            desc: 'إحالة الحالة إلى لجنة MRB قرار صائب لتحديد السبب الجذري ومعرفة إمكانية إعادة التشغيل (Rework)، شرط أن تكون الدفعة محجوزة فعلياً في الحجر الصحي أولاً.'
+          },
+          scrap: {
+            title: 'قرار متسرع قد يسبب خسارة مالية غير مبررة',
+            badge: 'COST OF POOR QUALITY (COPQ) RISK',
+            color: 'purple',
+            risk: 'مالية بحتة',
+            form: 'إذن تكهين Scrap Ticket Q-8709',
+            desc: 'لا يُتخذ قرار التكهين الفوري إلا بعد تقييم لجنة MRB لإمكانية المعالجة الهندسية أو استرجاع القيمة، ما لم تكن تكلفة الإصلاح تتجاوز قيمة القطعة.'
+          },
+          rtv: {
+            title: 'قرار غير صحيح نهائياً (خطأ في جهة المسؤولية)',
+            badge: 'AUDIT NONCONFORMITY',
+            color: 'rose',
+            risk: 'خطأ إجرائي فادح',
+            form: 'غير مطابق للسيناريو',
+            desc: 'العيب ناتج عن عملية تشغيل وتجميع داخلية داخل المصنع، ولا علاقة للمورد الخارجي به! إرجاعه للمورد يُعد عدم مطابقة صريحة في تدقيق الجودة.'
+          }
+        }
+      },
+      2: {
+        title: 'عيب بصري سطحي (خدش خفيف < 0.2mm)',
+        dept: 'فحص نهائي وتغليف',
+        eval: {
+          quarantine: {
+            title: 'إجراء سليم وتحفظي',
+            badge: 'STANDARD COMPLIANCE',
+            color: 'cyan',
+            risk: 'منخفضة',
+            form: 'بطاقة حجز مؤقت Yellow/Red Tag',
+            desc: 'عزل مؤقت للدفعة للتأكد من نسبة انتشار الخدوش السطحية ومقارنتها بعينة الحدود المعتمدة (Boundary / Limit Sample).'
+          },
+          concession: {
+            title: 'إجراء مثالي ومطابق للمواصفة القياسية',
+            badge: 'APPROVED VIA LIMIT SAMPLE',
+            color: 'emerald',
+            risk: 'معدومة (غير مؤثر على الوظيفة أو السلامة)',
+            form: 'اعتماد عينة حدودية Boundary Sample Sign-off',
+            desc: 'نظراً لأن العيب في جزء داخلي غير مرئي للعميل النهائي ولا يؤثر على المتانة أو الوظيفة، يتم الإفراج عنه تحت تنازل داخلي أو اعتماد عينة حدودية.'
+          },
+          mrb: {
+            title: 'مقبول للكميات الكبيرة فقط',
+            badge: 'ACCEPTABLE',
+            color: 'cyan',
+            risk: 'منخفضة',
+            form: 'سجل MRB السريع',
+            desc: 'مراجعة خفيفة وسريعة لتحديد هل يحتاج تلميع سطحي (Touch-up / Buffing) أم قبول بحالته (Use As Is).'
+          },
+          scrap: {
+            title: 'قرار غير اقتصادي وفادح يرفع تكلفة COPQ',
+            badge: 'UNNECESSARY SCRAP LOSS',
+            color: 'rose',
+            risk: 'هدر مالي خطير',
+            form: 'مرفوض',
+            desc: 'تكهين منتجات سليمة وظيفياً بسبب خدش سطحي بسيط غير ظاهر يُعتبر فشلاً في إدارة تكاليف الجودة وعدم فهم لمعايير القبول.'
+          },
+          rtv: {
+            title: 'غير قابل للتطبيق على الفحص النهائي الداخلي',
+            badge: 'INVALID ACTION',
+            color: 'rose',
+            risk: 'خطأ إجرائي',
+            form: 'غير متاح',
+            desc: 'الخدش حدث أثناء التداول الداخلي والتجميع ولا يتحمله مورد خامات.'
+          }
+        }
+      },
+      3: {
+        title: 'خامة ملوثة بشوائب زيتية (IQC)',
+        dept: 'فحص الواردات والمخازن',
+        eval: {
+          quarantine: {
+            title: 'إجراء إلزامي أولي حاسم',
+            badge: 'MANDATORY FIRST STEP',
+            color: 'emerald',
+            risk: 'صفر (منع دخول التلوث لصالة الإنتاج)',
+            form: 'نموذج رفض وارد IQC-Rejection + Red Tag',
+            desc: 'العزل الفوري في منطقة حجر الواردات يمنع صب البوليمر الملوث في ماكينات الحقن، مما يحمي المصنع من كوارث توقف الخطوط وتلف الاسطمبات.'
+          },
+          concession: {
+            title: 'مرفوض قطعاً وكارثي لخطوط الإنتاج',
+            badge: 'MAJOR NONCONFORMANCE',
+            color: 'rose',
+            risk: 'كارثية (تلف الاسطمبات واحتراق المنتجات)',
+            form: 'مرفوض',
+            desc: 'الشوائب الزيتية في خامات البوليمر تؤدي إلى تفحم داخلي، فقاعات هوائية، وانسداد الفواني. لا يُقبل أي تنازل عن تلوث الخامات.'
+          },
+          mrb: {
+            title: 'مقبول فقط للتأكيد الفني',
+            badge: 'TECHNICAL REVIEW',
+            color: 'cyan',
+            risk: 'منخفضة',
+            form: 'تقرير فحص معملي Lab Analysis',
+            desc: 'تأكيد التلوث عبر فحص معملي رسمي لتدعيم ملف المطالبة المالية ضد المورد.'
+          },
+          scrap: {
+            title: 'تحميل المصنع خسارة يتحملها المورد',
+            badge: 'FINANCIAL DEFECT',
+            color: 'amber',
+            risk: 'خسارة مالية للشركة',
+            form: 'مرفوض قبل استنفاذ حق الإرجاع',
+            desc: 'الخامة لم يتم قبولها بعد في رصيد المصنع؛ تكهينها داخل المصنع يضيع حق الشركة في استرداد ثمن الشحنة من المورد.'
+          },
+          rtv: {
+            title: 'الإجراء النهائي السليم 100% مع تفعيل SCAR',
+            badge: 'SUPPLIER CORRECTIVE ACTION REQUIRED',
+            color: 'emerald',
+            risk: 'صفر (تم تحميل التكلفة للمورد)',
+            form: 'طلب إجراء تصحيحي للمورد SCAR Form Q-8402',
+            desc: 'إرجاع الشحنة بالكامل إلى المورد، مع فتح طلب إجراء تصحيحي إلزامي (SCAR) وتخفيض تقييم المورد في لوحة الموردين الشهرية.'
+          }
+        }
+      },
+      4: {
+        title: 'انتهاء صلاحية معايرة جهاز العزم',
+        dept: 'محطة ربط محاور الأمان',
+        eval: {
+          quarantine: {
+            title: 'إجراء صحيح وفوري للأداة والمنتجات',
+            badge: 'ISO 7.1.5 MONITORING & MEASURING',
+            color: 'emerald',
+            risk: 'محصورة',
+            form: 'إيقاف استخدام الأداة Red Tag + تتبع الدفعات السابقة',
+            desc: 'يجب سحب المفتاح فوراً من الخط وإرساله لمعمل المعايرة، مع تتبع وفحص المنتجات التي تم ربطها بنفس الأداة منذ تاريخ انتهاء الصلاحية.'
+          },
+          concession: {
+            title: 'مرفوض قانونياً وفق ISO 7.1.5',
+            badge: 'CRITICAL AUDIT BREACH',
+            color: 'rose',
+            risk: 'عالية جداً (بطلان صلاحية الفحص)',
+            form: 'مرفوض تماماً',
+            desc: 'لا يوجد شيء اسمه "تنازل عن معايرة أداة قياس". نتائج القياس بأداة منتهية الصلاحية تُعتبر باطلة قانونياً أمام مدققي الآيزو وهيئات السلامة.'
+          },
+          mrb: {
+            title: 'ضروري لتقييم أثر القياسات السابقة (Impact Analysis)',
+            badge: 'IMPACT ASSESSMENT REQUIRED',
+            color: 'cyan',
+            risk: 'متوسطة',
+            form: 'تقرير تقييم الأثر القياسي Calibration Drift Analysis',
+            desc: 'تدرس اللجنة نتائج معايرة الجهاز في المعمل؛ إذا كان الحيود صفراً يتم الإفراج عن المنتجات السابقة، وإذا وُجد انحراف يُعاد عزم جميع المنتجات المنتجة.'
+          },
+          scrap: {
+            title: 'تكهين متسرع قبل معايرة الأداة وفحص عزم المنتجات',
+            badge: 'PREMATURE ACTION',
+            color: 'amber',
+            risk: 'مالية',
+            form: 'غير مبرر',
+            desc: 'قد يكون المفتاح لا يزال دقيقاً رغم انتهاء موعد التاريخ الدوري، لذا يلزم فحص المعايرة الفعلي قبل الحكم على المنتجات.'
+          },
+          rtv: {
+            title: 'غير منطقي نهائياً',
+            badge: 'INVALID ACTION',
+            color: 'rose',
+            risk: 'إدارية',
+            form: 'غير متاح',
+            desc: 'الأداة مملوكة للمصنع ومسؤولية إدارة المعايرة الداخلية، ولا علاقة لمورد خامات بها.'
+          }
+        }
+      }
+    };
+
+    let activeScenarioId = 1;
+
+    function selectScenario(id) {
+      activeScenarioId = id;
+      document.querySelectorAll('.sc-btn').forEach((btn, idx) => {
+        if (idx + 1 === id) {
+          btn.className = 'sc-btn active p-3 rounded-2xl border text-start transition-all bg-amber-500/15 border-amber-500 text-white shadow-md';
+        } else {
+          btn.className = 'sc-btn p-3 rounded-2xl border text-start transition-all bg-slate-800/40 border-slate-700 text-slate-300 hover:border-slate-500';
+        }
+      });
+      const res = document.getElementById('sandbox-result');
+      res.innerHTML = `
+        <div class="flex items-center gap-2 text-slate-400 text-xs">
+          <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+          <span>تم اختيار: <strong class="text-white">${scenarios[id].title}</strong>. اضغط الآن على الإجراء المناسب بالأعلى لمعرفة التقييم اللحظي.</span>
+        </div>
+      `;
+    }
+
+    function evaluateDecision(action) {
+      const data = scenarios[activeScenarioId].eval[action];
+      if (!data) return;
+      const res = document.getElementById('sandbox-result');
+
+      let colorCls = 'text-emerald-400 border-emerald-500/40 bg-emerald-950/40';
+      if (data.color === 'rose') colorCls = 'text-rose-400 border-rose-500/40 bg-rose-950/40';
+      if (data.color === 'amber') colorCls = 'text-amber-400 border-amber-500/40 bg-amber-950/40';
+      if (data.color === 'cyan') colorCls = 'text-cyan-400 border-cyan-500/40 bg-cyan-950/40';
+      if (data.color === 'purple') colorCls = 'text-purple-400 border-purple-500/40 bg-purple-950/40';
+
+      res.className = `p-5 rounded-2xl border transition-all ${colorCls}`;
+      res.innerHTML = `
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-white/10 pb-3 mb-3">
+          <div>
+            <span class="inline-block px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-white/10 mb-1">${data.badge}</span>
+            <h4 class="text-base font-black text-white">${data.title}</h4>
+          </div>
+          <div class="text-end text-xs">
+            <span class="text-slate-400 block text-[10px]">درجة المخاطرة الرقابية:</span>
+            <span class="font-bold text-white">${data.risk}</span>
+          </div>
+        </div>
+        <p class="text-xs text-slate-200 leading-relaxed mb-3">${data.desc}</p>
+        <div class="p-2.5 rounded-xl bg-black/40 border border-white/5 text-[11px] flex items-center gap-2">
+          <span class="text-amber-400 font-bold shrink-0">📄 النموذج المعتمد المطلوب:</span>
+          <span class="text-white font-mono">${data.form}</span>
+        </div>
+      `;
+    }
+
+    // ------------------------------------------------------------------
+    // ISO 9001 COMPETENCY QUIZ & CERTIFICATE LOGIC
+    // ------------------------------------------------------------------
+    const quizState = {
+      answers: {},
+      scores: {}
+    };
+
+    function checkAnswer(qid, choice) {
+      const card = document.querySelector(`.quiz-card[data-qid="${qid}"]`);
+      const correct = card.getAttribute('data-correct');
+      const isCorrect = choice === correct;
+
+      quizState.answers[qid] = choice;
+      quizState.scores[qid] = isCorrect ? 1 : 0;
+
+      const icon = card.querySelector('.res-icon');
+      const fbox = card.querySelector('.feedback-box');
+
+      if (isCorrect) {
+        card.classList.remove('border-rose-500', 'border-slate-800');
+        card.classList.add('border-emerald-500/60', 'bg-emerald-950/20');
+        icon.innerHTML = '<span class="text-emerald-400 font-bold">✓ إجابة صحيحة</span>';
+        fbox.className = 'feedback-box mt-2.5 text-xs p-2.5 rounded-xl bg-emerald-500/10 text-emerald-200 border border-emerald-500/30 block';
+        fbox.innerHTML = '<strong>ممتاز!</strong> هذا هو التصرف المطابق حرفياً لتعليمات التشغيل القياسية SOP ومعيار ISO 9001.';
+      } else {
+        card.classList.remove('border-emerald-500/60', 'border-slate-800');
+        card.classList.add('border-rose-500/60', 'bg-rose-950/20');
+        icon.innerHTML = '<span class="text-rose-400 font-bold">✕ إجابة غير صحيحة</span>';
+        fbox.className = 'feedback-box mt-2.5 text-xs p-2.5 rounded-xl bg-rose-500/10 text-rose-200 border border-rose-500/30 block';
+        fbox.innerHTML = '<strong>تنبيه:</strong> هذا الاختيار يخالف تسلسل السيطرة على عدم المطابقة. الإجابة الصحيحة هي (' + correct + ').';
+      }
+
+      updateQuizSummary();
+    }
+
+    function updateQuizSummary() {
+      const totalScore = Object.values(quizState.scores).reduce((a, b) => a + b, 0);
+      const totalAnswered = Object.keys(quizState.scores).length;
+      const pct = Math.round((totalScore / 5) * 100);
+
+      const badge = document.getElementById('quiz-score-badge');
+      if (badge) {
+        badge.innerText = `النتيجة: ${totalScore} / 5 (${pct}%)`;
+        if (pct >= 80) {
+          badge.className = 'px-3.5 py-1.5 rounded-xl bg-emerald-500/20 border border-emerald-500/50 text-xs font-mono font-bold text-emerald-300';
+        }
+      }
+
+      const revealBox = document.getElementById('cert-reveal-box');
+      if (totalAnswered >= 4 && totalScore >= 4) {
+        revealBox.classList.remove('hidden');
+      }
+    }
+
+    function generateCertificate() {
+      const nameInput = document.getElementById('cert-name-input');
+      const name = nameInput.value.trim();
+      if (!name) {
+        alert('يرجى كتابة الاسم لإصدار الشهادة');
+        nameInput.focus();
+        return;
+      }
+
+      document.getElementById('cert-recipient-name').innerText = name;
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
+      document.getElementById('cert-issue-date').innerText = dateStr;
+
+      const serial = 'QMS-' + Math.random().toString(36).substring(2, 8).toUpperCase() + '-' + now.getFullYear();
+      document.getElementById('cert-serial-id').innerText = serial;
+
+      const certFrame = document.getElementById('printable-certificate');
+      certFrame.classList.remove('hidden');
+      certFrame.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    // ------------------------------------------------------------------
+    // FLOATING AUDIO NARRATOR LOGIC (WEB SPEECH API)
+    // ------------------------------------------------------------------
+    let synth = window.speechSynthesis;
+    let currentUtterance = null;
+    let isSpeaking = false;
+    let audioRate = 1.0;
+    let arabicVoice = null;
+
+    function initVoices() {
+      if (!synth) return;
+      const voices = synth.getVoices();
+      arabicVoice = voices.find(v => v.lang && (v.lang.startsWith('ar') || v.lang.includes('ar'))) || null;
+    }
+
+    if (synth && synth.onvoiceschanged !== undefined) {
+      synth.onvoiceschanged = initVoices;
+    }
+    initVoices();
+
+    function toggleAudioSpeech() {
+      if (!synth) {
+        alert('المتصفح لا يدعم ميزة تحويل النص إلى كلام (Web Speech API)');
+        return;
+      }
+
+      if (isSpeaking) {
+        if (synth.paused) {
+          synth.resume();
+          updateAudioUI(true, 'يتم الاستماع الآن...');
+        } else {
+          synth.pause();
+          updateAudioUI(false, 'متوقف مؤقتاً');
+        }
+        return;
+      }
+
+      // Collect readable text from current main content
+      const headings = document.querySelectorAll('#main-content h2, #main-content h3, #main-content p');
+      let textToRead = '';
+      headings.forEach((el, idx) => {
+        if (idx < 25) {
+          const t = el.innerText.trim();
+          if (t && !t.includes('http') && t.length > 5) {
+            textToRead += t + '. ';
+          }
+        }
+      });
+
+      if (!textToRead) {
+        textToRead = 'مرحباً بك في دليل التشغيل القياسي لمنظومة إدارة الجودة الصناعية كيو إم إس أربعة نقطة صفر.';
+      }
+
+      synth.cancel();
+      currentUtterance = new SpeechSynthesisUtterance(textToRead);
+      currentUtterance.rate = audioRate;
+      currentUtterance.lang = 'ar-SA';
+      if (arabicVoice) currentUtterance.voice = arabicVoice;
+
+      currentUtterance.onstart = () => {
+        isSpeaking = true;
+        updateAudioUI(true, 'يتم قراءة دليل التشغيل صوتياً الآن...');
+      };
+      currentUtterance.onend = () => {
+        isSpeaking = false;
+        updateAudioUI(false, 'انتهت القراءة الصوتية');
+      };
+      currentUtterance.onerror = () => {
+        isSpeaking = false;
+        updateAudioUI(false, 'حدث توقف في القراءة الصوتية');
+      };
+
+      synth.speak(currentUtterance);
+    }
+
+    function stopAudioSpeech() {
+      if (synth) synth.cancel();
+      isSpeaking = false;
+      updateAudioUI(false, 'تم إيقاف القراءة');
+    }
+
+    function toggleAudioSpeed() {
+      const speeds = [1.0, 1.25, 1.5, 0.9];
+      const curIdx = speeds.indexOf(audioRate);
+      audioRate = speeds[(curIdx + 1) % speeds.length];
+      document.getElementById('audio-speed-btn').innerText = audioRate + 'x';
+      if (currentUtterance && isSpeaking) {
+        stopAudioSpeech();
+        toggleAudioSpeech();
+      }
+    }
+
+    function toggleAudioCollapse() {
+      const body = document.getElementById('audio-controls-body');
+      const btn = document.getElementById('audio-collapse-btn');
+      body.classList.toggle('hidden');
+      btn.innerText = body.classList.contains('hidden') ? '▲' : '▼';
+    }
+
+    function updateAudioUI(speaking, text) {
+      const dot = document.getElementById('audio-dot');
+      const label = document.getElementById('audio-play-label');
+      const icon = document.getElementById('audio-play-icon');
+      const status = document.getElementById('audio-status-text');
+
+      if (speaking) {
+        dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping';
+        label.innerText = 'إيقاف مؤقت';
+        icon.innerText = '⏸';
+      } else {
+        dot.className = 'w-2.5 h-2.5 rounded-full bg-cyan-400';
+        label.innerText = 'استمع للقسم الحالي';
+        icon.innerText = '▶';
+      }
+      status.innerText = text;
+    }
+  </script>
+</body>
+</html>

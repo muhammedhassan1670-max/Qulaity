@@ -243,186 +243,29 @@ def build_html():
         toc_html += f'  <a href="#{slug}" class="block py-1.5 {indent} rounded-lg hover:bg-slate-800/60 transition-colors truncate" title="{title}">{title}</a>\n'
     toc_html += '</nav>'
 
-    full_html = f'''<!DOCTYPE html>
-<html lang="ar" dir="rtl" class="dark scroll-smooth">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>دليل التشغيل القياسي (SOP) - منظومة إدارة الجودة QMS 4.0</title>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2306b6d4' stroke-width='2'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {{
-      darkMode: 'class',
-      theme: {{
-        extend: {{
-          fontFamily: {{
-            sans: ['Cairo', 'sans-serif'],
-            mono: ['JetBrains Mono', 'monospace'],
-          }},
-        }}
-      }}
-    }}
-  </script>
-  <style>
-    body {{
-      font-family: 'Cairo', sans-serif;
-    }}
-    code, pre {{
-      font-family: 'JetBrains Mono', monospace;
-    }}
-    @media print {{
-      #sidebar, #top-bar, #lightbox, .no-print {{
-        display: none !important;
-      }}
-      #main-content {{
-        margin: 0 !important;
-        padding: 0 !important;
-        width: 100% !important;
-        max-width: 100% !important;
-      }}
-      body {{
-        background: #fff !important;
-        color: #000 !important;
-      }}
-      .table-container {{
-        box-shadow: none !important;
-        border: 1px solid #ccc !important;
-      }}
-    }}
-  </style>
-</head>
-<body class="bg-slate-950 text-slate-200 antialiased selection:bg-cyan-500 selection:text-slate-950">
+    with open('template_sop.html', 'r', encoding='utf-8') as f:
+        template = f.read()
 
-  <!-- TOP BAR -->
-  <header id="top-bar" class="sticky top-0 z-40 w-full bg-slate-900/90 backdrop-blur-md border-b border-slate-800 shadow-md">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
-      <div class="flex items-center gap-3">
-        <button id="menu-btn" class="lg:hidden p-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white" onclick="toggleSidebar()">
-          ☰
-        </button>
-        <div class="p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-        </div>
-        <div>
-          <h1 class="font-black text-sm sm:text-base text-white tracking-wide">QMS Enterprise 4.0 — دليل التشغيل القياسي</h1>
-          <p class="text-[11px] text-cyan-400 font-mono">Standard Operating Procedure (SOP) & Work Instruction</p>
-        </div>
-      </div>
-
-      <div class="flex items-center gap-2">
-        <button onclick="window.print()" class="px-3.5 py-1.5 rounded-xl bg-cyan-500/15 hover:bg-cyan-500 text-cyan-300 hover:text-slate-950 border border-cyan-500/30 font-bold text-xs flex items-center gap-1.5 transition-all shadow-sm">
-          <span>🖨️ طباعة / حفظ PDF</span>
-        </button>
-        <a href="https://qmssystem.gt.tc/" target="_blank" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 font-bold text-xs flex items-center gap-1.5 transition-all">
-          <span>🌐 فتح المنظومة الحية ↗</span>
-        </a>
-      </div>
-    </div>
-  </header>
-
-  <!-- MAIN LAYOUT -->
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8 flex gap-8">
-    
-    <!-- SIDEBAR / TOC -->
-    <aside id="sidebar" class="hidden lg:block w-72 shrink-0 sticky top-24 h-[calc(100vh-7rem)] overflow-y-auto pr-2 pb-10 scrollbar-thin border-l border-slate-800">
-      <div class="mb-4">
-        <h3 class="text-xs font-black text-slate-400 uppercase tracking-wider mb-2">📑 فهرس المحتويات والسيناريوهات</h3>
-        <input 
-          type="text" 
-          id="toc-search" 
-          placeholder="بحث سريع في المحتويات..." 
-          onkeyup="filterToc()"
-          class="w-full px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 font-sans"
-        />
-      </div>
-      <div id="toc-list">
-        {toc_html}
-      </div>
-    </aside>
-
-    <!-- CONTENT BODY -->
-    <main id="main-content" class="flex-1 min-w-0 max-w-4xl bg-slate-900/40 border border-slate-800/80 rounded-3xl p-6 sm:p-10 shadow-2xl backdrop-blur-sm">
-      {rendered_body}
-      
-      <!-- FOOTER -->
-      <footer class="mt-16 pt-8 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-        <div>
-          <span>منظومة إدارة الجودة الصناعية QMS 4.0 — الإصدار الشامل المعتمد</span>
-        </div>
-        <div>
-          <span>تصميم وتطوير: <a href="https://www.facebook.com/share/1BZWXmCZRm/" target="_blank" class="text-cyan-400 font-bold hover:underline">PixoraCo</a></span>
-        </div>
-      </footer>
-    </main>
-
-  </div>
-
-  <!-- LIGHTBOX MODAL (FOR ZOOMING ON SCREENSHOTS) -->
-  <div id="lightbox" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md hidden flex items-center justify-center p-4 cursor-pointer" onclick="closeLightbox()">
-    <div class="relative max-w-5xl w-full max-h-[90vh] flex flex-col items-center" onclick="event.stopPropagation()">
-      <button class="absolute -top-10 end-0 text-white hover:text-cyan-400 text-xl font-bold p-2" onclick="closeLightbox()">✕ إغلاق</button>
-      <img id="lightbox-img" src="" alt="" class="max-w-full max-h-[82vh] object-contain rounded-xl shadow-2xl border border-white/10" />
-      <p id="lightbox-caption" class="mt-3 text-center text-sm font-bold text-cyan-300"></p>
-    </div>
-  </div>
-
-  <script>
-    function openLightbox(src, caption) {{
-      document.getElementById('lightbox-img').src = src;
-      document.getElementById('lightbox-caption').innerText = caption;
-      document.getElementById('lightbox').classList.remove('hidden');
-    }}
-    function closeLightbox() {{
-      document.getElementById('lightbox').classList.add('hidden');
-    }}
-    document.addEventListener('keydown', (e) => {{
-      if (e.key === 'Escape') closeLightbox();
-    }});
-
-    function toggleSidebar() {{
-      const sb = document.getElementById('sidebar');
-      sb.classList.toggle('hidden');
-      if (!sb.classList.contains('hidden')) {{
-        sb.classList.add('fixed', 'inset-y-0', 'start-0', 'z-50', 'bg-slate-950', 'p-6', 'w-80', 'shadow-2xl');
-      }} else {{
-        sb.classList.remove('fixed', 'inset-y-0', 'start-0', 'z-50', 'bg-slate-950', 'p-6', 'w-80', 'shadow-2xl');
-      }}
-    }}
-
-    function filterToc() {{
-      const q = document.getElementById('toc-search').value.toLowerCase();
-      const links = document.querySelectorAll('#toc-list a');
-      links.forEach(a => {{
-        const text = a.innerText.toLowerCase();
-        if (text.includes(q)) {{
-          a.style.display = 'block';
-        }} else {{
-          a.style.display = 'none';
-        }}
-      }});
-    }}
-  </script>
-</body>
-</html>
-'''
+    full_html = template.replace('__TOC_HTML__', toc_html).replace('__RENDERED_BODY__', rendered_body)
 
     os.makedirs('docs', exist_ok=True)
     os.makedirs(os.path.join('public', 'docs'), exist_ok=True)
+    os.makedirs(os.path.join('dist', 'docs'), exist_ok=True)
 
     out_path_docs = os.path.join('docs', 'sop.html')
     out_path_public = os.path.join('public', 'docs', 'sop.html')
+    out_path_dist = os.path.join('dist', 'docs', 'sop.html')
 
     with open(out_path_docs, 'w', encoding='utf-8') as f:
         f.write(full_html)
     with open(out_path_public, 'w', encoding='utf-8') as f:
         f.write(full_html)
+    with open(out_path_dist, 'w', encoding='utf-8') as f:
+        f.write(full_html)
 
-    print(f"Generated {out_path_docs} ({len(full_html)} bytes)")
-    print(f"Generated {out_path_public} ({len(full_html)} bytes)")
+    print(f'Generated {out_path_docs} ({len(full_html)} bytes)')
+    print(f'Generated {out_path_public} ({len(full_html)} bytes)')
+    print(f'Generated {out_path_dist} ({len(full_html)} bytes)')
 
 if __name__ == '__main__':
     build_html()

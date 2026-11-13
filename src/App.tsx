@@ -7,6 +7,7 @@ import { Sidebar } from './components/Sidebar';
 import { QualityPageAssistant } from './components/QualityPageAssistant';
 import { AICopilotWidget } from './components/AICopilotWidget';
 import { CommandPalette } from './components/CommandPalette';
+import { InteractiveTourModal } from './components/InteractiveTourModal';
 import { MobileTabBar } from './components/MobileTabBar';
 import { Footer } from './components/Footer';
 import { useAppStore } from './stores/appStore';
@@ -182,6 +183,7 @@ function App() {
       {/* Global AI Copilot & Command Palette */}
       <CommandPalette />
       <AICopilotWidget />
+      <InteractiveTourModal />
 
     </div>
   );
