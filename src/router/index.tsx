@@ -67,6 +67,7 @@ const QualityDashboardPage = lazy(() => import('../pages/quality/QualityDashboar
 const OfflineSyncManagerPage = lazy(() => import('../pages/quality/OfflineSyncManager'));
 const QualityControlTowerPage = lazy(() => import('../pages/quality/QualityControlTower'));
 const ModelBOMComparisonPage = lazy(() => import('../pages/quality/ModelBOMComparison'));
+const IndustrialSuperpowersHubPage = lazy(() => import('../pages/quality/IndustrialSuperpowersHub'));
 
 // Admin Pages
 const UsersPage = lazy(() => import('../pages/admin/Users'));
@@ -206,6 +207,9 @@ const routes: RouteObject[] = [
       { path: 'quality-sync-manager', element: <LazyWrapper><OfflineSyncManagerPage /></LazyWrapper> },
       { path: 'quality-control-tower', element: <LazyWrapper><QualityControlTowerPage /></LazyWrapper> },
       { path: 'model-bom-comparison', element: <LazyWrapper><ModelBOMComparisonPage /></LazyWrapper> },
+      { path: 'superpowers', element: <LazyWrapper><IndustrialSuperpowersHubPage /></LazyWrapper> },
+      { path: 'quality-superpowers', element: <Navigate to="/superpowers" replace /> },
+      { path: 'audit-battle', element: <Navigate to="/superpowers" replace /> },
       { path: 'bom-comparison', element: <Navigate to="/model-bom-comparison" replace /> },
       { path: 'plant-map', element: <Navigate to="/quality-control-tower" replace /> },
       { path: 'factory-map', element: <Navigate to="/quality-control-tower" replace /> },

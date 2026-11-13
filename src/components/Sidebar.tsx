@@ -32,6 +32,7 @@ import {
   X,
   GitCompare,
   BookOpen,
+  Sparkles,
   ExternalLink
 } from 'lucide-react';
 import { useConfigStore } from '../stores/configStore';
@@ -104,6 +105,17 @@ export function Sidebar({ isOpen, onClose, onSectionChange }: SidebarProps) {
         icon: Workflow,
         badge: 'FLOWCHART',
         badgeColor: 'bg-emerald-500'
+      },
+      {
+        id: 'superpowers',
+        labelKey: 'superpowers',
+        labelEn: '⚡ Superpowers Suite 5.0',
+        labelAr: '⚡ الترسانة الذكية الخارقة',
+        hintEn: 'Voice Copilot, Audit Battle, AI Vision & 3D Dissector',
+        hintAr: 'المساعد الصوتي، معركة الآيزو، ماسح الكاميرا، وتفكيك 3D',
+        icon: Sparkles,
+        badge: '5.0 PRO',
+        badgeColor: 'bg-purple-500'
       },
 
       // Stage 1: Incoming & Supplier Quality (IQC)
@@ -306,6 +318,7 @@ export function Sidebar({ isOpen, onClose, onSectionChange }: SidebarProps) {
     'admin': '/admin',
     'quality-home': '/quality-home',
     'quality-control-tower': '/quality-control-tower',
+    'superpowers': '/superpowers',
     'quality-intelligence': '/quality-intelligence',
     'quality-command-center': '/quality-command-center',
     'quality-command-center-actions': '/quality-command-center',

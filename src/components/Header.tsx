@@ -20,6 +20,7 @@ import {
   Box,
   BookOpen,
   Compass,
+  Sparkles,
   Mic,
   MicOff,
   Globe
@@ -166,6 +167,16 @@ export function Header({ onMenuToggle, user }: HeaderProps) {
             aria-label="Scan QR or Barcode"
           >
             <QrCode className="w-5 h-5" />
+          </button>
+
+          {/* Industrial Superpowers Hub Button */}
+          <button
+            onClick={() => navigate('/superpowers')}
+            className="inline-flex items-center gap-1.5 px-3 h-9 sm:h-10 rounded-xl border border-purple-500/50 bg-gradient-to-r from-purple-500/20 via-pink-500/20 to-rose-500/20 hover:from-purple-500/30 hover:to-pink-500/30 text-purple-400 dark:text-purple-300 transition-all font-black text-xs shadow-md shadow-purple-500/10 hover:scale-105 active:scale-95 shrink-0 whitespace-nowrap"
+            title={language === 'ar' ? 'الترسانة الذكية الفائقة: صوت تفاعلي، محاكي تفتيش الآيزو، ماسح الكاميرا، وتفكيك 3D' : 'Industrial Superpowers: Voice Copilot, Audit Battle, Vision Scanner, 3D Dissector'}
+          >
+            <Sparkles className="w-4 h-4 text-purple-400 shrink-0" />
+            <span className="hidden lg:inline">{language === 'ar' ? '⚡ الترسانة الذكية' : '⚡ Superpowers'}</span>
           </button>
 
           {/* Interactive Guided Tour Button */}
@@ -398,6 +409,13 @@ export function Header({ onMenuToggle, user }: HeaderProps) {
               >
                 <Settings className="w-4 h-4 mr-2" />
                 {t('settings')}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="hover:bg-white/10 cursor-pointer font-bold text-purple-400 dark:text-purple-300"
+                onSelect={() => navigate('/superpowers')}
+              >
+                <Sparkles className="w-4 h-4 mr-2 text-purple-400" />
+                {language === 'ar' ? '⚡ الترسانة الذكية الخارقة (Superpowers)' : '⚡ Industrial Superpowers'}
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="hover:bg-white/10 cursor-pointer font-bold text-amber-500 dark:text-amber-400"
