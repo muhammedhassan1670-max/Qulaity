@@ -15,6 +15,17 @@ import {
   Flame,
   ArrowRight,
   HelpCircle,
+  Activity,
+  Cpu,
+  Radio,
+  Glasses,
+  Gauge,
+  Sliders,
+  Crosshair,
+  AlertOctagon,
+  Clock,
+  Zap,
+  CheckCircle2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAppStore } from '../../stores/appStore';
@@ -47,7 +58,27 @@ export function IndustrialSuperpowersHub() {
   const navigate = useNavigate();
   const isArabic = language === 'ar';
 
-  const [activeTab, setActiveTab] = useState<'voice' | 'audit' | 'vision' | '3d' | 'print'>('voice');
+  const [activeTab, setActiveTab] = useState<'voice' | 'audit' | 'vision' | '3d' | 'print' | 'twin' | 'precog' | 'ar_hud'>('voice');
+
+  // -------------------------------------------------------------
+  // DIGITAL TWIN STATE (Tab 6)
+  // -------------------------------------------------------------
+  const [selectedCell, setSelectedCell] = useState<'cnc' | 'robot' | 'press' | 'inspection'>('cnc');
+  const [twinOverclock, setTwinOverclock] = useState(100);
+  const [twinEmergencyStop, setTwinEmergencyStop] = useState(false);
+
+  // -------------------------------------------------------------
+  // AI PRE-COG TIME-MACHINE STATE (Tab 7)
+  // -------------------------------------------------------------
+  const [precogHorizon, setPrecogHorizon] = useState<'1h' | '2h' | '4h' | '8h'>('2h');
+  const [isPreemptiveApplied, setIsPreemptiveApplied] = useState(false);
+
+  // -------------------------------------------------------------
+  // AR HOLO-LENS HUD STATE (Tab 8)
+  // -------------------------------------------------------------
+  const [arVisionMode, setArVisionMode] = useState<'cad' | 'flir' | 'wireframe'>('cad');
+  const [arReticleLocked, setArReticleLocked] = useState(true);
+  const [arSnapshotTaken, setArSnapshotTaken] = useState(false);
 
   // -------------------------------------------------------------
   // 1. TWO-WAY VOICE COPILOT STATE & LOGIC
@@ -439,89 +470,140 @@ export function IndustrialSuperpowersHub() {
         </div>
 
         {/* Tab Navigation Ribbon */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 mt-8 pt-6 border-t border-white/10 relative z-10">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2 mt-8 pt-6 border-t border-white/10 relative z-10">
           <button
             onClick={() => setActiveTab('voice')}
-            className={`p-3 rounded-2xl border text-start transition-all flex items-center gap-3 ${
+            className={`p-2.5 rounded-2xl border text-start transition-all flex items-center gap-2.5 ${
               activeTab === 'voice'
                 ? 'bg-gradient-to-r from-cyan-500/25 to-blue-500/25 border-cyan-400 text-white shadow-lg shadow-cyan-500/20 scale-[1.02]'
                 : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
             }`}
           >
-            <div className={`p-2 rounded-xl ${activeTab === 'voice' ? 'bg-cyan-500 text-slate-950 font-black' : 'bg-slate-800 text-cyan-400'}`}>
+            <div className={`p-1.5 rounded-xl ${activeTab === 'voice' ? 'bg-cyan-500 text-slate-950 font-black' : 'bg-slate-800 text-cyan-400'}`}>
               <Mic className="w-4 h-4" />
             </div>
             <div>
-              <span className="block text-xs font-black">{isArabic ? 'المساعد الصوتي الثنائي' : 'Voice Copilot'}</span>
-              <span className="block text-[10px] text-slate-400 font-mono">Two-Way Speech</span>
+              <span className="block text-xs font-black">{isArabic ? 'المساعد الصوتي' : 'Voice Copilot'}</span>
+              <span className="block text-[9px] text-slate-400 font-mono">Two-Way Speech</span>
             </div>
           </button>
 
           <button
             onClick={() => setActiveTab('audit')}
-            className={`p-3 rounded-2xl border text-start transition-all flex items-center gap-3 ${
+            className={`p-2.5 rounded-2xl border text-start transition-all flex items-center gap-2.5 ${
               activeTab === 'audit'
                 ? 'bg-gradient-to-r from-amber-500/25 to-orange-500/25 border-amber-400 text-white shadow-lg shadow-amber-500/20 scale-[1.02]'
                 : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
             }`}
           >
-            <div className={`p-2 rounded-xl ${activeTab === 'audit' ? 'bg-amber-500 text-slate-950 font-black' : 'bg-slate-800 text-amber-400'}`}>
+            <div className={`p-1.5 rounded-xl ${activeTab === 'audit' ? 'bg-amber-500 text-slate-950 font-black' : 'bg-slate-800 text-amber-400'}`}>
               <Swords className="w-4 h-4" />
             </div>
             <div>
-              <span className="block text-xs font-black">{isArabic ? 'معركة تفتيش الآيزو' : 'Audit Battle'}</span>
-              <span className="block text-[10px] text-slate-400 font-mono">ISO 9001 Simulator</span>
+              <span className="block text-xs font-black">{isArabic ? 'معركة الآيزو' : 'Audit Battle'}</span>
+              <span className="block text-[9px] text-slate-400 font-mono">Dr. Klaus Arena</span>
             </div>
           </button>
 
           <button
             onClick={() => setActiveTab('vision')}
-            className={`p-3 rounded-2xl border text-start transition-all flex items-center gap-3 ${
+            className={`p-2.5 rounded-2xl border text-start transition-all flex items-center gap-2.5 ${
               activeTab === 'vision'
                 ? 'bg-gradient-to-r from-rose-500/25 to-pink-500/25 border-rose-400 text-white shadow-lg shadow-rose-500/20 scale-[1.02]'
                 : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
             }`}
           >
-            <div className={`p-2 rounded-xl ${activeTab === 'vision' ? 'bg-rose-500 text-white font-black' : 'bg-slate-800 text-rose-400'}`}>
+            <div className={`p-1.5 rounded-xl ${activeTab === 'vision' ? 'bg-rose-500 text-white font-black' : 'bg-slate-800 text-rose-400'}`}>
               <Scan className="w-4 h-4" />
             </div>
             <div>
-              <span className="block text-xs font-black">{isArabic ? 'ماسح العيوب الذكي' : 'AI Vision Scanner'}</span>
-              <span className="block text-[10px] text-slate-400 font-mono">Computer Vision</span>
+              <span className="block text-xs font-black">{isArabic ? 'ماسح العيوب' : 'AI Vision'}</span>
+              <span className="block text-[9px] text-slate-400 font-mono">Edge Scanner</span>
             </div>
           </button>
 
           <button
             onClick={() => setActiveTab('3d')}
-            className={`p-3 rounded-2xl border text-start transition-all flex items-center gap-3 ${
+            className={`p-2.5 rounded-2xl border text-start transition-all flex items-center gap-2.5 ${
               activeTab === '3d'
                 ? 'bg-gradient-to-r from-purple-500/25 to-indigo-500/25 border-purple-400 text-white shadow-lg shadow-purple-500/20 scale-[1.02]'
                 : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
             }`}
           >
-            <div className={`p-2 rounded-xl ${activeTab === '3d' ? 'bg-purple-500 text-white font-black' : 'bg-slate-800 text-purple-400'}`}>
+            <div className={`p-1.5 rounded-xl ${activeTab === '3d' ? 'bg-purple-500 text-white font-black' : 'bg-slate-800 text-purple-400'}`}>
               <Layers className="w-4 h-4" />
             </div>
             <div>
-              <span className="block text-xs font-black">{isArabic ? 'مفكك القطع 3D' : '3D Exploded View'}</span>
-              <span className="block text-[10px] text-slate-400 font-mono">Stress Heatmap</span>
+              <span className="block text-xs font-black">{isArabic ? 'مفكك 3D' : '3D Assembly'}</span>
+              <span className="block text-[9px] text-slate-400 font-mono">FEA Heatmap</span>
             </div>
           </button>
 
           <button
             onClick={() => setActiveTab('print')}
-            className={`p-3 rounded-2xl border text-start transition-all flex items-center gap-3 ${
+            className={`p-2.5 rounded-2xl border text-start transition-all flex items-center gap-2.5 ${
               activeTab === 'print'
                 ? 'bg-gradient-to-r from-emerald-500/25 to-teal-500/25 border-emerald-400 text-white shadow-lg shadow-emerald-500/20 scale-[1.02]'
                 : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
             }`}
           >
-            <div className={`p-2 rounded-xl ${activeTab === 'print' ? 'bg-emerald-500 text-slate-950 font-black' : 'bg-slate-800 text-emerald-400'}`}>
+            <div className={`p-1.5 rounded-xl ${activeTab === 'print' ? 'bg-emerald-500 text-slate-950 font-black' : 'bg-slate-800 text-emerald-400'}`}>
               <Printer className="w-4 h-4" />
             </div>
             <div>
-              <span className="block text-xs font-black">{isArabic ? 'استوديو البطاقات' : 'Tag Print Studio'}</span>
-              <span className="block text-[10px] text-slate-400 font-mono">Traveler & Red Tag</span>
+              <span className="block text-xs font-black">{isArabic ? 'كروت التتبع' : 'Tag Studio'}</span>
+              <span className="block text-[9px] text-slate-400 font-mono">Red Tag & QR</span>
+            </div>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('twin')}
+            className={`p-2.5 rounded-2xl border text-start transition-all flex items-center gap-2.5 ${
+              activeTab === 'twin'
+                ? 'bg-gradient-to-r from-sky-500/25 to-blue-600/25 border-sky-400 text-white shadow-lg shadow-sky-500/20 scale-[1.02]'
+                : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
+            }`}
+          >
+            <div className={`p-1.5 rounded-xl ${activeTab === 'twin' ? 'bg-sky-500 text-slate-950 font-black' : 'bg-slate-800 text-sky-400'}`}>
+              <Cpu className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="block text-xs font-black">{isArabic ? 'التوأم الرقمي' : 'Digital Twin'}</span>
+              <span className="block text-[9px] text-slate-400 font-mono">3D Shopfloor</span>
+            </div>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('precog')}
+            className={`p-2.5 rounded-2xl border text-start transition-all flex items-center gap-2.5 ${
+              activeTab === 'precog'
+                ? 'bg-gradient-to-r from-fuchsia-500/25 to-pink-600/25 border-fuchsia-400 text-white shadow-lg shadow-fuchsia-500/20 scale-[1.02]'
+                : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
+            }`}
+          >
+            <div className={`p-1.5 rounded-xl ${activeTab === 'precog' ? 'bg-fuchsia-500 text-white font-black' : 'bg-slate-800 text-fuchsia-400'}`}>
+              <Radio className="w-4 h-4 animate-pulse" />
+            </div>
+            <div>
+              <span className="block text-xs font-black">{isArabic ? 'رادار التنبؤ' : 'AI Pre-Cog'}</span>
+              <span className="block text-[9px] text-slate-400 font-mono">Failure Forecast</span>
+            </div>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('ar_hud')}
+            className={`p-2.5 rounded-2xl border text-start transition-all flex items-center gap-2.5 ${
+              activeTab === 'ar_hud'
+                ? 'bg-gradient-to-r from-amber-400/25 to-yellow-500/25 border-amber-300 text-white shadow-lg shadow-amber-400/20 scale-[1.02]'
+                : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
+            }`}
+          >
+            <div className={`p-1.5 rounded-xl ${activeTab === 'ar_hud' ? 'bg-amber-400 text-slate-950 font-black' : 'bg-slate-800 text-amber-300'}`}>
+              <Glasses className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="block text-xs font-black">{isArabic ? 'نظارة AR HUD' : 'AR HoloLens'}</span>
+              <span className="block text-[9px] text-slate-400 font-mono">Shopfloor HUD</span>
             </div>
           </button>
         </div>
@@ -1406,6 +1488,622 @@ export function IndustrialSuperpowersHub() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* TAB 6: 3D FACTORY FLOOR DIGITAL TWIN                      */}
+      {/* ========================================================= */}
+      {activeTab === 'twin' && (
+        <div className="p-6 sm:p-10 rounded-3xl bg-slate-900/70 border border-sky-500/30 shadow-2xl backdrop-blur-xl">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 pb-6 border-b border-white/10">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="px-2.5 py-0.5 rounded-full bg-sky-500/20 text-sky-300 text-[10px] font-black uppercase tracking-wider">
+                  Cyber-Physical Shopfloor 5.0
+                </span>
+                <span className="text-slate-400 text-xs font-mono">Industry 4.0 Live Twin</span>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-black text-white">
+                {isArabic ? 'التوأم الرقمي ثلاثي الأبعاد لخطوط الإنتاج (3D Factory Digital Twin)' : '3D Factory Floor Digital Twin'}
+              </h2>
+              <p className="text-xs text-slate-400 mt-1">
+                {isArabic
+                  ? 'محاكاة ثلاثية الأبعاد تفاعلية لأرض المصنع مع ربط تيليميتري فوري لحساسات الحرارة، الاهتزاز الميكانيكي، ومؤشر الفاعلية الكلية OEE.'
+                  : 'Interactive 3D factory shopfloor twin with live telemetry streams for temperature, mechanical vibration, and OEE.'}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => {
+                  setTwinEmergencyStop(!twinEmergencyStop);
+                  if (!twinEmergencyStop) {
+                    toast.error(isArabic ? '🚨 تم تفعيل الإيقاف الطارئ لجميع الخطوط (ISO 8.7 Quarantine Active)' : 'Emergency Stop Triggered!');
+                  } else {
+                    toast.success(isArabic ? 'استئناف تشغيل خطوط الإنتاج' : 'Shopfloor Resumed');
+                  }
+                }}
+                className={`px-4 py-2.5 rounded-2xl font-black text-xs flex items-center gap-2 transition-all ${
+                  twinEmergencyStop
+                    ? 'bg-rose-500 text-white animate-pulse shadow-lg shadow-rose-500/40'
+                    : 'bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40'
+                }`}
+              >
+                <AlertOctagon className="w-4 h-4" />
+                <span>{twinEmergencyStop ? (isArabic ? '🚨 فك الإيقاف الطارئ' : 'RESET E-STOP') : (isArabic ? 'إيقاف طارئ للخط (E-STOP)' : 'EMERGENCY STOP')}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Interactive 3D Isometric Floor Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            <div className="lg:col-span-8 space-y-4">
+              <div className="relative rounded-2xl bg-gradient-to-b from-slate-950 to-slate-900 border border-sky-500/20 p-6 overflow-hidden min-h-[440px] flex flex-col justify-between">
+                {/* Background Grid Pattern */}
+                <div 
+                  className="absolute inset-0 opacity-15 pointer-events-none"
+                  style={{
+                    backgroundImage: 'linear-gradient(to right, #0284c7 1px, transparent 1px), linear-gradient(to bottom, #0284c7 1px, transparent 1px)',
+                    backgroundSize: '32px 32px'
+                  }}
+                />
+
+                {/* Top Status Indicators */}
+                <div className="relative z-10 flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
+                    <span className="font-mono text-emerald-300 font-bold">
+                      {twinEmergencyStop ? 'HALTED (E-STOP)' : 'LIVE TELEMETRY: 4 NODES ONLINE'}
+                    </span>
+                  </div>
+                  <div className="font-mono text-slate-400 text-[11px]">
+                    SIM SPEED: <span className="text-sky-400 font-bold">{twinOverclock}%</span>
+                  </div>
+                </div>
+
+                {/* Isometric Machine Cells Visualization */}
+                <div className="relative z-10 grid grid-cols-2 gap-4 py-8">
+                  {/* CELL A: CNC MILLING */}
+                  <div
+                    onClick={() => setSelectedCell('cnc')}
+                    className={`cursor-pointer p-4 rounded-2xl border transition-all duration-300 relative group ${
+                      selectedCell === 'cnc'
+                        ? 'bg-sky-500/20 border-sky-400 shadow-xl shadow-sky-500/20 scale-[1.02]'
+                        : 'bg-slate-900/80 border-slate-800 hover:border-sky-500/50'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="font-mono font-bold text-xs text-sky-300">CELL-A01</span>
+                      <span className={`w-2 h-2 rounded-full ${twinEmergencyStop ? 'bg-rose-500' : 'bg-emerald-400 animate-pulse'}`} />
+                    </div>
+                    <div className="text-center py-4">
+                      <Cpu className="w-12 h-12 mx-auto text-sky-400 group-hover:scale-110 transition-transform" />
+                      <h4 className="font-black text-sm text-white mt-2">5-Axis CNC Milling</h4>
+                      <p className="text-[10px] text-slate-400 font-mono mt-0.5">Spindle: 14,200 RPM</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-1 pt-2 border-t border-white/5 text-[10px] font-mono text-slate-400">
+                      <div>LOAD: <span className="text-white font-bold">{Math.round(72 * (twinOverclock / 100))}%</span></div>
+                      <div>TEMP: <span className="text-amber-400 font-bold">{Math.round(41 * (twinOverclock / 100))}°C</span></div>
+                    </div>
+                  </div>
+
+                  {/* CELL B: ROBOTIC WELDING */}
+                  <div
+                    onClick={() => setSelectedCell('robot')}
+                    className={`cursor-pointer p-4 rounded-2xl border transition-all duration-300 relative group ${
+                      selectedCell === 'robot'
+                        ? 'bg-sky-500/20 border-sky-400 shadow-xl shadow-sky-500/20 scale-[1.02]'
+                        : 'bg-slate-900/80 border-slate-800 hover:border-sky-500/50'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="font-mono font-bold text-xs text-sky-300">CELL-B04</span>
+                      <span className={`w-2 h-2 rounded-full ${twinEmergencyStop ? 'bg-rose-500' : 'bg-emerald-400 animate-pulse'}`} />
+                    </div>
+                    <div className="text-center py-4">
+                      <Zap className="w-12 h-12 mx-auto text-amber-400 group-hover:scale-110 transition-transform" />
+                      <h4 className="font-black text-sm text-white mt-2">Robotic Spot Welding</h4>
+                      <p className="text-[10px] text-slate-400 font-mono mt-0.5">6-Axis KUKA Arm</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-1 pt-2 border-t border-white/5 text-[10px] font-mono text-slate-400">
+                      <div>CURRENT: <span className="text-white font-bold">8.4 kA</span></div>
+                      <div>CYCLE: <span className="text-emerald-400 font-bold">14.2s</span></div>
+                    </div>
+                  </div>
+
+                  {/* CELL C: HYDRAULIC PRESS */}
+                  <div
+                    onClick={() => setSelectedCell('press')}
+                    className={`cursor-pointer p-4 rounded-2xl border transition-all duration-300 relative group ${
+                      selectedCell === 'press'
+                        ? 'bg-sky-500/20 border-sky-400 shadow-xl shadow-sky-500/20 scale-[1.02]'
+                        : 'bg-slate-900/80 border-slate-800 hover:border-sky-500/50'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="font-mono font-bold text-xs text-sky-300">CELL-C02</span>
+                      <span className={`w-2 h-2 rounded-full ${twinEmergencyStop ? 'bg-rose-500' : twinOverclock > 160 ? 'bg-rose-500 animate-ping' : 'bg-amber-400 animate-pulse'}`} />
+                    </div>
+                    <div className="text-center py-4">
+                      <Gauge className="w-12 h-12 mx-auto text-purple-400 group-hover:scale-110 transition-transform" />
+                      <h4 className="font-black text-sm text-white mt-2">400T Stamping Press</h4>
+                      <p className="text-[10px] text-slate-400 font-mono mt-0.5">Hydraulic Die 02</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-1 pt-2 border-t border-white/5 text-[10px] font-mono text-slate-400">
+                      <div>FORCE: <span className="text-white font-bold">{Math.round(380 * (twinOverclock / 100))}T</span></div>
+                      <div>VIB: <span className={`font-bold ${twinOverclock > 150 ? 'text-rose-400' : 'text-emerald-400'}`}>{(1.4 * (twinOverclock / 100)).toFixed(1)} mm/s</span></div>
+                    </div>
+                  </div>
+
+                  {/* CELL D: CMM & LASER INSPECTION */}
+                  <div
+                    onClick={() => setSelectedCell('inspection')}
+                    className={`cursor-pointer p-4 rounded-2xl border transition-all duration-300 relative group ${
+                      selectedCell === 'inspection'
+                        ? 'bg-sky-500/20 border-sky-400 shadow-xl shadow-sky-500/20 scale-[1.02]'
+                        : 'bg-slate-900/80 border-slate-800 hover:border-sky-500/50'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="font-mono font-bold text-xs text-sky-300">CELL-D07</span>
+                      <span className={`w-2 h-2 rounded-full ${twinEmergencyStop ? 'bg-rose-500' : 'bg-emerald-400 animate-pulse'}`} />
+                    </div>
+                    <div className="text-center py-4">
+                      <Scan className="w-12 h-12 mx-auto text-emerald-400 group-hover:scale-110 transition-transform" />
+                      <h4 className="font-black text-sm text-white mt-2">Laser CMM Inspection</h4>
+                      <p className="text-[10px] text-slate-400 font-mono mt-0.5">Optical Micrometry</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-1 pt-2 border-t border-white/5 text-[10px] font-mono text-slate-400">
+                      <div>AQL: <span className="text-emerald-400 font-bold">99.8%</span></div>
+                      <div>CPK: <span className="text-sky-400 font-bold">1.64</span></div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Simulation Overclock Slider */}
+                <div className="relative z-10 bg-slate-900/90 p-4 rounded-xl border border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="flex items-center gap-2 text-xs text-slate-300 font-bold">
+                    <Sliders className="w-4 h-4 text-sky-400" />
+                    <span>{isArabic ? 'محاكي سرعة وإجهاد خطوط الإنتاج:' : 'Line Stress & Overclock Simulator:'}</span>
+                  </div>
+                  <div className="flex items-center gap-3 w-full sm:w-64">
+                    <span className="text-[11px] font-mono text-slate-400">100%</span>
+                    <input
+                      type="range"
+                      min={100}
+                      max={250}
+                      step={10}
+                      value={twinOverclock}
+                      onChange={(e) => setTwinOverclock(Number(e.target.value))}
+                      className="flex-1 accent-sky-400 cursor-pointer"
+                    />
+                    <span className="text-[11px] font-mono font-bold text-sky-300">{twinOverclock}%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Telemetry Deep Inspector */}
+            <div className="lg:col-span-4 space-y-4">
+              <div className="p-6 rounded-2xl bg-slate-900/90 border border-sky-500/20 space-y-5">
+                <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                  <div>
+                    <span className="text-[10px] font-mono text-sky-400 block uppercase">Telemetry Inspector</span>
+                    <h3 className="font-black text-lg text-white">
+                      {selectedCell === 'cnc' && '5-Axis CNC Milling Center'}
+                      {selectedCell === 'robot' && 'Robotic Welding Arm'}
+                      {selectedCell === 'press' && '400T Stamping Press'}
+                      {selectedCell === 'inspection' && 'Laser CMM Station'}
+                    </h3>
+                  </div>
+                  <span className="text-xs px-2.5 py-1 rounded-full font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                    ISO OK
+                  </span>
+                </div>
+
+                {/* Telemetry Dials */}
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex justify-between text-xs mb-1">
+                      <span className="text-slate-400">{isArabic ? 'الحرارة التشغيلية:' : 'Operational Temperature:'}</span>
+                      <span className="font-mono font-bold text-white">
+                        {Math.round((selectedCell === 'cnc' ? 42 : selectedCell === 'press' ? 68 : 36) * (twinOverclock / 100))} °C
+                      </span>
+                    </div>
+                    <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-emerald-500 via-amber-500 to-rose-500 rounded-full transition-all duration-300"
+                        style={{ width: `${Math.min(100, Math.round(50 * (twinOverclock / 100)))}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between text-xs mb-1">
+                      <span className="text-slate-400">{isArabic ? 'الاهتزاز الميكانيكي (RMS):' : 'Vibration RMS:'}</span>
+                      <span className="font-mono font-bold text-white">
+                        {(1.2 * (twinOverclock / 100)).toFixed(2)} mm/s
+                      </span>
+                    </div>
+                    <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-sky-500 to-indigo-500 rounded-full transition-all duration-300"
+                        style={{ width: `${Math.min(100, Math.round(35 * (twinOverclock / 100)))}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between text-xs mb-1">
+                      <span className="text-slate-400">{isArabic ? 'الفاعلية الكلية للمعدة (OEE):' : 'Overall OEE:'}</span>
+                      <span className="font-mono font-bold text-emerald-400">
+                        {Math.max(70, Math.round(94 - (twinOverclock - 100) * 0.12))}%
+                      </span>
+                    </div>
+                    <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
+                      <div
+                        className="h-full bg-emerald-500 rounded-full transition-all duration-300"
+                        style={{ width: `${Math.max(70, Math.round(94 - (twinOverclock - 100) * 0.12))}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* AI Root Cause Recommendation */}
+                <div className="p-4 rounded-xl bg-sky-950/40 border border-sky-500/30 text-xs space-y-2">
+                  <div className="flex items-center gap-2 font-bold text-sky-300">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>{isArabic ? 'توصية الذكاء الاصطناعي للخلية:' : 'AI Cell Recommendation:'}</span>
+                  </div>
+                  <p className="text-slate-300 leading-relaxed text-[11px]">
+                    {isArabic
+                      ? 'جميع المعلمات ضمن حدود الضبط الإحصائي 3-Sigma. يوصى بإجراء تشحيم وقائي لرولمان بلي العمود بعد 12 ساعة تشغيل.'
+                      : 'All parameters within 3-Sigma limits. Preventive bearing lubrication recommended after 12h runtime.'}
+                  </p>
+                </div>
+
+                <button
+                  onClick={() => navigate('/spc')}
+                  className="w-full py-2.5 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 font-bold text-xs border border-sky-500/40 flex items-center justify-center gap-2 transition-all"
+                >
+                  <Activity className="w-4 h-4" />
+                  <span>{isArabic ? 'عرض منحنيات التحكم الإحصائي SPC' : 'View SPC Control Charts'}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* TAB 7: AI PRE-COG DEFECT TIME-MACHINE                     */}
+      {/* ========================================================= */}
+      {activeTab === 'precog' && (
+        <div className="p-6 sm:p-10 rounded-3xl bg-slate-900/70 border border-fuchsia-500/30 shadow-2xl backdrop-blur-xl">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 pb-6 border-b border-white/10">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="px-2.5 py-0.5 rounded-full bg-fuchsia-500/20 text-fuchsia-300 text-[10px] font-black uppercase tracking-wider">
+                  Neural Failure Forecasting
+                </span>
+                <span className="text-slate-400 text-xs font-mono">Zero-Scrap Autonomous AI</span>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-black text-white">
+                {isArabic ? 'رادار التنبؤ الاستباقي قبل وقوع العيب (AI Pre-Cog Time-Machine)' : 'AI Pre-Cog Defect Time-Machine'}
+              </h2>
+              <p className="text-xs text-slate-400 mt-1">
+                {isArabic
+                  ? 'نموذج انحدار زمني عصبي يحلل تآكل الأدوات وانحراف التيارات للتنبؤ بالعيب قبل تصنيعه بـ 4 ساعات وتفادي الخردة بنسبة 100%.'
+                  : 'Temporal neural model analyzing tool wear and current drift to predict defects 4 hours before they happen.'}
+              </p>
+            </div>
+
+            {/* Time Horizon Selector */}
+            <div className="flex items-center gap-1.5 bg-slate-950 p-1.5 rounded-2xl border border-white/10">
+              {(['1h', '2h', '4h', '8h'] as const).map((h) => (
+                <button
+                  key={h}
+                  onClick={() => setPrecogHorizon(h)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all ${
+                    precogHorizon === h
+                      ? 'bg-fuchsia-500 text-white shadow-lg shadow-fuchsia-500/30'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  +{h}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Pre-Cog Forecast Stream Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            {/* INCIDENT 1 */}
+            <div className="p-6 rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 border border-fuchsia-500/30 relative overflow-hidden space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 font-bold">
+                  HIGH CRITICALITY
+                </span>
+                <span className="text-xs font-mono text-fuchsia-400 font-bold">
+                  ETA: ~1h 45m
+                </span>
+              </div>
+              <div>
+                <h3 className="font-black text-base text-white">CNC Spindle Thermal Drift</h3>
+                <p className="text-xs text-slate-400 mt-1">
+                  {isArabic ? 'احتمالية انحراف لا مركزية الثقب (Concentricity > 0.022mm)' : 'Bore eccentricity runout risk'}
+                </p>
+              </div>
+
+              {/* Probability Meter */}
+              <div>
+                <div className="flex justify-between text-xs font-mono mb-1">
+                  <span className="text-slate-400">{isArabic ? 'احتمالية ظهور العيب:' : 'Defect Probability:'}</span>
+                  <span className={`font-black ${isPreemptiveApplied ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    {isPreemptiveApplied ? '1.8%' : '91.4%'}
+                  </span>
+                </div>
+                <div className="w-full h-2.5 rounded-full bg-slate-800 overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all duration-700 ${
+                      isPreemptiveApplied ? 'w-[2%] bg-emerald-500' : 'w-[91%] bg-gradient-to-r from-amber-500 to-rose-500'
+                    }`}
+                  />
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-white/5 text-[11px] text-slate-300 space-y-1">
+                <span className="text-slate-500 block text-[10px] uppercase font-mono">Recommended Preventive Action:</span>
+                <p>{isArabic ? 'تعويض إزاحة المحور Z بمقدار -0.012 مم وخفض التغذية بنسبة 8%.' : 'Offset Z-axis by -0.012mm and throttle feed by 8%.'}</p>
+              </div>
+            </div>
+
+            {/* INCIDENT 2 */}
+            <div className="p-6 rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 border border-fuchsia-500/20 relative overflow-hidden space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold">
+                  MEDIUM RISK
+                </span>
+                <span className="text-xs font-mono text-fuchsia-400 font-bold">
+                  ETA: ~3h 10m
+                </span>
+              </div>
+              <div>
+                <h3 className="font-black text-base text-white">Stamping Die Clearance Slip</h3>
+                <p className="text-xs text-slate-400 mt-1">
+                  {isArabic ? 'خطر ظهور تجاعيد ورايش على شفة الصاج المسحوب' : 'Flange wrinkling and burr risk'}
+                </p>
+              </div>
+
+              <div>
+                <div className="flex justify-between text-xs font-mono mb-1">
+                  <span className="text-slate-400">{isArabic ? 'احتمالية ظهور العيب:' : 'Defect Probability:'}</span>
+                  <span className="font-black text-amber-400">78.6%</span>
+                </div>
+                <div className="w-full h-2.5 rounded-full bg-slate-800 overflow-hidden">
+                  <div className="h-full rounded-full w-[78%] bg-gradient-to-r from-amber-400 to-orange-500 transition-all duration-500" />
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-white/5 text-[11px] text-slate-300 space-y-1">
+                <span className="text-slate-500 block text-[10px] uppercase font-mono">Recommended Preventive Action:</span>
+                <p>{isArabic ? 'إعادة ضبط ضغط الوسادة الهيدروليكية إلى 145 بار.' : 'Reset cushion pressure to 145 bar.'}</p>
+              </div>
+            </div>
+
+            {/* INCIDENT 3 */}
+            <div className="p-6 rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 border border-fuchsia-500/20 relative overflow-hidden space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 font-bold">
+                  LOW DRIFT
+                </span>
+                <span className="text-xs font-mono text-fuchsia-400 font-bold">
+                  ETA: ~5h 30m
+                </span>
+              </div>
+              <div>
+                <h3 className="font-black text-base text-white">Weld Tip Electrode Erosion</h3>
+                <p className="text-xs text-slate-400 mt-1">
+                  {isArabic ? 'نقص قطر بقعة اللحام (Nugget Undersize)' : 'Spot weld nugget undersize drift'}
+                </p>
+              </div>
+
+              <div>
+                <div className="flex justify-between text-xs font-mono mb-1">
+                  <span className="text-slate-400">{isArabic ? 'احتمالية ظهور العيب:' : 'Defect Probability:'}</span>
+                  <span className="font-black text-sky-400">62.1%</span>
+                </div>
+                <div className="w-full h-2.5 rounded-full bg-slate-800 overflow-hidden">
+                  <div className="h-full rounded-full w-[62%] bg-sky-500 transition-all duration-500" />
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-white/5 text-[11px] text-slate-300 space-y-1">
+                <span className="text-slate-500 block text-[10px] uppercase font-mono">Recommended Preventive Action:</span>
+                <p>{isArabic ? 'جدولة تسوية إلكترود اللحام (Tip Dressing) بعد 240 دورة.' : 'Schedule tip dressing after 240 cycles.'}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Trigger Banner */}
+          <div className="p-6 rounded-2xl bg-gradient-to-r from-fuchsia-950/60 via-purple-950/60 to-slate-950 border border-fuchsia-500/40 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-fuchsia-500/20 text-fuchsia-400 flex items-center justify-center flex-shrink-0">
+                <Zap className="w-6 h-6" />
+              </div>
+              <div>
+                <h4 className="font-black text-white text-base">
+                  {isArabic ? 'التدخل الاستباقي التلقائي (Autonomous Preemptive Mitigation)' : 'Autonomous Preemptive Mitigation'}
+                </h4>
+                <p className="text-xs text-slate-300 mt-0.5">
+                  {isArabic
+                    ? 'ضغطة زر واحدة تقوم بإرسال إشارة تصحيح الإزاحة للمعدة وتفادي تصنيع 120 قطعة سكراب متوقعة.'
+                    : 'One-click command dispatches tool offset compensation and prevents 120 expected scrap parts.'}
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                setIsPreemptiveApplied(true);
+                toast.success(
+                  isArabic
+                    ? '⚡ تم تطبيق التدخل الاستباقي بنجاح! هبوط احتمالية العيب من 91.4% إلى 1.8%'
+                    : 'Preemptive intervention applied! Defect risk dropped to 1.8%'
+                );
+              }}
+              className="px-6 py-3 rounded-2xl bg-gradient-to-r from-fuchsia-500 to-pink-600 hover:from-fuchsia-400 hover:to-pink-500 text-white font-black text-xs shadow-xl shadow-fuchsia-500/25 flex items-center gap-2 transition-all hover:scale-105 active:scale-95 whitespace-nowrap"
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              <span>{isArabic ? '⚡ تطبيق الإجراء الاستباقي الآن' : 'Execute Preemptive Mitigation'}</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* TAB 8: AR HOLO-LENS INSPECTOR HUD                         */}
+      {/* ========================================================= */}
+      {activeTab === 'ar_hud' && (
+        <div className="p-6 sm:p-10 rounded-3xl bg-slate-900/70 border border-amber-400/30 shadow-2xl backdrop-blur-xl">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 pb-6 border-b border-white/10">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="px-2.5 py-0.5 rounded-full bg-amber-400/20 text-amber-300 text-[10px] font-black uppercase tracking-wider">
+                  Smart Glasses Augmented Reality
+                </span>
+                <span className="text-slate-400 text-xs font-mono">HoloLens 3 / Vision Pro HUD</span>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-black text-white">
+                {isArabic ? 'نظارة الواقع المعزز الذكية للمفتش (AR Holo-Lens Inspector HUD)' : 'AR Holo-Lens Inspector HUD'}
+              </h2>
+              <p className="text-xs text-slate-400 mt-1">
+                {isArabic
+                  ? 'محاكي نظارة الواقع المعزز الميدانية مع شبكة توجيه ليزرية، قياسات تفاوت هولوجرامية، ووضع التصوير الحراري المباشر FLIR.'
+                  : 'Augmented reality smart glasses HUD with holographic measurement reticle, dynamic tolerance bar, and FLIR thermal overlay.'}
+              </p>
+            </div>
+
+            {/* Vision Mode Buttons */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setArVisionMode('cad')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                  arVisionMode === 'cad'
+                    ? 'bg-amber-400 text-slate-950 font-black shadow-lg shadow-amber-400/30'
+                    : 'bg-slate-800 text-slate-300 hover:text-white'
+                }`}
+              >
+                CAD Overlay
+              </button>
+              <button
+                onClick={() => setArVisionMode('flir')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                  arVisionMode === 'flir'
+                    ? 'bg-rose-500 text-white font-black shadow-lg shadow-rose-500/30'
+                    : 'bg-slate-800 text-slate-300 hover:text-white'
+                }`}
+              >
+                FLIR Thermal
+              </button>
+              <button
+                onClick={() => setArVisionMode('wireframe')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                  arVisionMode === 'wireframe'
+                    ? 'bg-cyan-500 text-slate-950 font-black shadow-lg shadow-cyan-500/30'
+                    : 'bg-slate-800 text-slate-300 hover:text-white'
+                }`}
+              >
+                X-Ray Wireframe
+              </button>
+            </div>
+          </div>
+
+          {/* AR Viewport Window */}
+          <div className="relative rounded-3xl bg-slate-950 border-2 border-amber-400/40 p-8 min-h-[480px] overflow-hidden flex flex-col justify-between shadow-[0_0_50px_rgba(251,191,36,0.15)]">
+            {/* Cyber HUD Corner Reticles */}
+            <div className="absolute top-4 left-4 w-8 h-8 border-t-2 border-l-2 border-amber-400" />
+            <div className="absolute top-4 right-4 w-8 h-8 border-t-2 border-r-2 border-amber-400" />
+            <div className="absolute bottom-4 left-4 w-8 h-8 border-b-2 border-l-2 border-amber-400" />
+            <div className="absolute bottom-4 right-4 w-8 h-8 border-b-2 border-r-2 border-amber-400" />
+
+            {/* Top AR Telemetry Bar */}
+            <div className="relative z-10 flex items-center justify-between text-xs font-mono">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setArReticleLocked(!arReticleLocked)}
+                  className={`px-2 py-0.5 rounded font-bold transition-all ${
+                    arReticleLocked
+                      ? 'bg-amber-400/20 text-amber-300 border border-amber-400/40'
+                      : 'bg-slate-800 text-slate-400'
+                  }`}
+                >
+                  HUD: {arReticleLocked ? 'LOCKED' : 'FREE TRACK'}
+                </button>
+                <span className="text-slate-400">PART: AERO-TURBINE-X4</span>
+              </div>
+              <div className="flex items-center gap-2 text-slate-400">
+                <Clock className="w-3.5 h-3.5 text-amber-400" />
+                <span>FPS: 60.0 | LATENCY: 2.1ms</span>
+              </div>
+            </div>
+
+            {/* Center Holographic Part & Reticle */}
+            <div className="relative z-10 flex flex-col items-center justify-center my-10">
+              <div className="relative w-64 h-64 flex items-center justify-center">
+                {/* Rotating Reticle Halo */}
+                <div className="absolute inset-0 rounded-full border border-amber-400/30 animate-spin" style={{ animationDuration: '12s' }} />
+                <div className="absolute inset-4 rounded-full border border-dashed border-amber-400/40 animate-spin" style={{ animationDuration: '20s', animationDirection: 'reverse' }} />
+
+                {/* Target Part Representation */}
+                <div className={`w-36 h-36 rounded-2xl flex items-center justify-center transition-all duration-500 shadow-2xl ${
+                  arVisionMode === 'flir'
+                    ? 'bg-gradient-to-tr from-blue-700 via-rose-600 to-yellow-400 shadow-rose-500/50'
+                    : arVisionMode === 'wireframe'
+                    ? 'bg-slate-900 border-2 border-cyan-400 shadow-cyan-500/50'
+                    : 'bg-gradient-to-tr from-slate-700 to-slate-500 border border-white/20'
+                }`}>
+                  <Crosshair className={`w-16 h-16 ${
+                    arVisionMode === 'flir' ? 'text-white' : arVisionMode === 'wireframe' ? 'text-cyan-300' : 'text-amber-400'
+                  }`} />
+                </div>
+
+                {/* Dynamic Measuring Caliper Tooltip */}
+                <div className="absolute -right-32 top-8 p-3 rounded-xl bg-slate-900/90 border border-amber-400/50 text-[11px] font-mono space-y-1 shadow-xl">
+                  <div className="text-amber-400 font-bold">FEATURE: DIA_01</div>
+                  <div className="text-slate-300">NOM: 50.000 mm</div>
+                  <div className="text-white font-bold">ACT: 50.008 mm</div>
+                  <div className="text-emerald-400 font-bold">DEV: +0.008 mm</div>
+                  <span className="inline-block mt-1 px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-black text-[9px]">
+                    PASS (AQL OK)
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom AR Controls & Hands-Free Voice Commands */}
+            <div className="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-white/10 text-xs font-mono">
+              <div className="flex items-center gap-2">
+                <Mic className="w-4 h-4 text-amber-400 animate-pulse" />
+                <span className="text-slate-300">{isArabic ? 'الأمر الصوتي النشط: "Capture Measurement"' : 'Voice Active: "Capture Measurement"'}</span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    setArSnapshotTaken(true);
+                    toast.success(isArabic ? '📸 تم التقاط وحفظ لقطة الفحص المعززة في سجل الجودة' : 'Inspection Snapshot Captured!');
+                    setTimeout(() => setArSnapshotTaken(false), 2000);
+                  }}
+                  className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black flex items-center gap-1.5 transition-all"
+                >
+                  <Camera className="w-4 h-4" />
+                  <span>{arSnapshotTaken ? (isArabic ? 'تم الحفظ ✓' : 'SAVED ✓') : (isArabic ? 'التقاط فحص هولوجرامي' : 'Capture Hologram')}</span>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
