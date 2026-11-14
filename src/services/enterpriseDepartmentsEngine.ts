@@ -256,7 +256,7 @@ export const ENTERPRISE_DEPARTMENTS: PlantDepartment[] = [
     linkedModules: [
       { id: 'quality-complaint', labelAr: 'سجل شكاوى العملاء والـ CSAT', labelEn: 'Customer Complaints Log & CSAT', path: '/complaints', icon: 'AlertCircle', badgeCountKey: 'complaint' },
       { id: 'quality-rma', labelAr: 'رصيف استلام وتتبع مرتجعات RMA', labelEn: 'Customer RMA Returns Intake', path: '/ncr', icon: 'Truck', badgeCountKey: 'ncr' },
-      { id: 'quality-fa', labelAr: 'مختبر فحص وتفكيك الأجهزة (FA)', labelEn: 'Teardown & Failure Analysis Lab', path: '/d8', icon: 'Brain' },
+      { id: 'quality-fa', labelAr: 'مختبر فحص وتفكيك الأجهزة (FA)', labelEn: 'Teardown & Failure Analysis Lab', path: '/8d', icon: 'Brain' },
       { id: 'quality-rework', labelAr: 'خط صيانة وإعادة تشغيل الأجهزة بالمصنع', labelEn: 'Factory Rework & Repair Line', path: '/quality-shopfloor', icon: 'RotateCcw' },
     ],
     primaryKpiAr: 'معدل شكاوى العملاء بالمليون (Customer PPM)',

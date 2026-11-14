@@ -10,6 +10,12 @@
     "lint": "eslint .",
     "check:routes": "node scripts/check-routes.mjs",
     "test": "vitest run --exclude \"backend*/**\"",
+    "test:e2e": "vitest run tests/e2e --no-file-parallelism",
+    "test:e2e:tier1": "vitest run tests/e2e/tier1-features --maxWorkers=2",
+    "test:e2e:tier2": "vitest run tests/e2e/tier2-boundary --maxWorkers=2",
+    "test:e2e:tier3": "vitest run tests/e2e/tier3-combinations --maxWorkers=2",
+    "test:e2e:tier4": "vitest run tests/e2e/tier4-scenarios --maxWorkers=2",
+    "test:all": "vitest run --no-file-parallelism",
     "verify": "npm run lint && npm run check:routes && npm run build",
     "deploy": "npm run build && node upload.mjs",
     "preview": "vite preview"

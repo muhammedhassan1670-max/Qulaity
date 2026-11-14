@@ -217,6 +217,10 @@ const routes: RouteObject[] = [
       { path: 'floor-layout', element: <Navigate to="/quality-control-tower" replace /> },
       { path: 'quality-stream-map', element: <Navigate to="/quality-control-tower" replace /> },
       { path: 'traceability-tower', element: <Navigate to="/quality-control-tower" replace /> },
+      { path: 'quality-tower', element: <Navigate to="/quality-control-tower" replace /> },
+      { path: 'traceability', element: <Navigate to="/quality-control-tower" replace /> },
+      { path: 'd8', element: <Navigate to="/8d" replace /> },
+      { path: 'd8/:id', element: <LazyWrapper><D8Page /></LazyWrapper> },
 
       // Compatibility aliases for older deep links used inside existing pages
       { path: 'quality/ncr', element: <Navigate to="/quality/records/ncr" replace /> },

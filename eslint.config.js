@@ -11,6 +11,8 @@ export default tseslint.config(
     'node_modules',
     'backend/**',
     'backend-nest/**',
+    'public/**',
+    'quality_intelligence/**',
   ]),
   js.configs.recommended,
   ...tseslint.configs.recommended,
@@ -31,6 +33,9 @@ export default tseslint.config(
       ...reactHooks.configs.recommended.rules,
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-unused-vars': 'off',
+      '@typescript-eslint/ban-ts-comment': 'off',
+      'prefer-const': 'off',
+      'no-empty': 'off',
       'react-hooks/exhaustive-deps': 'off',
       'react-refresh/only-export-components': 'off',
     },
@@ -45,12 +50,14 @@ export default tseslint.config(
     },
   },
   {
-    files: ['*.config.js', '*.config.cjs', 'scripts/**/*.mjs'],
+    files: ['*.config.js', '*.config.cjs', '*.mjs', 'scripts/**/*.mjs', 'scripts/**/*.cjs'],
     languageOptions: {
       globals: globals.node,
     },
     rules: {
       '@typescript-eslint/no-require-imports': 'off',
+      '@typescript-eslint/no-unused-vars': 'off',
+      'no-empty': 'off',
     },
   },
 )

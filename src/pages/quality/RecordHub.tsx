@@ -13,7 +13,7 @@ import { unifiedApiRegistry } from '../../api/unified-api';
 import { useConfigStore } from '../../stores/configStore';
 import { DynamicFormRenderer } from '../../components/DynamicFormRenderer';
 
-type RecordType = 'ncr' | 'capa' | '8d' | 'deviation' | 'change-control' | 'complaint';
+type RecordType = 'ncr' | 'capa' | '8d' | 'deviation' | 'change-control' | 'complaint' | 'eight-d';
 
 interface ModuleConfig {
   id: RecordType;
@@ -24,13 +24,18 @@ interface ModuleConfig {
   description: string;
 }
 
-const MODULES: Record<RecordType, ModuleConfig> = {
+const PRIMARY_MODULES: Record<string, ModuleConfig> = {
   'ncr': { id: 'ncr', label: 'NCR', icon: ShieldAlert, color: '#EF4444', apiKey: 'ncr', description: 'Non-Conformance Reports' },
   'capa': { id: 'capa', label: 'CAPA', icon: ClipboardList, color: '#F59E0B', apiKey: 'capa', description: 'Corrective & Preventive Actions' },
   '8d': { id: '8d', label: '8D', icon: FileText, color: '#3B82F6', apiKey: 'eight-d', description: '8D Problem Solving Reports' },
   'deviation': { id: 'deviation', label: 'Deviation', icon: TrendingUp, color: '#8B5CF6', apiKey: 'deviations', description: 'Process Deviations' },
   'change-control': { id: 'change-control', label: 'Change Control', icon: Workflow, color: '#10B981', apiKey: 'change-control', description: 'Change Management' },
   'complaint': { id: 'complaint', label: 'Complaint', icon: MessageSquare, color: '#EC4899', apiKey: 'complaints', description: 'Customer Complaints' },
+};
+
+const MODULES: Record<string, ModuleConfig> = {
+  ...PRIMARY_MODULES,
+  'eight-d': PRIMARY_MODULES['8d'],
 };
 
 const STAGES = [
@@ -49,17 +54,23 @@ export function QualityRecordHub() {
   
   // Professional active type detection using useMemo and path matching
   const activeType = useMemo(() => {
+    // Normalize aliases like 'eight-d' -> '8d'
+    const normalizeType = (val?: string): RecordType | undefined => {
+      if (!val) return undefined;
+      const lower = val.toLowerCase();
+      if (lower === 'eight-d' || lower === '8d') return '8d';
+      return lower in MODULES ? (lower as RecordType) : undefined;
+    };
+
     // Priority 1: useParams
-    if (type) return type as RecordType;
+    const fromParam = normalizeType(type);
+    if (fromParam) return fromParam;
     
     // Priority 2: Extract from pathname (handle trailing slashes and nested paths)
     const segments = location.pathname.split('/').filter(Boolean);
     const lastSegment = segments[segments.length - 1];
-    
-    // Validate if the last segment is a valid module ID
-    if (lastSegment && MODULES[lastSegment as RecordType]) {
-      return lastSegment as RecordType;
-    }
+    const fromPath = normalizeType(lastSegment);
+    if (fromPath) return fromPath;
     
     return 'ncr';
   }, [type, location.pathname]);
@@ -187,7 +198,7 @@ export function QualityRecordHub() {
       />
 
       <div className="flex items-center gap-2 sm:gap-3 mb-6 sm:mb-8 p-1.5 bg-white/5 border border-white/10 rounded-2xl sm:rounded-[1.5rem] w-full sm:w-fit overflow-x-auto no-scrollbar backdrop-blur-md">
-        {(Object.values(MODULES)).map((m) => {
+        {(Object.values(PRIMARY_MODULES)).map((m) => {
           const MIcon = m.icon;
           const isActive = activeType === m.id;
           return (

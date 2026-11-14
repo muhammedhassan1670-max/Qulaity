@@ -29,6 +29,7 @@ class QualityEngineService {
       title: `CAPA from NCR: ${ncr.title}`,
       description: `Automatically generated CAPA for defect: ${ncr.description}. \nRoot Cause (if known): ${ncr.metadata?.rootCause || 'To be investigated'}`,
       priority: ncr.priority === 'High' || ncr.priority === 'Critical' ? 'Critical' : 'High',
+      status: 'Identified',
       capaType: 'Corrective Action',
       sourceNcrId: ncr.id,
       plantId: ncr.plantId,
@@ -86,7 +87,11 @@ class QualityEngineService {
   // ------------------------------------------------------------------------
   async checkAndUpdateFmeaRecord(defectDescription: string, plantId: string, sourceCapaId?: string) {
     const fmeas = await unifiedFmeaApi.getAll({ plantId });
-    const matchingFmea = fmeas.data.find(f => f.title.toLowerCase().includes(defectDescription.toLowerCase()));
+    const matchingFmea = fmeas.data.find(f => {
+      const fRec = f as unknown as Record<string, unknown>;
+      const label = (f.title || f.metadata?.processStep || f.metadata?.failureMode || fRec.processStep || fRec.failureMode || '') as string;
+      return label.toLowerCase().includes((defectDescription || '').toLowerCase());
+    });
     
     if (matchingFmea) {
       const currentO = matchingFmea.metadata?.occurrence || 1;

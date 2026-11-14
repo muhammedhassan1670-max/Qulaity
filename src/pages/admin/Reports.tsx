@@ -25,7 +25,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { exportData, prepareDataForExport } from '@/utils/exportUtils';
 import { ncrApi, capaApi, auditApi } from '@/services/api';
-import { unifiedDefectLogApi } from '@/api/unified-api';
+import { unifiedDefectLogApi, unifiedEightDApi, unifiedFmeaApi, unifiedSupplierApi, unifiedCalibrationApi } from '@/api/unified-api';
 
 interface Report {
   id: string;
@@ -122,8 +122,46 @@ export function ReportsPage() {
           mapping = { date: 'Date', productionLine: 'Line', defectType: 'Type', quantity: 'Qty', severity: 'Severity', status: 'Status' };
           break;
         }
-        default:
-          throw new Error('Module not implemented');
+        case '8d': {
+          const res = await unifiedEightDApi.getAll();
+          data = res.data || [];
+          fileName = '8D_Problem_Solving_Export';
+          sheetName = '8D Reports';
+          mapping = { id: '8D ID', title: 'Problem Statement', status: 'Status', priority: 'Priority', createdAt: 'Created Date' };
+          break;
+        }
+        case 'fmea': {
+          const res = await unifiedFmeaApi.getAll();
+          data = res.data || [];
+          fileName = 'PFMEA_Risk_Matrix_Export';
+          sheetName = 'FMEA Records';
+          mapping = { id: 'FMEA ID', title: 'Process Step / Failure Mode', status: 'Status', createdAt: 'Date' };
+          break;
+        }
+        case 'supplier': {
+          const res = await unifiedSupplierApi.getAll();
+          data = res.data || [];
+          fileName = 'Supplier_Quality_Export';
+          sheetName = 'Suppliers';
+          mapping = { id: 'Supplier ID', name: 'Supplier Name', rating: 'Rating', status: 'Status' };
+          break;
+        }
+        case 'calibration': {
+          const res = await unifiedCalibrationApi.getAll();
+          data = res.data || [];
+          fileName = 'Calibration_MSA_Export';
+          sheetName = 'Calibration Equipment';
+          mapping = { id: 'Equipment ID', name: 'Instrument', status: 'Calibration Status', nextDueDate: 'Next Due Date' };
+          break;
+        }
+        default: {
+          const res = await unifiedDefectLogApi.getAll();
+          data = res.data || [];
+          fileName = `${moduleId.toUpperCase()}_Export`;
+          sheetName = 'Records';
+          mapping = { id: 'ID', title: 'Title', status: 'Status', createdAt: 'Date' };
+          break;
+        }
       }
 
       if (data.length === 0) {
@@ -147,7 +185,11 @@ export function ReportsPage() {
     { id: 'ncr', name: 'Non-Conformance Reports', icon: AlertTriangle, color: 'text-red-400', bg: 'bg-red-500/10' },
     { id: 'capa', name: 'Corrective & Preventive Actions', icon: Zap, color: 'text-orange-400', bg: 'bg-orange-500/10' },
     { id: 'audit', name: 'Audit & Compliance Records', icon: ShieldCheck, color: 'text-blue-400', bg: 'bg-blue-500/10' },
-    { id: 'defects', name: 'Daily Production Defects', icon: ClipboardList, color: 'text-green-400', bg: 'bg-green-500/10' }
+    { id: 'defects', name: 'Daily Production Defects', icon: ClipboardList, color: 'text-green-400', bg: 'bg-green-500/10' },
+    { id: '8d', name: '8D Problem Solving Reports', icon: FileText, color: 'text-purple-400', bg: 'bg-purple-500/10' },
+    { id: 'fmea', name: 'PFMEA Risk Matrix Records', icon: BarChart3, color: 'text-cyan-400', bg: 'bg-cyan-500/10' },
+    { id: 'supplier', name: 'Supplier Quality & Scorecards', icon: Database, color: 'text-amber-400', bg: 'bg-amber-500/10' },
+    { id: 'calibration', name: 'Calibration & MSA Certificates', icon: Clock, color: 'text-emerald-400', bg: 'bg-emerald-500/10' }
   ];
 
   return (

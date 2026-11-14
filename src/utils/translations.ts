@@ -71,6 +71,21 @@ export const translations = {
     'admin-database': 'Database',
     'admin-reports': 'Reports',
 
+    // Quality Stages & Flow
+    'quality-control-tower': 'Quality Process Flowchart',
+    'superpowers': '⚡ Superpowers Suite 5.0',
+    'stage-incoming': '1. Incoming & Supplier (IQC)',
+    'stage-inprocess': '2. In-Process Quality (IPQC)',
+    'stage-resolution': '3. Problem Solving (NCR/8D)',
+    'stage-outgoing': '4. Outgoing Quality (OQC)',
+    'stage-customer': '5. Customer & Field Quality',
+    'model-bom-comparison': 'Model BOM Comparison & Matrix',
+
+    // Sidebar ID Aliases (supporting t(item.id))
+    'quality-spc': 'SPC Control Charts',
+    'quality-compliance-group': '6. Engineering Lab & Audits',
+    'quality-defect-prediction': 'AI Defect Prediction',
+
     // Digital Twin Section
     'digital-twin-title': 'Digital Twin',
     'digital-twin-subtitle': 'Real-time 3D Factory Visualization',
@@ -254,12 +269,27 @@ export const translations = {
     'system-tools': 'النظام والإدارة',
     'builder': 'منشئ النماذج No-Code',
     'admin': 'الإدارة',
-    'admin-users': 'المستخدمين',
+    'admin-users': 'المستخدمون',
     'admin-roles': 'الأدوار والصلاحيات',
     'admin-plants': 'المصانع المتعددة',
     'admin-workflow': 'محرك مسارات العمل',
     'admin-database': 'قاعدة البيانات',
     'admin-reports': 'التقارير',
+
+    // مراحل ومسارات الجودة
+    'quality-control-tower': 'فلو شارت مسار الجودة (Quality Flowchart)',
+    'superpowers': '⚡ الترسانة الذكية الخارقة',
+    'stage-incoming': '1. استلام الخامات والموردين (IQC)',
+    'stage-inprocess': '2. جودة التصنيع والعمليات (IPQC)',
+    'stage-resolution': '3. عدم المطابقة وحل المشكلات',
+    'stage-outgoing': '4. فحص وخروج المنتج (OQC)',
+    'stage-customer': '5. شكاوى العملاء والميدان',
+    'model-bom-comparison': 'مقارنة أشجار الموديلات (BOM Matrix)',
+
+    // أسماء الموديولات المتوافقة مع معرّف القائمة (t(item.id))
+    'quality-spc': 'كارتات التحكم الإحصائي SPC',
+    'quality-compliance-group': '6. المختبر الهندسي والتدقيق',
+    'quality-defect-prediction': 'توقع العيوب بالذكاء الاصطناعي',
 
     // قسم التوأم الرقمي
     'digital-twin-title': 'التوأم الرقمي',
@@ -388,9 +418,11 @@ export type Language = 'en' | 'ar';
 export const useTranslation = () => {
   const { language } = useAppStore();
   const lang = (language as Language) || 'en';
+  const isAr = lang === 'ar';
+  const dir: 'rtl' | 'ltr' = isAr ? 'rtl' : 'ltr';
   
-  const t = (key: keyof typeof translations['en']) => {
-    return translations[lang][key] || translations['en'][key] || key;
+  const t = (key: keyof typeof translations['en'] | string) => {
+    return (translations[lang] as Record<string, string>)?.[key] || (translations['en'] as Record<string, string>)?.[key] || key;
   };
-  return { t, language: lang };
+  return { t, language: lang, isAr, dir };
 };

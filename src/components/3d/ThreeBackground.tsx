@@ -347,7 +347,7 @@ export function ThreeBackground({ mode = 'full', interactive = false }: ThreeBac
     
     if (rendererRef.current) {
       rendererRef.current.dispose();
-      if (containerRef.current && rendererRef.current.domElement) {
+      if (containerRef.current && rendererRef.current.domElement && containerRef.current.contains(rendererRef.current.domElement)) {
         containerRef.current.removeChild(rendererRef.current.domElement);
       }
     }

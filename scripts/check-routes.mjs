@@ -7,6 +7,7 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'
 const routerFile = path.join(repoRoot, 'src', 'router', 'index.tsx')
 const sidebarFile = path.join(repoRoot, 'src', 'components', 'Sidebar.tsx')
 const srcDir = path.join(repoRoot, 'src')
+const publicDir = path.join(repoRoot, 'public')
 
 const readSourceFile = (filePath) => {
   const source = fs.readFileSync(filePath, 'utf8')
@@ -291,8 +292,16 @@ const pathMap = collectPathMap(sidebarSource)
 const leafIds = collectSidebarLeafIds(sidebarSource)
 const staticNavigationPaths = collectStaticNavigationPaths(collectSourceFiles(srcDir))
 
+const isPublicAsset = (pathToCheck) => {
+  if (!pathToCheck || typeof pathToCheck !== 'string') return false
+  const relativeAssetPath = pathToCheck.replace(/^\/+/, '')
+  if (!relativeAssetPath) return false
+  const fullAssetPath = path.join(publicDir, relativeAssetPath)
+  return fs.existsSync(fullAssetPath) && fs.statSync(fullAssetPath).isFile()
+}
+
 const hasMatchingRoute = (pathToCheck) =>
-  [...routerPaths].some((routePath) => routeMatchesPath(routePath, pathToCheck))
+  [...routerPaths].some((routePath) => routeMatchesPath(routePath, pathToCheck)) || isPublicAsset(pathToCheck)
 
 const missingPathMapEntries = [...leafIds].filter((id) => !pathMap.has(id))
 const missingRoutes = [...pathMap.entries()].filter(([, menuPath]) => {

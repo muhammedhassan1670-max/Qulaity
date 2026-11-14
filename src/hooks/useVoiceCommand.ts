@@ -126,7 +126,6 @@ export function useVoiceCommand(onChatIntent?: (text: string) => void) {
       }
       setTranscript(currentTranscript);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recognition, navigate]); // Intentionally omitting parseIntent from deps to avoid stale closure issues
 
   const parseIntent = useCallback((text: string) => {

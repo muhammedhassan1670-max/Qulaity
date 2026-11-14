@@ -1748,7 +1748,7 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
                 <button
                   type="button"
                   onClick={() => {
-                    const route = gateNumber === 2 ? '/d8' : gateNumber === 5 ? '/complaints' : '/ncr';
+                    const route = gateNumber === 2 ? '/8d' : gateNumber === 5 ? '/complaints' : '/ncr';
                     navigate(route);
                   }}
                   className="flex-1 py-1.5 px-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-[11px] flex items-center justify-center gap-1 transition-all shadow-sm active:scale-95 cursor-pointer"
@@ -2517,7 +2517,7 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
             </div>
             <button
               type="button"
-              onClick={() => navigate('/d8')}
+              onClick={() => navigate('/8d')}
               className="mt-3 w-full py-1.5 px-2.5 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/30 font-bold text-[11px] flex items-center justify-center gap-1 transition-all cursor-pointer"
             >
               <span>{isAr ? 'تقرير فحص العطل FA ➔' : 'Teardown Report ➔'}</span>
@@ -2700,7 +2700,7 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
             </div>
             <button
               type="button"
-              onClick={() => navigate('/d8')}
+              onClick={() => navigate('/8d')}
               className="mt-3 w-full py-2 px-3 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 font-bold text-xs flex items-center justify-center gap-1.5 transition-all group-hover:bg-rose-600 group-hover:text-white cursor-pointer"
             >
               <span>{isAr ? 'فتح تحقيق 8D للعميل بالمصنع ➔' : 'Open 8D Investigation ➔'}</span>
@@ -4105,7 +4105,7 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
             <span className="text-[10px] text-slate-400 block mt-0.5">{isAr ? 'عدم مطابقة' : 'Reports'}</span>
           </div>
           <div 
-            onClick={() => navigate('/d8')} 
+            onClick={() => navigate('/8d')} 
             className={`p-2.5 rounded-2xl border cursor-pointer transition-all ${
               isStepNcr
                 ? 'bg-rose-900/80 border-rose-400 ring-4 ring-rose-400 shadow-xl shadow-rose-500/50 scale-105 animate-pulse'
@@ -4287,7 +4287,7 @@ export const ModernQualityFlowchart: React.FC<ModernQualityFlowchartProps> = ({
         failCount: getStageRecordStats('DEPT-STAGE-INPROCESS').fail,
         failTitleAr: 'المرحلة 3: مركز تقارير عدم المطابقة NCR وعزل الخط والتحقيق 8D و CAPA',
         failTitleEn: 'Stage 3: NCR, Line Containment & 8D / CAPA Investigation Hub',
-        failNcrRoute: '/d8',
+        failNcrRoute: '/8d',
         failTargetAction: () => {
           setActiveStageDrawer({ stageNumber: 3, stageId: 'DEPT-STAGE-RESOLUTION' });
         }

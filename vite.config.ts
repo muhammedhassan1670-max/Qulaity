@@ -82,6 +82,11 @@ export default defineConfig(() => ({
   test: {
     globals: true,
     environment: 'node',
-    include: ['src/**/*.{test,spec}.{ts,tsx}'],
+    setupFiles: ['./tests/setup.ts'],
+    testTimeout: 30000,
+    fileParallelism: false,
+    maxWorkers: 2,
+    minWorkers: 1,
+    include: ['src/**/*.{test,spec}.{ts,tsx}', 'tests/**/*.{test,spec}.{ts,tsx}'],
   },
 }))

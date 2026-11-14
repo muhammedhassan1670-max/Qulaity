@@ -20,6 +20,7 @@ import {
   Check
 } from 'lucide-react';
 import { useVoiceCommand } from '../hooks/useVoiceCommand';
+import { useTranslation } from '../utils/translations';
 import { askQualityCopilot, type CopilotAction } from '../services/copilotEngine';
 
 interface Message {
@@ -33,6 +34,7 @@ interface Message {
 }
 
 export function AICopilotWidget() {
+  const { isAr } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [input, setInput] = useState('');
@@ -217,13 +219,13 @@ export function AICopilotWidget() {
       .replace(/\$[^$]*\$/g, '');
 
     const utterance = new SpeechSynthesisUtterance(plainText);
-    utterance.lang = 'ar-SA';
+    utterance.lang = isAr ? 'ar-SA' : 'en-US';
     utterance.rate = 1.0;
     utterance.pitch = 1.0;
 
     const voices = window.speechSynthesis.getVoices();
-    const arabicVoice = voices.find(v => v.lang.startsWith('ar'));
-    if (arabicVoice) utterance.voice = arabicVoice;
+    const voice = voices.find(v => v.lang.startsWith(isAr ? 'ar' : 'en'));
+    if (voice) utterance.voice = voice;
 
     utterance.onend = () => setIsSpeakingId(null);
     utterance.onerror = () => setIsSpeakingId(null);
@@ -289,8 +291,8 @@ export function AICopilotWidget() {
             animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
             exit={{ opacity: 0, y: 20, scale: 0.95, filter: 'blur(5px)' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed bottom-6 right-6 z-[100] w-[420px] sm:w-[460px] max-w-[calc(100vw-2rem)] h-[650px] max-h-[calc(100vh-5rem)] bg-white/95 dark:bg-[#0A1A2F]/95 backdrop-blur-2xl rounded-2xl shadow-[0_0_40px_rgba(0,0,0,0.25)] border border-slate-200 dark:border-white/10 flex flex-col overflow-hidden text-right"
-            dir="rtl"
+            className={`fixed bottom-6 right-6 z-[100] w-[420px] sm:w-[460px] max-w-[calc(100vw-2rem)] h-[650px] max-h-[calc(100vh-5rem)] bg-white/95 dark:bg-[#0A1A2F]/95 backdrop-blur-2xl rounded-2xl shadow-[0_0_40px_rgba(0,0,0,0.25)] border border-slate-200 dark:border-white/10 flex flex-col overflow-hidden ${isAr ? 'text-right' : 'text-left'}`}
+            dir={isAr ? 'rtl' : 'ltr'}
           >
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-4 bg-gradient-to-l from-[#00A3E0]/15 via-slate-100/50 to-transparent dark:from-[#00A3E0]/20 dark:via-white/5 border-b border-black/5 dark:border-white/5">
@@ -316,7 +318,7 @@ export function AICopilotWidget() {
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => setShowSettings(!showSettings)}
-                  title="إعدادات الذكاء الاصطناعي ومفتاح Gemini API"
+                  title={isAr ? 'إعدادات الذكاء الاصطناعي ومفتاح Gemini API' : 'AI Settings & Gemini API Key'}
                   className="w-8 h-8 rounded-full flex items-center justify-center text-slate-500 hover:text-[#00A3E0] hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
                 >
                   <Settings className="w-4 h-4" />
@@ -341,10 +343,12 @@ export function AICopilotWidget() {
                 >
                   <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300">
                     <Key className="w-3.5 h-3.5 text-[#00A3E0]" />
-                    <span>ربط مفتاح Google Gemini API المباشر (اختياري)</span>
+                    <span>{isAr ? 'ربط مفتاح Google Gemini API المباشر (اختياري)' : 'Connect Google Gemini API Key directly (Optional)'}</span>
                   </div>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    يمكنك إدخال مفتاح Gemini الخاص بك لتفعيل الاتصال السحابي المباشر، أو تركه فارغاً للاعتماد على العقل العصبي الصناعي الداخلي بدون إنترنت.
+                    {isAr 
+                      ? 'يمكنك إدخال مفتاح Gemini الخاص بك لتفعيل الاتصال السحابي المباشر، أو تركه فارغاً للاعتماد على العقل العصبي الصناعي الداخلي بدون إنترنت.'
+                      : 'You can enter your Gemini API key to enable direct cloud intelligence, or leave it empty to rely on the offline industrial neural brain.'}
                   </p>
                   <div className="flex gap-2">
                     <input
@@ -361,7 +365,7 @@ export function AICopilotWidget() {
                       }}
                       className="px-3 py-1.5 text-xs bg-[#00A3E0] text-white rounded-lg font-medium hover:bg-[#008AC0] transition-colors"
                     >
-                      حفظ
+                      {isAr ? 'حفظ' : 'Save'}
                     </button>
                   </div>
                 </motion.div>
@@ -408,7 +412,7 @@ export function AICopilotWidget() {
                             <div className="flex items-center gap-2">
                               <button
                                 onClick={() => speakText(msg.content, msg.id)}
-                                title={isSpeakingId === msg.id ? 'إيقاف الصوت' : 'استماع صوتي للإجابة'}
+                                title={isSpeakingId === msg.id ? (isAr ? 'إيقاف الصوت' : 'Stop audio') : (isAr ? 'استماع صوتي للإجابة' : 'Listen to answer')}
                                 className={`p-1 rounded hover:bg-slate-100 dark:hover:bg-white/10 transition-colors ${
                                   isSpeakingId === msg.id ? 'text-[#00A3E0] animate-pulse' : 'text-slate-400 hover:text-slate-600'
                                 }`}
@@ -417,7 +421,7 @@ export function AICopilotWidget() {
                               </button>
                               <button
                                 onClick={() => copyToClipboard(msg.content, msg.id)}
-                                title="نسخ النص"
+                                title={isAr ? 'نسخ النص' : 'Copy text'}
                                 className="p-1 rounded hover:bg-slate-100 dark:hover:bg-white/10 transition-colors text-slate-400 hover:text-slate-600"
                               >
                                 {copiedId === msg.id ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
@@ -487,8 +491,8 @@ export function AICopilotWidget() {
             <div className="p-3 bg-slate-50 dark:bg-slate-900/60 border-t border-slate-200 dark:border-white/10">
               <div className="flex items-end gap-2 bg-white dark:bg-[#0f131a] rounded-xl border border-slate-200 dark:border-white/10 p-2 focus-within:border-[#00A3E0] dark:focus-within:border-[#00A3E0] focus-within:ring-1 focus-within:ring-[#00A3E0]/20 transition-all duration-300">
                 <button 
-                  onClick={() => handleSendWithText('لخص لي حالة الجودة الحالية في المنصة وأبرز أولويات العمل')}
-                  title="تحديث وتلخيص الأولويات"
+                  onClick={() => handleSendWithText(isAr ? 'لخص لي حالة الجودة الحالية في المنصة وأبرز أولويات العمل' : 'Summarize the current quality status and key operational priorities across the platform')}
+                  title={isAr ? 'تحديث وتلخيص الأولويات' : 'Refresh and summarize priorities'}
                   className="p-2 text-slate-400 hover:text-[#00A3E0] transition-colors rounded-lg hover:bg-slate-100 dark:hover:bg-white/5"
                 >
                   <RefreshCw className="w-4 h-4" />
@@ -497,7 +501,7 @@ export function AICopilotWidget() {
                 {isSupported && (
                   <button 
                     onClick={toggleListening}
-                    title={isListening ? 'إيقاف الاستماع' : 'تحدث صوتياً'}
+                    title={isListening ? (isAr ? 'إيقاف الاستماع' : 'Stop listening') : (isAr ? 'تحدث صوتياً' : 'Voice input')}
                     className={`p-2 transition-colors rounded-lg ${
                       isListening 
                         ? 'text-red-500 bg-red-100 dark:bg-red-500/20 animate-pulse' 
@@ -512,7 +516,9 @@ export function AICopilotWidget() {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder={isListening ? 'جاري الاستماع لصوتك...' : 'اسأل عن ISO 9001، الـ CAPA، Cpk، أو أي عيب...'}
+                  placeholder={isListening 
+                    ? (isAr ? 'جاري الاستماع لصوتك...' : 'Listening to your voice...') 
+                    : (isAr ? 'اسأل عن ISO 9001، الـ CAPA، Cpk، أو أي عيب...' : 'Ask about ISO 9001, CAPA, Cpk, or any defect...')}
                   className="flex-1 max-h-28 min-h-[38px] bg-transparent border-none resize-none focus:ring-0 text-xs py-2 px-2 text-slate-900 dark:text-white"
                   rows={1}
                   dir="auto"
@@ -527,16 +533,16 @@ export function AICopilotWidget() {
                       : 'bg-slate-200 dark:bg-white/5 text-slate-400 cursor-not-allowed'
                   }`}
                 >
-                  <Send className="w-4 h-4 rotate-180" />
+                  <Send className={`w-4 h-4 ${isAr ? 'rotate-180' : ''}`} />
                 </button>
               </div>
 
               <div className="mt-1.5 flex items-center justify-between text-[10px] text-slate-400 px-1">
                 <span className="flex items-center gap-1">
                   <Sparkles className="w-2.5 h-2.5 text-[#00A3E0]" />
-                  نظام ذكاء اصطناعي صناعي مدرب على معايير الجودة 4.0
+                  {isAr ? 'نظام ذكاء اصطناعي صناعي مدرب على معايير الجودة 4.0' : 'Industrial AI trained on Quality 4.0 standards'}
                 </span>
-                <span>Enter للإرسال</span>
+                <span>{isAr ? 'Enter للإرسال' : 'Enter to send'}</span>
               </div>
             </div>
           </motion.div>

@@ -126,7 +126,7 @@ export default function QualityIntelligenceBridge() {
   const handleReloadEngine = () => {
     handleSyncRealData(activeScope, true);
     if (iframeRef.current) {
-      iframeRef.current.src = iframeRef.current.src;
+      iframeRef.current.contentWindow?.location.reload();
     }
   };
 

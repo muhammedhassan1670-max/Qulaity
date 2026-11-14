@@ -498,7 +498,7 @@ export const DEFAULT_EQUIPMENT_PODS: ScadaEquipment[] = [
     locationAr: 'مختبر تفكيك وتشخيص أسباب أعطال أجهزة العملاء',
     locationEn: 'Customer Units Teardown & Diagnostic Station',
     iconType: 'alert',
-    moduleUrl: '/d8',
+    moduleUrl: '/8d',
     moduleLabelAr: 'مختبر تحليل الأعطال FA',
     oeeEstimate: 98,
     fpyEstimate: 99,
@@ -2741,7 +2741,7 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
           titleEn: '8D Root Cause Analysis',
           count: matchedEightDs.length,
           status: matchedEightDs.some(d => d.status !== 'd8' && d.status !== 'closed') ? 'warning' : matchedEightDs.length > 0 ? 'pass' : 'neutral',
-          route: '/quality/records/eight-d',
+          route: '/quality/records/8d',
           sampleId: matchedEightDs[0]?.id || matchedEightDs[0]?.eightDNumber
         },
         {
@@ -6576,7 +6576,7 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                         <span>{isAr ? `تحقيقات 8D الجذرية (${selectedStatus?.matchedEightDs?.length || 0})` : `8D Investigations (${selectedStatus?.matchedEightDs?.length || 0})`}</span>
                       </span>
                       <button
-                        onClick={() => navigate('/quality/records/eight-d')}
+                        onClick={() => navigate('/quality/records/8d')}
                         className="text-[10px] text-purple-400 hover:text-purple-300 font-bold"
                       >
                         {isAr ? 'فتح الكل ←' : 'Open All →'}
@@ -6588,7 +6588,7 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                         {selectedStatus.matchedEightDs.map((d8, i) => (
                           <div 
                             key={i}
-                            onClick={() => navigate('/quality/records/eight-d')}
+                            onClick={() => navigate('/quality/records/8d')}
                             className="p-3 rounded-xl bg-purple-950/30 border border-purple-500/30 hover:border-purple-400 text-xs space-y-1.5 cursor-pointer transition-colors"
                           >
                             <div className="flex items-center justify-between">
@@ -7114,7 +7114,7 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                       </button>
 
                       <button
-                        onClick={() => navigate('/quality/records/eight-d')}
+                        onClick={() => navigate('/quality/records/8d')}
                         className="p-2 rounded-xl bg-slate-950/80 hover:bg-slate-800 border border-white/5 hover:border-pink-500/40 text-start transition-all group"
                       >
                         <span className="text-pink-400 font-black block text-[11px] group-hover:text-pink-300">🔍 {isAr ? 'تحقيقات 8D' : '8D Root Cause'}</span>
@@ -7122,7 +7122,7 @@ export function QualityControlTower({ embedded = false, className = '' }: Qualit
                       </button>
 
                       <button
-                        onClick={() => navigate('/traceability')}
+                        onClick={() => navigate('/quality-control-tower')}
                         className="p-2 rounded-xl bg-slate-950/80 hover:bg-slate-800 border border-white/5 hover:border-blue-500/40 text-start transition-all group"
                       >
                         <span className="text-blue-400 font-black block text-[11px] group-hover:text-blue-300">📦 {isAr ? 'تتبع الدفعة والمسار' : 'Traceability Hub'}</span>
@@ -7912,7 +7912,7 @@ const PLATFORM_MODULE_OPTIONS = [
   { url: '/supplier-quality', shortAr: 'جودة الموردين', labelAr: '4. بوابة جودة وتأهيل الموردين (Supplier Quality)', labelEn: '4. Supplier Quality Portal (/supplier-quality)' },
   { url: '/quality/records/ncr', shortAr: 'تقارير عدم المطابقة', labelAr: '5. تقارير حالات عدم المطابقة (NCR Registry)', labelEn: '5. Non-Conformance Reports (/ncr)' },
   { url: '/quality/records/capa', shortAr: 'الإجراءات التصحيحية', labelAr: '6. الإجراءات التصحيحية والوقائية (CAPA)', labelEn: '6. Corrective & Preventive Action (/capa)' },
-  { url: '/quality/records/eight-d', shortAr: 'منهجية 8D', labelAr: '7. منهجية حل المشكلات الثمانية (8D Problem Solving)', labelEn: '7. 8D Problem Solving Methodology (/eight-d)' },
+  { url: '/quality/records/8d', shortAr: 'منهجية 8D', labelAr: '7. منهجية حل المشكلات الثمانية (8D Problem Solving)', labelEn: '7. 8D Problem Solving Methodology (/8d)' },
   { url: '/compliance/hub/control-plan', shortAr: 'خطة المراقبة', labelAr: '8. خطة مراقبة العمليات والتصنيع (Control Plan)', labelEn: '8. Manufacturing Control Plan (/control-plan)' },
   { url: '/spc', shortAr: 'التحكم الإحصائي', labelAr: '9. كارتات التحكم الإحصائي والقدرة العملية (SPC & Cpk)', labelEn: '9. Statistical Process Control & Capability (/spc)' },
   { url: '/compliance/hub/calibration', shortAr: 'المعايرة', labelAr: '10. معايرة وصيانة أجهزة القياس (Calibration Hub)', labelEn: '10. Equipment & Gauge Calibration (/calibration)' },

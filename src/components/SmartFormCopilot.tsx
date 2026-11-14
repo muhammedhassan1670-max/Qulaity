@@ -116,13 +116,13 @@ function parseIndustrialNlp(rawText: string): ParsedNlpData {
   }
 
   // 7. Batch / Lot Number
-  const lotMatch = rawText.match(/(?:تشغيلة|تشغيله|لوط|دفعة|دفعه|batch|lot)\s*(?:رقم|num|#)?\s*([a-zA-Z0-9_\-]+)/i);
+  const lotMatch = rawText.match(/(?:تشغيلة|تشغيله|لوط|دفعة|دفعه|batch|lot)\s*(?:رقم|num|#)?\s*([a-zA-Z0-9_-]+)/i);
   if (lotMatch) result.batchNumber = lotMatch[1];
 
   // 8. Product Name
-  const prodMatch = rawText.match(/(?:منتج|خامة|خامه|قطعة|قطعه|صنف|جزء|موديل|product|part|item)\s*[:=]?\s*([a-zA-Z0-9\u0600-\u06FF\s\-]+?)(?=(?:[\u060C,،\.\n]|تشغيلة|تشغيله|لوط|دفعة|دفعه|عينة|عينه|عيب|عيوب|عدد|كمية|كميه|نتيجة|بعدد|مع|$))/i);
+  const prodMatch = rawText.match(/(?:منتج|خامة|خامه|قطعة|قطعه|صنف|جزء|موديل|product|part|item)\s*[:=]?\s*([a-zA-Z0-9\u0600-\u06FF\s-]+?)(?=(?:[\u060C,،.\n]|تشغيلة|تشغيله|لوط|دفعة|دفعه|عينة|عينه|عيب|عيوب|عدد|كمية|كميه|نتيجة|بعدد|مع|$))/i);
   if (prodMatch && prodMatch[1].trim()) {
-    result.productName = prodMatch[1].replace(/[\u060C,،\.;:]+$/g, '').trim();
+    result.productName = prodMatch[1].replace(/[\u060C,،.;:]+$/g, '').trim();
   }
 
   // 9. Severity
@@ -137,7 +137,7 @@ function parseIndustrialNlp(rawText: string): ParsedNlpData {
   }
 
   // 10. Inspector
-  const inspMatch = rawText.match(/(?:الفاحص|المفتش|بواسطة|مهندس|فحص|inspected by|inspector)\s*[:=]?\s*([a-zA-Z\u0600-\u06FF\s]+?)(?=(?:[\u060C,،\.\n]|تشغيلة|تشغيله|لوط|دفعة|عينة|عيب|نتيجة|$))/i);
+  const inspMatch = rawText.match(/(?:الفاحص|المفتش|بواسطة|مهندس|فحص|inspected by|inspector)\s*[:=]?\s*([a-zA-Z\u0600-\u06FF\s]+?)(?=(?:[\u060C,،.\n]|تشغيلة|تشغيله|لوط|دفعة|عينة|عيب|نتيجة|$))/i);
   if (inspMatch && inspMatch[1].trim()) {
     result.inspectedBy = inspMatch[1].trim();
   }
@@ -202,7 +202,9 @@ export function SmartFormCopilot({ onAutoFill, fields }: SmartFormCopilotProps) 
     return () => {
       try {
         recognition.stop();
-      } catch {}
+      } catch {
+        // ignore cleanup error
+      }
     };
   }, [isListening]);
 

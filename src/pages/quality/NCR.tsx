@@ -510,7 +510,7 @@ export function NCRPage() {
 
                 {/* SCADA Floorplan Deep Link */}
                 <Link
-                  to="/quality-tower"
+                  to="/quality-control-tower"
                   className="h-11 px-3.5 rounded-2xl border border-cyan-500/30 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 flex items-center gap-2 text-xs font-bold transition-all shadow-sm"
                   title={isAr ? 'عرض برج المراقبة وخريطة المصنع الرقمية' : 'View SCADA Factory Floorplan'}
                 >
@@ -944,7 +944,7 @@ export function NCRPage() {
                   variant="outline"
                   onClick={() => {
                     setViewingNcr(null);
-                    navigate(viewingNcr.productionLine ? `/quality-tower?station=${encodeURIComponent(viewingNcr.productionLine)}` : '/quality-tower');
+                    navigate(viewingNcr.productionLine ? `/quality-control-tower?station=${encodeURIComponent(viewingNcr.productionLine)}` : '/quality-control-tower');
                   }}
                   className="bg-cyan-500/10 text-cyan-300 border-cyan-500/30 hover:bg-cyan-500/20 rounded-xl h-10 text-xs font-bold"
                   title={isAr ? 'عرض موقع المحطة على خريطة المصنع SCADA' : 'View on SCADA plant floorplan'}

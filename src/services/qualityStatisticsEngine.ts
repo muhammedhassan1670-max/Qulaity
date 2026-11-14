@@ -20,7 +20,7 @@ export const mathSpecialFunctions = {
   logGamma: (z: number): number => {
     if (z <= 0) return 0;
     const c = [
-      0.99999999999980993,
+      0.99999999999981,
       676.5203681218851,
       -1259.1392167224028,
       771.32342877765313,
@@ -30,7 +30,7 @@ export const mathSpecialFunctions = {
       9.9843695780195716e-6,
       1.5056327351493116e-7
     ];
-    let x = z;
+    const x = z;
     let y = x;
     let tmp = x + 7.5;
     tmp -= (x + 0.5) * Math.log(tmp);
@@ -38,7 +38,7 @@ export const mathSpecialFunctions = {
     for (let j = 1; j < c.length; j++) {
       ser += c[j] / ++y;
     }
-    return -tmp + Math.log(2.5066282746310005 * ser / x);
+    return -tmp + Math.log(2.5066282746310007 * ser / x);
   },
 
   /**

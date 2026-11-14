@@ -78,10 +78,12 @@ function App() {
         const renderer = (gl as WebGLRenderingContext).getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
         
         // Check for low-power devices
-        if (renderer.includes('Intel') && !renderer.includes('Arc')) {
-          setPerformanceMode('lite');
-        } else if (renderer.includes('Software') || renderer.includes('SwiftShader')) {
-          setPerformanceMode('2d');
+        if (typeof renderer === 'string') {
+          if (renderer.includes('Intel') && !renderer.includes('Arc')) {
+            setPerformanceMode('lite');
+          } else if (renderer.includes('Software') || renderer.includes('SwiftShader')) {
+            setPerformanceMode('2d');
+          }
         }
       }
       

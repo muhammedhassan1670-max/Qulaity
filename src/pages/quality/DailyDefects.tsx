@@ -2804,17 +2804,11 @@ export default function DailyDefects() {
                         <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest">{chart.seriesLabel || 'Industrial Pareto Analysis'}</p>
                       </div>
                     </div>
-                    {chart.chartType === 'pareto' ? (
-                      <ParetoChart 
-                        data={defects} 
-                        categoryField={chart.bind?.xField || ''} 
-                        title={chart.title}
-                      />
-                    ) : (
-                      <div className="h-64 flex items-center justify-center text-white/20 border-2 border-dashed border-white/5 rounded-3xl">
-                        Chart type {chart.chartType} not implemented
-                      </div>
-                    )}
+                    <ParetoChart 
+                      data={defects} 
+                      categoryField={chart.bind?.xField || ''} 
+                      title={chart.title}
+                    />
                   </div>
                 ))}
 
